@@ -43,6 +43,9 @@ export function GameShell({
   onBuy,
   onSell,
   onSail,
+  onCombatReward,
+  onVitals,
+  onPlayerDeath,
 }: {
   character: ValeCharacter;
   cls: ValeClass;
@@ -76,12 +79,22 @@ export function GameShell({
   onBuy: (itemId: string, price: number) => void;
   onSell: (itemId: string, price: number) => void;
   onSail: (dest: ContinentId) => void;
+  onCombatReward: (
+    combatXp: number,
+    skill: SkillId,
+    skillXp: number,
+    gold: number,
+  ) => void;
+  onVitals: (hp: number, mana: number) => void;
+  onPlayerDeath: () => void;
 }) {
+  const overlayOpen = Boolean(dialogue || shop || voyageDock);
   const { canvasRef, hud, prompt } = useGameCanvas({
     character,
     cls,
     arrivedFrom,
     shipSpawn,
+    overlayOpen,
     onTrain,
     onToggleSkills,
     onToggleMap,
@@ -92,6 +105,9 @@ export function GameShell({
     onOpenFolk,
     onOpenShop,
     onOpenShip,
+    onCombatReward,
+    onVitals,
+    onPlayerDeath,
   });
 
   void skillTick;
@@ -100,7 +116,7 @@ export function GameShell({
     ? `${continentName} | Hollow ${(hollowIndex ?? 0) + 1}`
     : continentName;
 
-  const overlayOpen = Boolean(dialogue || shop || voyageDock);
+  
 
   return (
     <div className="relative h-full w-full select-none">
@@ -137,6 +153,40 @@ export function GameShell({
                 }}
               />
             </div>
+            <div className="mt-2">
+              <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-[#6a7260]">
+                <span>HP</span>
+                <span className="normal-case tracking-normal text-[#e8e6d9]">
+                  {hud.hp}/{hud.maxHp}
+                </span>
+              </div>
+              <div className="mt-0.5 h-1.5 w-28 overflow-hidden rounded bg-[#0c0d0b]">
+                <div
+                  className="h-full rounded bg-[#c45c3e]"
+                  style={{
+                    width: `${hud.maxHp > 0 ? Math.round((hud.hp / hud.maxHp) * 100) : 0}%`,
+                  }}
+                />
+              </div>
+              {hud.maxMana > 0 && (
+                <>
+                  <div className="mt-1.5 flex items-center justify-between text-[10px] uppercase tracking-wider text-[#6a7260]">
+                    <span>Mana</span>
+                    <span className="normal-case tracking-normal text-[#e8e6d9]">
+                      {hud.mana}/{hud.maxMana}
+                    </span>
+                  </div>
+                  <div className="mt-0.5 h-1.5 w-28 overflow-hidden rounded bg-[#0c0d0b]">
+                    <div
+                      className="h-full rounded bg-[#4a8ab8]"
+                      style={{
+                        width: `${hud.maxMana > 0 ? Math.round((hud.mana / hud.maxMana) * 100) : 0}%`,
+                      }}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
             <div className="mt-2 text-[10px] uppercase tracking-wider text-[#6a7260]">
               Tile {hud.x}, {hud.y} · {character.gold}g
             </div>
@@ -146,6 +196,8 @@ export function GameShell({
           <div className="w-fit rounded border border-[#2a2e24] bg-[#161812]/80 px-3 py-1.5 text-xs text-[#a8b09a] backdrop-blur-sm">
             Move <span className="text-[#e8e6d9]">WASD</span> /{" "}
             <span className="text-[#e8e6d9]">Arrows</span>
+            {" | "}
+            <span className="text-[#e8e6d9]">Space</span>/<span className="text-[#e8e6d9]">Click</span> attack
             {" | "}
             <span className="text-[#e8e6d9]">E</span> talk/shop/board
             {" | "}
