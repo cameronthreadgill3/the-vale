@@ -31,7 +31,9 @@ import {
   getShop,
   getDock,
   dockSpawnForContinent,
+  folkOnContinent,
 } from "@/game/folk";
+import { goldLostOnDeath } from "@/game/combat";
 import { ClassSelectOverlay } from "@/game/ui/ClassSelectOverlay";
 import { GameShell } from "@/game/GameShell";
 
@@ -56,6 +58,8 @@ export function GameApp() {
   const [shipSpawn, setShipSpawn] = useState<{ x: number; y: number } | null>(
     null,
   );
+  /** Bumps GameShell remount on death so deadLock / spawn reset even on same continent. */
+  const [worldEpoch, setWorldEpoch] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
   const [dialogue, setDialogue] = useState<{
     name: string;
@@ -70,6 +74,7 @@ export function GameApp() {
     setCharacter(createCharacter(id));
     setArrivedFrom(null);
     setShipSpawn(null);
+    setWorldEpoch(0);
   }, []);
 
   const resetPath = useCallback(() => {
@@ -82,6 +87,7 @@ export function GameApp() {
     setDialogue(null);
     setActiveShopId(null);
     setActiveDockId(null);
+    setWorldEpoch(0);
   }, []);
 
   const trainSkill = useCallback((skill: SkillId) => {
@@ -111,7 +117,12 @@ export function GameApp() {
       setDialogue(null);
       setActiveShopId(null);
       setActiveDockId(null);
-      showToast(`Gate opens onto ${getContinent(target).name}`);
+      const dest = getContinent(target);
+      if (folkOnContinent(target).length === 0) {
+        showToast(`${dest.name} — ${dest.blurb}`);
+      } else {
+        showToast(`Gate opens onto ${dest.name}`);
+      }
     },
     [showToast],
   );
@@ -199,7 +210,12 @@ export function GameApp() {
       setShipSpawn(dockSpawnForContinent(dest));
       setActiveDockId(null);
       setMapOpen(false);
-      showToast(`Sailing to ${getContinent(dest).name}`);
+      const c = getContinent(dest);
+      if (folkOnContinent(dest).length === 0) {
+        showToast(`Sailing to ${c.name} — ${c.blurb}`);
+      } else {
+        showToast(`Sailing to ${c.name}`);
+      }
     },
     [showToast],
   );
@@ -232,14 +248,26 @@ export function GameApp() {
   }, []);
 
   const handlePlayerDeath = useCallback(() => {
-    setCharacter((prev) => (prev ? applyDeath(prev) : prev));
+    let loss = 0;
+    setCharacter((prev) => {
+      if (!prev) return prev;
+      loss = goldLostOnDeath(prev.gold);
+      return applyDeath(prev);
+    });
     setArrivedFrom(null);
     setShipSpawn(null);
     setDialogue(null);
     setActiveShopId(null);
     setActiveDockId(null);
     setMapOpen(false);
-    showToast("You wake at the continent spawn...");
+    setSkillsOpen(false);
+    // Remount canvas even when continent/hollow unchanged (clears deadLock).
+    setWorldEpoch((e) => e + 1);
+    showToast(
+      loss > 0
+        ? `You wake at spawn (−${loss}g)...`
+        : "You wake at the continent spawn...",
+    );
   }, [showToast]);
 
   if (!character) {
@@ -250,7 +278,7 @@ export function GameApp() {
   const skills = skillRowsFrom(character);
   const continent = getContinent(character.continentId);
   const inHollow = character.hollowIndex !== null;
-  const locationKey = `${character.continentId}:${character.hollowIndex ?? "over"}:${shipSpawn ? "ship" : "gate"}`;
+  const locationKey = `${character.continentId}:${character.hollowIndex ?? "over"}:${shipSpawn ? "ship" : "gate"}:${worldEpoch}`;
   const shop = activeShopId ? (getShop(activeShopId) ?? null) : null;
   const voyageDock = activeDockId ? (getDock(activeDockId) ?? null) : null;
 
