@@ -17,7 +17,7 @@ export function VoyagePanel({
   const ports = dock.destinations.filter((d) => d !== currentContinent);
 
   return (
-    <div className="pointer-events-auto absolute bottom-20 left-1/2 z-30 w-[min(100%-2rem,24rem)] -translate-x-1/2 rounded border border-[#5a9aaa]/40 bg-[#161812]/96 p-4 shadow-xl backdrop-blur-md">
+    <div className="vale-panel pointer-events-auto absolute bottom-24 left-1/2 z-30 w-[min(100%-2rem,24rem)] -translate-x-1/2 rounded border border-[#5a9aaa]/40 bg-[#161812]/96 p-4 shadow-xl backdrop-blur-md max-md:bottom-8">
       <div className="mb-2 flex items-center justify-between gap-2">
         <div>
           <div className="font-display text-sm tracking-wide text-[#7ab8c9]">
@@ -30,7 +30,7 @@ export function VoyagePanel({
         <button
           type="button"
           onClick={onClose}
-          className="rounded px-2 py-1 text-xs text-[#a8b09a] hover:text-[#e8e6d9]"
+          className="vale-tap-sm rounded px-3 py-2 text-xs text-[#a8b09a] hover:text-[#e8e6d9]"
         >
           Close
         </button>
@@ -47,7 +47,7 @@ export function VoyagePanel({
               <button
                 type="button"
                 onClick={() => onSail(dest)}
-                className="w-full rounded border border-[#2a2e24] bg-[#1c1f16] px-3 py-2 text-left hover:border-[#7ab8c9]/50"
+                className="vale-tap w-full rounded border border-[#2a2e24] bg-[#1c1f16] px-3 py-3 text-left hover:border-[#7ab8c9]/50 active:border-[#7ab8c9]/60"
               >
                 <div className="font-display text-xs text-[#e8e6d9]">
                   {cont.name}
