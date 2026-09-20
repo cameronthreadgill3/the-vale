@@ -162,6 +162,23 @@ export function spawnNearArrivalGate(
       const cy = Math.floor(map.height / 2);
       const dx = Math.sign(cx - gate.x) || 0;
       const dy = Math.sign(cy - gate.y) || 0;
+      // Step inward from the gate so we do not stand on the gate tile itself.
+      const candidates = [
+        { x: gate.x + dx, y: gate.y + dy },
+        { x: gate.x + dx, y: gate.y },
+        { x: gate.x, y: gate.y + dy },
+        { x: gate.x - dx, y: gate.y - dy },
+      ];
+      for (const c of candidates) {
+        if (
+          c.x > 0 &&
+          c.y > 0 &&
+          c.x < map.width - 1 &&
+          c.y < map.height - 1
+        ) {
+          return c;
+        }
+      }
       return { x: gate.x + dx, y: gate.y + dy };
     }
   }
