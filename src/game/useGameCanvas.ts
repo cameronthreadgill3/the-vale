@@ -72,15 +72,7 @@ export function useGameCanvas(opts: {
   const promptRef = useRef<PromptState>(null);
   const interactLock = useRef(false);
 
-  const characterRef = useRef({
-    classId: character.classId,
-    skillXp: character.skillXp as Record<string, number>,
-    combatXp: character.combatXp,
-    gold: character.gold,
-    hp: character.hp,
-    mana: character.mana,
-    hollowIndex: character.hollowIndex,
-  });
+  const characterRef = useRef<ValeCharacter>(character);
   const onCombatRewardRef = useRef(onCombatReward);
   const onVitalsRef = useRef(onVitals);
   const onPlayerDeathRef = useRef(onPlayerDeath);
@@ -102,16 +94,7 @@ export function useGameCanvas(opts: {
   onVitalsRef.current = onVitals;
   onPlayerDeathRef.current = onPlayerDeath;
   overlayOpenRef.current = overlayOpen;
-
-  characterRef.current = {
-    classId: character.classId,
-    skillXp: character.skillXp as Record<string, number>,
-    combatXp: character.combatXp,
-    gold: character.gold,
-    hp: character.hp,
-    mana: character.mana,
-    hollowIndex: character.hollowIndex,
-  };
+  characterRef.current = character;
 
   const combatXp = character.combatXp;
   const level = levelFromXp(combatXp);
