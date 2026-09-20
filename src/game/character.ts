@@ -13,7 +13,7 @@ import {
   xpForStartingLevel,
 } from "@/game/skills";
 import { isItemId, type ItemId } from "@/game/items";
-import { maxHpFor, maxManaFor, usesMana } from "@/game/combat";
+import { maxHpFor, maxManaFor, usesMana, goldLostOnDeath } from "@/game/combat";
 
 export const CHARACTER_STORAGE_KEY = "vale-character-v1";
 
@@ -387,15 +387,15 @@ export function awardCombatXp(character: ValeCharacter, amount: number): ValeCha
 
 /** Death: leave hollow if inside, restore vitals, mild gold loss. */
 export function applyDeath(character: ValeCharacter): ValeCharacter {
-  const loss = Math.min(character.gold, Math.max(0, Math.floor(character.gold * 0.05)));
+  const loss = goldLostOnDeath(character.gold);
   let next: ValeCharacter = {
     ...character,
     gold: Math.max(0, character.gold - loss),
     skillXp: { ...character.skillXp },
+    // Force overworld respawn at continent spawn (cleared by shell remount).
+    hollowIndex: null,
+    hollowReturn: null,
   };
-  if (next.hollowIndex !== null) {
-    next = exitHollow(next);
-  }
   next = syncVitals(next, true);
   saveCharacter(next);
   return next;
