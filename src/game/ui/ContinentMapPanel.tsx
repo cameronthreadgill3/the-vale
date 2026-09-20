@@ -10,7 +10,7 @@ export function ContinentMapPanel({
 }) {
   const discovered = new Set(character.discoveredContinents);
   return (
-    <div className="pointer-events-auto absolute bottom-4 left-4 z-10 w-[min(100%-2rem,22rem)] rounded border border-[#2a2e24] bg-[#161812]/95 p-3 shadow-xl backdrop-blur-md sm:bottom-6 sm:left-6">
+    <div className="vale-panel pointer-events-auto absolute bottom-4 left-4 z-30 w-[min(100%-2rem,22rem)] rounded border border-[#2a2e24] bg-[#161812]/95 p-3 shadow-xl backdrop-blur-md max-md:bottom-auto max-md:top-20 max-md:left-3 sm:bottom-6 sm:left-6">
       <div className="mb-2 flex items-center justify-between gap-2">
         <div>
           <div className="font-display text-sm tracking-wide text-[#c9a227]">
@@ -23,7 +23,7 @@ export function ContinentMapPanel({
         <button
           type="button"
           onClick={onClose}
-          className="rounded px-2 py-1 text-xs text-[#a8b09a] hover:text-[#e8e6d9]"
+          className="vale-tap-sm rounded px-3 py-2 text-xs text-[#a8b09a] hover:text-[#e8e6d9]"
         >
           Close
         </button>
@@ -38,7 +38,7 @@ export function ContinentMapPanel({
           return (
             <li
               key={c.id}
-              className="rounded border border-transparent px-2 py-1.5"
+              className="rounded border border-transparent px-2 py-2.5"
               style={{
                 borderColor: here || inHollowHere ? c.palette.gate : "transparent",
                 background:
