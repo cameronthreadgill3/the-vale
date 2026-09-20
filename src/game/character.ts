@@ -13,6 +13,7 @@ import {
   xpForStartingLevel,
 } from "@/game/skills";
 import { isItemId, type ItemId } from "@/game/items";
+import { maxHpFor, maxManaFor, usesMana } from "@/game/combat";
 
 export const CHARACTER_STORAGE_KEY = "vale-character-v1";
 
@@ -40,6 +41,10 @@ export interface ValeCharacter {
   hollowReturn: { x: number; y: number } | null;
   /** Purse gold. */
   gold: number;
+  /** Current hit points. */
+  hp: number;
+  /** Current mana (0 for non-magic classes). */
+  mana: number;
   /** Simple item stacks. */
   inventory: InventoryStack[];
   /** Folk ids the player has spoken with (optional flavor). */
@@ -141,7 +146,7 @@ export function loadCharacter(): ValeCharacter | null {
       typeof rec.gold === "number" && Number.isFinite(rec.gold)
         ? Math.max(0, Math.floor(rec.gold))
         : STARTING_GOLD;
-    return {
+    const loaded: ValeCharacter = {
       classId: rec.classId,
       skillXp: sanitizeSkillXp(rec.skillXp),
       combatXp:
@@ -156,9 +161,18 @@ export function loadCharacter(): ValeCharacter | null {
       hollowIndex,
       hollowReturn: hollowIndex !== null ? sanitizeHollowReturn(rec.hollowReturn) : null,
       gold,
+      hp:
+        typeof rec.hp === "number" && Number.isFinite(rec.hp)
+          ? Math.max(0, Math.floor(rec.hp))
+          : 0,
+      mana:
+        typeof rec.mana === "number" && Number.isFinite(rec.mana)
+          ? Math.max(0, Math.floor(rec.mana))
+          : 0,
       inventory: sanitizeInventory(rec.inventory),
       metFolk: sanitizeMetFolk(rec.metFolk),
     };
+    return syncVitals(loaded, loaded.hp <= 0);
   } catch {
     return null;
   }
@@ -184,11 +198,13 @@ export function createCharacter(classId: ClassId): ValeCharacter {
     hollowIndex: null,
     hollowReturn: null,
     gold: STARTING_GOLD,
+    hp: 0,
+    mana: 0,
     inventory: [{ id: "trail-rations", qty: 2 }],
     metFolk: [],
   };
   saveCharacter(character);
-  return character;
+  return syncVitals(character, true);
 }
 
 export function clearCharacter(): void {
@@ -307,6 +323,80 @@ export function removeInventoryItem(
 
 export function setGold(character: ValeCharacter, gold: number): ValeCharacter {
   const next = { ...character, gold: Math.max(0, Math.floor(gold)) };
+  saveCharacter(next);
+  return next;
+}
+
+
+/** Clamp / fill HP & mana from current combat + skill levels. */
+export function syncVitals(character: ValeCharacter, fill = false): ValeCharacter {
+  const cls = getClass(character.classId);
+  const maxHp = maxHpFor(character);
+  const maxMana = maxManaFor(character, cls);
+  let hp = typeof character.hp === "number" && Number.isFinite(character.hp)
+    ? Math.floor(character.hp)
+    : maxHp;
+  let mana = typeof character.mana === "number" && Number.isFinite(character.mana)
+    ? Math.floor(character.mana)
+    : maxMana;
+  if (fill) {
+    hp = maxHp;
+    mana = maxMana;
+  }
+  hp = Math.max(0, Math.min(maxHp, hp));
+  mana = Math.max(0, Math.min(maxMana, mana));
+  if (!usesMana(character.classId)) mana = 0;
+  if (hp === character.hp && mana === character.mana) return character;
+  const next = { ...character, hp, mana };
+  saveCharacter(next);
+  return next;
+}
+
+export function setVitals(
+  character: ValeCharacter,
+  hp: number,
+  mana: number,
+): ValeCharacter {
+  const cls = getClass(character.classId);
+  const maxHp = maxHpFor(character);
+  const maxMana = maxManaFor(character, cls);
+  const next = {
+    ...character,
+    hp: Math.max(0, Math.min(maxHp, Math.floor(hp))),
+    mana: usesMana(character.classId)
+      ? Math.max(0, Math.min(maxMana, Math.floor(mana)))
+      : 0,
+  };
+  saveCharacter(next);
+  return next;
+}
+
+/** Award combat XP and persist. */
+export function awardCombatXp(character: ValeCharacter, amount: number): ValeCharacter {
+  const gained = Math.max(0, Math.floor(amount));
+  const next = {
+    ...character,
+    combatXp: character.combatXp + gained,
+    skillXp: { ...character.skillXp },
+  };
+  // Refresh max HP lightly after XP (do not fully heal).
+  const synced = syncVitals(next, false);
+  saveCharacter(synced);
+  return synced;
+}
+
+/** Death: leave hollow if inside, restore vitals, mild gold loss. */
+export function applyDeath(character: ValeCharacter): ValeCharacter {
+  const loss = Math.min(character.gold, Math.max(0, Math.floor(character.gold * 0.05)));
+  let next: ValeCharacter = {
+    ...character,
+    gold: Math.max(0, character.gold - loss),
+    skillXp: { ...character.skillXp },
+  };
+  if (next.hollowIndex !== null) {
+    next = exitHollow(next);
+  }
+  next = syncVitals(next, true);
   saveCharacter(next);
   return next;
 }

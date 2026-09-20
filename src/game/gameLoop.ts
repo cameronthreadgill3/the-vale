@@ -23,6 +23,31 @@ drawShipDocks,
 drawShopMarkers,
 drawNamedFolk,
 } from "@/game/folkCanvas";
+import {
+  attackProfileForClass,
+  maxHpFor,
+  maxManaFor,
+  playerAttackDamage,
+  mitigateDamage,
+} from "@/game/combat";
+import {
+  spawnEnemies,
+  updateEnemies,
+  killEnemy,
+  nearestEnemyInRange,
+  enemyAtCursor,
+  updateFloatTexts,
+  updateProjectiles,
+  drawEnemies,
+  drawFloatTexts,
+  drawProjectiles,
+  type Enemy,
+  type FloatText,
+  type Projectile,
+} from "@/game/enemies";
+import { TILE as _TILE_CHECK } from "@/game/world";
+import type { SkillId as CombatSkillId } from "@/game/skills";
+import { getClass } from "@/game/classes";
 export function useGameLoopEffect(d: {
 canvasRef: RefObject<HTMLCanvasElement | null>;
 keysRef: MutableRefObject<Record<string, boolean>>;
@@ -46,12 +71,32 @@ shipSpawn: { x: number; y: number } | null;
 combatXp: number;
 setHud: Dispatch<SetStateAction<HudState>>;
 setPrompt: Dispatch<SetStateAction<PromptState>>;
+/** Live character snapshot for combat reads (skills, hp, mana, gold, class). */
+characterRef: MutableRefObject<{
+  classId: string;
+  skillXp: Record<string, number>;
+  combatXp: number;
+  gold: number;
+  hp: number;
+  mana: number;
+  hollowIndex: number | null;
+}>;
+onCombatReward: MutableRefObject<(
+  combatXp: number,
+  skill: CombatSkillId,
+  skillXp: number,
+  gold: number,
+) => void>;
+onVitals: MutableRefObject<(hp: number, mana: number) => void>;
+onPlayerDeath: MutableRefObject<() => void>;
+overlayOpenRef: MutableRefObject<boolean>;
 }): void {
 const {
 canvasRef, keysRef, accentRef, passiveRef, trainRef, toggleSkillsRef, toggleMapRef,
 travelRef, enterHollowRef, exitHollowRef, openFolkRef, openShopRef, openShipRef,
 passiveAccum, promptRef, interactLock,
 character, arrivedFrom, shipSpawn, combatXp, setHud, setPrompt,
+characterRef, onCombatReward, onVitals, onPlayerDeath, overlayOpenRef,
 } = d;
 useEffect(() => {
 const canvas = canvasRef.current;
@@ -110,6 +155,23 @@ let last = performance.now();
 let running = true;
 let hudAccum = 0;
 let promptAccum = 0;
+const blockedTiles: { x: number; y: number }[] = [
+  ...folk.map((f) => ({ x: f.x, y: f.y })),
+  ...shops.map((s) => ({ x: s.x, y: s.y })),
+  ...docks.map((dk) => ({ x: dk.x, y: dk.y })),
+  ...map.gates.map((g) => ({ x: g.x, y: g.y })),
+  ...map.hollows.map((h) => ({ x: h.x, y: h.y })),
+];
+if (map.exit) blockedTiles.push({ x: map.exit.x, y: map.exit.y });
+const enemies: Enemy[] = spawnEnemies(map, character.continentId, blockedTiles);
+const floatTexts: FloatText[] = [];
+const projectiles: Projectile[] = [];
+let attackCd = 0;
+let playerFlash = 0;
+let deadLock = false;
+const mouse = { x: 0, y: 0, down: false, worldX: 0, worldY: 0 };
+const combatRng = () => Math.random();
+void _TILE_CHECK;
 const resize = () => {
 const dpr = Math.min(window.devicePixelRatio || 1, 2);
 const w = window.innerWidth;
@@ -146,6 +208,61 @@ openShopRef.current(p.shopId);
 openShipRef.current(p.dockId);
 }
 };
+const pushFloat = (x: number, y: number, text: string, color: string) => {
+floatTexts.push({ x, y, text, color, life: 0.7, vy: -28 });
+};
+const doPlayerAttack = () => {
+if (deadLock || overlayOpenRef.current) return;
+const snap = characterRef.current;
+const cls = getClass(snap.classId as Parameters<typeof getClass>[0]);
+const profile = attackProfileForClass(cls.id);
+if (attackCd > 0) return;
+if (profile.manaCost > 0 && snap.mana < profile.manaCost) {
+pushFloat(player.x, player.y - 14, "No mana", "#7ab8c9");
+return;
+}
+const cursorTarget = enemyAtCursor(enemies, mouse.worldX, mouse.worldY);
+const target =
+cursorTarget &&
+Math.hypot(cursorTarget.x - player.x, cursorTarget.y - player.y) / TILE <= profile.range + 0.25
+? cursorTarget
+: nearestEnemyInRange(enemies, player.x, player.y, profile.range);
+if (!target) return;
+attackCd = profile.cooldown;
+if (profile.manaCost > 0) {
+snap.mana = Math.max(0, snap.mana - profile.manaCost);
+onVitals.current(snap.hp, snap.mana);
+}
+const dmg = playerAttackDamage(snap as never, profile, combatRng);
+target.hp -= dmg;
+target.flash = 0.15;
+pushFloat(target.x, target.y - 10, String(dmg), "#e8e6d9");
+if (profile.style !== "melee") {
+projectiles.push({
+x: player.x,
+y: player.y,
+tx: target.x,
+ty: target.y,
+color: profile.style === "magic" ? cls.accent : "#c9a227",
+life: 0.22,
+style: profile.style === "magic" ? "magic" : "bolt",
+});
+}
+if (target.hp <= 0) {
+killEnemy(target);
+const goldGain =
+target.kind.goldMin +
+Math.floor(combatRng() * (target.kind.goldMax - target.kind.goldMin + 1));
+pushFloat(target.x, target.y - 22, `+${goldGain}g`, "#c9a227");
+onCombatReward.current(target.kind.xpBase, profile.skill, Math.max(4, Math.floor(target.kind.xpBase * 0.35)), goldGain);
+if (profile.healOnKill > 0) {
+const heal = Math.max(1, Math.floor(dmg * profile.healOnKill));
+snap.hp = Math.min(maxHpFor(snap as never), snap.hp + heal);
+onVitals.current(snap.hp, snap.mana);
+pushFloat(player.x, player.y - 18, `+${heal}`, "#7ab85a");
+}
+}
+};
 const onKeyDown = (e: KeyboardEvent) => {
 keysRef.current[e.code] = true;
 if (
@@ -172,6 +289,10 @@ if (e.code === "KeyE" && !e.repeat) {
 e.preventDefault();
 doInteract();
 }
+if (e.code === "Space") {
+e.preventDefault();
+if (!e.repeat) doPlayerAttack();
+}
 if (!e.repeat && e.key >= "1" && e.key <= "7") {
 const idx = Number(e.key) - 1;
 const skill = SKILL_IDS[idx];
@@ -186,6 +307,24 @@ keysRef.current[e.code] = false;
 };
 window.addEventListener("keydown", onKeyDown);
 window.addEventListener("keyup", onKeyUp);
+const onMouseMove = (e: MouseEvent) => {
+const rect = canvas.getBoundingClientRect();
+mouse.x = e.clientX - rect.left;
+mouse.y = e.clientY - rect.top;
+};
+const onMouseDown = (e: MouseEvent) => {
+if (e.button !== 0) return;
+mouse.down = true;
+const rect = canvas.getBoundingClientRect();
+mouse.x = e.clientX - rect.left;
+mouse.y = e.clientY - rect.top;
+};
+const onMouseUp = (e: MouseEvent) => {
+if (e.button === 0) mouse.down = false;
+};
+canvas.addEventListener("mousemove", onMouseMove);
+canvas.addEventListener("mousedown", onMouseDown);
+window.addEventListener("mouseup", onMouseUp);
 const tryMove = (nx: number, ny: number) => {
 const r = PLAYER_RADIUS;
 const samples = [
@@ -294,6 +433,29 @@ passiveAccum.current -= grant;
 passiveRef.current(grant);
 }
 }
+if (!deadLock && !overlayOpenRef.current) {
+attackCd = Math.max(0, attackCd - dt);
+if (playerFlash > 0) playerFlash = Math.max(0, playerFlash - dt);
+const snap = characterRef.current;
+if ((keys.Space || mouse.down) && attackCd <= 0) {
+doPlayerAttack();
+}
+const foeHit = updateEnemies(enemies, map, player.x, player.y, dt, combatRng);
+if (foeHit.playerDamage > 0) {
+const taken = mitigateDamage(snap as never, foeHit.playerDamage, combatRng);
+snap.hp = Math.max(0, snap.hp - taken);
+playerFlash = 0.18;
+pushFloat(player.x, player.y - 12, String(taken), "#c45c3e");
+onVitals.current(snap.hp, snap.mana);
+if (snap.hp <= 0 && !deadLock) {
+deadLock = true;
+pushFloat(player.x, player.y - 24, "You fall...", "#a8b09a");
+onPlayerDeath.current();
+}
+}
+updateFloatTexts(floatTexts, dt);
+updateProjectiles(projectiles, dt);
+}
 const standingTx = Math.floor(player.x / TILE);
 const standingTy = Math.floor(player.y / TILE);
 if (
@@ -385,6 +547,10 @@ ctx.fillRect(0, 0, viewW, viewH);
 drawShipDocks(ctx, docks, originX, originY);
 drawShopMarkers(ctx, shops, folk, originX, originY);
 drawNamedFolk(ctx, folk, originX, originY);
+mouse.worldX = originX + mouse.x;
+mouse.worldY = originY + mouse.y;
+drawEnemies(ctx, enemies, originX, originY);
+drawProjectiles(ctx, projectiles, originX, originY);
 const px = Math.floor(player.x - originX);
 const py = Math.floor(player.y - originY);
 ctx.fillStyle = "rgba(0,0,0,0.35)";
@@ -418,9 +584,19 @@ ctx.fill();
 ctx.strokeStyle = "#0c0d0b";
 ctx.lineWidth = 2;
 ctx.stroke();
+if (playerFlash > 0) {
+ctx.fillStyle = `rgba(255,80,60,${Math.min(0.45, playerFlash * 2)})`;
+ctx.beginPath();
+ctx.arc(px, py, PLAYER_RADIUS, 0, Math.PI * 2);
+ctx.fill();
+}
+drawFloatTexts(ctx, floatTexts, originX, originY);
 hudAccum += dt;
 if (hudAccum >= 0.2) {
 hudAccum = 0;
+{
+const snap = characterRef.current;
+const cls = getClass(snap.classId as Parameters<typeof getClass>[0]);
 setHud({
 x: Math.round(player.x / TILE),
 y: Math.round(player.y / TILE),
@@ -428,7 +604,12 @@ level: combatLevel,
 xp,
 progress: progressInLevel(combatLevel, xp),
 next: xpToNext(combatLevel),
+hp: snap.hp,
+maxHp: maxHpFor(snap as never),
+mana: snap.mana,
+maxMana: maxManaFor(snap as never, cls),
 });
+}
 }
 promptAccum += dt;
 if (promptAccum >= 0.15) {
@@ -445,6 +626,9 @@ cancelAnimationFrame(raf);
 window.removeEventListener("resize", resize);
 window.removeEventListener("keydown", onKeyDown);
 window.removeEventListener("keyup", onKeyUp);
+canvas.removeEventListener("mousemove", onMouseMove);
+canvas.removeEventListener("mousedown", onMouseDown);
+window.removeEventListener("mouseup", onMouseUp);
 };
 }, []);
 }
