@@ -1,4 +1,4 @@
-/** Persist class choice + skill XP + world location in localStorage. */
+/** Persist class choice + skill XP + world location + purse in localStorage. */
 
 import {
   STARTER_CONTINENT,
@@ -12,8 +12,17 @@ import {
   type SkillId,
   xpForStartingLevel,
 } from "@/game/skills";
+import { isItemId, type ItemId } from "@/game/items";
 
 export const CHARACTER_STORAGE_KEY = "vale-character-v1";
+
+/** Starting gold for a new path. */
+export const STARTING_GOLD = 45;
+
+export interface InventoryStack {
+  id: ItemId;
+  qty: number;
+}
 
 export interface ValeCharacter {
   classId: ClassId;
@@ -29,6 +38,12 @@ export interface ValeCharacter {
   hollowIndex: number | null;
   /** Overworld tile to return to when exiting a hollow. */
   hollowReturn: { x: number; y: number } | null;
+  /** Purse gold. */
+  gold: number;
+  /** Simple item stacks. */
+  inventory: InventoryStack[];
+  /** Folk ids the player has spoken with (optional flavor). */
+  metFolk: string[];
 }
 
 function isClassId(v: unknown): v is ClassId {
@@ -79,6 +94,32 @@ function sanitizeHollowReturn(
   return null;
 }
 
+function sanitizeInventory(raw: unknown): InventoryStack[] {
+  if (!Array.isArray(raw)) return [];
+  const out: InventoryStack[] = [];
+  for (const row of raw) {
+    if (!row || typeof row !== "object") continue;
+    const o = row as Record<string, unknown>;
+    if (!isItemId(o.id)) continue;
+    const qty =
+      typeof o.qty === "number" && Number.isFinite(o.qty) ? Math.floor(o.qty) : 0;
+    if (qty <= 0) continue;
+    const existing = out.find((s) => s.id === o.id);
+    if (existing) existing.qty += qty;
+    else out.push({ id: o.id, qty });
+  }
+  return out;
+}
+
+function sanitizeMetFolk(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  const set = new Set<string>();
+  for (const v of raw) {
+    if (typeof v === "string" && v.length > 0 && v.length < 64) set.add(v);
+  }
+  return Array.from(set);
+}
+
 export function loadCharacter(): ValeCharacter | null {
   try {
     const raw = localStorage.getItem(CHARACTER_STORAGE_KEY);
@@ -96,6 +137,10 @@ export function loadCharacter(): ValeCharacter | null {
       rec.hollowIndex >= 0
         ? Math.floor(rec.hollowIndex)
         : null;
+    const gold =
+      typeof rec.gold === "number" && Number.isFinite(rec.gold)
+        ? Math.max(0, Math.floor(rec.gold))
+        : STARTING_GOLD;
     return {
       classId: rec.classId,
       skillXp: sanitizeSkillXp(rec.skillXp),
@@ -110,6 +155,9 @@ export function loadCharacter(): ValeCharacter | null {
       ),
       hollowIndex,
       hollowReturn: hollowIndex !== null ? sanitizeHollowReturn(rec.hollowReturn) : null,
+      gold,
+      inventory: sanitizeInventory(rec.inventory),
+      metFolk: sanitizeMetFolk(rec.metFolk),
     };
   } catch {
     return null;
@@ -135,6 +183,9 @@ export function createCharacter(classId: ClassId): ValeCharacter {
     discoveredContinents: [STARTER_CONTINENT],
     hollowIndex: null,
     hollowReturn: null,
+    gold: STARTING_GOLD,
+    inventory: [{ id: "trail-rations", qty: 2 }],
+    metFolk: [],
   };
   saveCharacter(character);
   return character;
@@ -206,6 +257,56 @@ export function exitHollow(character: ValeCharacter): ValeCharacter {
 export function clearHollowReturn(character: ValeCharacter): ValeCharacter {
   if (!character.hollowReturn) return character;
   const next: ValeCharacter = { ...character, hollowReturn: null };
+  saveCharacter(next);
+  return next;
+}
+
+export function markFolkMet(
+  character: ValeCharacter,
+  folkId: string,
+): ValeCharacter {
+  if (character.metFolk.includes(folkId)) return character;
+  const next: ValeCharacter = {
+    ...character,
+    metFolk: [...character.metFolk, folkId],
+  };
+  saveCharacter(next);
+  return next;
+}
+
+export function addInventoryItem(
+  character: ValeCharacter,
+  itemId: ItemId,
+  qty = 1,
+): ValeCharacter {
+  const inventory = character.inventory.map((s) => ({ ...s }));
+  const stack = inventory.find((s) => s.id === itemId);
+  if (stack) stack.qty += qty;
+  else inventory.push({ id: itemId, qty });
+  const next = { ...character, inventory };
+  saveCharacter(next);
+  return next;
+}
+
+export function removeInventoryItem(
+  character: ValeCharacter,
+  itemId: ItemId,
+  qty = 1,
+): ValeCharacter | null {
+  const inventory = character.inventory.map((s) => ({ ...s }));
+  const idx = inventory.findIndex((s) => s.id === itemId);
+  if (idx < 0) return null;
+  const stack = inventory[idx]!;
+  if (stack.qty < qty) return null;
+  stack.qty -= qty;
+  if (stack.qty <= 0) inventory.splice(idx, 1);
+  const next = { ...character, inventory };
+  saveCharacter(next);
+  return next;
+}
+
+export function setGold(character: ValeCharacter, gold: number): ValeCharacter {
+  const next = { ...character, gold: Math.max(0, Math.floor(gold)) };
   saveCharacter(next);
   return next;
 }

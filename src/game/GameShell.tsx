@@ -2,8 +2,12 @@ import { type ValeClass } from "@/game/classes";
 import { type ContinentId } from "@/game/continents";
 import type { ValeCharacter } from "@/game/character";
 import type { SkillId } from "@/game/skills";
+import type { ShopDef, ShipDock } from "@/game/folk";
 import { ContinentMapPanel } from "@/game/ui/ContinentMapPanel";
 import { SkillsPanel, type SkillRow } from "@/game/ui/SkillsPanel";
+import { DialogueOverlay } from "@/game/ui/DialogueOverlay";
+import { ShopPanel } from "@/game/ui/ShopPanel";
+import { VoyagePanel } from "@/game/ui/VoyagePanel";
 import { useGameCanvas } from "@/game/useGameCanvas";
 
 export function GameShell({
@@ -14,10 +18,14 @@ export function GameShell({
   mapOpen,
   skillTick,
   arrivedFrom,
+  shipSpawn,
   toast,
   continentName,
   inHollow,
   hollowIndex,
+  dialogue,
+  shop,
+  voyageDock,
   onToggleSkills,
   onToggleMap,
   onTrain,
@@ -26,6 +34,15 @@ export function GameShell({
   onEnterHollow,
   onExitHollow,
   onPassivePrimary,
+  onOpenFolk,
+  onOpenShop,
+  onOpenShip,
+  onCloseDialogue,
+  onCloseShop,
+  onCloseVoyage,
+  onBuy,
+  onSell,
+  onSail,
 }: {
   character: ValeCharacter;
   cls: ValeClass;
@@ -34,10 +51,14 @@ export function GameShell({
   mapOpen: boolean;
   skillTick: number;
   arrivedFrom: ContinentId | null;
+  shipSpawn: { x: number; y: number } | null;
   toast: string | null;
   continentName: string;
   inHollow: boolean;
   hollowIndex: number | null;
+  dialogue: { name: string; line: string; hasShop: boolean; shopId?: string } | null;
+  shop: ShopDef | null;
+  voyageDock: ShipDock | null;
   onToggleSkills: () => void;
   onToggleMap: () => void;
   onTrain: (skill: SkillId) => void;
@@ -46,11 +67,21 @@ export function GameShell({
   onEnterHollow: (index: number, returnTile: { x: number; y: number }) => void;
   onExitHollow: () => void;
   onPassivePrimary: (amount: number) => void;
+  onOpenFolk: (folkId: string) => void;
+  onOpenShop: (shopId: string) => void;
+  onOpenShip: (dockId: string) => void;
+  onCloseDialogue: () => void;
+  onCloseShop: () => void;
+  onCloseVoyage: () => void;
+  onBuy: (itemId: string, price: number) => void;
+  onSell: (itemId: string, price: number) => void;
+  onSail: (dest: ContinentId) => void;
 }) {
   const { canvasRef, hud, prompt } = useGameCanvas({
     character,
     cls,
     arrivedFrom,
+    shipSpawn,
     onTrain,
     onToggleSkills,
     onToggleMap,
@@ -58,6 +89,9 @@ export function GameShell({
     onEnterHollow,
     onExitHollow,
     onPassivePrimary,
+    onOpenFolk,
+    onOpenShop,
+    onOpenShip,
   });
 
   void skillTick;
@@ -65,6 +99,8 @@ export function GameShell({
   const locationLabel = inHollow
     ? `${continentName} | Hollow ${(hollowIndex ?? 0) + 1}`
     : continentName;
+
+  const overlayOpen = Boolean(dialogue || shop || voyageDock);
 
   return (
     <div className="relative h-full w-full select-none">
@@ -102,7 +138,7 @@ export function GameShell({
               />
             </div>
             <div className="mt-2 text-[10px] uppercase tracking-wider text-[#6a7260]">
-              Tile {hud.x}, {hud.y}
+              Tile {hud.x}, {hud.y} · {character.gold}g
             </div>
           </div>
         </div>
@@ -111,7 +147,7 @@ export function GameShell({
             Move <span className="text-[#e8e6d9]">WASD</span> /{" "}
             <span className="text-[#e8e6d9]">Arrows</span>
             {" | "}
-            <span className="text-[#e8e6d9]">E</span> interact
+            <span className="text-[#e8e6d9]">E</span> talk/shop/board
             {" | "}
             <span className="text-[#e8e6d9]">M</span> map
             {" | "}
@@ -143,7 +179,7 @@ export function GameShell({
         </div>
       </div>
 
-      {prompt && (
+      {prompt && !overlayOpen && (
         <div className="pointer-events-none absolute bottom-24 left-1/2 z-10 -translate-x-1/2 rounded border border-[#c9a227]/50 bg-[#161812]/95 px-4 py-2 text-center text-sm text-[#e8e6d9] shadow-lg backdrop-blur-md">
           {prompt.kind === "gate" && (
             <>
@@ -169,6 +205,31 @@ export function GameShell({
               </div>
             </>
           )}
+          {prompt.kind === "folk" && (
+            <>
+              <span className="text-[#c9a227]">{prompt.name}</span>
+              <div className="mt-0.5 text-xs text-[#a8b09a]">
+                Press <span className="text-[#e8e6d9]">E</span> to{" "}
+                {prompt.hasShop ? "talk / shop" : "talk"}
+              </div>
+            </>
+          )}
+          {prompt.kind === "shop" && (
+            <>
+              <span className="text-[#c9a227]">{prompt.name}</span>
+              <div className="mt-0.5 text-xs text-[#a8b09a]">
+                Press <span className="text-[#e8e6d9]">E</span> to shop
+              </div>
+            </>
+          )}
+          {prompt.kind === "ship" && (
+            <>
+              Ship at <span className="text-[#7ab8c9]">{prompt.name}</span>
+              <div className="mt-0.5 text-xs text-[#a8b09a]">
+                Press <span className="text-[#e8e6d9]">E</span> to board
+              </div>
+            </>
+          )}
         </div>
       )}
 
@@ -188,6 +249,40 @@ export function GameShell({
           skills={skills}
           onTrain={onTrain}
           onClose={onToggleSkills}
+        />
+      )}
+
+      {dialogue && (
+        <DialogueOverlay
+          name={dialogue.name}
+          line={dialogue.line}
+          hasShop={dialogue.hasShop}
+          onTalkClose={onCloseDialogue}
+          onOpenShop={
+            dialogue.shopId
+              ? () => onOpenShop(dialogue.shopId!)
+              : undefined
+          }
+        />
+      )}
+
+      {shop && (
+        <ShopPanel
+          shop={shop}
+          character={character}
+          onBuy={onBuy}
+          onSell={onSell}
+          onClose={onCloseShop}
+        />
+      )}
+
+      {voyageDock && (
+        <VoyagePanel
+          dock={voyageDock}
+          currentContinent={character.continentId}
+          discovered={character.discoveredContinents}
+          onSail={onSail}
+          onClose={onCloseVoyage}
         />
       )}
     </div>
