@@ -66,6 +66,12 @@ npm run build        # Vercel / main site → dist/
 npm run build:itch   # itch.io HTML5 pack → dist-itch/
 ```
 
+## Deploy (Vercel)
+
+`vercel.json` pins **Vite** → `npm run build` → **`dist/`** (not the repo root). The public HTML entry is Vite’s `index.html` → `/src/main.tsx`; do not redeploy a static stub landing.
+
+After merging to `main`, Vercel should serve the React client (class select → Thornreach). If the live site still shows a non-clickable “Enter the Vale” card, force a redeploy with Framework Preset **Vite** and Output Directory **dist**.
+
 ## Theme
 
 Background `#0c0d0b`, fonts Cinzel + Figtree.
