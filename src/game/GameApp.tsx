@@ -211,6 +211,7 @@ export function GameApp() {
     }
   }, [character]);
 
+
   const handleCombatReward = useCallback(
     (combatXpGain: number, skill: SkillId, skillXpGain: number, goldGain: number) => {
       setCharacter((prev) => {
