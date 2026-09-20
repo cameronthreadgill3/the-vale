@@ -1,48 +1,51 @@
 #!/usr/bin/env node
-import { mkdirSync, writeFileSync, readdirSync, readFileSync, existsSync } from "node:fs";
+import { mkdirSync, writeFileSync, readFileSync, existsSync, readdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+const scriptsDir = join(root, "scripts");
 
-function materializeB64(basePath, outPath) {
-  if (existsSync(basePath)) {
-    const buf = Buffer.from(readFileSync(basePath, "utf8").trim(), "base64");
-    writeFileSync(outPath, buf);
-    return buf.length;
-  }
-  const name = basePath.split("/").pop();
-  const dir = dirname(basePath);
-  const partFiles = readdirSync(dir)
-    .filter((f) => f.startsWith(name + ".part"))
-    .sort();
-  if (partFiles.length === 0) return 0;
-  const b64 = partFiles.map((f) => readFileSync(join(dir, f), "utf8").trim()).join("");
-  const buf = Buffer.from(b64, "base64");
-  writeFileSync(outPath, buf);
-  return buf.length;
+function joinParts(dir, prefix) {
+  const partFiles = readdirSync(dir).filter((f) => f.startsWith(prefix + ".part")).sort();
+  if (!partFiles.length) return null;
+  return partFiles.map((f) => readFileSync(join(dir, f), "utf8").trim()).join("");
 }
 
-const patchOut = join(root, "scripts/patch-gameLoop-sprites.mjs");
-const patchB64 = join(root, "scripts/patch-gameLoop-sprites.mjs.b64");
-const n = materializeB64(patchB64, patchOut);
-if (n) console.log("wrote patch-gameLoop-sprites.mjs", n);
+const patchOut = join(scriptsDir, "patch-gameLoop-sprites.mjs");
+const patchB64 = join(scriptsDir, "patch-gameLoop-sprites.mjs.b64");
+if (existsSync(patchB64)) {
+  writeFileSync(patchOut, Buffer.from(readFileSync(patchB64, "utf8").trim(), "base64"));
+  console.log("wrote patch-gameLoop-sprites.mjs from .b64");
+} else {
+  const joined = joinParts(scriptsDir, "patch-gameLoop-sprites.mjs.b64");
+  if (joined) {
+    writeFileSync(patchOut, Buffer.from(joined, "base64"));
+    console.log("wrote patch-gameLoop-sprites.mjs from parts");
+  }
+}
 
-const dir = join(root, "public/sprites/player");
-mkdirSync(dir, { recursive: true });
+const outDir = join(root, "public/sprites/player");
+mkdirSync(outDir, { recursive: true });
+const dataDir = join(scriptsDir, "sprite-data");
 const classes = ["pathfinder", "thornblade", "hearthmage", "verdant", "hollowborn", "warden"];
+
+if (existsSync(dataDir)) {
+  for (const id of classes) {
+    const p = join(dataDir, `${id}.b64`);
+    if (!existsSync(p)) continue;
+    const buf = Buffer.from(readFileSync(p, "utf8").trim(), "base64");
+    writeFileSync(join(outDir, `${id}.png`), buf);
+    console.log("wrote", id + ".png", buf.length);
+  }
+  process.exit(0);
+}
+
 for (const id of classes) {
-  const b64Path = join(dir, `${id}.png.b64`);
-  const out = join(dir, `${id}.png`);
-  const n = materializeB64(b64Path, out);
-  if (n) console.log("wrote", id + ".png", n);
-  else {
-    const partFiles = readdirSync(dir).filter((f) => f.startsWith(`${id}.png.b64.part`)).sort();
-    if (partFiles.length) {
-      const b64 = partFiles.map((f) => readFileSync(join(dir, f), "utf8").trim()).join("");
-      const buf = Buffer.from(b64, "base64");
-      writeFileSync(out, buf);
-      console.log("wrote", id + ".png", buf.length, "(from parts)");
-    }
+  const single = join(outDir, `${id}.png.b64`);
+  if (existsSync(single)) {
+    const buf = Buffer.from(readFileSync(single, "utf8").trim(), "base64");
+    writeFileSync(join(outDir, `${id}.png`), buf);
+    console.log("wrote", id + ".png", buf.length);
   }
 }
