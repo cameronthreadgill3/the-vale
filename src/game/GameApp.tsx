@@ -70,6 +70,10 @@ export function GameApp() {
     setCharacter(createCharacter(id));
     setArrivedFrom(null);
     setShipSpawn(null);
+    setToast("First Story · Thornvale — Survive · Learn · Progress");
+    window.setTimeout(() => setToast((t) =>
+      t === "First Story · Thornvale — Survive · Learn · Progress" ? null : t
+    ), 3200);
   }, []);
 
   const resetPath = useCallback(() => {
