@@ -10,10 +10,14 @@ mkdirSync(outDir, { recursive: true });
 const dataDir = join(scriptsDir, "sprite-data");
 const classes = ["pathfinder", "thornblade", "hearthmage", "verdant", "hollowborn", "warden"];
 
+function stripB64(s) {
+  return s.replace(/\s+/g, "");
+}
+
 function joinParts(dir, prefix) {
   const partFiles = readdirSync(dir).filter((f) => f.startsWith(prefix + ".part")).sort();
   if (!partFiles.length) return null;
-  return partFiles.map((f) => readFileSync(join(dir, f), "utf8").trim()).join("");
+  return stripB64(partFiles.map((f) => readFileSync(join(dir, f), "utf8")).join(""));
 }
 
 if (!existsSync(dataDir)) {
@@ -23,7 +27,7 @@ if (!existsSync(dataDir)) {
 for (const id of classes) {
   const single = join(dataDir, `${id}.b64`);
   let b64 = null;
-  if (existsSync(single)) b64 = readFileSync(single, "utf8").trim();
+  if (existsSync(single)) b64 = stripB64(readFileSync(single, "utf8"));
   else b64 = joinParts(dataDir, `${id}.b64`);
   if (!b64) {
     console.warn("missing b64 for", id);
