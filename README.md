@@ -17,6 +17,8 @@ Open the URL Vite prints (usually http://localhost:5173).
 
 ### Controls
 
+**Desktop / keyboard**
+
 - **WASD** or **Arrow keys** — move
 - **Space** or **left click** — attack nearest foe in range (hold to auto-swing on cooldown)
 - **E** — interact (gates, hollows, folk, shops, ships) — still works when not in a fight prompt
@@ -24,6 +26,16 @@ Open the URL Vite prints (usually http://localhost:5173).
 - **K** — toggle skills panel
 - **1–7** — train a skill (sword, axe, club, distance, shielding, fist, magic)
 - Click a skill row — train that skill
+
+**Mobile / touch** (virtual pads appear on coarse pointers or narrow screens)
+
+- **Joystick** (bottom-left) — drag to move (feeds the same WASD path as keyboard)
+- **Attack** (bottom-right, large) — tap or hold for auto-swing
+- **Interact** — same as **E** (talk / shop / board / gates / hollows)
+- **Skills** / **Map** — toggle panels (also available in the top bar)
+- **Tap the canvas** — attack nearest foe in range (same as click)
+- Overlays (class select, shop, dialogue, skills, map) use larger tap targets and scroll on small screens
+- Page scroll/bounce is disabled while playing (`100dvh`, safe-area insets, `touch-action: none`)
 - Camera follows the player on a seeded continent map
 - Walk onto a **gold gate** tile to travel, or press **E** nearby
 - Walk onto a **hollow** (dark circle) to descend, or press **E** nearby
@@ -71,6 +83,7 @@ npm run build:itch   # itch.io HTML5 pack → dist-itch/
 `vercel.json` pins **Vite** → `npm run build` → **`dist/`** (not the repo root). The public HTML entry is Vite’s `index.html` → `/src/main.tsx`; do not redeploy a static stub landing.
 
 After merging to `main`, Vercel should serve the React client (class select → Thornreach). If the live site still shows a non-clickable “Enter the Vale” card, force a redeploy with Framework Preset **Vite** and Output Directory **dist**.
+
 
 ## Theme
 
