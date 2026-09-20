@@ -17,7 +17,7 @@ export function ShopPanel({
   onClose: () => void;
 }) {
   return (
-    <div className="pointer-events-auto absolute bottom-4 left-1/2 z-30 w-[min(100%-2rem,24rem)] -translate-x-1/2 rounded border border-[#2a2e24] bg-[#161812]/96 p-3 shadow-xl backdrop-blur-md sm:bottom-6">
+    <div className="vale-panel pointer-events-auto absolute bottom-4 left-1/2 z-30 w-[min(100%-2rem,24rem)] -translate-x-1/2 rounded border border-[#2a2e24] bg-[#161812]/96 p-3 shadow-xl backdrop-blur-md max-md:bottom-8 sm:bottom-6">
       <div className="mb-2 flex items-center justify-between gap-2">
         <div>
           <div className="font-display text-sm tracking-wide text-[#c9a227]">
@@ -30,7 +30,7 @@ export function ShopPanel({
         <button
           type="button"
           onClick={onClose}
-          className="rounded px-2 py-1 text-xs text-[#a8b09a] hover:text-[#e8e6d9]"
+          className="vale-tap-sm rounded px-3 py-2 text-xs text-[#a8b09a] hover:text-[#e8e6d9]"
         >
           Close
         </button>
@@ -46,7 +46,7 @@ export function ShopPanel({
           return (
             <li
               key={row.itemId}
-              className="flex items-center justify-between gap-2 rounded border border-transparent px-2 py-1.5 hover:border-[#2a2e24] hover:bg-[#1c1f16]"
+              className="flex items-center justify-between gap-2 rounded border border-transparent px-2 py-2.5 hover:border-[#2a2e24] hover:bg-[#1c1f16]"
             >
               <div className="min-w-0 flex-1">
                 <div className="truncate text-xs text-[#e8e6d9]">{item.name}</div>
@@ -58,7 +58,7 @@ export function ShopPanel({
                 type="button"
                 disabled={!canBuy}
                 onClick={() => onBuy(row.itemId, row.price)}
-                className="shrink-0 rounded border border-[#2a2e24] px-2 py-1 text-[10px] text-[#c9a227] disabled:cursor-not-allowed disabled:opacity-40 hover:enabled:border-[#c9a227]/50"
+                className="vale-tap-sm shrink-0 rounded border border-[#2a2e24] px-3 py-2 text-xs text-[#c9a227] disabled:cursor-not-allowed disabled:opacity-40 hover:enabled:border-[#c9a227]/50"
               >
                 Buy {row.price}g
               </button>
@@ -81,7 +81,7 @@ export function ShopPanel({
             return (
               <li
                 key={stack.id}
-                className="flex items-center justify-between gap-2 rounded px-2 py-1.5 hover:bg-[#1c1f16]"
+                className="flex items-center justify-between gap-2 rounded px-2 py-2.5 hover:bg-[#1c1f16]"
               >
                 <span className="text-xs text-[#e8e6d9]">
                   {item.name}{" "}
@@ -90,7 +90,7 @@ export function ShopPanel({
                 <button
                   type="button"
                   onClick={() => onSell(stack.id, price)}
-                  className="shrink-0 rounded border border-[#2a2e24] px-2 py-1 text-[10px] text-[#a8b09a] hover:border-[#c9a227]/40 hover:text-[#e8e6d9]"
+                  className="vale-tap-sm shrink-0 rounded border border-[#2a2e24] px-3 py-2 text-xs text-[#a8b09a] hover:border-[#c9a227]/40 hover:text-[#e8e6d9]"
                 >
                   Sell {price}g
                 </button>

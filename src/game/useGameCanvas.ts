@@ -56,6 +56,7 @@ export function useGameCanvas(opts: {
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const keysRef = useRef<Record<string, boolean>>({});
+  const interactRequestRef = useRef(false);
   const accentRef = useRef(cls);
   const passiveRef = useRef(onPassivePrimary);
   const trainRef = useRef(onTrain);
@@ -132,6 +133,7 @@ export function useGameCanvas(opts: {
   useGameLoopEffect({
     canvasRef,
     keysRef,
+    interactRequestRef,
     accentRef,
     passiveRef,
     trainRef,
@@ -158,5 +160,5 @@ export function useGameCanvas(opts: {
     onPlayerDeath: onPlayerDeathRef,
     overlayOpenRef,
   });
-  return { canvasRef, hud, prompt };
+  return { canvasRef, keysRef, interactRequestRef, hud, prompt };
 }

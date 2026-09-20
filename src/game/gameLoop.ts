@@ -1,5 +1,5 @@
 import { useEffect, type Dispatch, type SetStateAction, type MutableRefObject, type RefObject } from "react";
-import { type ValeClass, getClass } from "@/game/classes";
+import { type ValeClass } from "@/game/classes";
 import { type ContinentId } from "@/game/continents";
 import type { ValeCharacter } from "@/game/character";
 import { SKILL_IDS, type SkillId } from "@/game/skills";
@@ -26,18 +26,10 @@ import {
   softClearRadius,
   resolveWalkableSpawn,
 } from "@/game/folkCanvas";
-import {
-  attackProfileForClass,
-  maxHpFor,
-  playerAttackDamage,
-  mitigateDamage,
-} from "@/game/combat";
+import { mitigateDamage } from "@/game/combat";
 import {
   spawnEnemies,
   updateEnemies,
-  killEnemy,
-  nearestEnemyInRange,
-  enemyAtCursor,
   updateFloatTexts,
   updateProjectiles,
   type Enemy,
@@ -46,10 +38,13 @@ import {
 } from "@/game/enemies";
 import { tryMovePlayer } from "@/game/gameLoopFrame";
 import { advanceCameraAndRender } from "@/game/gameLoopRender";
+import { attachCanvasPointers } from "@/game/gameLoopPointers";
+import { createPlayerAttack } from "@/game/gameLoopCombat";
 
 export function useGameLoopEffect(d: {
   canvasRef: RefObject<HTMLCanvasElement | null>;
   keysRef: MutableRefObject<Record<string, boolean>>;
+  interactRequestRef: MutableRefObject<boolean>;
   accentRef: MutableRefObject<ValeClass>;
   passiveRef: MutableRefObject<(n: number) => void>;
   trainRef: MutableRefObject<(s: SkillId) => void>;
@@ -82,7 +77,7 @@ export function useGameLoopEffect(d: {
   overlayOpenRef: MutableRefObject<boolean>;
 }): void {
   const {
-    canvasRef, keysRef, accentRef, passiveRef, trainRef, toggleSkillsRef, toggleMapRef,
+    canvasRef, keysRef, interactRequestRef, accentRef, passiveRef, trainRef, toggleSkillsRef, toggleMapRef,
     travelRef, enterHollowRef, exitHollowRef, openFolkRef, openShopRef, openShipRef,
     passiveAccum, promptRef, interactLock,
     character, arrivedFrom, shipSpawn, setHud, setPrompt,
@@ -208,70 +203,23 @@ export function useGameLoopEffect(d: {
       floatTexts.push({ x, y, text, color, life: 0.7, vy: -28 });
     };
 
-    const doPlayerAttack = () => {
-      if (deadLock || overlayOpenRef.current) return;
-      const snap = characterRef.current;
-      const cls = getClass(snap.classId);
-      const profile = attackProfileForClass(cls.id);
-      if (attackCd > 0) return;
-      if (profile.manaCost > 0 && snap.mana < profile.manaCost) {
-        pushFloat(player.x, player.y - 14, "No mana", "#7ab8c9");
-        return;
-      }
-      const cursorTarget = enemyAtCursor(enemies, mouse.worldX, mouse.worldY);
-      const target =
-        cursorTarget &&
-        Math.hypot(cursorTarget.x - player.x, cursorTarget.y - player.y) / TILE <=
-          profile.range + 0.25
-          ? cursorTarget
-          : nearestEnemyInRange(enemies, player.x, player.y, profile.range);
-      if (!target) {
-        if (noTargetCd <= 0) {
-          pushFloat(player.x, player.y - 14, "No foe in range", "#a8b09a");
-          noTargetCd = 0.55;
-        }
-        return;
-      }
-      attackCd = profile.cooldown;
-      if (profile.manaCost > 0) {
-        snap.mana = Math.max(0, snap.mana - profile.manaCost);
-        onVitals.current(snap.hp, snap.mana);
-      }
-      const dmg = playerAttackDamage(snap, profile, combatRng);
-      target.hp -= dmg;
-      target.flash = 0.15;
-      pushFloat(target.x, target.y - 10, String(dmg), "#e8e6d9");
-      if (profile.style !== "melee") {
-        projectiles.push({
-          x: player.x,
-          y: player.y,
-          tx: target.x,
-          ty: target.y,
-          color: profile.style === "magic" ? cls.accent : "#c9a227",
-          life: 0.22,
-          style: profile.style === "magic" ? "magic" : "bolt",
-        });
-      }
-      if (target.hp <= 0) {
-        killEnemy(target);
-        const goldGain =
-          target.kind.goldMin +
-          Math.floor(combatRng() * (target.kind.goldMax - target.kind.goldMin + 1));
-        pushFloat(target.x, target.y - 22, `+${goldGain}g`, "#c9a227");
-        onCombatReward.current(
-          target.kind.xpBase,
-          profile.skill,
-          Math.max(4, Math.floor(target.kind.xpBase * 0.35)),
-          goldGain,
-        );
-        if (profile.healOnKill > 0) {
-          const heal = Math.max(1, Math.floor(dmg * profile.healOnKill));
-          snap.hp = Math.min(maxHpFor(snap), snap.hp + heal);
-          onVitals.current(snap.hp, snap.mana);
-          pushFloat(player.x, player.y - 18, `+${heal}`, "#7ab85a");
-        }
-      }
-    };
+    const doPlayerAttack = createPlayerAttack({
+      characterRef,
+      overlayOpenRef,
+      onCombatReward,
+      onVitals,
+      player,
+      enemies,
+      mouse,
+      projectiles,
+      floatTexts,
+      combatRng,
+      getAttackCd: () => attackCd,
+      setAttackCd: (n) => { attackCd = n; },
+      getNoTargetCd: () => noTargetCd,
+      setNoTargetCd: (n) => { noTargetCd = n; },
+      getDeadLock: () => deadLock,
+    });
 
     const onKeyDown = (e: KeyboardEvent) => {
       keysRef.current[e.code] = true;
@@ -318,24 +266,7 @@ export function useGameLoopEffect(d: {
     window.addEventListener("keydown", onKeyDown);
     window.addEventListener("keyup", onKeyUp);
 
-    const onMouseMove = (e: MouseEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      mouse.x = e.clientX - rect.left;
-      mouse.y = e.clientY - rect.top;
-    };
-    const onMouseDown = (e: MouseEvent) => {
-      if (e.button !== 0) return;
-      mouse.down = true;
-      const rect = canvas.getBoundingClientRect();
-      mouse.x = e.clientX - rect.left;
-      mouse.y = e.clientY - rect.top;
-    };
-    const onMouseUp = (e: MouseEvent) => {
-      if (e.button === 0) mouse.down = false;
-    };
-    canvas.addEventListener("mousemove", onMouseMove);
-    canvas.addEventListener("mousedown", onMouseDown);
-    window.addEventListener("mouseup", onMouseUp);
+    const detachPointers = attachCanvasPointers(canvas, mouse);
 
     const tick = (now: number) => {
       if (!running) return;
@@ -343,6 +274,11 @@ export function useGameLoopEffect(d: {
       last = now;
       const keys = keysRef.current;
       const paused = deadLock || overlayOpenRef.current;
+
+      if (interactRequestRef.current) {
+        interactRequestRef.current = false;
+        doInteract();
+      }
 
       let dx = 0;
       let dy = 0;
@@ -473,9 +409,7 @@ export function useGameLoopEffect(d: {
       window.removeEventListener("resize", resize);
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
-      canvas.removeEventListener("mousemove", onMouseMove);
-      canvas.removeEventListener("mousedown", onMouseDown);
-      window.removeEventListener("mouseup", onMouseUp);
+      detachPointers();
     };
   }, []);
 }
