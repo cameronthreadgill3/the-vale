@@ -27,6 +27,9 @@ export function tryMovePlayer(
   return true;
 }
 
+type PromptCandidate = { prompt: NonNullable<PromptState>; dist: number };
+
+/** Pick the nearest interactable when several overlap (folk on shop, etc.). */
 export function computePrompt(
   map: WorldMap,
   player: { x: number; y: number },
@@ -36,57 +39,46 @@ export function computePrompt(
 ): PromptState {
   const px = player.x / TILE;
   const py = player.y / TILE;
-  let next: PromptState = null;
+  const candidates: PromptCandidate[] = [];
+
+  const consider = (tx: number, ty: number, prompt: NonNullable<PromptState>) => {
+    if (!nearTile(px, py, tx, ty, INTERACT_RADIUS)) return;
+    const dist = Math.hypot(px - (tx + 0.5), py - (ty + 0.5));
+    candidates.push({ prompt, dist });
+  };
+
   if (map.kind === "overworld") {
     for (const g of map.gates) {
-      if (nearTile(px, py, g.x, g.y, INTERACT_RADIUS)) {
-        next = {
-          kind: "gate",
-          target: g.targetContinentId,
-          name: getContinent(g.targetContinentId).name,
-        };
-        break;
-      }
+      consider(g.x, g.y, {
+        kind: "gate",
+        target: g.targetContinentId,
+        name: getContinent(g.targetContinentId).name,
+      });
     }
-    if (!next) {
-      for (const h of map.hollows) {
-        if (nearTile(px, py, h.x, h.y, INTERACT_RADIUS)) {
-          next = { kind: "hollow", index: h.index };
-          break;
-        }
-      }
+    for (const h of map.hollows) {
+      consider(h.x, h.y, { kind: "hollow", index: h.index });
     }
-    if (!next) {
-      for (const dk of docks) {
-        if (nearTile(px, py, dk.x, dk.y, INTERACT_RADIUS)) {
-          next = { kind: "ship", dockId: dk.id, name: dk.name };
-          break;
-        }
-      }
+    for (const dk of docks) {
+      consider(dk.x, dk.y, { kind: "ship", dockId: dk.id, name: dk.name });
     }
-    if (!next) {
-      for (const f of folk) {
-        if (nearTile(px, py, f.x, f.y, INTERACT_RADIUS)) {
-          next = {
-            kind: "folk",
-            folkId: f.id,
-            name: f.name,
-            hasShop: Boolean(f.shopId),
-          };
-          break;
-        }
-      }
+    for (const f of folk) {
+      consider(f.x, f.y, {
+        kind: "folk",
+        folkId: f.id,
+        name: f.name,
+        hasShop: Boolean(f.shopId),
+      });
     }
-    if (!next) {
-      for (const s of shops) {
-        if (nearTile(px, py, s.x, s.y, INTERACT_RADIUS)) {
-          next = { kind: "shop", shopId: s.id, name: s.name };
-          break;
-        }
-      }
+    for (const s of shops) {
+      // Skip shop marker if a folk with that shop already covers the tile.
+      if (folk.some((f) => f.x === s.x && f.y === s.y && f.shopId === s.id)) continue;
+      consider(s.x, s.y, { kind: "shop", shopId: s.id, name: s.name });
     }
-  } else if (map.exit && nearTile(px, py, map.exit.x, map.exit.y, INTERACT_RADIUS)) {
-    next = { kind: "exit" };
+  } else if (map.exit) {
+    consider(map.exit.x, map.exit.y, { kind: "exit" });
   }
-  return next;
+
+  if (candidates.length === 0) return null;
+  candidates.sort((a, b) => a.dist - b.dist);
+  return candidates[0]!.prompt;
 }
