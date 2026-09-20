@@ -1,8 +1,9 @@
 import { CLASSES, type ClassId } from "@/game/classes";
+import { playerSpriteUrl } from "@/game/playerSprites";
 
 export function ClassSelectOverlay({ onPick }: { onPick: (id: ClassId) => void }) {
   return (
-    <div className="flex h-full w-full items-center justify-center overflow-auto overscroll-contain bg-[#0c0d0b] p-4 sm:p-8" style={{ WebkitOverflowScrolling: "touch" }}>
+    <div className="flex h-full w-full items-center justify-center overflow-auto bg-[#0c0d0b] p-4 sm:p-8">
       <div className="w-full max-w-3xl">
         <h1 className="font-display text-center text-2xl tracking-wide text-[#c9a227] sm:text-3xl">
           The Vale
@@ -28,21 +29,35 @@ export function ClassSelectOverlay({ onPick }: { onPick: (id: ClassId) => void }
               key={c.id}
               type="button"
               onClick={() => onPick(c.id)}
-              className="vale-tap group min-h-[4.5rem] rounded border border-[#2a2e24] bg-[#161812] p-4 text-left transition hover:border-[#c9a227]/60 hover:bg-[#1c1f16] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c9a227] active:border-[#c9a227]/70"
+              className="group flex gap-3 rounded border border-[#2a2e24] bg-[#161812] p-4 text-left transition hover:border-[#c9a227]/60 hover:bg-[#1c1f16] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c9a227]"
               style={{ borderLeftWidth: 4, borderLeftColor: c.accent }}
             >
-              <div
-                className="font-display text-lg tracking-wide"
-                style={{ color: c.accent }}
+              <span
+                className="relative h-14 w-14 shrink-0 overflow-hidden rounded bg-[#0c0d0b] ring-1 ring-[#2a2e24]"
+                aria-hidden
               >
-                {c.name}
-              </div>
-              <p className="mt-1 text-xs leading-relaxed text-[#a8b09a] sm:text-sm">
-                {c.blurb}
-              </p>
-              <p className="mt-2 text-[10px] uppercase tracking-wider text-[#6a7260]">
-                Primary · {c.primarySkill}
-              </p>
+                <img
+                  src={playerSpriteUrl(c.id)}
+                  alt=""
+                  className="pointer-events-none absolute left-0 top-0 h-[400%] w-[400%] max-w-none"
+                  style={{ imageRendering: "pixelated" }}
+                  draggable={false}
+                />
+              </span>
+              <span className="min-w-0 flex-1">
+                <div
+                  className="font-display text-lg tracking-wide"
+                  style={{ color: c.accent }}
+                >
+                  {c.name}
+                </div>
+                <p className="mt-1 text-xs leading-relaxed text-[#a8b09a] sm:text-sm">
+                  {c.blurb}
+                </p>
+                <p className="mt-2 text-[10px] uppercase tracking-wider text-[#6a7260]">
+                  Primary · {c.primarySkill}
+                </p>
+              </span>
             </button>
           ))}
         </div>
