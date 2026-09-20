@@ -18,7 +18,15 @@ Open the URL Vite prints (usually http://localhost:5173).
 ### Controls
 
 - **WASD** or **Arrow keys** — move
+- **K** — toggle skills panel
+- **1–7** — train a skill (sword, axe, club, distance, shielding, fist, magic)
+- Click a skill row — train that skill
 - Camera follows the player on a seeded starter map
+- First visit: **Choose your path** (six Vale classes). Choice + skill XP persist in `localStorage` (`vale-character-v1`).
+
+### Classes
+
+Warden, Thornblade, Pathfinder, Hearthmage, Verdant, Hollowborn — each with accent color, starting skill biases, and a primary skill that gains tiny XP while moving.
 
 ### Builds
 

@@ -1,5 +1,19 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { CLASSES, getClass, type ClassId, type ValeClass } from "@/game/classes";
+import {
+  awardSkillXp,
+  clearCharacter,
+  createCharacter,
+  loadCharacter,
+  type ValeCharacter,
+} from "@/game/character";
 import { rngFrom, randInt } from "@/game/rng";
+import {
+  SKILLS,
+  SKILL_IDS,
+  skillSnapshot,
+  type SkillId,
+} from "@/game/skills";
 import { levelFromXp, progressInLevel, xpToNext } from "@/game/xp";
 
 const TILE = 32;
@@ -7,6 +21,10 @@ const MAP_W = 48;
 const MAP_H = 36;
 const PLAYER_SPEED = 140; // px / second
 const PLAYER_RADIUS = 10;
+/** Tiny passive skill XP per second of movement into the class primary skill. */
+const PASSIVE_SKILL_XP_PER_SEC = 2.5;
+/** Explicit train click / hotkey awards this base amount (class mult applies). */
+const TRAIN_SKILL_XP = 18;
 
 const TILE_COLORS = {
   grass: "#1f3a24",
@@ -76,10 +94,167 @@ function isSolid(tile: TileKind): boolean {
 
 type Keys = Record<string, boolean>;
 
+function skillRowsFrom(character: ValeCharacter) {
+  return SKILL_IDS.map((id) => {
+    const def = SKILLS.find((s) => s.id === id)!;
+    const snap = skillSnapshot(character.skillXp[id]);
+    return { id, name: def.name, hotkey: def.hotkey, ...snap };
+  });
+}
+
 export function GameApp() {
+  const [character, setCharacter] = useState<ValeCharacter | null>(() =>
+    loadCharacter(),
+  );
+  const [skillsOpen, setSkillsOpen] = useState(false);
+  const [skillTick, setSkillTick] = useState(0);
+
+  const pickClass = useCallback((id: ClassId) => {
+    setCharacter(createCharacter(id));
+  }, []);
+
+  const resetPath = useCallback(() => {
+    clearCharacter();
+    setCharacter(null);
+    setSkillsOpen(false);
+  }, []);
+
+  const trainSkill = useCallback(
+    (skill: SkillId) => {
+      setCharacter((prev) => {
+        if (!prev) return prev;
+        const next: ValeCharacter = {
+          ...prev,
+          skillXp: { ...prev.skillXp },
+        };
+        awardSkillXp(next, skill, TRAIN_SKILL_XP);
+        return { ...next, skillXp: { ...next.skillXp } };
+      });
+      setSkillTick((t) => t + 1);
+    },
+    [],
+  );
+
+  if (!character) {
+    return <ClassSelectOverlay onPick={pickClass} />;
+  }
+
+  const cls = getClass(character.classId);
+  const skills = skillRowsFrom(character);
+
+  return (
+    <GameShell
+      character={character}
+      cls={cls}
+      skills={skills}
+      skillsOpen={skillsOpen}
+      skillTick={skillTick}
+      onToggleSkills={() => setSkillsOpen((o) => !o)}
+      onTrain={trainSkill}
+      onResetPath={resetPath}
+      onPassivePrimary={(amount) => {
+        setCharacter((prev) => {
+          if (!prev) return prev;
+          const next: ValeCharacter = {
+            ...prev,
+            skillXp: { ...prev.skillXp },
+          };
+          awardSkillXp(next, cls.primarySkill, amount);
+          return { ...next, skillXp: { ...next.skillXp } };
+        });
+        setSkillTick((t) => t + 1);
+      }}
+    />
+  );
+}
+
+function ClassSelectOverlay({ onPick }: { onPick: (id: ClassId) => void }) {
+  return (
+    <div className="flex h-full w-full items-center justify-center overflow-auto bg-[#0c0d0b] p-4 sm:p-8">
+      <div className="w-full max-w-3xl">
+        <h1 className="font-display text-center text-2xl tracking-wide text-[#c9a227] sm:text-3xl">
+          Choose your path
+        </h1>
+        <p className="mt-2 text-center text-sm text-[#a8b09a]">
+          Six ways through Thornvale. Favored skills start higher and train faster.
+        </p>
+        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          {CLASSES.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => onPick(c.id)}
+              className="group rounded border border-[#2a2e24] bg-[#161812] p-4 text-left transition hover:border-[#c9a227]/60 hover:bg-[#1c1f16] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c9a227]"
+              style={{ borderLeftWidth: 4, borderLeftColor: c.accent }}
+            >
+              <div
+                className="font-display text-lg tracking-wide"
+                style={{ color: c.accent }}
+              >
+                {c.name}
+              </div>
+              <p className="mt-1 text-xs leading-relaxed text-[#a8b09a] sm:text-sm">
+                {c.blurb}
+              </p>
+              <p className="mt-2 text-[10px] uppercase tracking-wider text-[#6a7260]">
+                Primary · {c.primarySkill}
+              </p>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+type SkillRow = ReturnType<typeof skillRowsFrom>[number];
+
+function GameShell({
+  character,
+  cls,
+  skills,
+  skillsOpen,
+  skillTick,
+  onToggleSkills,
+  onTrain,
+  onResetPath,
+  onPassivePrimary,
+}: {
+  character: ValeCharacter;
+  cls: ValeClass;
+  skills: SkillRow[];
+  skillsOpen: boolean;
+  skillTick: number;
+  onToggleSkills: () => void;
+  onTrain: (skill: SkillId) => void;
+  onResetPath: () => void;
+  onPassivePrimary: (amount: number) => void;
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const keysRef = useRef<Keys>({});
-  const [hud, setHud] = useState({ x: 0, y: 0, level: 1, xp: 0, progress: 0, next: 0 });
+  const accentRef = useRef(cls);
+  const passiveRef = useRef(onPassivePrimary);
+  const trainRef = useRef(onTrain);
+  const toggleRef = useRef(onToggleSkills);
+  const primaryRef = useRef(cls.primarySkill);
+  const passiveAccum = useRef(0);
+
+  accentRef.current = cls;
+  passiveRef.current = onPassivePrimary;
+  trainRef.current = onTrain;
+  toggleRef.current = onToggleSkills;
+  primaryRef.current = cls.primarySkill;
+
+  const combatXp = character.combatXp;
+  const level = levelFromXp(combatXp);
+  const [hud, setHud] = useState({
+    x: Math.floor(MAP_W / 2),
+    y: Math.floor(MAP_H / 2),
+    level,
+    xp: combatXp,
+    progress: progressInLevel(level, combatXp),
+    next: xpToNext(level),
+  });
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -88,8 +263,8 @@ export function GameApp() {
     if (!ctx) return;
 
     const map = generateMap("thornvale-starter-hollow");
-    const xp = 0;
-    const level = levelFromXp(xp);
+    const xp = combatXp;
+    const combatLevel = levelFromXp(xp);
 
     const player = {
       x: (MAP_W / 2) * TILE,
@@ -130,6 +305,19 @@ export function GameApp() {
       ) {
         e.preventDefault();
       }
+      if (e.code === "KeyK" && !e.repeat) {
+        e.preventDefault();
+        toggleRef.current();
+      }
+      // Digit hotkeys 1–7 train skills
+      if (!e.repeat && e.key >= "1" && e.key <= "7") {
+        const idx = Number(e.key) - 1;
+        const skill = SKILL_IDS[idx];
+        if (skill) {
+          e.preventDefault();
+          trainRef.current(skill);
+        }
+      }
     };
     const onKeyUp = (e: KeyboardEvent) => {
       keysRef.current[e.code] = false;
@@ -168,6 +356,7 @@ export function GameApp() {
       if (keys.KeyS || keys.ArrowDown) dy += 1;
       if (keys.KeyA || keys.ArrowLeft) dx -= 1;
       if (keys.KeyD || keys.ArrowRight) dx += 1;
+      let moved = false;
       if (dx !== 0 || dy !== 0) {
         const len = Math.hypot(dx, dy);
         dx /= len;
@@ -177,6 +366,16 @@ export function GameApp() {
         const ny = player.y + dy * step;
         if (!tryMove(nx, ny)) {
           if (!tryMove(nx, player.y)) tryMove(player.x, ny);
+        }
+        moved = true;
+      }
+
+      if (moved) {
+        passiveAccum.current += PASSIVE_SKILL_XP_PER_SEC * dt;
+        if (passiveAccum.current >= 1) {
+          const grant = Math.floor(passiveAccum.current);
+          passiveAccum.current -= grant;
+          passiveRef.current(grant);
         }
       }
 
@@ -221,11 +420,12 @@ export function GameApp() {
       ctx.ellipse(px, py + 6, PLAYER_RADIUS * 0.9, PLAYER_RADIUS * 0.45, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // Player body (warm gold circle — Vale wanderer)
+      // Player body — tinted by class accent
+      const ac = accentRef.current;
       const grad = ctx.createRadialGradient(px - 3, py - 4, 2, px, py, PLAYER_RADIUS + 2);
-      grad.addColorStop(0, "#e8c96a");
-      grad.addColorStop(0.6, "#c9a227");
-      grad.addColorStop(1, "#7a5c12");
+      grad.addColorStop(0, ac.accentLite);
+      grad.addColorStop(0.6, ac.accent);
+      grad.addColorStop(1, ac.accentDark);
       ctx.fillStyle = grad;
       ctx.beginPath();
       ctx.arc(px, py, PLAYER_RADIUS, 0, Math.PI * 2);
@@ -240,10 +440,10 @@ export function GameApp() {
         setHud({
           x: Math.round(player.x / TILE),
           y: Math.round(player.y / TILE),
-          level,
+          level: combatLevel,
           xp,
-          progress: progressInLevel(level, xp),
-          next: xpToNext(level),
+          progress: progressInLevel(combatLevel, xp),
+          next: xpToNext(combatLevel),
         });
       }
 
@@ -258,7 +458,12 @@ export function GameApp() {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
     };
+    // Canvas loop mounts once per class session; skill updates go through React.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // silence unused skillTick in deps for future HUD flashes
+  void skillTick;
 
   return (
     <div className="relative h-full w-full select-none">
@@ -272,9 +477,15 @@ export function GameApp() {
             <p className="mt-0.5 text-xs text-[#a8b09a] sm:text-sm">
               A Story as Old as Time — starter hollow
             </p>
+            <p
+              className="mt-1 font-display text-sm tracking-wide sm:text-base"
+              style={{ color: cls.accent }}
+            >
+              {cls.name}
+            </p>
           </div>
           <div className="rounded border border-[#2a2e24] bg-[#161812]/90 px-3 py-2 text-xs text-[#e8e6d9] backdrop-blur-sm sm:text-sm">
-            <div className="font-display text-[#c9a227]">
+            <div className="font-display" style={{ color: cls.accent }}>
               Level {hud.level}
             </div>
             <div className="mt-1 text-[#a8b09a]">
@@ -282,8 +493,11 @@ export function GameApp() {
             </div>
             <div className="mt-1.5 h-1.5 w-28 overflow-hidden rounded bg-[#0c0d0b]">
               <div
-                className="h-full rounded bg-[#c9a227]"
-                style={{ width: `${Math.round(hud.progress * 100)}%` }}
+                className="h-full rounded"
+                style={{
+                  width: `${Math.round(hud.progress * 100)}%`,
+                  background: cls.accent,
+                }}
               />
             </div>
             <div className="mt-2 text-[10px] uppercase tracking-wider text-[#6a7260]">
@@ -291,11 +505,123 @@ export function GameApp() {
             </div>
           </div>
         </div>
-        <div className="w-fit rounded border border-[#2a2e24] bg-[#161812]/80 px-3 py-1.5 text-xs text-[#a8b09a] backdrop-blur-sm">
-          Move with <span className="text-[#e8e6d9]">WASD</span> or{" "}
-          <span className="text-[#e8e6d9]">Arrow keys</span>
+        <div className="flex flex-wrap gap-2">
+          <div className="w-fit rounded border border-[#2a2e24] bg-[#161812]/80 px-3 py-1.5 text-xs text-[#a8b09a] backdrop-blur-sm">
+            Move <span className="text-[#e8e6d9]">WASD</span> /{" "}
+            <span className="text-[#e8e6d9]">Arrows</span>
+            {" · "}
+            <span className="text-[#e8e6d9]">K</span> skills
+            {" · "}
+            <span className="text-[#e8e6d9]">1–7</span> train
+          </div>
+          <button
+            type="button"
+            className="pointer-events-auto rounded border border-[#2a2e24] bg-[#161812]/90 px-3 py-1.5 text-xs text-[#e8e6d9] backdrop-blur-sm hover:border-[#c9a227]/50"
+            onClick={onToggleSkills}
+          >
+            {skillsOpen ? "Hide skills" : "Skills (K)"}
+          </button>
+          <button
+            type="button"
+            className="pointer-events-auto rounded border border-[#2a2e24] bg-[#161812]/90 px-3 py-1.5 text-xs text-[#a8b09a] backdrop-blur-sm hover:border-[#c9a227]/50"
+            onClick={onResetPath}
+          >
+            Change path
+          </button>
         </div>
       </div>
+
+      {skillsOpen && (
+        <SkillsPanel
+          cls={cls}
+          skills={skills}
+          onTrain={onTrain}
+          onClose={onToggleSkills}
+        />
+      )}
+    </div>
+  );
+}
+
+function SkillsPanel({
+  cls,
+  skills,
+  onTrain,
+  onClose,
+}: {
+  cls: ValeClass;
+  skills: SkillRow[];
+  onTrain: (skill: SkillId) => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="pointer-events-auto absolute bottom-4 right-4 w-[min(100%-2rem,20rem)] rounded border border-[#2a2e24] bg-[#161812]/95 p-3 shadow-xl backdrop-blur-md sm:bottom-6 sm:right-6">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <div>
+          <div className="font-display text-sm tracking-wide text-[#c9a227]">
+            Skills
+          </div>
+          <div className="text-[10px] uppercase tracking-wider text-[#6a7260]">
+            Cubic XP · click or 1–7 to train
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded px-2 py-1 text-xs text-[#a8b09a] hover:text-[#e8e6d9]"
+        >
+          Close
+        </button>
+      </div>
+      <ul className="flex flex-col gap-1.5">
+        {skills.map((s) => {
+          const favored = (cls.gainMultipliers[s.id] ?? 1) > 1;
+          const isPrimary = cls.primarySkill === s.id;
+          return (
+            <li key={s.id}>
+              <button
+                type="button"
+                onClick={() => onTrain(s.id)}
+                className="flex w-full flex-col gap-1 rounded border border-transparent px-2 py-1.5 text-left transition hover:border-[#2a2e24] hover:bg-[#1c1f16]"
+              >
+                <div className="flex items-baseline justify-between gap-2 text-xs">
+                  <span className="text-[#e8e6d9]">
+                    <span className="mr-1.5 inline-block w-3 text-[#6a7260]">
+                      {s.hotkey}
+                    </span>
+                    {s.name}
+                    {isPrimary && (
+                      <span
+                        className="ml-1.5 text-[10px] uppercase tracking-wider"
+                        style={{ color: cls.accent }}
+                      >
+                        primary
+                      </span>
+                    )}
+                    {favored && !isPrimary && (
+                      <span className="ml-1.5 text-[10px] uppercase tracking-wider text-[#6a7260]">
+                        favored
+                      </span>
+                    )}
+                  </span>
+                  <span className="font-display" style={{ color: cls.accent }}>
+                    {s.level}
+                  </span>
+                </div>
+                <div className="h-1.5 overflow-hidden rounded bg-[#0c0d0b]">
+                  <div
+                    className="h-full rounded transition-[width] duration-200"
+                    style={{
+                      width: `${Math.round(s.progress * 100)}%`,
+                      background: isPrimary ? cls.accent : "#c9a227",
+                    }}
+                  />
+                </div>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
     </div>
   );
 }
