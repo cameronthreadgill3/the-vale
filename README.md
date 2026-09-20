@@ -4,7 +4,7 @@ Thornvale — a top-down 2D MMORPG. Enter the Vale.
 
 Play: https://vale-as-old-as-time.vercel.app
 
-Six classes, Tibia-style skills, eight continents, gates, hollows, named folk, shops, and coastal ships.
+Six classes, Tibia-style skills, eight continents, gates, hollows, combat, named folk, shops, and coastal ships.
 
 ## Local development
 
@@ -18,7 +18,8 @@ Open the URL Vite prints (usually http://localhost:5173).
 ### Controls
 
 - **WASD** or **Arrow keys** — move
-- **E** — interact (gates, hollows, folk, shops, ships)
+- **Space** or **left click** — attack nearest foe in range (hold to auto-swing on cooldown)
+- **E** — interact (gates, hollows, folk, shops, ships) — still works when not in a fight prompt
 - **M** — continent map (discovered lands)
 - **K** — toggle skills panel
 - **1–7** — train a skill (sword, axe, club, distance, shielding, fist, magic)
@@ -29,7 +30,20 @@ Open the URL Vite prints (usually http://localhost:5173).
 - Inside a hollow, walk onto the **exit** tile (or **E**) to return
 - Approach **named folk** (colored sprites) and press **E** to talk; shopkeepers also open a store
 - Approach a **ship dock** (sail marker) on Mistmere, Sunken Choir, or Nightglass Coast and press **E** to voyage
-- First visit: **Choose your path** (six Vale classes). Choice, skills, gold, inventory, and world location persist in `localStorage` (`vale-character-v1`).
+- First visit: **Choose your path** (six Vale classes). Choice, skills, gold, inventory, HP/mana, and world location persist in `localStorage` (`vale-character-v1`).
+
+### Combat
+
+Tibia-flavored, scoped tight:
+
+- **HP** (and **mana** for Hearthmage / Verdant) on the HUD; max HP scales lightly with combat level and shielding
+- Attack uses the class’s combat skill (sword / axe / distance / magic / fist); damage scales with that skill + a small roll
+- **Shielding** reduces damage taken
+- Killing foes grants **combat XP**, **skill XP** on the skill used, and a little **gold**
+- Hostiles spawn mainly in **hollows** (rats, creepers, wisps); a few **briar mites** on overworld edges — seeded so maps feel stable; never on NPCs/gates
+- Simple AI: wander → aggro → chase → melee hit on cooldown
+- Floating damage numbers; death respawns at continent spawn / hollow exit with HP restored and a mild gold loss
+- Class flavor: Warden/Thornblade melee, Pathfinder bolts, Hearthmage/Verdant magic (Verdant soft heal-on-kill), Hollowborn short-range hybrid
 
 ### Classes
 

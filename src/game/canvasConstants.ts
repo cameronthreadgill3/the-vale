@@ -21,4 +21,11 @@ export type HudState = {
   xp: number;
   progress: number;
   next: number;
+  hp: number;
+  maxHp: number;
+  mana: number;
+  maxMana: number;
 };
+
+/** Combat pacing / ranges (seconds, tiles). */
+export const ATTACK_HOLD_REPEAT = true;
