@@ -32,19 +32,12 @@ const classes = ["pathfinder", "thornblade", "hearthmage", "verdant", "hollowbor
 
 if (existsSync(dataDir)) {
   for (const id of classes) {
-    const p = join(dataDir, `${id}.b64`);
-    if (!existsSync(p)) continue;
-    const buf = Buffer.from(readFileSync(p, "utf8").trim(), "base64");
-    writeFileSync(join(outDir, `${id}.png`), buf);
-    console.log("wrote", id + ".png", buf.length);
-  }
-  process.exit(0);
-}
-
-for (const id of classes) {
-  const single = join(outDir, `${id}.png.b64`);
-  if (existsSync(single)) {
-    const buf = Buffer.from(readFileSync(single, "utf8").trim(), "base64");
+    const single = join(dataDir, `${id}.b64`);
+    let b64 = null;
+    if (existsSync(single)) b64 = readFileSync(single, "utf8").trim();
+    else b64 = joinParts(dataDir, `${id}.b64`);
+    if (!b64) continue;
+    const buf = Buffer.from(b64, "base64");
     writeFileSync(join(outDir, `${id}.png`), buf);
     console.log("wrote", id + ".png", buf.length);
   }
