@@ -5,25 +5,44 @@ import { fileURLToPath } from "node:url";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
-// Decode gameLoop patch script if sidecar present
-const patchB64 = join(root, "scripts/patch-gameLoop-sprites.mjs.b64");
-if (existsSync(patchB64)) {
-  const buf = Buffer.from(readFileSync(patchB64, "utf8").trim(), "base64");
-  writeFileSync(join(root, "scripts/patch-gameLoop-sprites.mjs"), buf);
-  console.log("wrote patch-gameLoop-sprites.mjs", buf.length);
+function materializeB64(basePath, outPath) {
+  if (existsSync(basePath)) {
+    const buf = Buffer.from(readFileSync(basePath, "utf8").trim(), "base64");
+    writeFileSync(outPath, buf);
+    return buf.length;
+  }
+  const name = basePath.split("/").pop();
+  const dir = dirname(basePath);
+  const partFiles = readdirSync(dir)
+    .filter((f) => f.startsWith(name + ".part"))
+    .sort();
+  if (partFiles.length === 0) return 0;
+  const b64 = partFiles.map((f) => readFileSync(join(dir, f), "utf8").trim()).join("");
+  const buf = Buffer.from(b64, "base64");
+  writeFileSync(outPath, buf);
+  return buf.length;
 }
+
+const patchOut = join(root, "scripts/patch-gameLoop-sprites.mjs");
+const patchB64 = join(root, "scripts/patch-gameLoop-sprites.mjs.b64");
+const n = materializeB64(patchB64, patchOut);
+if (n) console.log("wrote patch-gameLoop-sprites.mjs", n);
 
 const dir = join(root, "public/sprites/player");
 mkdirSync(dir, { recursive: true });
-const files = readdirSync(dir).filter((f) => f.endsWith(".png.b64"));
-if (files.length === 0) {
-  console.warn("no .png.b64 sidecars; skipping sprite materialize");
-} else {
-  for (const f of files) {
-    const id = f.replace(/\.png\.b64$/, "");
-    const b64 = readFileSync(join(dir, f), "utf8").trim();
-    const buf = Buffer.from(b64, "base64");
-    writeFileSync(join(dir, `${id}.png`), buf);
-    console.log("wrote", id + ".png", buf.length);
+const classes = ["pathfinder", "thornblade", "hearthmage", "verdant", "hollowborn", "warden"];
+for (const id of classes) {
+  const b64Path = join(dir, `${id}.png.b64`);
+  const out = join(dir, `${id}.png`);
+  const n = materializeB64(b64Path, out);
+  if (n) console.log("wrote", id + ".png", n);
+  else {
+    const partFiles = readdirSync(dir).filter((f) => f.startsWith(`${id}.png.b64.part`)).sort();
+    if (partFiles.length) {
+      const b64 = partFiles.map((f) => readFileSync(join(dir, f), "utf8").trim()).join("");
+      const buf = Buffer.from(b64, "base64");
+      writeFileSync(out, buf);
+      console.log("wrote", id + ".png", buf.length, "(from parts)");
+    }
   }
 }
