@@ -6,8 +6,11 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "build:itch": "tsc --noEmit && vite build --config vite.itch.config.ts",
-    "preview": "vite preview"
+    "build:itch": "node scripts/materialize-player-sprites.mjs && tsc --noEmit && vite build --config vite.itch.config.ts",
+    "preview": "vite preview",
+    "materialize-sprites": "node scripts/materialize-player-sprites.mjs",
+    "prebuild": "node scripts/materialize-player-sprites.mjs",
+    "predev": "node scripts/materialize-player-sprites.mjs"
   },
   "dependencies": {
     "react": "^19.0.0",
