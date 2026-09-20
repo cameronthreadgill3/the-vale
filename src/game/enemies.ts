@@ -6,13 +6,17 @@ import { TILE, isSolid, type WorldMap } from "@/game/world";
 
 export type EnemyKindId =
   | "briar-mite"
-  | "hollow-rat"
-  | "moss-creeper"
+  | "needle-rat"
+  | "bark-hound"
   | "shade-wisp";
 
 export interface EnemyKind {
   id: EnemyKindId;
   name: string;
+  /** System Identify rank (F-rank early fauna). */
+  rank: string;
+  /** Sparse Identify detail line. */
+  detail: string;
   color: string;
   colorDark: string;
   radius: number;
@@ -32,6 +36,8 @@ export const ENEMY_KINDS: Record<EnemyKindId, EnemyKind> = {
   "briar-mite": {
     id: "briar-mite",
     name: "Briar Mite",
+    rank: "F",
+    detail: "Thorn-shelled pest of the basin grass.",
     color: "#8a6a3a",
     colorDark: "#4a3820",
     radius: 7,
@@ -46,43 +52,49 @@ export const ENEMY_KINDS: Record<EnemyKindId, EnemyKind> = {
     goldMin: 1,
     goldMax: 3,
   },
-  "hollow-rat": {
-    id: "hollow-rat",
-    name: "Hollow Rat",
+  "needle-rat": {
+    id: "needle-rat",
+    name: "Needle Rat",
+    rank: "F",
+    detail: "Small, long body; hooked snout; four curved needle-teeth. Fast.",
     color: "#7a6a5a",
     colorDark: "#3a3028",
     radius: 8,
     level: 2,
     maxHp: 28,
     attack: 6,
-    speed: 70,
+    speed: 78,
     aggroRange: 4,
     attackRange: 0.95,
-    attackCooldown: 1.1,
+    attackCooldown: 1.05,
     xpBase: 22,
     goldMin: 2,
     goldMax: 5,
   },
-  "moss-creeper": {
-    id: "moss-creeper",
-    name: "Moss Creeper",
-    color: "#4a7a48",
-    colorDark: "#243a22",
-    radius: 10,
+  "bark-hound": {
+    id: "bark-hound",
+    name: "Bark Hound",
+    rank: "F",
+    detail: "Wolf-sized; bark hide; pale eyes; hooked teeth. Packs from ashwood edge.",
+    color: "#6a5a3a",
+    colorDark: "#2a2418",
+    radius: 12,
     level: 4,
-    maxHp: 45,
-    attack: 9,
-    speed: 48,
-    aggroRange: 4.5,
-    attackRange: 1.05,
-    attackCooldown: 1.3,
-    xpBase: 40,
+    maxHp: 48,
+    attack: 10,
+    speed: 62,
+    aggroRange: 5,
+    attackRange: 1.1,
+    attackCooldown: 1.25,
+    xpBase: 42,
     goldMin: 3,
-    goldMax: 8,
+    goldMax: 9,
   },
   "shade-wisp": {
     id: "shade-wisp",
     name: "Shade Wisp",
+    rank: "F",
+    detail: "Hollow-born flicker. Sparse. Avoid if alone.",
     color: "#6a5a8a",
     colorDark: "#2a2238",
     radius: 9,
@@ -199,14 +211,19 @@ export function spawnEnemies(
   if (map.kind === "hollow") {
     const depth = (map.hollowIndex ?? 0) + 1;
     const rats = 3 + randInt(rng, 0, 2);
-    const creepers = 1 + randInt(rng, 0, depth > 1 ? 2 : 1);
+    const hounds = 1 + randInt(rng, 0, depth > 1 ? 2 : 1);
     const wisps = depth >= 2 ? randInt(rng, 0, 2) : randInt(rng, 0, 1);
-    for (let i = 0; i < rats; i++) add("hollow-rat", 3);
-    for (let i = 0; i < creepers; i++) add("moss-creeper", 4);
+    for (let i = 0; i < rats; i++) add("needle-rat", 3);
+    for (let i = 0; i < hounds; i++) add("bark-hound", 4);
     for (let i = 0; i < wisps; i++) add("shade-wisp", 5);
   } else {
-    const pests = 2 + randInt(rng, 0, 2);
-    for (let i = 0; i < pests; i++) add("briar-mite", 8);
+    // Ashwood-edge fauna on the clearing: needle rats in basin grass, bark hounds farther out.
+    const rats = 2 + randInt(rng, 0, 2);
+    const hounds = 1 + randInt(rng, 0, 1);
+    for (let i = 0; i < rats; i++) add("needle-rat", 7);
+    for (let i = 0; i < hounds; i++) add("bark-hound", 10);
+    const mites = randInt(rng, 0, 1);
+    for (let i = 0; i < mites; i++) add("briar-mite", 8);
   }
 
   return out;
@@ -399,6 +416,15 @@ export function drawEnemies(
     ctx.strokeStyle = e.kind.colorDark;
     ctx.lineWidth = 1.5;
     ctx.stroke();
+    // Sparse Identify pane: Name / Rank
+    ctx.font = "9px Figtree, system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#c9c4a8";
+    ctx.fillText(
+      `${e.kind.name} · ${e.kind.rank}`,
+      sx,
+      sy - e.kind.radius - 10,
+    );
     const ratio = e.hp / e.kind.maxHp;
     ctx.fillStyle = "#1a1c16";
     ctx.fillRect(sx - 8, sy - e.kind.radius - 6, 16, 3);

@@ -4,6 +4,8 @@ Thornvale — a top-down 2D MMORPG. Enter the Vale.
 
 Play: https://vale-as-old-as-time.vercel.app
 
+The System remembers this pattern as the **First Story**. Walkers call it Thornvale. Echo texture from Hollow Reach *The Accession* (ashwood, basin grass, Needle Rat, Bark Hound) — not a retelling of Day 0.
+
 Six classes, Tibia-style skills, eight continents, gates, hollows, combat, named folk, shops, and coastal ships.
 
 ## Local development
@@ -40,7 +42,7 @@ Tibia-flavored, scoped tight:
 - Attack uses the class’s combat skill (sword / axe / distance / magic / fist); damage scales with that skill + a small roll
 - **Shielding** reduces damage taken
 - Killing foes grants **combat XP**, **skill XP** on the skill used, and a little **gold**
-- Hostiles spawn mainly in **hollows** (rats, creepers, wisps); a few **briar mites** on overworld edges — seeded so maps feel stable; never on NPCs/gates
+- Hostiles: **Needle Rat** (Beast Lv.2 F) and **Bark Hound** (Beast Lv.4 F) from Accession texture, plus shade wisps in deeper hollows; sparse briar mites — seeded; never on NPCs/gates
 - Simple AI: wander → aggro → chase → melee hit on cooldown
 - Floating damage numbers; death respawns at continent spawn / hollow exit with HP restored and a mild gold loss
 - Class flavor: Warden/Thornblade melee, Pathfinder bolts, Hearthmage/Verdant magic (Verdant soft heal-on-kill), Hollowborn short-range hybrid
@@ -55,7 +57,7 @@ Thornreach (starter), Mistmere, Ashen Marches, Sunken Choir, Embercoil, Pale Was
 
 ### Folk, shops, and ships
 
-- Named NPCs on Thornreach, Mistmere, Sunken Choir, Ashen Marches, and Nightglass Coast
+- Named NPCs on Thornreach (Rook watch-captain, Mara shop, Noll healer), Mistmere (Old Reed guide), Sunken Choir, Ashen Marches, and Nightglass Coast — First Story echoes only; no Hollow Reach cast
 - Shops: Thornreach General Store, Mistmere Pier Market, Choir Cloister Stores — buy/sell with starting gold
 - Ships link Mistmere ↔ Sunken Choir ↔ Nightglass Coast with short voyage flavor
 

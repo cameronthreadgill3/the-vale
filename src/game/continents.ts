@@ -51,14 +51,14 @@ export const CONTINENTS: ContinentDef[] = [
   {
     id: "thornreach",
     name: "Thornreach",
-    blurb: "Briar-laced hills where the Vale first opens its gates.",
+    blurb: "Basin grass clearings under ashwood — dark gray bark, silver-edged green leaves; twin river-cloud bands above. Where the Vale first opens its gates.",
     seedPrefix: "thornreach",
     palette: {
-      grass: "#1f3a24",
-      grassAlt: "#25462c",
+      grass: "#1e3c26",
+      grassAlt: "#264a2e",
       dirt: "#3a2f1f",
       path: "#4a3d28",
-      stone: "#2c3030",
+      stone: "#2a2e2e",
       water: "#1a2a3a",
       flower: "#3a2840",
       gate: "#c9a227",
@@ -195,7 +195,7 @@ export const CONTINENTS: ContinentDef[] = [
   {
     id: "verdant-spine",
     name: "Verdant Spine",
-    blurb: "A green ridge of deep wood and thorn-crowned peaks.",
+    blurb: "A green ridge of deep ashwood and thorn-crowned peaks — silver-edged canopy over basin grass.",
     seedPrefix: "verdant",
     palette: {
       grass: "#1a4028",

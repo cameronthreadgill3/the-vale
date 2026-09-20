@@ -56,9 +56,9 @@ export const COASTAL_CONTINENTS: ContinentId[] = [
 
 export const FOLK: FolkDef[] = [
   {
-    id: "briar-ward",
-    name: "Briar Ward",
-    line: "Thornreach holds the first gate. Keep your blade oiled and your path chosen.",
+    id: "rook",
+    name: "Rook",
+    line: "Watch-captain of this square. Survive first. Learn the ashwood edge. Progress when the System allows. Needle rats in the basin grass; bark hounds pack from the trees.",
     continentId: "thornreach",
     x: 22,
     y: 16,
@@ -67,7 +67,7 @@ export const FOLK: FolkDef[] = [
   {
     id: "mara-hearth",
     name: "Mara Hearth",
-    line: "Coin for bread, oil, and luck-charms — the Vale runs on small mercies.",
+    line: "Coin for bread, oil, and luck-charms — the Vale runs on small mercies. If you bleed, find Noll; if you wander lost, ask Rook.",
     continentId: "thornreach",
     x: 27,
     y: 17,
@@ -75,9 +75,18 @@ export const FOLK: FolkDef[] = [
     shopId: "thornreach-general",
   },
   {
+    id: "noll",
+    name: "Noll",
+    line: "Healer of the square. Draughts and clean wraps — Identify your wounds before they Identify you. Survive. Then learn.",
+    continentId: "thornreach",
+    x: 25,
+    y: 15,
+    color: "#8ab87a",
+  },
+  {
     id: "old-reed",
     name: "Old Reed",
-    line: "Fog eats footsteps here. Follow the reed-path and you will not drown.",
+    line: "Outdoor guide of Mistmere. Fog eats footsteps; follow the reed-path and you will not drown. I walk the ashwood skirts when the twin river-clouds show.",
     continentId: "mistmere",
     x: 21,
     y: 19,
