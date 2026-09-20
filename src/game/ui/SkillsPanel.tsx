@@ -23,7 +23,7 @@ export function SkillsPanel({
   onClose: () => void;
 }) {
   return (
-    <div className="pointer-events-auto absolute bottom-4 right-4 w-[min(100%-2rem,20rem)] rounded border border-[#2a2e24] bg-[#161812]/95 p-3 shadow-xl backdrop-blur-md sm:bottom-6 sm:right-6">
+    <div className="vale-panel pointer-events-auto absolute bottom-4 right-4 z-30 w-[min(100%-2rem,20rem)] rounded border border-[#2a2e24] bg-[#161812]/95 p-3 shadow-xl backdrop-blur-md max-md:bottom-auto max-md:top-20 max-md:right-3 sm:bottom-6 sm:right-6">
       <div className="mb-2 flex items-center justify-between gap-2">
         <div>
           <div className="font-display text-sm tracking-wide text-[#c9a227]">
@@ -36,7 +36,7 @@ export function SkillsPanel({
         <button
           type="button"
           onClick={onClose}
-          className="rounded px-2 py-1 text-xs text-[#a8b09a] hover:text-[#e8e6d9]"
+          className="vale-tap-sm rounded px-3 py-2 text-xs text-[#a8b09a] hover:text-[#e8e6d9]"
         >
           Close
         </button>
@@ -50,7 +50,7 @@ export function SkillsPanel({
               <button
                 type="button"
                 onClick={() => onTrain(s.id)}
-                className="flex w-full flex-col gap-1 rounded border border-transparent px-2 py-1.5 text-left transition hover:border-[#2a2e24] hover:bg-[#1c1f16]"
+                className="vale-tap-sm flex w-full flex-col gap-1 rounded border border-transparent px-2 py-2.5 text-left transition hover:border-[#2a2e24] hover:bg-[#1c1f16] active:bg-[#1c1f16]"
               >
                 <div className="flex items-baseline justify-between gap-2 text-xs">
                   <span className="text-[#e8e6d9]">
