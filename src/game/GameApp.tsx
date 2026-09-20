@@ -14,6 +14,9 @@ import {
   addInventoryItem,
   removeInventoryItem,
   setGold,
+  awardCombatXp,
+  setVitals,
+  applyDeath,
   type ValeCharacter,
 } from "@/game/character";
 import {
@@ -208,6 +211,36 @@ export function GameApp() {
     }
   }, [character]);
 
+  const handleCombatReward = useCallback(
+    (combatXpGain: number, skill: SkillId, skillXpGain: number, goldGain: number) => {
+      setCharacter((prev) => {
+        if (!prev) return prev;
+        let next = awardCombatXp(prev, combatXpGain);
+        next = { ...next, skillXp: { ...next.skillXp } };
+        awardSkillXp(next, skill, skillXpGain);
+        next = setGold(next, next.gold + goldGain);
+        return { ...next, skillXp: { ...next.skillXp } };
+      });
+      setSkillTick((t) => t + 1);
+    },
+    [],
+  );
+
+  const handleVitals = useCallback((hp: number, mana: number) => {
+    setCharacter((prev) => (prev ? setVitals(prev, hp, mana) : prev));
+  }, []);
+
+  const handlePlayerDeath = useCallback(() => {
+    setCharacter((prev) => (prev ? applyDeath(prev) : prev));
+    setArrivedFrom(null);
+    setShipSpawn(null);
+    setDialogue(null);
+    setActiveShopId(null);
+    setActiveDockId(null);
+    setMapOpen(false);
+    showToast("You wake at the continent spawn...");
+  }, [showToast]);
+
   if (!character) {
     return <ClassSelectOverlay onPick={pickClass} />;
   }
@@ -254,6 +287,9 @@ export function GameApp() {
       onBuy={buyItem}
       onSell={sellItem}
       onSail={sailTo}
+      onCombatReward={handleCombatReward}
+      onVitals={handleVitals}
+      onPlayerDeath={handlePlayerDeath}
       onPassivePrimary={(amount) => {
         setCharacter((prev) => {
           if (!prev) return prev;
