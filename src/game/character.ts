@@ -1,5 +1,10 @@
-/** Persist class choice + skill XP in localStorage. */
+/** Persist class choice + skill XP + world location in localStorage. */
 
+import {
+  STARTER_CONTINENT,
+  isContinentId,
+  type ContinentId,
+} from "@/game/continents";
 import { getClass, type ClassId } from "@/game/classes";
 import {
   emptySkillXp,
@@ -16,6 +21,14 @@ export interface ValeCharacter {
   skillXp: Record<SkillId, number>;
   /** Combat / character XP (shell HUD). */
   combatXp: number;
+  /** Current continent (overworld or parent of hollow). */
+  continentId: ContinentId;
+  /** Continents unlocked by visiting via gates (or starter). */
+  discoveredContinents: ContinentId[];
+  /** null = overworld; otherwise hollow index on current continent. */
+  hollowIndex: number | null;
+  /** Overworld tile to return to when exiting a hollow. */
+  hollowReturn: { x: number; y: number } | null;
 }
 
 function isClassId(v: unknown): v is ClassId {
@@ -40,6 +53,32 @@ function sanitizeSkillXp(raw: unknown): Record<SkillId, number> {
   return base;
 }
 
+function sanitizeDiscovered(raw: unknown, current: ContinentId): ContinentId[] {
+  const set = new Set<ContinentId>([STARTER_CONTINENT, current]);
+  if (Array.isArray(raw)) {
+    for (const v of raw) {
+      if (isContinentId(v)) set.add(v);
+    }
+  }
+  return Array.from(set);
+}
+
+function sanitizeHollowReturn(
+  raw: unknown,
+): { x: number; y: number } | null {
+  if (!raw || typeof raw !== "object") return null;
+  const o = raw as Record<string, unknown>;
+  if (
+    typeof o.x === "number" &&
+    typeof o.y === "number" &&
+    Number.isFinite(o.x) &&
+    Number.isFinite(o.y)
+  ) {
+    return { x: Math.floor(o.x), y: Math.floor(o.y) };
+  }
+  return null;
+}
+
 export function loadCharacter(): ValeCharacter | null {
   try {
     const raw = localStorage.getItem(CHARACTER_STORAGE_KEY);
@@ -48,6 +87,15 @@ export function loadCharacter(): ValeCharacter | null {
     if (!data || typeof data !== "object") return null;
     const rec = data as Record<string, unknown>;
     if (!isClassId(rec.classId)) return null;
+    const continentId = isContinentId(rec.continentId)
+      ? rec.continentId
+      : STARTER_CONTINENT;
+    const hollowIndex =
+      typeof rec.hollowIndex === "number" &&
+      Number.isFinite(rec.hollowIndex) &&
+      rec.hollowIndex >= 0
+        ? Math.floor(rec.hollowIndex)
+        : null;
     return {
       classId: rec.classId,
       skillXp: sanitizeSkillXp(rec.skillXp),
@@ -55,6 +103,13 @@ export function loadCharacter(): ValeCharacter | null {
         typeof rec.combatXp === "number" && Number.isFinite(rec.combatXp)
           ? Math.max(0, Math.floor(rec.combatXp))
           : 0,
+      continentId,
+      discoveredContinents: sanitizeDiscovered(
+        rec.discoveredContinents,
+        continentId,
+      ),
+      hollowIndex,
+      hollowReturn: hollowIndex !== null ? sanitizeHollowReturn(rec.hollowReturn) : null,
     };
   } catch {
     return null;
@@ -72,7 +127,15 @@ export function createCharacter(classId: ClassId): ValeCharacter {
     const start = cls.startingLevels[id] ?? 1;
     skillXp[id] = xpForStartingLevel(start);
   }
-  const character: ValeCharacter = { classId, skillXp, combatXp: 0 };
+  const character: ValeCharacter = {
+    classId,
+    skillXp,
+    combatXp: 0,
+    continentId: STARTER_CONTINENT,
+    discoveredContinents: [STARTER_CONTINENT],
+    hollowIndex: null,
+    hollowReturn: null,
+  };
   saveCharacter(character);
   return character;
 }
@@ -93,5 +156,56 @@ export function awardSkillXp(
   const next = character.skillXp[skill] + gained;
   character.skillXp[skill] = next;
   saveCharacter(character);
+  return next;
+}
+
+/** Travel to another continent via gate; marks it discovered. */
+export function travelToContinent(
+  character: ValeCharacter,
+  target: ContinentId,
+): ValeCharacter {
+  const discovered = new Set(character.discoveredContinents);
+  discovered.add(target);
+  const next: ValeCharacter = {
+    ...character,
+    continentId: target,
+    discoveredContinents: Array.from(discovered),
+    hollowIndex: null,
+    hollowReturn: null,
+  };
+  saveCharacter(next);
+  return next;
+}
+
+/** Enter a hollow from an overworld entrance tile. */
+export function enterHollow(
+  character: ValeCharacter,
+  index: number,
+  returnTile: { x: number; y: number },
+): ValeCharacter {
+  const next: ValeCharacter = {
+    ...character,
+    hollowIndex: index,
+    hollowReturn: { ...returnTile },
+  };
+  saveCharacter(next);
+  return next;
+}
+
+/** Leave hollow back to overworld (keeps hollowReturn for one-shot spawn). */
+export function exitHollow(character: ValeCharacter): ValeCharacter {
+  const next: ValeCharacter = {
+    ...character,
+    hollowIndex: null,
+  };
+  saveCharacter(next);
+  return next;
+}
+
+/** Clear pending overworld return tile after spawning. */
+export function clearHollowReturn(character: ValeCharacter): ValeCharacter {
+  if (!character.hollowReturn) return character;
+  const next: ValeCharacter = { ...character, hollowReturn: null };
+  saveCharacter(next);
   return next;
 }
