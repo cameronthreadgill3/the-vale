@@ -28,6 +28,7 @@ import {
   GREEN_GATE_QUEST_TITLE,
   SPINE_QUEST_TITLE,
   PALE_QUEST_TITLE,
+  ASHEN_QUEST_TITLE,
   teethHudLines,
   ashwoodHudLines,
   hollowHudLines,
@@ -40,6 +41,7 @@ import {
   greenGateHudLines,
   spineHudLines,
   paleHudLines,
+  ashenHudLines,
   type TeethQuestProgress,
   type AshwoodQuestProgress,
   type HollowQuestProgress,
@@ -52,6 +54,7 @@ import {
   type GreenGateQuestProgress,
   type SpineQuestProgress,
   type PaleQuestProgress,
+  type AshenQuestProgress,
 } from "@/game/quests";
 
 function equippedLine(character: ValeCharacter): string {
@@ -65,6 +68,7 @@ function equippedLine(character: ValeCharacter): string {
 }
 
 function activeQuest(
+  ashenQuest: AshenQuestProgress | null,
   paleQuest: PaleQuestProgress | null,
   spineQuest: SpineQuestProgress | null,
   greenGateQuest: GreenGateQuestProgress | null,
@@ -78,6 +82,9 @@ function activeQuest(
   ashwoodQuest: AshwoodQuestProgress | null,
   teethQuest: TeethQuestProgress | null,
 ): { title: string; lines: string[] } | null {
+  if (ashenQuest?.status === "active") {
+    return { title: ASHEN_QUEST_TITLE, lines: ashenHudLines(ashenQuest) };
+  }
   if (paleQuest?.status === "active") {
     return { title: PALE_QUEST_TITLE, lines: paleHudLines(paleQuest) };
   }
@@ -134,6 +141,7 @@ export function GameShellHud({
   greenGateQuest,
   spineQuest,
   paleQuest,
+  ashenQuest,
   onOpenPack,
 }: {
   cls: ValeClass;
@@ -152,10 +160,12 @@ export function GameShellHud({
   greenGateQuest: GreenGateQuestProgress | null;
   spineQuest: SpineQuestProgress | null;
   paleQuest: PaleQuestProgress | null;
+  ashenQuest: AshenQuestProgress | null;
   onOpenPack: () => void;
 }) {
   const [muted, setMuted] = useState(isAudioMuted);
   const quest = activeQuest(
+    ashenQuest,
     paleQuest,
     spineQuest,
     greenGateQuest,

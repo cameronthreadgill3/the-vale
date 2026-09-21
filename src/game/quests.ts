@@ -21,6 +21,7 @@ export const WHARF_QUEST_ID = "the-wharf-answers" as const;
 export const GREEN_GATE_QUEST_ID = "the-green-gate-keeps" as const;
 export const SPINE_QUEST_ID = "the-spine-remembers" as const;
 export const PALE_QUEST_ID = "the-pale-gate-opens" as const;
+export const ASHEN_QUEST_ID = "the-ashen-gate-opens" as const;
 
 /** Depot clerk — Cress Ledger in folk.ts. */
 export const CRESS_FOLK_ID = "cress-ledger" as const;
@@ -30,6 +31,8 @@ export const OLD_REED_FOLK_ID = "old-reed" as const;
 export const CHOIR_KEEPER_FOLK_ID = "choir-keeper" as const;
 /** Nightglass Wharf captain — Captain Vesper in folk.ts. */
 export const VESPER_FOLK_ID = "nightglass-pilot" as const;
+/** Ashen Marches guide — Ash Pilgrim in folk.ts. */
+export const ASH_PILGRIM_FOLK_ID = "ash-pilgrim" as const;
 /** Mistmere Pier dock — sail to Sunken Choir. */
 export const MISTMERE_PIER_DOCK_ID = "mistmere-pier" as const;
 /** Choir Landing dock on Sunken Choir. */
@@ -51,7 +54,8 @@ export type QuestId =
   | typeof WHARF_QUEST_ID
   | typeof GREEN_GATE_QUEST_ID
   | typeof SPINE_QUEST_ID
-  | typeof PALE_QUEST_ID;
+  | typeof PALE_QUEST_ID
+  | typeof ASHEN_QUEST_ID;
 
 export type QuestStatus = "active" | "complete";
 
@@ -183,6 +187,19 @@ export interface PaleQuestProgress {
   ratDone: boolean;
 }
 
+export interface AshenQuestProgress {
+  id: typeof ASHEN_QUEST_ID;
+  status: QuestStatus;
+  /** Reached Ashen Marches overworld (travel, stand, or arrive via Pale / Thornreach gate). */
+  reachedAshen: boolean;
+  /** Talked to Ash Pilgrim on Ashen Marches. */
+  talkedAshPilgrim: boolean;
+  /** First successful Identify of a Bark Hound on Ashen Marches. */
+  identifiedHound: boolean;
+  /** Needle Rat defeated on Ashen Marches (target 1; continent-scoped). */
+  ratDone: boolean;
+}
+
 export type QuestLog = {
   [TEETH_QUEST_ID]?: TeethQuestProgress;
   [ASHWOOD_QUEST_ID]?: AshwoodQuestProgress;
@@ -196,6 +213,7 @@ export type QuestLog = {
   [GREEN_GATE_QUEST_ID]?: GreenGateQuestProgress;
   [SPINE_QUEST_ID]?: SpineQuestProgress;
   [PALE_QUEST_ID]?: PaleQuestProgress;
+  [ASHEN_QUEST_ID]?: AshenQuestProgress;
 };
 
 export const TEETH_RATS_NEEDED = 3;
@@ -214,6 +232,7 @@ export const WHARF_QUEST_TITLE = "The Wharf Answers";
 export const GREEN_GATE_QUEST_TITLE = "The Green Gate Keeps";
 export const SPINE_QUEST_TITLE = "The Spine Remembers";
 export const PALE_QUEST_TITLE = "The Pale Gate Opens";
+export const ASHEN_QUEST_TITLE = "The Ashen Gate Opens";
 
 export const TEETH_START_TOAST =
   "Rook: Ashwood edge has wrong prey - Identify first.";
@@ -286,6 +305,12 @@ export const PALE_START_TOAST =
 
 export const PALE_COMPLETE_LINE =
   "Rook: The pale gate opened, and the bone flats keep your footing. Survive. Learn. Progress — the far road runs white now.";
+
+export const ASHEN_START_TOAST =
+  "Rook: The pale gate opened, and the bone flats keep your footing. Walk the ashen gate beyond the pale — take the Ash Pilgrim's word, name the hound that packs the cinders, quiet one needle-rat on that steppe, and bring the ashen measure home. Survive. Learn. Progress.";
+
+export const ASHEN_COMPLETE_LINE =
+  "Rook: The ashen gate opened, and the cinder steppe knows your footing. Survive. Learn. Progress — the far road runs gray now.";
 
 export const TEETH_REWARDS = {
   gold: 28,
@@ -369,6 +394,13 @@ export const PALE_REWARDS = {
   combatXp: 170,
   skill: "distance" as SkillId,
   skillXp: 50,
+};
+
+export const ASHEN_REWARDS = {
+  gold: 90,
+  combatXp: 180,
+  skill: "shielding" as SkillId,
+  skillXp: 52,
 };
 
 export function loadQuestLog(): QuestLog {
@@ -514,6 +546,17 @@ export function emptyPaleQuest(): PaleQuestProgress {
     status: "active",
     reachedPale: false,
     identifiedMite: false,
+    ratDone: false,
+  };
+}
+
+export function emptyAshenQuest(): AshenQuestProgress {
+  return {
+    id: ASHEN_QUEST_ID,
+    status: "active",
+    reachedAshen: false,
+    talkedAshPilgrim: false,
+    identifiedHound: false,
     ratDone: false,
   };
 }
@@ -709,6 +752,21 @@ export function sanitizeQuestLog(raw: unknown): QuestLog {
     };
   }
 
+  const ashen = obj[ASHEN_QUEST_ID];
+  if (ashen && typeof ashen === "object") {
+    const a = ashen as Record<string, unknown>;
+    const status: QuestStatus =
+      a.status === "complete" ? "complete" : "active";
+    log[ASHEN_QUEST_ID] = {
+      id: ASHEN_QUEST_ID,
+      status,
+      reachedAshen: Boolean(a.reachedAshen),
+      talkedAshPilgrim: Boolean(a.talkedAshPilgrim),
+      identifiedHound: Boolean(a.identifiedHound),
+      ratDone: Boolean(a.ratDone),
+    };
+  }
+
   return log;
 }
 
@@ -782,6 +840,12 @@ export function getPaleQuest(
   return log?.[PALE_QUEST_ID] ?? null;
 }
 
+export function getAshenQuest(
+  log: QuestLog | undefined,
+): AshenQuestProgress | null {
+  return log?.[ASHEN_QUEST_ID] ?? null;
+}
+
 export function isTeethActive(log: QuestLog | undefined): boolean {
   const q = getTeethQuest(log);
   return Boolean(q && q.status === "active");
@@ -839,6 +903,11 @@ export function isSpineActive(log: QuestLog | undefined): boolean {
 
 export function isPaleActive(log: QuestLog | undefined): boolean {
   const q = getPaleQuest(log);
+  return Boolean(q && q.status === "active");
+}
+
+export function isAshenActive(log: QuestLog | undefined): boolean {
+  const q = getAshenQuest(log);
   return Boolean(q && q.status === "active");
 }
 
@@ -903,6 +972,12 @@ export function spineObjectivesMet(q: SpineQuestProgress): boolean {
 
 export function paleObjectivesMet(q: PaleQuestProgress): boolean {
   return q.reachedPale && q.identifiedMite && q.ratDone;
+}
+
+export function ashenObjectivesMet(q: AshenQuestProgress): boolean {
+  return (
+    q.reachedAshen && q.talkedAshPilgrim && q.identifiedHound && q.ratDone
+  );
 }
 
 /** HUD lines for Teeth sticky panel. */
@@ -1139,6 +1214,30 @@ export function paleHudLines(q: PaleQuestProgress): string[] {
   ];
 }
 
+/** HUD lines for The Ashen Gate Opens. */
+export function ashenHudLines(q: AshenQuestProgress): string[] {
+  if (q.status === "complete") {
+    return ["Complete - The ashen gate opened"];
+  }
+  return [
+    q.reachedAshen
+      ? "[done] Reach Ashen Marches"
+      : "[ ] Reach Ashen Marches (Pale Wastes gate)",
+    q.talkedAshPilgrim
+      ? "[done] Talk to Ash Pilgrim"
+      : "[ ] Talk to the Ash Pilgrim (Ashen Marches)",
+    q.identifiedHound
+      ? "[done] Identify Bark Hound"
+      : "[ ] Identify a Bark Hound (near look)",
+    q.ratDone
+      ? "[done] Defeat Needle Rat 1/1"
+      : "[ ] Defeat Needle Rat 0/1 (Ashen Marches)",
+    q.reachedAshen && q.talkedAshPilgrim && q.identifiedHound && q.ratDone
+      ? "[ ] Return to Rook (the ashen measure)"
+      : "[ ] Return to Rook with the ashen measure",
+  ];
+}
+
 
 export type QuestEventResult = {
   log: QuestLog;
@@ -1167,6 +1266,8 @@ export type QuestEventResult = {
   startedSpine?: boolean;
   /** The Pale Gate Opens auto-started after The Spine Remembers. */
   startedPale?: boolean;
+  /** The Ashen Gate Opens auto-started after The Pale Gate Opens. */
+  startedAshen?: boolean;
 };
 
 /** If Teeth is complete and Ashwood missing, start Ashwood Watch. */
@@ -1367,6 +1468,24 @@ export function ensurePaleAfterSpine(log: QuestLog): {
   };
 }
 
+/** If The Pale Gate Opens is complete and The Ashen Gate Opens missing, start it. */
+export function ensureAshenAfterPale(log: QuestLog): {
+  log: QuestLog;
+  started: boolean;
+} {
+  const pale = getPaleQuest(log);
+  if (!pale || pale.status !== "complete") {
+    return { log, started: false };
+  }
+  if (getAshenQuest(log)) {
+    return { log, started: false };
+  }
+  return {
+    log: withAshenQuest(log, emptyAshenQuest()),
+    started: true,
+  };
+}
+
 export function withTeethQuest(
   log: QuestLog | undefined,
   quest: TeethQuestProgress,
@@ -1451,6 +1570,13 @@ export function withPaleQuest(
   return { ...(log ?? {}), [PALE_QUEST_ID]: quest };
 }
 
+export function withAshenQuest(
+  log: QuestLog | undefined,
+  quest: AshenQuestProgress,
+): QuestLog {
+  return { ...(log ?? {}), [ASHEN_QUEST_ID]: quest };
+}
+
 function finishTeethIfReady(
   log: QuestLog,
   next: TeethQuestProgress,
@@ -1514,6 +1640,24 @@ export function applyIdentify(
   kindId: EnemyKindId,
   continentId?: ContinentId,
 ): QuestEventResult | null {
+  const ashen = getAshenQuest(log);
+  if (
+    ashen &&
+    ashen.status === "active" &&
+    !ashen.identifiedHound &&
+    kindId === "bark-hound" &&
+    continentId === "ashen-marches"
+  ) {
+    return {
+      log: withAshenQuest(log, {
+        ...ashen,
+        reachedAshen: true,
+        identifiedHound: true,
+      }),
+      toast: "Identified: Bark Hound / F",
+    };
+  }
+
   const pale = getPaleQuest(log);
   if (
     pale &&
@@ -1653,6 +1797,26 @@ export function applyEnemyKill(
   kindId: EnemyKindId,
   continentId?: ContinentId,
 ): QuestEventResult | null {
+  const ashen = getAshenQuest(log);
+  if (
+    ashen &&
+    ashen.status === "active" &&
+    kindId === "needle-rat" &&
+    continentId === "ashen-marches" &&
+    !ashen.ratDone
+  ) {
+    return {
+      log: withAshenQuest(log, {
+        ...ashen,
+        reachedAshen: true,
+        ratDone: true,
+      }),
+      toast: ashen.identifiedHound
+        ? "Needle Rat 1/1 — Return to Rook"
+        : "Needle Rat 1/1 — Name the Bark Hound",
+    };
+  }
+
   const pale = getPaleQuest(log);
   if (
     pale &&
@@ -2193,10 +2357,63 @@ export function applyPaleRookTalk(log: QuestLog): QuestEventResult | null {
   const q = getPaleQuest(log);
   if (!q || q.status !== "active") return null;
   if (!paleObjectivesMet(q)) return null;
+  let out = withPaleQuest(log, { ...q, status: "complete" });
+  const ensured = ensureAshenAfterPale(out);
+  out = ensured.log;
   return {
-    log: withPaleQuest(log, { ...q, status: "complete" }),
-    toast: PALE_COMPLETE_LINE,
+    log: out,
+    toast: ensured.started ? ASHEN_START_TOAST : PALE_COMPLETE_LINE,
     completedId: PALE_QUEST_ID,
+    startedAshen: ensured.started,
+  };
+}
+
+/** Mark Ashen Marches reached for The Ashen Gate Opens (travel, stand, or arrival). */
+export function applyAshenReached(log: QuestLog): QuestEventResult | null {
+  const q = getAshenQuest(log);
+  if (!q || q.status !== "active" || q.reachedAshen) {
+    return null;
+  }
+  return {
+    log: withAshenQuest(log, { ...q, reachedAshen: true }),
+    toast:
+      q.talkedAshPilgrim && q.identifiedHound && q.ratDone
+        ? "Ashen Marches marked — Return to Rook with the ashen measure"
+        : q.talkedAshPilgrim && q.identifiedHound
+          ? "Ashen Marches marked — Quiet one needle-rat on that steppe"
+          : q.talkedAshPilgrim
+            ? "Ashen Marches marked — Name the hound that packs the cinders"
+            : "Ashen Marches marked — Take the Ash Pilgrim's word",
+  };
+}
+
+/** Talk to Ash Pilgrim on Ashen Marches. */
+export function applyAshPilgrimTalk(log: QuestLog): QuestEventResult | null {
+  const q = getAshenQuest(log);
+  if (!q || q.status !== "active" || q.talkedAshPilgrim) {
+    return null;
+  }
+  const next: AshenQuestProgress = {
+    ...q,
+    reachedAshen: true,
+    talkedAshPilgrim: true,
+  };
+  return {
+    log: withAshenQuest(log, next),
+    toast:
+      "Ash Pilgrim: Cinders remember the old wars. Name the hound that packs the steppe, then quiet one needle-rat.",
+  };
+}
+
+/** Complete The Ashen Gate Opens when talking to Rook after the cinder steppe is measured. */
+export function applyAshenRookTalk(log: QuestLog): QuestEventResult | null {
+  const q = getAshenQuest(log);
+  if (!q || q.status !== "active") return null;
+  if (!ashenObjectivesMet(q)) return null;
+  return {
+    log: withAshenQuest(log, { ...q, status: "complete" }),
+    toast: ASHEN_COMPLETE_LINE,
+    completedId: ASHEN_QUEST_ID,
   };
 }
 
@@ -2246,6 +2463,26 @@ export function applyCairnInspect(
 
 /** Rook line while sticky quests are active / complete. */
 export function rookQuestLine(log: QuestLog | undefined): string | null {
+  const ashen = getAshenQuest(log);
+  if (ashen) {
+    if (ashen.status === "complete") {
+      return ASHEN_COMPLETE_LINE.replace(/^Rook:\s*/, "");
+    }
+    if (!ashen.reachedAshen) {
+      return "The pale gate opened, and the bone flats keep your footing. Walk the ashen gate beyond the pale — take the Ash Pilgrim's word, name the hound that packs the cinders, quiet one needle-rat on that steppe, and bring the ashen measure home.";
+    }
+    if (!ashen.talkedAshPilgrim) {
+      return "The ashen gate is underfoot. Take the Ash Pilgrim's word, then name the hound that packs the cinders.";
+    }
+    if (!ashen.identifiedHound) {
+      return "The pilgrim's word is taken. Identify a Bark Hound on Ashen Marches — Name and Rank — then quiet one needle-rat on that steppe.";
+    }
+    if (!ashen.ratDone) {
+      return "The hound is named. Quiet one Needle Rat on the Ashen Marches, then bring the ashen measure home.";
+    }
+    return "The ashen gate opened. Survive. Learn. Progress — the far road runs gray when you tell me.";
+  }
+
   const pale = getPaleQuest(log);
   if (pale) {
     if (pale.status === "complete") {
