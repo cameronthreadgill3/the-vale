@@ -83,6 +83,9 @@ import {
   WHARF_REMEMBERS_START_TOAST,
   WHARF_REMEMBERS_REWARDS,
   WHARF_REMEMBERS_COMPLETE_LINE,
+  MERE_REMEMBERS_START_TOAST,
+  MERE_REMEMBERS_REWARDS,
+  MERE_REMEMBERS_COMPLETE_LINE,
   TEETH_QUEST_ID,
   ASHWOOD_QUEST_ID,
   HOLLOW_QUEST_ID,
@@ -101,6 +104,7 @@ import {
   CHOIR_REMEMBERS_QUEST_ID,
   EDGE_REMEMBERS_QUEST_ID,
   WHARF_REMEMBERS_QUEST_ID,
+  MERE_REMEMBERS_QUEST_ID,
   CRESS_FOLK_ID,
   OLD_REED_FOLK_ID,
   CHOIR_KEEPER_FOLK_ID,
@@ -125,6 +129,7 @@ import {
   getChoirRemembersQuest,
   getEdgeRemembersQuest,
   getWharfRemembersQuest,
+  getMereRemembersQuest,
   applyIdentify,
   applyEnemyKill,
   applyCairnInspect,
@@ -166,6 +171,8 @@ import {
   applyEdgeRemembersRookTalk,
   applyWharfRemembersReached,
   applyWharfRemembersRookTalk,
+  applyMereRemembersReached,
+  applyMereRemembersRookTalk,
   withTeethQuest,
   ensureAshwoodAfterTeeth,
   ensureHollowAfterAshwood,
@@ -184,6 +191,7 @@ import {
   ensureChoirRemembersAfterCoil,
   ensureEdgeRemembersAfterChoir,
   ensureWharfRemembersAfterEdge,
+  ensureMereRemembersAfterWharf,
   rookQuestLine,
   loadQuestLog,
   saveQuestLog,
@@ -469,6 +477,18 @@ export function GameApp() {
             return true;
           }
         }
+        const mereRemembers = applyMereRemembersReached(loadQuestLog());
+        if (mereRemembers) {
+          saveQuestLog(mereRemembers.log);
+          if (mereRemembers.toast) {
+            showToast(mereRemembers.toast);
+            window.setTimeout(
+              () => setToast((t) => (t === mereRemembers.toast ? null : t)),
+              2800,
+            );
+            return true;
+          }
+        }
       }
       if (target === "sunken-choir") {
         const choirLand = applyChoirCountsChoirReached(loadQuestLog());
@@ -723,6 +743,7 @@ export function GameApp() {
     }
     if (folkId === "rook" && character) {
       const turnIn =
+        applyMereRemembersRookTalk(loadQuestLog()) ??
         applyWharfRemembersRookTalk(loadQuestLog()) ??
         applyEdgeRemembersRookTalk(loadQuestLog()) ??
         applyChoirRemembersRookTalk(loadQuestLog()) ??
@@ -746,7 +767,21 @@ export function GameApp() {
             ...prev,
             skillXp: { ...prev.skillXp },
           };
-          if (turnIn.completedId === WHARF_REMEMBERS_QUEST_ID) {
+          if (turnIn.completedId === MERE_REMEMBERS_QUEST_ID) {
+            next = awardCombatXp(next, MERE_REMEMBERS_REWARDS.combatXp);
+            next = { ...next, skillXp: { ...next.skillXp } };
+            awardSkillXp(
+              next,
+              MERE_REMEMBERS_REWARDS.skill,
+              MERE_REMEMBERS_REWARDS.skillXp,
+            );
+            next = setGold(next, next.gold + MERE_REMEMBERS_REWARDS.gold);
+            next = { ...next, skillXp: { ...next.skillXp } };
+            queueMicrotask(() => {
+              showToast(MERE_REMEMBERS_COMPLETE_LINE);
+              setSkillTick((t) => t + 1);
+            });
+          } else if (turnIn.completedId === WHARF_REMEMBERS_QUEST_ID) {
             next = awardCombatXp(next, WHARF_REMEMBERS_REWARDS.combatXp);
             next = { ...next, skillXp: { ...next.skillXp } };
             awardSkillXp(
@@ -757,7 +792,11 @@ export function GameApp() {
             next = setGold(next, next.gold + WHARF_REMEMBERS_REWARDS.gold);
             next = { ...next, skillXp: { ...next.skillXp } };
             queueMicrotask(() => {
-              showToast(WHARF_REMEMBERS_COMPLETE_LINE);
+              showToast(
+                turnIn.startedMereRemembers
+                  ? MERE_REMEMBERS_START_TOAST
+                  : WHARF_REMEMBERS_COMPLETE_LINE,
+              );
               setSkillTick((t) => t + 1);
             });
           } else if (turnIn.completedId === EDGE_REMEMBERS_QUEST_ID) {
@@ -1224,6 +1263,14 @@ export function GameApp() {
             return;
           }
         }
+        const mereRemembers = applyMereRemembersReached(loadQuestLog());
+        if (mereRemembers) {
+          saveQuestLog(mereRemembers.log);
+          if (mereRemembers.toast) {
+            showToast(mereRemembers.toast);
+            return;
+          }
+        }
       }
       if (dest === "sunken-choir") {
         const choirLand = applyChoirCountsChoirReached(loadQuestLog());
@@ -1560,6 +1607,19 @@ export function GameApp() {
     );
   }, [character]);
 
+  // Quest 19: auto-start The Mere Remembers once The Wharf Remembers is complete.
+  useEffect(() => {
+    if (!character) return;
+    const ensured = ensureMereRemembersAfterWharf(loadQuestLog());
+    if (!ensured.started) return;
+    saveQuestLog(ensured.log);
+    setToast(MERE_REMEMBERS_START_TOAST);
+    window.setTimeout(
+      () => setToast((t) => (t === MERE_REMEMBERS_START_TOAST ? null : t)),
+      3600,
+    );
+  }, [character]);
+
   // The Edge Remembers: mark Thornreach overworld (usually already home after Rook).
   useEffect(() => {
     if (!character) return;
@@ -1592,6 +1652,19 @@ export function GameApp() {
     if (!character) return;
     if (character.continentId !== "mistmere") return;
     const result = applyChoirCountsMistmereReached(loadQuestLog());
+    if (!result) return;
+    saveQuestLog(result.log);
+    if (result.toast) {
+      setToast(result.toast);
+      window.setTimeout(() => setToast((t) => (t === result.toast ? null : t)), 2800);
+    }
+  }, [character]);
+
+  // The Mere Remembers: mark Mistmere arrival (gate / travel / stand).
+  useEffect(() => {
+    if (!character) return;
+    if (character.continentId !== "mistmere") return;
+    const result = applyMereRemembersReached(loadQuestLog());
     if (!result) return;
     saveQuestLog(result.log);
     if (result.toast) {
@@ -1974,7 +2047,25 @@ export function GameApp() {
         next = setGold(next, next.gold + WHARF_REMEMBERS_REWARDS.gold);
         next = { ...next, skillXp: { ...next.skillXp } };
         queueMicrotask(() => {
-          showToast(WHARF_REMEMBERS_COMPLETE_LINE);
+          showToast(
+            result.startedMereRemembers
+              ? MERE_REMEMBERS_START_TOAST
+              : WHARF_REMEMBERS_COMPLETE_LINE,
+          );
+          setSkillTick((t) => t + 1);
+        });
+      } else if (result.completedId === MERE_REMEMBERS_QUEST_ID) {
+        next = awardCombatXp(next, MERE_REMEMBERS_REWARDS.combatXp);
+        next = { ...next, skillXp: { ...next.skillXp } };
+        awardSkillXp(
+          next,
+          MERE_REMEMBERS_REWARDS.skill,
+          MERE_REMEMBERS_REWARDS.skillXp,
+        );
+        next = setGold(next, next.gold + MERE_REMEMBERS_REWARDS.gold);
+        next = { ...next, skillXp: { ...next.skillXp } };
+        queueMicrotask(() => {
+          showToast(MERE_REMEMBERS_COMPLETE_LINE);
           setSkillTick((t) => t + 1);
         });
       } else if (result.toast) {
@@ -2312,6 +2403,7 @@ export function GameApp() {
       choirRemembersQuest={getChoirRemembersQuest(loadQuestLog())}
       edgeRemembersQuest={getEdgeRemembersQuest(loadQuestLog())}
       wharfRemembersQuest={getWharfRemembersQuest(loadQuestLog())}
+      mereRemembersQuest={getMereRemembersQuest(loadQuestLog())}
       onVitals={handleVitals}
       onPlayerDeath={handlePlayerDeath}
       onPassivePrimary={(amount) => {

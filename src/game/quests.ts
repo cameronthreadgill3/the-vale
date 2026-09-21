@@ -27,6 +27,7 @@ export const COIL_QUEST_ID = "the-coil-remembers" as const;
 export const CHOIR_REMEMBERS_QUEST_ID = "the-choir-remembers" as const;
 export const EDGE_REMEMBERS_QUEST_ID = "the-edge-remembers" as const;
 export const WHARF_REMEMBERS_QUEST_ID = "the-wharf-remembers" as const;
+export const MERE_REMEMBERS_QUEST_ID = "the-mere-remembers" as const;
 
 /** Depot clerk — Cress Ledger in folk.ts. */
 export const CRESS_FOLK_ID = "cress-ledger" as const;
@@ -65,7 +66,8 @@ export type QuestId =
   | typeof COIL_QUEST_ID
   | typeof CHOIR_REMEMBERS_QUEST_ID
   | typeof EDGE_REMEMBERS_QUEST_ID
-  | typeof WHARF_REMEMBERS_QUEST_ID;
+  | typeof WHARF_REMEMBERS_QUEST_ID
+  | typeof MERE_REMEMBERS_QUEST_ID;
 
 export type QuestStatus = "active" | "complete";
 
@@ -267,6 +269,17 @@ export interface WharfRemembersQuestProgress {
   ratDone: boolean;
 }
 
+export interface MereRemembersQuestProgress {
+  id: typeof MERE_REMEMBERS_QUEST_ID;
+  status: QuestStatus;
+  /** Arrived on Mistmere overworld (gate, travel, or stand). */
+  reachedMistmere: boolean;
+  /** First successful Identify of a Briar Mite on Mistmere. */
+  identifiedMite: boolean;
+  /** Bark Hound defeated on Mistmere (target 1; continent-scoped). */
+  houndDone: boolean;
+}
+
 export type QuestLog = {
   [TEETH_QUEST_ID]?: TeethQuestProgress;
   [ASHWOOD_QUEST_ID]?: AshwoodQuestProgress;
@@ -286,6 +299,7 @@ export type QuestLog = {
   [CHOIR_REMEMBERS_QUEST_ID]?: ChoirRemembersQuestProgress;
   [EDGE_REMEMBERS_QUEST_ID]?: EdgeRemembersQuestProgress;
   [WHARF_REMEMBERS_QUEST_ID]?: WharfRemembersQuestProgress;
+  [MERE_REMEMBERS_QUEST_ID]?: MereRemembersQuestProgress;
 };
 
 export const TEETH_RATS_NEEDED = 3;
@@ -310,6 +324,7 @@ export const COIL_QUEST_TITLE = "The Coil Remembers";
 export const CHOIR_REMEMBERS_QUEST_TITLE = "The Choir Remembers";
 export const EDGE_REMEMBERS_QUEST_TITLE = "The Edge Remembers";
 export const WHARF_REMEMBERS_QUEST_TITLE = "The Wharf Remembers";
+export const MERE_REMEMBERS_QUEST_TITLE = "The Mere Remembers";
 
 export const TEETH_START_TOAST =
   "Rook: Ashwood edge has wrong prey - Identify first.";
@@ -418,6 +433,12 @@ export const WHARF_REMEMBERS_START_TOAST =
 
 export const WHARF_REMEMBERS_COMPLETE_LINE =
   "Rook: The Wharf remembers your footing. Soft prey named, the shore pack quieted. Survive. Learn. Progress — the far road holds the tide again.";
+
+export const MERE_REMEMBERS_START_TOAST =
+  "Rook: The Wharf remembers your footing. The tide's measure washed back to the reed-mere — walk the Mistmere gate, name the briar-mite that skitters the fog, quiet one bark-hound packing the mere, and bring the Mere's measure home. Survive. Learn. Progress.";
+
+export const MERE_REMEMBERS_COMPLETE_LINE =
+  "Rook: The Mere remembers your footing. Soft prey named, the mere pack quieted. Survive. Learn. Progress — the far road holds the fog again.";
 
 export const TEETH_REWARDS = {
   gold: 28,
@@ -543,6 +564,13 @@ export const WHARF_REMEMBERS_REWARDS = {
   combatXp: 220,
   skill: "magic" as SkillId,
   skillXp: 62,
+};
+
+export const MERE_REMEMBERS_REWARDS = {
+  gold: 115,
+  combatXp: 230,
+  skill: "shielding" as SkillId,
+  skillXp: 65,
 };
 
 export function loadQuestLog(): QuestLog {
@@ -751,6 +779,16 @@ export function emptyWharfRemembersQuest(): WharfRemembersQuestProgress {
     reachedNightglass: false,
     identifiedFox: false,
     ratDone: false,
+  };
+}
+
+export function emptyMereRemembersQuest(): MereRemembersQuestProgress {
+  return {
+    id: MERE_REMEMBERS_QUEST_ID,
+    status: "active",
+    reachedMistmere: false,
+    identifiedMite: false,
+    houndDone: false,
   };
 }
 
@@ -1031,6 +1069,20 @@ export function sanitizeQuestLog(raw: unknown): QuestLog {
     };
   }
 
+  const mereRemembers = obj[MERE_REMEMBERS_QUEST_ID];
+  if (mereRemembers && typeof mereRemembers === "object") {
+    const m = mereRemembers as Record<string, unknown>;
+    const status: QuestStatus =
+      m.status === "complete" ? "complete" : "active";
+    log[MERE_REMEMBERS_QUEST_ID] = {
+      id: MERE_REMEMBERS_QUEST_ID,
+      status,
+      reachedMistmere: Boolean(m.reachedMistmere),
+      identifiedMite: Boolean(m.identifiedMite),
+      houndDone: Boolean(m.houndDone),
+    };
+  }
+
   return log;
 }
 
@@ -1140,6 +1192,12 @@ export function getWharfRemembersQuest(
   return log?.[WHARF_REMEMBERS_QUEST_ID] ?? null;
 }
 
+export function getMereRemembersQuest(
+  log: QuestLog | undefined,
+): MereRemembersQuestProgress | null {
+  return log?.[MERE_REMEMBERS_QUEST_ID] ?? null;
+}
+
 export function isTeethActive(log: QuestLog | undefined): boolean {
   const q = getTeethQuest(log);
   return Boolean(q && q.status === "active");
@@ -1227,6 +1285,11 @@ export function isEdgeRemembersActive(log: QuestLog | undefined): boolean {
 
 export function isWharfRemembersActive(log: QuestLog | undefined): boolean {
   const q = getWharfRemembersQuest(log);
+  return Boolean(q && q.status === "active");
+}
+
+export function isMereRemembersActive(log: QuestLog | undefined): boolean {
+  const q = getMereRemembersQuest(log);
   return Boolean(q && q.status === "active");
 }
 
@@ -1323,6 +1386,12 @@ export function wharfRemembersObjectivesMet(
   q: WharfRemembersQuestProgress,
 ): boolean {
   return q.reachedNightglass && q.identifiedFox && q.ratDone;
+}
+
+export function mereRemembersObjectivesMet(
+  q: MereRemembersQuestProgress,
+): boolean {
+  return q.reachedMistmere && q.identifiedMite && q.houndDone;
 }
 
 /** HUD lines for Teeth sticky panel. */
@@ -1691,6 +1760,27 @@ export function wharfRemembersHudLines(q: WharfRemembersQuestProgress): string[]
   ];
 }
 
+/** HUD lines for The Mere Remembers. */
+export function mereRemembersHudLines(q: MereRemembersQuestProgress): string[] {
+  if (q.status === "complete") {
+    return ["Complete - The Mere remembers"];
+  }
+  return [
+    q.reachedMistmere
+      ? "[done] Reach Mistmere"
+      : "[ ] Reach Mistmere (gate / travel)",
+    q.identifiedMite
+      ? "[done] Identify Briar Mite"
+      : "[ ] Identify a Briar Mite (near look)",
+    q.houndDone
+      ? "[done] Defeat Bark Hound 1/1"
+      : "[ ] Defeat Bark Hound 0/1 (Mistmere)",
+    q.reachedMistmere && q.identifiedMite && q.houndDone
+      ? "[ ] Return to Rook (the Mere's measure)"
+      : "[ ] Return to Rook with the Mere's measure",
+  ];
+}
+
 
 export type QuestEventResult = {
   log: QuestLog;
@@ -1731,6 +1821,8 @@ export type QuestEventResult = {
   startedEdgeRemembers?: boolean;
   /** The Wharf Remembers auto-started after The Edge Remembers. */
   startedWharfRemembers?: boolean;
+  /** The Mere Remembers auto-started after The Wharf Remembers. */
+  startedMereRemembers?: boolean;
 };
 
 /** If Teeth is complete and Ashwood missing, start Ashwood Watch. */
@@ -2039,6 +2131,24 @@ export function ensureWharfRemembersAfterEdge(log: QuestLog): {
   };
 }
 
+/** If The Wharf Remembers is complete and The Mere Remembers missing, start it. */
+export function ensureMereRemembersAfterWharf(log: QuestLog): {
+  log: QuestLog;
+  started: boolean;
+} {
+  const wharf = getWharfRemembersQuest(log);
+  if (!wharf || wharf.status !== "complete") {
+    return { log, started: false };
+  }
+  if (getMereRemembersQuest(log)) {
+    return { log, started: false };
+  }
+  return {
+    log: withMereRemembersQuest(log, emptyMereRemembersQuest()),
+    started: true,
+  };
+}
+
 export function withTeethQuest(
   log: QuestLog | undefined,
   quest: TeethQuestProgress,
@@ -2165,6 +2275,13 @@ export function withWharfRemembersQuest(
   return { ...(log ?? {}), [WHARF_REMEMBERS_QUEST_ID]: quest };
 }
 
+export function withMereRemembersQuest(
+  log: QuestLog | undefined,
+  quest: MereRemembersQuestProgress,
+): QuestLog {
+  return { ...(log ?? {}), [MERE_REMEMBERS_QUEST_ID]: quest };
+}
+
 function finishTeethIfReady(
   log: QuestLog,
   next: TeethQuestProgress,
@@ -2228,6 +2345,24 @@ export function applyIdentify(
   kindId: EnemyKindId,
   continentId?: ContinentId,
 ): QuestEventResult | null {
+  const mereRemembers = getMereRemembersQuest(log);
+  if (
+    mereRemembers &&
+    mereRemembers.status === "active" &&
+    !mereRemembers.identifiedMite &&
+    kindId === "briar-mite" &&
+    continentId === "mistmere"
+  ) {
+    return {
+      log: withMereRemembersQuest(log, {
+        ...mereRemembers,
+        reachedMistmere: true,
+        identifiedMite: true,
+      }),
+      toast: "Identified: Briar Mite / F",
+    };
+  }
+
   const wharfRemembers = getWharfRemembersQuest(log);
   if (
     wharfRemembers &&
@@ -2475,6 +2610,26 @@ export function applyEnemyKill(
   kindId: EnemyKindId,
   continentId?: ContinentId,
 ): QuestEventResult | null {
+  const mereRemembers = getMereRemembersQuest(log);
+  if (
+    mereRemembers &&
+    mereRemembers.status === "active" &&
+    kindId === "bark-hound" &&
+    continentId === "mistmere" &&
+    !mereRemembers.houndDone
+  ) {
+    return {
+      log: withMereRemembersQuest(log, {
+        ...mereRemembers,
+        reachedMistmere: true,
+        houndDone: true,
+      }),
+      toast: mereRemembers.identifiedMite
+        ? "Bark Hound 1/1 — Return to Rook"
+        : "Bark Hound 1/1 — Name the Briar Mite",
+    };
+  }
+
   const wharfRemembers = getWharfRemembersQuest(log);
   if (
     wharfRemembers &&
@@ -3389,10 +3544,49 @@ export function applyWharfRemembersRookTalk(
   const q = getWharfRemembersQuest(log);
   if (!q || q.status !== "active") return null;
   if (!wharfRemembersObjectivesMet(q)) return null;
+  let out = withWharfRemembersQuest(log, { ...q, status: "complete" });
+  const ensured = ensureMereRemembersAfterWharf(out);
+  out = ensured.log;
   return {
-    log: withWharfRemembersQuest(log, { ...q, status: "complete" }),
-    toast: WHARF_REMEMBERS_COMPLETE_LINE,
+    log: out,
+    toast: ensured.started
+      ? MERE_REMEMBERS_START_TOAST
+      : WHARF_REMEMBERS_COMPLETE_LINE,
     completedId: WHARF_REMEMBERS_QUEST_ID,
+    startedMereRemembers: ensured.started,
+  };
+}
+
+/** Mark Mistmere overworld reached for The Mere Remembers (gate, travel, or stand). */
+export function applyMereRemembersReached(
+  log: QuestLog,
+): QuestEventResult | null {
+  const q = getMereRemembersQuest(log);
+  if (!q || q.status !== "active" || q.reachedMistmere) {
+    return null;
+  }
+  return {
+    log: withMereRemembersQuest(log, { ...q, reachedMistmere: true }),
+    toast:
+      q.identifiedMite && q.houndDone
+        ? "Mistmere marked — Return to Rook with the Mere's measure"
+        : q.identifiedMite
+          ? "Mistmere marked — Quiet one bark-hound packing the mere"
+          : "Mistmere marked — Name the briar-mite that skitters the fog",
+  };
+}
+
+/** Complete The Mere Remembers when talking to Rook after the mere is measured. */
+export function applyMereRemembersRookTalk(
+  log: QuestLog,
+): QuestEventResult | null {
+  const q = getMereRemembersQuest(log);
+  if (!q || q.status !== "active") return null;
+  if (!mereRemembersObjectivesMet(q)) return null;
+  return {
+    log: withMereRemembersQuest(log, { ...q, status: "complete" }),
+    toast: MERE_REMEMBERS_COMPLETE_LINE,
+    completedId: MERE_REMEMBERS_QUEST_ID,
   };
 }
 
@@ -3442,6 +3636,23 @@ export function applyCairnInspect(
 
 /** Rook line while sticky quests are active / complete. */
 export function rookQuestLine(log: QuestLog | undefined): string | null {
+  const mereRemembers = getMereRemembersQuest(log);
+  if (mereRemembers) {
+    if (mereRemembers.status === "complete") {
+      return MERE_REMEMBERS_COMPLETE_LINE.replace(/^Rook:\s*/, "");
+    }
+    if (!mereRemembers.reachedMistmere) {
+      return "The Wharf remembers your footing. The tide's measure washed back to the reed-mere — walk the Mistmere gate, name the briar-mite that skitters the fog, quiet one bark-hound packing the mere, and bring the Mere's measure home.";
+    }
+    if (!mereRemembers.identifiedMite) {
+      return "The Mere is underfoot. Identify a Briar Mite on Mistmere — Name and Rank — then quiet one bark-hound packing the mere.";
+    }
+    if (!mereRemembers.houndDone) {
+      return "The mite is named. Quiet one Bark Hound packing the Mistmere fog, then bring the Mere's measure home.";
+    }
+    return "The Mere remembers. Survive. Learn. Progress — the far road holds the fog again when you tell me.";
+  }
+
   const wharfRemembers = getWharfRemembersQuest(log);
   if (wharfRemembers) {
     if (wharfRemembers.status === "complete") {
