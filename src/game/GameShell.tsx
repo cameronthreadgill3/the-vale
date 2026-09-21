@@ -24,7 +24,7 @@ import { CornerTabs } from "@/game/ui/CornerTabs";
 import { GameShellHud } from "@/game/ui/GameShellHud";
 import { STARTER_TIP, STARTER_TIP_MS } from "@/game/wayfinding";
 import type { EnemyKindId } from "@/game/enemies";
-import type { TeethQuestProgress, AshwoodQuestProgress, HollowQuestProgress, GateWatchQuestProgress, MistmereQuestProgress, WatchlineQuestProgress, AshveilQuestProgress, ChoirCountsQuestProgress, WharfQuestProgress, GreenGateQuestProgress, SpineQuestProgress, PaleQuestProgress, AshenQuestProgress, EmbercoilQuestProgress, CoilQuestProgress, ChoirRemembersQuestProgress, EdgeRemembersQuestProgress, WharfRemembersQuestProgress, MereRemembersQuestProgress } from "@/game/quests";
+import type { TeethQuestProgress, AshwoodQuestProgress, HollowQuestProgress, GateWatchQuestProgress, MistmereQuestProgress, WatchlineQuestProgress, AshveilQuestProgress, ChoirCountsQuestProgress, WharfQuestProgress, GreenGateQuestProgress, SpineQuestProgress, PaleQuestProgress, AshenQuestProgress, EmbercoilQuestProgress, CoilQuestProgress, ChoirRemembersQuestProgress, EdgeRemembersQuestProgress, WharfRemembersQuestProgress, MereRemembersQuestProgress, PaleRemembersQuestProgress } from "@/game/quests";
 import type { ItemId, EquipSlot } from "@/game/items";
 
 export function GameShell({
@@ -102,6 +102,7 @@ export function GameShell({
   edgeRemembersQuest,
   wharfRemembersQuest,
   mereRemembersQuest,
+  paleRemembersQuest,
   onInspectCairn,
   onWorkNode,
   onOpenCraft,
@@ -188,6 +189,7 @@ export function GameShell({
   edgeRemembersQuest: EdgeRemembersQuestProgress | null;
   wharfRemembersQuest: WharfRemembersQuestProgress | null;
   mereRemembersQuest: MereRemembersQuestProgress | null;
+  paleRemembersQuest: PaleRemembersQuestProgress | null;
   onInspectCairn: (cairnId: string) => void;
   onWorkNode: (nodeId: string) => void;
   onOpenCraft: () => void;
@@ -275,6 +277,7 @@ export function GameShell({
           edgeRemembersQuest={edgeRemembersQuest}
           wharfRemembersQuest={wharfRemembersQuest}
           mereRemembersQuest={mereRemembersQuest}
+          paleRemembersQuest={paleRemembersQuest}
           onOpenPack={onTogglePack}
         />
         <div className="flex flex-wrap gap-2">

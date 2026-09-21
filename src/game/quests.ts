@@ -28,6 +28,7 @@ export const CHOIR_REMEMBERS_QUEST_ID = "the-choir-remembers" as const;
 export const EDGE_REMEMBERS_QUEST_ID = "the-edge-remembers" as const;
 export const WHARF_REMEMBERS_QUEST_ID = "the-wharf-remembers" as const;
 export const MERE_REMEMBERS_QUEST_ID = "the-mere-remembers" as const;
+export const PALE_REMEMBERS_QUEST_ID = "the-pale-remembers" as const;
 
 /** Depot clerk — Cress Ledger in folk.ts. */
 export const CRESS_FOLK_ID = "cress-ledger" as const;
@@ -67,7 +68,8 @@ export type QuestId =
   | typeof CHOIR_REMEMBERS_QUEST_ID
   | typeof EDGE_REMEMBERS_QUEST_ID
   | typeof WHARF_REMEMBERS_QUEST_ID
-  | typeof MERE_REMEMBERS_QUEST_ID;
+  | typeof MERE_REMEMBERS_QUEST_ID
+  | typeof PALE_REMEMBERS_QUEST_ID;
 
 export type QuestStatus = "active" | "complete";
 
@@ -280,6 +282,17 @@ export interface MereRemembersQuestProgress {
   houndDone: boolean;
 }
 
+export interface PaleRemembersQuestProgress {
+  id: typeof PALE_REMEMBERS_QUEST_ID;
+  status: QuestStatus;
+  /** Arrived on Pale Wastes overworld (gate, travel, or stand). */
+  reachedPale: boolean;
+  /** First successful Identify of an Ash-vole on Pale Wastes. */
+  identifiedVole: boolean;
+  /** Gorse Fox defeated on Pale Wastes (target 1; continent-scoped). */
+  foxDone: boolean;
+}
+
 export type QuestLog = {
   [TEETH_QUEST_ID]?: TeethQuestProgress;
   [ASHWOOD_QUEST_ID]?: AshwoodQuestProgress;
@@ -300,6 +313,7 @@ export type QuestLog = {
   [EDGE_REMEMBERS_QUEST_ID]?: EdgeRemembersQuestProgress;
   [WHARF_REMEMBERS_QUEST_ID]?: WharfRemembersQuestProgress;
   [MERE_REMEMBERS_QUEST_ID]?: MereRemembersQuestProgress;
+  [PALE_REMEMBERS_QUEST_ID]?: PaleRemembersQuestProgress;
 };
 
 export const TEETH_RATS_NEEDED = 3;
@@ -325,6 +339,7 @@ export const CHOIR_REMEMBERS_QUEST_TITLE = "The Choir Remembers";
 export const EDGE_REMEMBERS_QUEST_TITLE = "The Edge Remembers";
 export const WHARF_REMEMBERS_QUEST_TITLE = "The Wharf Remembers";
 export const MERE_REMEMBERS_QUEST_TITLE = "The Mere Remembers";
+export const PALE_REMEMBERS_QUEST_TITLE = "The Pale Remembers";
 
 export const TEETH_START_TOAST =
   "Rook: Ashwood edge has wrong prey - Identify first.";
@@ -439,6 +454,12 @@ export const MERE_REMEMBERS_START_TOAST =
 
 export const MERE_REMEMBERS_COMPLETE_LINE =
   "Rook: The Mere remembers your footing. Soft prey named, the mere pack quieted. Survive. Learn. Progress — the far road holds the fog again.";
+
+export const PALE_REMEMBERS_START_TOAST =
+  "Rook: The Mere remembers your footing. The fog's measure washed out to the bone flats — walk the Pale Wastes gate, name the soft ash-vole that shares the white ground, quiet one gorse-fox packing the pale, and bring the Pale's measure home. Survive. Learn. Progress.";
+
+export const PALE_REMEMBERS_COMPLETE_LINE =
+  "Rook: The Pale remembers your footing. Soft prey named, the white pack quieted. Survive. Learn. Progress — the far road holds the bone flats again.";
 
 export const TEETH_REWARDS = {
   gold: 28,
@@ -571,6 +592,13 @@ export const MERE_REMEMBERS_REWARDS = {
   combatXp: 230,
   skill: "shielding" as SkillId,
   skillXp: 65,
+};
+
+export const PALE_REMEMBERS_REWARDS = {
+  gold: 120,
+  combatXp: 240,
+  skill: "distance" as SkillId,
+  skillXp: 68,
 };
 
 export function loadQuestLog(): QuestLog {
@@ -789,6 +817,16 @@ export function emptyMereRemembersQuest(): MereRemembersQuestProgress {
     reachedMistmere: false,
     identifiedMite: false,
     houndDone: false,
+  };
+}
+
+export function emptyPaleRemembersQuest(): PaleRemembersQuestProgress {
+  return {
+    id: PALE_REMEMBERS_QUEST_ID,
+    status: "active",
+    reachedPale: false,
+    identifiedVole: false,
+    foxDone: false,
   };
 }
 
@@ -1083,6 +1121,20 @@ export function sanitizeQuestLog(raw: unknown): QuestLog {
     };
   }
 
+  const paleRemembers = obj[PALE_REMEMBERS_QUEST_ID];
+  if (paleRemembers && typeof paleRemembers === "object") {
+    const p = paleRemembers as Record<string, unknown>;
+    const status: QuestStatus =
+      p.status === "complete" ? "complete" : "active";
+    log[PALE_REMEMBERS_QUEST_ID] = {
+      id: PALE_REMEMBERS_QUEST_ID,
+      status,
+      reachedPale: Boolean(p.reachedPale),
+      identifiedVole: Boolean(p.identifiedVole),
+      foxDone: Boolean(p.foxDone),
+    };
+  }
+
   return log;
 }
 
@@ -1198,6 +1250,12 @@ export function getMereRemembersQuest(
   return log?.[MERE_REMEMBERS_QUEST_ID] ?? null;
 }
 
+export function getPaleRemembersQuest(
+  log: QuestLog | undefined,
+): PaleRemembersQuestProgress | null {
+  return log?.[PALE_REMEMBERS_QUEST_ID] ?? null;
+}
+
 export function isTeethActive(log: QuestLog | undefined): boolean {
   const q = getTeethQuest(log);
   return Boolean(q && q.status === "active");
@@ -1290,6 +1348,11 @@ export function isWharfRemembersActive(log: QuestLog | undefined): boolean {
 
 export function isMereRemembersActive(log: QuestLog | undefined): boolean {
   const q = getMereRemembersQuest(log);
+  return Boolean(q && q.status === "active");
+}
+
+export function isPaleRemembersActive(log: QuestLog | undefined): boolean {
+  const q = getPaleRemembersQuest(log);
   return Boolean(q && q.status === "active");
 }
 
@@ -1392,6 +1455,12 @@ export function mereRemembersObjectivesMet(
   q: MereRemembersQuestProgress,
 ): boolean {
   return q.reachedMistmere && q.identifiedMite && q.houndDone;
+}
+
+export function paleRemembersObjectivesMet(
+  q: PaleRemembersQuestProgress,
+): boolean {
+  return q.reachedPale && q.identifiedVole && q.foxDone;
 }
 
 /** HUD lines for Teeth sticky panel. */
@@ -1781,6 +1850,27 @@ export function mereRemembersHudLines(q: MereRemembersQuestProgress): string[] {
   ];
 }
 
+/** HUD lines for The Pale Remembers. */
+export function paleRemembersHudLines(q: PaleRemembersQuestProgress): string[] {
+  if (q.status === "complete") {
+    return ["Complete - The Pale remembers"];
+  }
+  return [
+    q.reachedPale
+      ? "[done] Reach Pale Wastes"
+      : "[ ] Reach Pale Wastes (gate / travel)",
+    q.identifiedVole
+      ? "[done] Identify Ash-vole"
+      : "[ ] Identify an Ash-vole (near look)",
+    q.foxDone
+      ? "[done] Defeat Gorse Fox 1/1"
+      : "[ ] Defeat Gorse Fox 0/1 (Pale Wastes)",
+    q.reachedPale && q.identifiedVole && q.foxDone
+      ? "[ ] Return to Rook (the Pale's measure)"
+      : "[ ] Return to Rook with the Pale's measure",
+  ];
+}
+
 
 export type QuestEventResult = {
   log: QuestLog;
@@ -1823,6 +1913,8 @@ export type QuestEventResult = {
   startedWharfRemembers?: boolean;
   /** The Mere Remembers auto-started after The Wharf Remembers. */
   startedMereRemembers?: boolean;
+  /** The Pale Remembers auto-started after The Mere Remembers. */
+  startedPaleRemembers?: boolean;
 };
 
 /** If Teeth is complete and Ashwood missing, start Ashwood Watch. */
@@ -2149,6 +2241,24 @@ export function ensureMereRemembersAfterWharf(log: QuestLog): {
   };
 }
 
+/** If The Mere Remembers is complete and The Pale Remembers missing, start it. */
+export function ensurePaleRemembersAfterMere(log: QuestLog): {
+  log: QuestLog;
+  started: boolean;
+} {
+  const mere = getMereRemembersQuest(log);
+  if (!mere || mere.status !== "complete") {
+    return { log, started: false };
+  }
+  if (getPaleRemembersQuest(log)) {
+    return { log, started: false };
+  }
+  return {
+    log: withPaleRemembersQuest(log, emptyPaleRemembersQuest()),
+    started: true,
+  };
+}
+
 export function withTeethQuest(
   log: QuestLog | undefined,
   quest: TeethQuestProgress,
@@ -2282,6 +2392,13 @@ export function withMereRemembersQuest(
   return { ...(log ?? {}), [MERE_REMEMBERS_QUEST_ID]: quest };
 }
 
+export function withPaleRemembersQuest(
+  log: QuestLog | undefined,
+  quest: PaleRemembersQuestProgress,
+): QuestLog {
+  return { ...(log ?? {}), [PALE_REMEMBERS_QUEST_ID]: quest };
+}
+
 function finishTeethIfReady(
   log: QuestLog,
   next: TeethQuestProgress,
@@ -2345,6 +2462,24 @@ export function applyIdentify(
   kindId: EnemyKindId,
   continentId?: ContinentId,
 ): QuestEventResult | null {
+  const paleRemembers = getPaleRemembersQuest(log);
+  if (
+    paleRemembers &&
+    paleRemembers.status === "active" &&
+    !paleRemembers.identifiedVole &&
+    kindId === "ash-vole" &&
+    continentId === "pale-wastes"
+  ) {
+    return {
+      log: withPaleRemembersQuest(log, {
+        ...paleRemembers,
+        reachedPale: true,
+        identifiedVole: true,
+      }),
+      toast: "Identified: Ash-vole / F",
+    };
+  }
+
   const mereRemembers = getMereRemembersQuest(log);
   if (
     mereRemembers &&
@@ -2610,6 +2745,26 @@ export function applyEnemyKill(
   kindId: EnemyKindId,
   continentId?: ContinentId,
 ): QuestEventResult | null {
+  const paleRemembers = getPaleRemembersQuest(log);
+  if (
+    paleRemembers &&
+    paleRemembers.status === "active" &&
+    kindId === "gorse-fox" &&
+    continentId === "pale-wastes" &&
+    !paleRemembers.foxDone
+  ) {
+    return {
+      log: withPaleRemembersQuest(log, {
+        ...paleRemembers,
+        reachedPale: true,
+        foxDone: true,
+      }),
+      toast: paleRemembers.identifiedVole
+        ? "Gorse Fox 1/1 — Return to Rook"
+        : "Gorse Fox 1/1 — Name the Ash-vole",
+    };
+  }
+
   const mereRemembers = getMereRemembersQuest(log);
   if (
     mereRemembers &&
@@ -3583,10 +3738,49 @@ export function applyMereRemembersRookTalk(
   const q = getMereRemembersQuest(log);
   if (!q || q.status !== "active") return null;
   if (!mereRemembersObjectivesMet(q)) return null;
+  let out = withMereRemembersQuest(log, { ...q, status: "complete" });
+  const ensured = ensurePaleRemembersAfterMere(out);
+  out = ensured.log;
   return {
-    log: withMereRemembersQuest(log, { ...q, status: "complete" }),
-    toast: MERE_REMEMBERS_COMPLETE_LINE,
+    log: out,
+    toast: ensured.started
+      ? PALE_REMEMBERS_START_TOAST
+      : MERE_REMEMBERS_COMPLETE_LINE,
     completedId: MERE_REMEMBERS_QUEST_ID,
+    startedPaleRemembers: ensured.started,
+  };
+}
+
+/** Mark Pale Wastes overworld reached for The Pale Remembers (gate, travel, or stand). */
+export function applyPaleRemembersReached(
+  log: QuestLog,
+): QuestEventResult | null {
+  const q = getPaleRemembersQuest(log);
+  if (!q || q.status !== "active" || q.reachedPale) {
+    return null;
+  }
+  return {
+    log: withPaleRemembersQuest(log, { ...q, reachedPale: true }),
+    toast:
+      q.identifiedVole && q.foxDone
+        ? "Pale Wastes marked — Return to Rook with the Pale's measure"
+        : q.identifiedVole
+          ? "Pale Wastes marked — Quiet one gorse-fox packing the pale"
+          : "Pale Wastes marked — Name the soft ash-vole that shares the white ground",
+  };
+}
+
+/** Complete The Pale Remembers when talking to Rook after the pale is measured. */
+export function applyPaleRemembersRookTalk(
+  log: QuestLog,
+): QuestEventResult | null {
+  const q = getPaleRemembersQuest(log);
+  if (!q || q.status !== "active") return null;
+  if (!paleRemembersObjectivesMet(q)) return null;
+  return {
+    log: withPaleRemembersQuest(log, { ...q, status: "complete" }),
+    toast: PALE_REMEMBERS_COMPLETE_LINE,
+    completedId: PALE_REMEMBERS_QUEST_ID,
   };
 }
 
@@ -3636,6 +3830,23 @@ export function applyCairnInspect(
 
 /** Rook line while sticky quests are active / complete. */
 export function rookQuestLine(log: QuestLog | undefined): string | null {
+  const paleRemembers = getPaleRemembersQuest(log);
+  if (paleRemembers) {
+    if (paleRemembers.status === "complete") {
+      return PALE_REMEMBERS_COMPLETE_LINE.replace(/^Rook:\s*/, "");
+    }
+    if (!paleRemembers.reachedPale) {
+      return "The Mere remembers your footing. The fog's measure washed out to the bone flats — walk the Pale Wastes gate, name the soft ash-vole that shares the white ground, quiet one gorse-fox packing the pale, and bring the Pale's measure home.";
+    }
+    if (!paleRemembers.identifiedVole) {
+      return "The Pale is underfoot. Identify an Ash-vole on Pale Wastes — Name and Rank — then quiet one gorse-fox packing the pale.";
+    }
+    if (!paleRemembers.foxDone) {
+      return "The vole is named. Quiet one Gorse Fox on the Pale Wastes, then bring the Pale's measure home.";
+    }
+    return "The Pale remembers. Survive. Learn. Progress — the far road holds the bone flats again when you tell me.";
+  }
+
   const mereRemembers = getMereRemembersQuest(log);
   if (mereRemembers) {
     if (mereRemembers.status === "complete") {

@@ -35,6 +35,7 @@ import {
   getEdgeRemembersQuest,
   getWharfRemembersQuest,
   getMereRemembersQuest,
+  getPaleRemembersQuest,
   isTeethActive,
   isAshwoodActive,
   isHollowActive,
@@ -54,6 +55,7 @@ import {
   isEdgeRemembersActive,
   isWharfRemembersActive,
   isMereRemembersActive,
+  isPaleRemembersActive,
   loadQuestLog,
   type TeethQuestProgress,
   type AshwoodQuestProgress,
@@ -74,6 +76,7 @@ import {
   type EdgeRemembersQuestProgress,
   type WharfRemembersQuestProgress,
   type MereRemembersQuestProgress,
+  type PaleRemembersQuestProgress,
 } from "@/game/quests";
 import { ASHWOOD_CAIRNS } from "@/game/cairns";
 import { huntZoneById } from "@/game/huntZones";
@@ -104,6 +107,10 @@ export function resolveQuestObjective(
   map: WorldMap,
 ): WayfindObjective | null {
   const log = loadQuestLog();
+  if (isPaleRemembersActive(log)) {
+    const q = getPaleRemembersQuest(log);
+    if (q) return objectiveForPaleRemembers(q, player, enemies, folk, map);
+  }
   if (isMereRemembersActive(log)) {
     const q = getMereRemembersQuest(log);
     if (q) return objectiveForMereRemembers(q, player, enemies, folk, map);
@@ -1583,6 +1590,179 @@ export function objectiveForWharfRemembers(
       label: "Sail toward Rook (Thornreach)",
       x: (pierHome.x + 0.5) * TILE,
       y: (pierHome.y + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  return {
+    label: "Return to Rook (Thornreach)",
+    x: player.x + TILE * 8,
+    y: player.y - TILE * 2,
+    kind: "landmark",
+  };
+}
+
+function objectiveTowardPale(
+  player: { x: number; y: number },
+  map: WorldMap,
+  labels: {
+    gate: string;
+    viaSpine: string;
+    viaHome: string;
+    fallback: string;
+  },
+): WayfindObjective {
+  const gate = continentGateOnMap(map, "pale-wastes");
+  if (gate) {
+    return {
+      label: labels.gate,
+      x: (gate.x + 0.5) * TILE,
+      y: (gate.y + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  const toSpine = continentGateOnMap(map, "verdant-spine");
+  if (toSpine) {
+    return {
+      label: labels.viaSpine,
+      x: (toSpine.x + 0.5) * TILE,
+      y: (toSpine.y + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  const home = continentGateOnMap(map, "thornreach");
+  if (home) {
+    return {
+      label: labels.viaHome,
+      x: (home.x + 0.5) * TILE,
+      y: (home.y + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  const toAshen = continentGateOnMap(map, "ashen-marches");
+  if (toAshen) {
+    return {
+      label: labels.viaSpine,
+      x: (toAshen.x + 0.5) * TILE,
+      y: (toAshen.y + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  const toEmber = continentGateOnMap(map, "embercoil");
+  if (toEmber) {
+    return {
+      label: labels.viaSpine,
+      x: (toEmber.x + 0.5) * TILE,
+      y: (toEmber.y + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  return {
+    label: labels.fallback,
+    x: player.x + TILE * 8,
+    y: player.y - TILE * 2,
+    kind: "landmark",
+  };
+}
+
+export function objectiveForPaleRemembers(
+  q: PaleRemembersQuestProgress,
+  player: { x: number; y: number },
+  enemies: Enemy[],
+  folk: FolkDef[],
+  map: WorldMap,
+): WayfindObjective | null {
+  if (q.status !== "active") return null;
+  const rook = folk.find((f) => f.id === "rook");
+  const onPale = map.continentId === "pale-wastes" && map.kind === "overworld";
+
+  if (!q.reachedPale && !onPale) {
+    return objectiveTowardPale(player, map, {
+      gate: "Reach Pale Wastes gate",
+      viaSpine: "Gate to Pale Wastes (Verdant Spine)",
+      viaHome: "Gate toward Pale Wastes",
+      fallback: "Find a Pale Wastes gate / path",
+    });
+  }
+
+  if (!q.identifiedVole) {
+    if (onPale) {
+      const vole = nearestEnemy(player, enemies, "ash-vole");
+      if (vole) {
+        return { label: "Identify Ash-vole", x: vole.x, y: vole.y, kind: "enemy" };
+      }
+      return {
+        label: "Find Ash-vole (Pale Wastes)",
+        x: player.x + TILE * 6,
+        y: player.y - TILE * 4,
+        kind: "landmark",
+      };
+    }
+    return objectiveTowardPale(player, map, {
+      gate: "Gate to Ash-vole (Pale Wastes)",
+      viaSpine: "Gate to Pale Wastes (Verdant Spine)",
+      viaHome: "Gate toward Pale Wastes",
+      fallback: "Find Ash-vole (Pale Wastes)",
+    });
+  }
+
+  if (!q.foxDone) {
+    if (onPale) {
+      const fox = nearestEnemy(player, enemies, "gorse-fox");
+      if (fox) {
+        return {
+          label: "Defeat Gorse Fox (0/1)",
+          x: fox.x,
+          y: fox.y,
+          kind: "enemy",
+        };
+      }
+      return {
+        label: "Find Gorse Fox (Pale Wastes)",
+        x: player.x + TILE * 6,
+        y: player.y - TILE * 4,
+        kind: "landmark",
+      };
+    }
+    return objectiveTowardPale(player, map, {
+      gate: "Gate to Gorse Fox (Pale Wastes)",
+      viaSpine: "Gate to Pale Wastes (Verdant Spine)",
+      viaHome: "Gate toward Pale Wastes",
+      fallback: "Find Gorse Fox (Pale Wastes)",
+    });
+  }
+
+  if (rook) {
+    return {
+      label: "Return to Rook",
+      x: (rook.x + 0.5) * TILE,
+      y: (rook.y + 0.5) * TILE,
+      kind: "folk",
+    };
+  }
+  const home = continentGateOnMap(map, "thornreach");
+  if (home) {
+    return {
+      label: "Gate back to Rook (Thornreach)",
+      x: (home.x + 0.5) * TILE,
+      y: (home.y + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  const toSpineHome = continentGateOnMap(map, "verdant-spine");
+  if (toSpineHome) {
+    return {
+      label: "Gate toward Rook (Verdant Spine)",
+      x: (toSpineHome.x + 0.5) * TILE,
+      y: (toSpineHome.y + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  const toPaleHome = continentGateOnMap(map, "pale-wastes");
+  if (toPaleHome) {
+    return {
+      label: "Gate toward Rook (Pale Wastes)",
+      x: (toPaleHome.x + 0.5) * TILE,
+      y: (toPaleHome.y + 0.5) * TILE,
       kind: "landmark",
     };
   }

@@ -35,6 +35,7 @@ import {
   EDGE_REMEMBERS_QUEST_TITLE,
   WHARF_REMEMBERS_QUEST_TITLE,
   MERE_REMEMBERS_QUEST_TITLE,
+  PALE_REMEMBERS_QUEST_TITLE,
   teethHudLines,
   ashwoodHudLines,
   hollowHudLines,
@@ -54,6 +55,7 @@ import {
   edgeRemembersHudLines,
   wharfRemembersHudLines,
   mereRemembersHudLines,
+  paleRemembersHudLines,
   type TeethQuestProgress,
   type AshwoodQuestProgress,
   type HollowQuestProgress,
@@ -73,6 +75,7 @@ import {
   type EdgeRemembersQuestProgress,
   type WharfRemembersQuestProgress,
   type MereRemembersQuestProgress,
+  type PaleRemembersQuestProgress,
 } from "@/game/quests";
 
 function equippedLine(character: ValeCharacter): string {
@@ -86,6 +89,7 @@ function equippedLine(character: ValeCharacter): string {
 }
 
 function activeQuest(
+  paleRemembersQuest: PaleRemembersQuestProgress | null,
   mereRemembersQuest: MereRemembersQuestProgress | null,
   wharfRemembersQuest: WharfRemembersQuestProgress | null,
   edgeRemembersQuest: EdgeRemembersQuestProgress | null,
@@ -106,6 +110,9 @@ function activeQuest(
   ashwoodQuest: AshwoodQuestProgress | null,
   teethQuest: TeethQuestProgress | null,
 ): { title: string; lines: string[] } | null {
+  if (paleRemembersQuest?.status === "active") {
+    return { title: PALE_REMEMBERS_QUEST_TITLE, lines: paleRemembersHudLines(paleRemembersQuest) };
+  }
   if (mereRemembersQuest?.status === "active") {
     return { title: MERE_REMEMBERS_QUEST_TITLE, lines: mereRemembersHudLines(mereRemembersQuest) };
   }
@@ -190,6 +197,7 @@ export function GameShellHud({
   edgeRemembersQuest,
   wharfRemembersQuest,
   mereRemembersQuest,
+  paleRemembersQuest,
   onOpenPack,
 }: {
   cls: ValeClass;
@@ -215,10 +223,12 @@ export function GameShellHud({
   edgeRemembersQuest: EdgeRemembersQuestProgress | null;
   wharfRemembersQuest: WharfRemembersQuestProgress | null;
   mereRemembersQuest: MereRemembersQuestProgress | null;
+  paleRemembersQuest: PaleRemembersQuestProgress | null;
   onOpenPack: () => void;
 }) {
   const [muted, setMuted] = useState(isAudioMuted);
   const quest = activeQuest(
+    paleRemembersQuest,
     mereRemembersQuest,
     wharfRemembersQuest,
     edgeRemembersQuest,

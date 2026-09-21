@@ -72,6 +72,7 @@ import {
   getEdgeRemembersQuest,
   getWharfRemembersQuest,
   getMereRemembersQuest,
+  getPaleRemembersQuest,
   isAshveilActive,
   isGreenGateActive,
   isSpineActive,
@@ -83,6 +84,7 @@ import {
   isEdgeRemembersActive,
   isWharfRemembersActive,
   isMereRemembersActive,
+  isPaleRemembersActive,
   loadQuestLog,
   notifyQuestUi,
   saveQuestLog,
@@ -116,6 +118,7 @@ const CHOIR_REMEMBERS_IDENTIFY_TILES = 3.6;
 const EDGE_REMEMBERS_IDENTIFY_TILES = 3.6;
 const WHARF_REMEMBERS_IDENTIFY_TILES = 3.6;
 const MERE_REMEMBERS_IDENTIFY_TILES = 3.6;
+const PALE_REMEMBERS_IDENTIFY_TILES = 3.6;
 
 /** Chamber reach + Ember Identify without patching assembled gameLoop. */
 function tickAshveilField(
@@ -435,6 +438,33 @@ function tickMereRemembersField(
   }
 }
 
+/** Ash-vole Identify on Pale Wastes without patching assembled gameLoop. */
+function tickPaleRemembersField(
+  player: { x: number; y: number },
+  map: WorldMap,
+  enemies: Enemy[],
+): void {
+  if (!isPaleRemembersActive(loadQuestLog())) return;
+  const log = loadQuestLog();
+  const q = getPaleRemembersQuest(log);
+  if (!q || q.status !== "active" || q.identifiedVole) return;
+  if (map.kind !== "overworld" || map.continentId !== "pale-wastes") return;
+
+  for (const e of enemies) {
+    if (e.ai === "dead" || e.hp <= 0) continue;
+    if (e.kind.id !== "ash-vole") continue;
+    const dist = Math.hypot(e.x - player.x, e.y - player.y) / TILE;
+    if (dist <= PALE_REMEMBERS_IDENTIFY_TILES) {
+      const result = applyIdentify(loadQuestLog(), "ash-vole", "pale-wastes");
+      if (result) {
+        saveQuestLog(result.log);
+        notifyQuestUi(result.toast);
+      }
+      break;
+    }
+  }
+}
+
 export function advanceCameraAndRender(args: {
   ctx: CanvasRenderingContext2D;
   canvas: HTMLCanvasElement;
@@ -625,6 +655,7 @@ export function advanceCameraAndRender(args: {
   tickEdgeRemembersField(player, map, enemies);
   tickWharfRemembersField(player, map, enemies);
   tickMereRemembersField(player, map, enemies);
+  tickPaleRemembersField(player, map, enemies);
   const objective = resolveQuestObjective(player, enemies, folk, map);
   const radarDots = collectRadarDots(player, enemies, folk, docks, map, objective);
   drawCompass(ctx, viewW);

@@ -289,6 +289,17 @@ After *The Wharf Remembers* completes, Rook starts **The Mere Remembers** (`ensu
 
 Rewards: ~115g + ~230 combat XP + shielding skill XP. Yellow arrow: Mistmere gate/path → nearest Briar Mite on Mistmere → nearest Bark Hound on Mistmere → return → Rook. Reuses existing gates, docks, and fauna (briar-mite / bark-hound pads while sticky) — no new geometry. First Story Accession texture only — Survive · Learn · Progress. No Lucas transplant.
 
+### Twentieth sticky quest — The Pale Remembers
+
+After *The Mere Remembers* completes, Rook starts **The Pale Remembers** (`ensurePaleRemembersAfterMere`): the Mere's fog measure washed out to the bone flats. Walk the Pale Wastes gate, name the soft ash-vole that shares the white ground, quiet one gorse-fox packing the pale, and bring the Pale's measure home.
+
+1. **Reach** Pale Wastes overworld (gate / travel / stand)
+2. **Identify** 1 **Ash-vole** (`ash-vole`) on Pale Wastes only (near-field look / Name · Rank)
+3. **Defeat** 1 **Gorse Fox** (`gorse-fox`) on Pale Wastes only
+4. Return by gate/path and report to **Rook**
+
+Rewards: ~120g + ~240 combat XP + distance skill XP. Yellow arrow: Pale Wastes gate/path → nearest Ash-vole on Pale Wastes → nearest Gorse Fox on Pale Wastes → return → Rook. Reuses existing gates and fauna (ash-vole / gorse-fox pads while sticky) — no new geometry. First Story Accession texture only — Survive · Learn · Progress. No Lucas transplant.
+
 ### Thornreach hollows (mini-dungeon + boss stub)
 
 Thornreach hollows read as a short dungeon: rooms and corridors, a single lit **↑ Surface** exit at the entrance (the deep room is no longer a second door), denser Shade Wisps the farther you walk, and a marked **Ashveil chamber** in the deepest room.
