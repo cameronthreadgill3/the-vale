@@ -1,5 +1,6 @@
 import { TILE, isSolid, type WorldMap } from "@/game/world";
 import type { FolkDef, ShopDef, ShipDock } from "@/game/folk";
+import { drawFolkSprite } from "@/game/gfx/folkSprites";
 
 export function softClearTile(
   map: { width: number; height: number; tiles: string[][] },
@@ -125,7 +126,7 @@ function drawFloatingLabel(
   label: string,
   color = "#e8e6d9",
 ): void {
-  ctx.font = "700 12px Figtree, system-ui, sans-serif";
+  ctx.font = "700 11px \"IBM Plex Mono\", ui-monospace, monospace";
   ctx.textAlign = "center";
   ctx.textBaseline = "bottom";
   const padX = 6;
@@ -133,9 +134,9 @@ function drawFloatingLabel(
   const w = ctx.measureText(label).width;
   const bx = x - w / 2 - padX;
   const by = y - 16 - padY;
-  ctx.fillStyle = "rgba(8,9,7,0.88)";
+  ctx.fillStyle = "rgba(6,8,5,0.92)";
   ctx.fillRect(bx, by, w + padX * 2, 16 + padY);
-  ctx.strokeStyle = "rgba(240,208,96,0.7)";
+  ctx.strokeStyle = "rgba(160,140,60,0.85)";
   ctx.lineWidth = 1.5;
   ctx.strokeRect(bx, by, w + padX * 2, 16 + padY);
   ctx.fillStyle = color;
@@ -154,22 +155,7 @@ export function drawNamedFolk(
   for (const f of folk) {
     const fsx = Math.floor((f.x + 0.5) * TILE - originX);
     const fsy = Math.floor((f.y + 0.5) * TILE - originY);
-    ctx.fillStyle = "rgba(0,0,0,0.35)";
-    ctx.beginPath();
-    ctx.ellipse(fsx, fsy + 7, 11, 5.5, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = f.color;
-    ctx.beginPath();
-    ctx.arc(fsx, fsy - 1, 11, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = "#e8e6d9";
-    ctx.lineWidth = 2.5;
-    ctx.stroke();
-    ctx.strokeStyle = "#0c0d0b";
-    ctx.lineWidth = 1;
-    ctx.stroke();
-    ctx.fillStyle = "#e8e6d9";
-    ctx.fillRect(fsx - 2.5, fsy - 14, 5, 4);
+    drawFolkSprite(ctx, f.color, fsx, fsy);
     if (player && Math.hypot(px - (f.x + 0.5), py - (f.y + 0.5)) <= 8) {
       drawFloatingLabel(ctx, fsx, fsy - 14, f.name, "#f0d060");
     }

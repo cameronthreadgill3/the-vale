@@ -36,7 +36,7 @@ export function GameShellHud({
           {cls.name}
         </p>
         {hud.objectiveLabel && (
-          <div className="mt-2 max-w-xs rounded border border-[#c9a227]/50 bg-[#161812]/92 px-2.5 py-1.5 text-[11px] leading-snug text-[#f0d060] backdrop-blur-sm sm:text-xs">
+          <div className="vale-chrome mt-2 max-w-xs rounded-sm border-[#c9a227]/55 bg-[#12140e]/95 px-2.5 py-1.5 text-[11px] leading-snug text-[#f0d060] sm:text-xs">
             <span className="font-display tracking-wide">
               → {hud.objectiveLabel}
             </span>
@@ -48,7 +48,7 @@ export function GameShellHud({
           </div>
         )}
         {teethQuest && teethQuest.status === "active" && (
-          <div className="mt-2 max-w-xs rounded border border-[#2a2e24] bg-[#161812]/85 px-2.5 py-1.5 text-[10px] leading-relaxed text-[#a8b09a] backdrop-blur-sm sm:text-xs">
+          <div className="vale-chrome mt-2 max-w-xs rounded-sm px-2.5 py-1.5 text-[10px] leading-relaxed text-[#9aa288] sm:text-xs">
             <div className="font-display text-[11px] tracking-wide text-[#c9a227] sm:text-xs">
               {TEETH_QUEST_TITLE}
             </div>
@@ -60,14 +60,14 @@ export function GameShellHud({
           </div>
         )}
       </div>
-      <div className="rounded border border-[#2a2e24] bg-[#161812]/90 px-3 py-2 text-xs text-[#e8e6d9] backdrop-blur-sm sm:text-sm">
+      <div className="vale-chrome rounded-sm px-3 py-2 text-xs text-[#e0dcc8] sm:text-sm">
         <div className="font-display" style={{ color: cls.accent }}>
           Level {hud.level}
         </div>
         <div className="mt-1 text-[#a8b09a]">
           XP {hud.xp} / {hud.next}
         </div>
-        <div className="mt-1.5 h-1.5 w-28 overflow-hidden rounded bg-[#0c0d0b]">
+        <div className="mt-1.5 h-1.5 w-28 overflow-hidden rounded-sm bg-[#050604]">
           <div
             className="h-full rounded"
             style={{
@@ -83,7 +83,7 @@ export function GameShellHud({
               {hud.hp}/{hud.maxHp}
             </span>
           </div>
-          <div className="mt-0.5 h-1.5 w-28 overflow-hidden rounded bg-[#0c0d0b]">
+          <div className="mt-0.5 h-1.5 w-28 overflow-hidden rounded-sm bg-[#050604]">
             <div
               className="h-full rounded bg-[#c45c3e]"
               style={{
@@ -99,7 +99,7 @@ export function GameShellHud({
                   {hud.mana}/{hud.maxMana}
                 </span>
               </div>
-              <div className="mt-0.5 h-1.5 w-28 overflow-hidden rounded bg-[#0c0d0b]">
+              <div className="mt-0.5 h-1.5 w-28 overflow-hidden rounded-sm bg-[#050604]">
                 <div
                   className="h-full rounded bg-[#4a8ab8]"
                   style={{

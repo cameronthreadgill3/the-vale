@@ -10,19 +10,20 @@ import {
   drawNamedFolk,
 } from "@/game/folkCanvas";
 import {
-  drawEnemies,
   drawFloatTexts,
   drawProjectiles,
   type Enemy,
   type FloatText,
   type Projectile,
 } from "@/game/enemies";
+import { drawEnemies } from "@/game/gfx/drawEnemies";
 import type { ValeCharacter } from "@/game/character";
 import type { FolkDef, ShopDef, ShipDock } from "@/game/folk";
 import { computePrompt } from "@/game/gameLoopFrame";
 import { drawPlayer } from "@/game/renderPlayer";
 import type { Facing } from "@/game/playerSprites";
 import { WALK_FPS } from "@/game/playerSprites";
+import { drawTile } from "@/game/gfx/drawTile";
 import {
   resolveQuestObjective,
   tilesAway,
@@ -85,49 +86,13 @@ export function advanceCameraAndRender(args: {
   const endTX = Math.min(map.width - 1, Math.ceil((originX + viewW) / TILE) + 1);
   const endTY = Math.min(map.height - 1, Math.ceil((originY + viewH) / TILE) + 1);
   const pal = map.palette;
+  ctx.imageSmoothingEnabled = false;
   for (let ty = startTY; ty <= endTY; ty++) {
     for (let tx = startTX; tx <= endTX; tx++) {
       const kind = map.tiles[ty]![tx]!;
-      ctx.fillStyle = pal[kind];
       const sx = Math.floor(tx * TILE - originX);
       const sy = Math.floor(ty * TILE - originY);
-      ctx.fillRect(sx, sy, TILE + 1, TILE + 1);
-      if (kind === "grass" || kind === "grassAlt") {
-        ctx.fillStyle = "rgba(0,0,0,0.08)";
-        ctx.fillRect(sx, sy, TILE + 1, 1);
-        ctx.fillRect(sx, sy, 1, TILE + 1);
-      }
-      if (kind === "gate") {
-        ctx.strokeStyle = "#e8e6d9";
-        ctx.lineWidth = 3;
-        ctx.strokeRect(sx + 2, sy + 2, TILE - 4, TILE - 4);
-        ctx.fillStyle = "rgba(255,255,255,0.22)";
-        ctx.fillRect(sx + 6, sy + 6, TILE - 12, TILE - 12);
-        ctx.fillStyle = pal.gate;
-        ctx.fillRect(sx + TILE / 2 - 3, sy + 4, 6, TILE - 8);
-      } else if (kind === "hollow") {
-        ctx.beginPath();
-        ctx.fillStyle = "rgba(0,0,0,0.55)";
-        ctx.arc(sx + TILE / 2, sy + TILE / 2, 12, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = pal.hollow;
-        ctx.lineWidth = 3;
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.strokeStyle = "#e8e6d9";
-        ctx.lineWidth = 1.5;
-        ctx.arc(sx + TILE / 2, sy + TILE / 2, 5, 0, Math.PI * 2);
-        ctx.stroke();
-      } else if (kind === "exit") {
-        ctx.strokeStyle = "#e8e6d9";
-        ctx.lineWidth = 3;
-        ctx.strokeRect(sx + 4, sy + 4, TILE - 8, TILE - 8);
-        ctx.fillStyle = "rgba(200,180,100,0.4)";
-        ctx.fillRect(sx + 8, sy + 8, TILE - 16, TILE - 16);
-        ctx.strokeStyle = pal.exit;
-        ctx.lineWidth = 2;
-        ctx.strokeRect(sx + 8, sy + 8, TILE - 16, TILE - 16);
-      }
+      drawTile(ctx, kind, pal, sx, sy, tx, ty);
     }
   }
   if (map.darkness > 0) {
