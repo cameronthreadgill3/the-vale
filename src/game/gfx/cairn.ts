@@ -69,56 +69,61 @@ function paintRecLabel(
 function paintStackedStones(ctx: CanvasRenderingContext2D, band: string): void {
   const out = "#1a1814";
   const dark = "#3a3830";
-  const mid = "#5a564c";
+  const mid = "#6a665c";
   const stone = "#8a8680";
   const lite = "#c9c4b8";
-  const moss = mixHex(band, "#4a5a30", 0.45);
-  const lichen = shadeHex(band, 1.05);
+  const moss = mixHex(band, "#4a5a30", 0.4);
+  const lichen = shadeHex(band, 1.08);
 
-  // Base course — three irregular stones
-  px(ctx, 4, 31, out, 24, 6);
-  px(ctx, 5, 32, dark, 10, 5);
-  px(ctx, 6, 33, mid, 8, 3);
-  px(ctx, 7, 34, stone, 5, 2);
-  px(ctx, 16, 32, dark, 11, 5);
-  px(ctx, 17, 33, mid, 9, 3);
-  px(ctx, 18, 34, stone, 6, 2);
-  px(ctx, 12, 31, dark, 8, 4);
-  px(ctx, 13, 32, stone, 6, 2);
-  px(ctx, 8, 35, lite, 2, 1);
-  px(ctx, 20, 35, lite, 2, 1);
+  // Wide base course — three chunky stones
+  px(ctx, 2, 30, out, 28, 9);
+  px(ctx, 3, 31, dark, 11, 8);
+  px(ctx, 4, 32, mid, 9, 6);
+  px(ctx, 5, 33, stone, 7, 4);
+  px(ctx, 6, 34, lite, 3, 2);
+  px(ctx, 14, 31, dark, 8, 7);
+  px(ctx, 15, 32, mid, 6, 5);
+  px(ctx, 16, 33, stone, 4, 3);
+  px(ctx, 18, 31, dark, 11, 8);
+  px(ctx, 19, 32, mid, 9, 6);
+  px(ctx, 20, 33, stone, 7, 4);
+  px(ctx, 22, 34, lite, 3, 2);
+  px(ctx, 10, 36, out, 1, 2);
+  px(ctx, 24, 35, out, 1, 3);
 
-  // Mid course
-  px(ctx, 7, 25, out, 18, 7);
-  px(ctx, 8, 26, dark, 8, 6);
-  px(ctx, 9, 27, mid, 6, 4);
-  px(ctx, 10, 28, stone, 4, 2);
-  px(ctx, 16, 26, dark, 8, 6);
-  px(ctx, 17, 27, mid, 6, 4);
-  px(ctx, 18, 28, stone, 4, 2);
-  px(ctx, 12, 25, mid, 8, 4);
-  px(ctx, 13, 26, stone, 6, 2);
-  px(ctx, 14, 27, lite, 3, 1);
+  // Mid course — two overlapping stones
+  px(ctx, 6, 24, out, 20, 8);
+  px(ctx, 7, 25, dark, 10, 7);
+  px(ctx, 8, 26, mid, 8, 5);
+  px(ctx, 9, 27, stone, 6, 3);
+  px(ctx, 10, 26, lite, 3, 2);
+  px(ctx, 16, 25, dark, 9, 7);
+  px(ctx, 17, 26, mid, 7, 5);
+  px(ctx, 18, 27, stone, 5, 3);
+  px(ctx, 19, 26, lite, 3, 2);
+  px(ctx, 15, 24, mid, 4, 3);
 
-  // Rec-band lichen on the left mid stone
-  px(ctx, 9, 29, moss, 5, 2);
-  px(ctx, 10, 28, lichen, 3, 1);
+  // Rec-band lichen so the cairn reads from the plaza
+  px(ctx, 8, 28, moss, 7, 3);
+  px(ctx, 9, 27, lichen, 5, 2);
+  px(ctx, 19, 29, moss, 4, 2);
 
   // Capstone
-  px(ctx, 11, 20, out, 10, 6);
-  px(ctx, 12, 21, dark, 8, 5);
+  px(ctx, 10, 19, out, 12, 7);
+  px(ctx, 11, 20, dark, 10, 6);
+  px(ctx, 12, 21, mid, 8, 4);
   px(ctx, 13, 22, stone, 6, 3);
-  px(ctx, 14, 23, lite, 4, 2);
-  px(ctx, 15, 21, lite, 2, 1);
+  px(ctx, 14, 21, lite, 4, 2);
 
   // Peak pebble
-  px(ctx, 14, 17, out, 4, 4);
-  px(ctx, 15, 18, stone, 2, 3);
-  px(ctx, 15, 18, lite, 2, 1);
+  px(ctx, 13, 16, out, 6, 5);
+  px(ctx, 14, 17, mid, 4, 4);
+  px(ctx, 15, 18, stone, 3, 2);
+  px(ctx, 15, 17, lite, 2, 1);
 
-  // Right-face cracks
-  px(ctx, 23, 33, out, 1, 3);
-  px(ctx, 21, 28, out, 1, 2);
+  // Face cracks
+  px(ctx, 12, 33, out, 1, 3);
+  px(ctx, 22, 27, out, 1, 3);
 }
 
 function paintRecPost(
@@ -135,19 +140,19 @@ function paintRecPost(
   const boardDark = shadeHex(band, 0.72);
 
   // Short post sunk into the capstone
-  px(ctx, 15, 8, woodDark, 3, 12);
-  px(ctx, 15, 8, wood, 2, 11);
-  px(ctx, 15, 9, woodLite, 1, 8);
+  px(ctx, 15, 10, woodDark, 3, 9);
+  px(ctx, 15, 10, wood, 2, 8);
+  px(ctx, 15, 11, woodLite, 1, 6);
 
-  // Rec board
-  px(ctx, 8, 2, ink, 16, 8);
-  px(ctx, 9, 3, boardDark, 14, 6);
-  px(ctx, 10, 4, board, 12, 4);
-  px(ctx, 10, 4, shadeHex(band, 1.25), 12, 1);
+  // Rec board — tall enough for 3×5 digits + padding
+  px(ctx, 7, 1, ink, 18, 10);
+  px(ctx, 8, 2, boardDark, 16, 8);
+  px(ctx, 9, 3, board, 14, 6);
+  px(ctx, 9, 3, shadeHex(band, 1.28), 14, 1);
 
   const label = `${recMin}-${recMax}`;
   const labelW = label.length * 4 - 1;
-  paintRecLabel(ctx, label, 16 - Math.floor(labelW / 2), 4, ink);
+  paintRecLabel(ctx, label, 16 - Math.floor(labelW / 2), 3, ink);
 }
 
 function paintWatchMark(ctx: CanvasRenderingContext2D): void {
@@ -155,12 +160,12 @@ function paintWatchMark(ctx: CanvasRenderingContext2D): void {
   const goldLite = "#e8d060";
   const goldDark = "#8a7018";
   // Gold orb on the peak pebble
-  px(ctx, 14, 14, goldDark, 4, 4);
-  px(ctx, 15, 15, gold, 3, 3);
-  px(ctx, 16, 15, goldLite, 1, 1);
+  px(ctx, 14, 13, goldDark, 4, 4);
+  px(ctx, 15, 14, gold, 3, 3);
+  px(ctx, 16, 14, goldLite, 1, 1);
   // Chalk slash on the capstone
-  px(ctx, 13, 22, gold, 5, 1);
-  px(ctx, 14, 23, goldLite, 3, 1);
+  px(ctx, 12, 22, gold, 6, 1);
+  px(ctx, 13, 23, goldLite, 4, 1);
 }
 
 function paintCairn(opts: CairnSheetOpts): Sheet {
