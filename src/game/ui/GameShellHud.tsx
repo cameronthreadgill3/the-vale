@@ -55,7 +55,9 @@ export function GameShellHud({
           The Vale
         </h1>
         <p className="mt-0.5 text-xs text-[#a8b09a] sm:text-sm">
-          {locationLabel}
+          {hud.huntZoneLabel
+            ? `${locationLabel} · ${hud.huntZoneLabel}`
+            : locationLabel}
         </p>
         <p
           className="mt-1 font-display text-sm tracking-wide sm:text-base"

@@ -68,6 +68,27 @@ export const LOOT_TABLES: Record<EnemyKindId, LootTable> = {
       { itemId: "thorn-ward", weight: 2 },
     ],
   },
+  "ash-vole": {
+    rolls: 1,
+    table: [
+      EMPTY(40),
+      { itemId: "trail-rations", weight: 28 },
+      { itemId: "basin-leather", weight: 18 },
+      { itemId: "mite-chitin", weight: 10 },
+      { itemId: "healing-draught", weight: 4 },
+    ],
+  },
+  "gorse-fox": {
+    rolls: 1,
+    table: [
+      EMPTY(30),
+      { itemId: "basin-leather", weight: 26 },
+      { itemId: "ashwood-splinter", weight: 16 },
+      { itemId: "rat-tooth", weight: 12 },
+      { itemId: "fledgling-knife", weight: 10 },
+      { itemId: "healing-draught", weight: 6 },
+    ],
+  },
 };
 
 export function pickWeighted<T>(rng: () => number, entries: { value: T; weight: number }[]): T {

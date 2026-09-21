@@ -1,7 +1,7 @@
 /**
  * Original creature pixel sprites for The Vale (gfx pass 3).
- * Needle Rat, Bark Hound, Briar Mite, Shade Wisp — 4 walk/bob frames with
- * pose changes (legs, tail, mandibles, flame). Cached sheets, not CipSoft.
+ * Needle Rat, Bark Hound, Ash-vole, Gorse Fox, Briar Mite, Shade Wisp —
+ * 4 walk/bob frames with pose changes. Cached sheets, not CipSoft.
  */
 import { makeCanvas, ctx2d, px, shadeHex, drawSoftShadow } from "@/game/gfx/canvasUtil";
 
@@ -9,7 +9,9 @@ export type CreatureKindId =
   | "briar-mite"
   | "needle-rat"
   | "bark-hound"
-  | "shade-wisp";
+  | "shade-wisp"
+  | "ash-vole"
+  | "gorse-fox";
 
 export const CREATURE_FRAME = 32;
 export const CREATURE_WALK_FRAMES = 4;
@@ -217,6 +219,67 @@ function paintShadeWisp(ctx: CanvasRenderingContext2D, flash: boolean, frame: nu
   px(ctx, mx + sway, my + by, hot, 2, 2);
 }
 
+function paintAshVole(ctx: CanvasRenderingContext2D, flash: boolean, frame: number): void {
+  const fur = flash ? "#d8d0c0" : "#6a6050";
+  const dark = flash ? "#a89880" : "#2e2a22";
+  const dust = flash ? "#c8c0b0" : "#8a8070";
+  const eye = "#c45c3e";
+  const by = bobY(frame);
+  const s = stride(frame);
+  // round body
+  px(ctx, 10, 16 + by, dark, 12, 8);
+  px(ctx, 11, 15 + by, fur, 11, 8);
+  px(ctx, 12, 18 + by, dust, 8, 4);
+  // head
+  px(ctx, 19, 14 + by, fur, 7, 7);
+  px(ctx, 22, 16 + by, dark, 5, 4);
+  px(ctx, 24, 17 + by, dust, 3, 2);
+  px(ctx, 21, 15 + by, eye, 2, 2);
+  // ear
+  px(ctx, 19, 12 + by, dark, 3, 3);
+  px(ctx, 20, 12 + by, fur, 2, 2);
+  // legs
+  px(ctx, 12 + s, 23 + by, dark, 2, 3);
+  px(ctx, 16 - s, 24 + by, dark, 2, 2);
+  px(ctx, 19 + s, 23 + by, dark, 2, 3);
+  // stub tail
+  px(ctx, 8, 18 + by, dark, 3, 2);
+  px(ctx, 7, 16 + by, fur, 2, 2);
+}
+
+function paintGorseFox(ctx: CanvasRenderingContext2D, flash: boolean, frame: number): void {
+  const hide = flash ? "#e8d0b0" : "#b07038";
+  const dark = flash ? "#a88860" : "#4a2c14";
+  const gorse = flash ? "#d0c890" : "#8a9a40";
+  const chest = flash ? "#f0e0c8" : "#d8b888";
+  const eye = "#1a1814";
+  const by = bobY(frame);
+  const s = stride(frame);
+  // torso
+  px(ctx, 7, 14 + by, dark, 16, 10);
+  px(ctx, 8, 13 + by, hide, 15, 10);
+  px(ctx, 9, 16 + by, chest, 10, 5);
+  // head / muzzle
+  px(ctx, 18, 9 + by, hide, 9, 9);
+  px(ctx, 22, 12 + by, dark, 6, 5);
+  px(ctx, 24, 13 + by, chest, 4, 3);
+  px(ctx, 22, 11 + by, eye, 2, 2);
+  // ears
+  px(ctx, 18, 6 + by, dark, 3, 4);
+  px(ctx, 22, 5 + by, dark, 3, 5);
+  px(ctx, 19, 7 + by, hide, 2, 2);
+  // gorse-bristle tail
+  px(ctx, 4, 14 + by, hide, 4, 4);
+  px(ctx, 2, 12 + by, gorse, 4, 4);
+  px(ctx, 1, 10 + by, dark, 3, 3);
+  px(ctx, 2, 11 + by, gorse, 2, 2);
+  // legs
+  px(ctx, 9 + s, 23 + by, dark, 2, 5);
+  px(ctx, 13 - s, 24 + by, dark, 2, 4);
+  px(ctx, 17 + s, 23 + by, dark, 2, 5);
+  px(ctx, 21 - s, 24 + by, dark, 2, 4);
+}
+
 function paintCreature(
   id: CreatureKindId,
   color: string,
@@ -239,6 +302,12 @@ function paintCreature(
       break;
     case "shade-wisp":
       paintShadeWisp(ctx, flash, f);
+      break;
+    case "ash-vole":
+      paintAshVole(ctx, flash, f);
+      break;
+    case "gorse-fox":
+      paintGorseFox(ctx, flash, f);
       break;
     default:
       px(ctx, 10, 14, colorDark, 12, 10);
@@ -294,6 +363,8 @@ const CREATURE_IDS: CreatureKindId[] = [
   "needle-rat",
   "bark-hound",
   "shade-wisp",
+  "ash-vole",
+  "gorse-fox",
 ];
 
 export function warmCreatureSheets(): void {

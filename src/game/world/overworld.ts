@@ -13,6 +13,7 @@ import {
   type WorldMap,
 } from "@/game/world/types";
 import { stampThornreachTown } from "@/game/world/town";
+import { stampHuntCairnTiles, huntZonesFor } from "@/game/huntZones";
 
 /** Edge slots for gates - N/E/S/W midpoints with slight offsets. */
 function gateSlots(
@@ -117,6 +118,7 @@ export function generateOverworld(continentId: ContinentId): WorldMap {
     });
   }
 
+  const huntCairns = huntZonesFor(continentId);
   const hollows: HollowMarker[] = [];
   const hollowCount = continent.hollowCount;
   for (let i = 0; i < hollowCount; i++) {
@@ -131,19 +133,21 @@ export function generateOverworld(continentId: ContinentId): WorldMap {
       tries < 40 &&
       (Math.hypot(hx - sx, hy - sy) < (continentId === "thornreach" ? 11 : 6) ||
         gates.some((g) => Math.hypot(g.x - hx, g.y - hy) < 4) ||
-        hollows.some((h0) => Math.hypot(h0.x - hx, h0.y - hy) < 5))
+        hollows.some((h0) => Math.hypot(h0.x - hx, h0.y - hy) < 5) ||
+        huntCairns.some((z) => Math.hypot(z.cairn.x - hx, z.cairn.y - hy) < 4))
     );
     const pos = placeWalkable(tiles, hx, hy, "hollow", w, h);
     hollows.push({ x: pos.x, y: pos.y, index: i });
   }
 
-  // Extra ashwood groves after markers so spawn/gates/hollows stay walkable.
+  // Extra ashwood groves after markers so spawn/gates/hollows/cairns stay walkable.
   for (let g = 0; g < 8; g++) {
     const gx = randInt(rng, 4, w - 5);
     const gy = randInt(rng, 4, h - 5);
     if (Math.hypot(gx - sx, gy - sy) < 7) continue;
     if (gates.some((gt) => Math.hypot(gt.x - gx, gt.y - gy) < 4)) continue;
     if (hollows.some((h0) => Math.hypot(h0.x - gx, h0.y - gy) < 4)) continue;
+    if (huntCairns.some((z) => Math.hypot(z.cairn.x - gx, z.cairn.y - gy) < 4)) continue;
     const count = 4 + randInt(rng, 0, 5);
     for (let i = 0; i < count; i++) {
       const tx = gx + randInt(rng, -2, 2);
@@ -172,6 +176,7 @@ export function generateOverworld(continentId: ContinentId): WorldMap {
     returnTile: null,
   };
   stampThornreachTown(map);
+  stampHuntCairnTiles(map);
   return map;
 }
 

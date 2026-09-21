@@ -18,6 +18,7 @@ export {
 } from "@/game/wayfindingDraw";
 export {
   drawWorldWayfindLabels,
+  huntZoneLabelForPlayer,
   STARTER_TIP,
   STARTER_TIP_MS,
 } from "@/game/wayfindingLabels";

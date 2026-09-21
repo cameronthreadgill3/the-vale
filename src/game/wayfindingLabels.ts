@@ -4,6 +4,12 @@ import { getContinent } from "@/game/continents";
 import type { ShipDock } from "@/game/folk";
 import { drawFloatingLabel } from "@/game/folkCanvas";
 import { WAYFIND_LABEL_RANGE } from "@/game/wayfindingObjectives";
+import {
+  huntZoneAt,
+  huntZonesFor,
+  huntZoneTableLabel,
+  huntZoneWayfindLabel,
+} from "@/game/huntZones";
 
 /** High-contrast landmark labels within ~8 tiles. */
 export function drawWorldWayfindLabels(
@@ -19,6 +25,16 @@ export function drawWorldWayfindLabels(
   const range = WAYFIND_LABEL_RANGE;
 
   if (map.kind === "overworld") {
+    for (const z of huntZonesFor(map.continentId)) {
+      const d = Math.hypot(ptx - (z.cairn.x + 0.5), pty - (z.cairn.y + 0.5));
+      if (d > range) continue;
+      const cx = Math.floor((z.cairn.x + 0.5) * TILE - originX);
+      const cy = Math.floor((z.cairn.y + 0.5) * TILE - originY);
+      drawFloatingLabel(ctx, cx, cy - 14, huntZoneWayfindLabel(z), z.labelColor);
+      if (d <= 5) {
+        drawFloatingLabel(ctx, cx, cy - 32, huntZoneTableLabel(z), "#c8c4b0");
+      }
+    }
     for (const g of map.gates) {
       if (Math.hypot(ptx - (g.x + 0.5), pty - (g.y + 0.5)) > range) continue;
       const gx = Math.floor((g.x + 0.5) * TILE - originX);
@@ -58,8 +74,18 @@ export function drawWorldWayfindLabels(
   }
 }
 
+/** HUD / compass helper — current hunt ground at the player tile. */
+export function huntZoneLabelForPlayer(
+  map: WorldMap,
+  player: { x: number; y: number },
+): string | null {
+  if (map.kind !== "overworld") return null;
+  const zone = huntZoneAt(map.continentId, player.x / TILE, player.y / TILE);
+  return zone ? huntZoneWayfindLabel(zone) : null;
+}
+
 
 export const STARTER_TIP =
-  "Talk to Rook (watch) · Shops & depot on the square · Bank with Cress · Fountain heals";
+  "Talk to Rook (watch) · Cairns mark hunt grounds (Rec. levels) · Shops & depot on the square · Bank with Cress · Fountain heals";
 
 export const STARTER_TIP_MS = 60_000;

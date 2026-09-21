@@ -56,7 +56,7 @@ Tibia-flavored, scoped tight:
 - Attack uses the class’s combat skill (sword / axe / distance / magic / fist); damage scales with that skill + worn weapon attack + a small roll
 - **Shielding** plus worn armor / shield reduces damage taken
 - Killing foes grants **combat XP**, **skill XP** on the skill used, a little **gold**, and a **loot roll** from that fauna's table (Needle Tooth, Bark Hide, Ashwood Blade, …)
-- Hostiles: **Needle Rat** (Beast Lv.2 F) and **Bark Hound** (Beast Lv.4 F) from Accession texture, plus shade wisps in deeper hollows; sparse briar mites — seeded; never on NPCs/gates
+- Hostiles: **Needle Rat** (Beast Lv.2 F) and **Bark Hound** (Beast Lv.4 F) from Accession texture, plus **Ash-vole** (Lv.1 F) and **Gorse Fox** (Lv.3 F) on Thornreach hunting grounds; shade wisps in deeper hollows; sparse briar mites — seeded; never on NPCs/gates. Thornreach overworld uses per-area spawn tables (cairn-marked hunt zones) instead of a single sparse pack.
 - Simple AI: wander → aggro → chase → melee hit on cooldown
 - Floating damage numbers; death respawns at continent spawn (hollows eject) with HP restored
 - **Death losses:** about **5% of carried gold** (at least 1g if you hold any) and **10% of carried item quantity** (rounded down). **Banked gold and items never drop.** A toast lists what was lost.
@@ -79,10 +79,20 @@ After class select on Thornreach, Rook flags the ashwood edge: wrong prey. A min
 2. Defeat **3 Needle Rats** near Thornhearth / ashwood edge
 3. Survive or drive off **1 Bark Hound**
 
-Rewards: modest gold + combat XP + shielding skill XP, with a short Survive · Learn · Progress line. Progress persists in `vale-character-v1`. Early Thornreach fauna is briefly denser while the hunt is active.
+Rewards: modest gold + combat XP + shielding skill XP, with a short Survive · Learn · Progress line. Progress persists in `vale-character-v1`. Thornreach hunting grounds stay populated (Ashwood Edge, North Ashwood, East Basin, South Skirt) whether or not the hunt is active.
 
+### Hunting grounds (Thornreach)
 
+Four cairn-marked hunt zones around Thornhearth plaza. Walk within ~8 tiles for wayfinding labels (`Ashwood Edge · Rec. 2–4`); closer still shows the spawn table. The HUD location line picks up the Rec. band while you stand inside a zone. Radar paints cairns in the zone color.
 
+| Zone | Cairn | Rec. | Spawn table |
+| --- | --- | --- | --- |
+| **Ashwood Edge** (west) | 12, 16 | 2–4 | Needle Rat ×4, Ash-vole ×2, Briar Mite ×1 |
+| **North Ashwood** | 24, 8 | 3–5 | Bark Hound ×2, Needle Rat ×2, Gorse Fox ×1 |
+| **East Basin** | 36, 20 | 1–3 | Ash-vole ×3, Needle Rat ×3, Briar Mite ×1 |
+| **South Skirt** | 24, 28 | 3–5 | Gorse Fox ×2, Bark Hound ×1, Needle Rat ×1 |
+
+Plaza fountain stays clear (~7 tiles). *Teeth in the Grass* arrows point at the Ashwood Edge / North Ashwood cairns when prey is missing.
 
 ### Second sticky quest — Ashwood Watch
 
@@ -109,8 +119,8 @@ Rewards: ~40g + ~80 combat XP + magic skill XP. Yellow arrow points at the hollo
 New cues so you are never lost on Thornreach:
 
 1. **Quest arrow + HUD line** — Active sticky quests show a yellow edge/on-screen arrow toward the current objective (cairns, hollow entrance, Shade Wisp, Needle Rat, Bark Hound, or Rook) plus a HUD line like `→ Identify Needle Rat · 12 tiles`.
-2. **Labeled landmarks + compass** — Larger high-contrast markers; names for folk, **Gate → Continent**, hollow entrance/exit, ship docks, and the plaza **Fountain** within ~8 tiles. Top-center compass (N/E/S/W) with a tiny radar of nearby interactables (gold) and the quest target (bright).
-3. **Starter tip + clear prompts** — First 60s on load: soft tip *Talk to Rook (watch) · Bank with Cress · Fountain square is safe*. Nearest interactable prompts read as actions: `Talk · Rook`, `Talk / Bank · Cress Vault`, `Enter hollow`, `Use gate → …`, `Board ship · …`.
+2. **Labeled landmarks + compass** — Larger high-contrast markers; names for folk, **Gate → Continent**, hollow entrance/exit, ship docks, the plaza **Fountain**, and **hunt-ground cairns** (`Name · Rec. 2–4`, plus spawn table when close) within ~8 tiles. Top-center compass (N/E/S/W) with a tiny radar of nearby interactables (gold), cairns, and the quest target (bright).
+3. **Starter tip + clear prompts** — First 60s on load: soft tip *Talk to Rook (watch) · Cairns mark hunt grounds (Rec. levels) · Bank with Cress · Fountain square is safe*. Nearest interactable prompts read as actions: `Talk · Rook`, `Talk / Bank · Cress Vault`, `Enter hollow`, `Use gate → …`, `Board ship · …`.
 
 
 ### Classes
