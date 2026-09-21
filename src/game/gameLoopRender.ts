@@ -57,6 +57,7 @@ import {
   drawWorldWayfindLabels,
   huntZoneLabelForPlayer,
 } from "@/game/wayfinding";
+import { playFootstep, playHit } from "@/game/audio";
 
 /** Position-delta walk state (avoids patching assembled gameLoop). */
 let _lastPx = 0;
@@ -64,6 +65,8 @@ let _lastPy = 0;
 let _facing: Facing = "south";
 let _walkPhase = 0;
 let _moving = false;
+let _lastPlayerFlash = 0;
+let _walkSampled = false;
 let _atmosT = 0;
 let _gfxWarmed = false;
 
@@ -174,7 +177,10 @@ export function advanceCameraAndRender(args: {
   const dx = player.x - _lastPx;
   const dy = player.y - _lastPy;
   const dist = Math.hypot(dx, dy);
-  if (dist > 0.4) {
+  if (!_walkSampled) {
+    _walkSampled = true;
+    _moving = false;
+  } else if (dist > 0.4) {
     _moving = true;
     if (Math.abs(dx) >= Math.abs(dy)) _facing = dx < 0 ? "west" : "east";
     else _facing = dy < 0 ? "north" : "south";
@@ -186,6 +192,9 @@ export function advanceCameraAndRender(args: {
   _lastPx = player.x;
   _lastPy = player.y;
   const walkFrame = _moving ? (Math.floor(_walkPhase) % 4) : 0;
+  if (_moving && !paused && walkFrame % 2 === 0) playFootstep();
+  if (playerFlash > _lastPlayerFlash + 0.2) playHit("player");
+  _lastPlayerFlash = playerFlash;
 
   const depth: DepthItem[] = [
     ...collectFolkDepthItems(folk, originX, originY),

@@ -20,6 +20,7 @@ import type { ItemId } from "@/game/items";
 import { rollLoot, lootFloatLabel } from "@/game/loot";
 import type { MutableRefObject } from "react";
 import type { MouseState } from "@/game/gameLoopPointers";
+import { playHit } from "@/game/audio";
 
 export function createPlayerAttack(opts: {
   characterRef: MutableRefObject<ValeCharacter>;
@@ -81,6 +82,7 @@ export function createPlayerAttack(opts: {
     const dmg = playerAttackDamage(snap, profile, opts.combatRng);
     target.hp -= dmg;
     target.flash = 0.15;
+    playHit("enemy");
     pushFloat(target.x, target.y - 10, String(dmg), "#e8e6d9");
     if (profile.style !== "melee") {
       opts.projectiles.push({
