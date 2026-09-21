@@ -325,6 +325,9 @@ function paintWater(
     px(ctx, x, y, foam, 8 + (i % 3), 1);
     px(ctx, x + 10, (y + 3) % 30, shadeHex(foam, 0.85), 6, 1);
   }
+  // One crisp catchlight per fountain frame so the sheet shimmers, not only shifts.
+  const shineY = (5 + anim * 7 + (variant % 5)) % 28;
+  px(ctx, 4 + ((anim + variant) % 6), shineY, mixHex(foam, "#f7fcff", 0.5), 4 + (anim % 3), 1);
 }
 
 function paintAshwoodBase(ctx: CanvasRenderingContext2D, base: string, variant: number): void {
@@ -426,9 +429,12 @@ function paintFlowerFountain(
   px(ctx, 5, 12, stoneLite, 22, 2);
   px(ctx, 6, 14, water, 20, 13);
   px(ctx, 7, 15, shadeHex(water, 1.15), 18, 4);
-  const rippleY = 16 + (anim % 3);
-  px(ctx, 8, rippleY, waterLite, 16, 2);
+  // Four-frame basin cycle (fountainFrameAt). Stays in the pool, under the spout.
+  const rippleY = 16 + anim;
+  px(ctx, 8, rippleY, waterLite, 16, 1);
   px(ctx, 10, rippleY + 3, foam, 12, 1);
+  px(ctx, 9 + anim * 2, 22, foam, 1, 1);
+  px(ctx, 21 - anim, 24, foam, 1, 1);
   // pedestal + spout
   px(ctx, 13, 7, stoneDark, 6, 12);
   px(ctx, 14, 6, stone, 4, 12);
