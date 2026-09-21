@@ -179,94 +179,7 @@ export const ASHWOOD_QUEST_TITLE = "Ashwood Watch";
 export const HOLLOW_QUEST_TITLE = "Hollow Watch";
 export const GATE_QUEST_TITLE = "Gate Watch";
 export const MISTMERE_QUEST_TITLE = "Mistmere Crossing";
-export const WAE_COMPLETE_LINE.replace(/^Rook:\s*/, "");
-    }
-    if (!watch.talkedCress) {
-      return "Old Reed's word is good. Cress at the depot will set it in the ledger — then recheck the first cairn.";
-    }
-    if (!watch.cairnInspected) {
-      return "The ledger holds. Recheck the first cairn on the ashwood edge — West Watch.";
-    }
-    if (!watch.houndDone) {
-      return "West Watch is marked. Identify or clear one Bark Hound on the ashwood edge, then tell me the line holds.";
-    }
-    return "The line is nearly set. Survive. Learn. Progress — tell me the watchline holds.";
-  }
-
-  const mist = getMistmereQuest(log);
-  if (mist) {
-    if (mist.status === "complete") {
-      return MISTMERE_COMPLETE_LINE.replace(/^Rook:\s*/, "");
-    }
-    if (!mist.reachedMistmere) {
-      return "Gate Watch is done. Cross the Mistmere gate — Old Reed walks the reed-path on the far shore.";
-    }
-    if (!mist.talkedOldReed) {
-      return "You stand on Mistmere. Find Old Reed — fog guide of the reed-path — then bring his word home.";
-    }
-    return "Old Reed spoke. Survive. Learn. Progress — the crossing ends when you tell me.";
-  }
-
-  const gate = getGateWatchQuest(log);
-  if (gate) {
-    if (gate.status === "complete") {
-      return "The gate is known. Cross to Mistmere when ready — Old Reed still walks the reed-path.";
-    }
-    if (!gate.gateReached) {
-      return "Walk Gate Watch. The Mistmere gate sits on Thornreach — stand the tile, travel, or press E. Know the road before you leave.";
-    }
-    return "The Mistmere gate is marked. Survive. Learn. Progress — the watch ends here.";
-  }
-
-  const hollow = getHollowQuest(log);
-  if (hollow) {
-    if (hollow.status === "complete") {
-      return "Hollow quieted. Walk Gate Watch — the Mistmere gate on Thornreach still waits.";
-    }
-    if (!hollow.enteredHollow) {
-      return "Something wrong under the nearest Thornreach hollow. Descend, Identify the shade flicker, then clear two wisps.";
-    }
-    if (!hollow.identifiedWisp) {
-      return "You are under the stone. Identify a Shade Wisp — Name and Rank — before you swing wild.";
-    }
-    if (hollow.wispsKilled < HOLLOW_WISPS_NEEDED) {
-      return `Shade Wisps ${hollow.wispsKilled}/${HOLLOW_WISPS_NEEDED}. Clear the flicker, then return when the hollow holds.`;
-    }
-    return "The hollow is nearly quiet. Survive. Learn. Progress.";
-  }
-
-  const ash = getAshwoodQuest(log);
-  if (ash) {
-    if (ash.status === "complete") {
-      return "Ashwood watch is settled. Something wrong under the nearest hollow — talk when you are ready to descend.";
-    }
-    const n = ash.cairnsVisited.length;
-    if (n < ASHWOOD_CAIRNS_NEEDED) {
-      return `Walk the ashwood watch. Cairns mark the edge — inspect them (${n}/${ASHWOOD_CAIRNS_NEEDED}). Wrong prey still shows between the stones.`;
-    }
-    if (!ash.wrongPreyDone) {
-      return "Cairns are marked. Identify or clear one Needle Rat or Bark Hound still haunting the watch.";
-    }
-    return "The watch is nearly done. Survive. Learn. Progress.";
-  }
-
-  const q = getTeethQuest(log);
-  if (!q) return null;
-  if (q.status === "complete") {
-    return "Teeth are settled. Walk the ashwood watch when you are ready — cairns still mark wrong prey.";
-  }
-  if (!q.identifiedRat) {
-    return "Ashwood edge has wrong prey. Identify first - Name and Rank. Then clear three Needle Rats and one Bark Hound near Thornhearth.";
-  }
-  if (q.ratsKilled < TEETH_RATS_NEEDED) {
-    return `Good eyes. Needle Rats ${q.ratsKilled}/${TEETH_RATS_NEEDED} - keep the basin grass honest.`;
-  }
-  if (!q.houndDone) {
-    return "Rats down. One Bark Hound still packs the ashwood skirts - survive it or drive it off.";
-  }
-  return "Survive. Learn. Progress.";
-}
-TCHLINE_QUEST_TITLE = "The Watchline Holds";
+export const WATCHLINE_QUEST_TITLE = "The Watchline Holds";
 export const ASHVEIL_QUEST_TITLE = "Ashveil Under the Watchline";
 export const CHOIR_COUNTS_QUEST_TITLE = "The Choir Counts";
 export const WHARF_QUEST_TITLE = "The Wharf Answers";
@@ -2038,4 +1951,90 @@ export function rookQuestLine(log: QuestLog | undefined): string | null {
   const watch = getWatchlineQuest(log);
   if (watch) {
     if (watch.status === "complete") {
-      return WATCHLIN
+      return WATCHLINE_COMPLETE_LINE.replace(/^Rook:\s*/, "");
+    }
+    if (!watch.talkedCress) {
+      return "Old Reed's word is good. Cress at the depot will set it in the ledger — then recheck the first cairn.";
+    }
+    if (!watch.cairnInspected) {
+      return "The ledger holds. Recheck the first cairn on the ashwood edge — West Watch.";
+    }
+    if (!watch.houndDone) {
+      return "West Watch is marked. Identify or clear one Bark Hound on the ashwood edge, then tell me the line holds.";
+    }
+    return "The line is nearly set. Survive. Learn. Progress — tell me the watchline holds.";
+  }
+
+  const mist = getMistmereQuest(log);
+  if (mist) {
+    if (mist.status === "complete") {
+      return MISTMERE_COMPLETE_LINE.replace(/^Rook:\s*/, "");
+    }
+    if (!mist.reachedMistmere) {
+      return "Gate Watch is done. Cross the Mistmere gate — Old Reed walks the reed-path on the far shore.";
+    }
+    if (!mist.talkedOldReed) {
+      return "You stand on Mistmere. Find Old Reed — fog guide of the reed-path — then bring his word home.";
+    }
+    return "Old Reed spoke. Survive. Learn. Progress — the crossing ends when you tell me.";
+  }
+
+  const gate = getGateWatchQuest(log);
+  if (gate) {
+    if (gate.status === "complete") {
+      return "The gate is known. Cross to Mistmere when ready — Old Reed still walks the reed-path.";
+    }
+    if (!gate.gateReached) {
+      return "Walk Gate Watch. The Mistmere gate sits on Thornreach — stand the tile, travel, or press E. Know the road before you leave.";
+    }
+    return "The Mistmere gate is marked. Survive. Learn. Progress — the watch ends here.";
+  }
+
+  const hollow = getHollowQuest(log);
+  if (hollow) {
+    if (hollow.status === "complete") {
+      return "Hollow quieted. Walk Gate Watch — the Mistmere gate on Thornreach still waits.";
+    }
+    if (!hollow.enteredHollow) {
+      return "Something wrong under the nearest Thornreach hollow. Descend, Identify the shade flicker, then clear two wisps.";
+    }
+    if (!hollow.identifiedWisp) {
+      return "You are under the stone. Identify a Shade Wisp — Name and Rank — before you swing wild.";
+    }
+    if (hollow.wispsKilled < HOLLOW_WISPS_NEEDED) {
+      return `Shade Wisps ${hollow.wispsKilled}/${HOLLOW_WISPS_NEEDED}. Clear the flicker, then return when the hollow holds.`;
+    }
+    return "The hollow is nearly quiet. Survive. Learn. Progress.";
+  }
+
+  const ash = getAshwoodQuest(log);
+  if (ash) {
+    if (ash.status === "complete") {
+      return "Ashwood watch is settled. Something wrong under the nearest hollow — talk when you are ready to descend.";
+    }
+    const n = ash.cairnsVisited.length;
+    if (n < ASHWOOD_CAIRNS_NEEDED) {
+      return `Walk the ashwood watch. Cairns mark the edge — inspect them (${n}/${ASHWOOD_CAIRNS_NEEDED}). Wrong prey still shows between the stones.`;
+    }
+    if (!ash.wrongPreyDone) {
+      return "Cairns are marked. Identify or clear one Needle Rat or Bark Hound still haunting the watch.";
+    }
+    return "The watch is nearly done. Survive. Learn. Progress.";
+  }
+
+  const q = getTeethQuest(log);
+  if (!q) return null;
+  if (q.status === "complete") {
+    return "Teeth are settled. Walk the ashwood watch when you are ready — cairns still mark wrong prey.";
+  }
+  if (!q.identifiedRat) {
+    return "Ashwood edge has wrong prey. Identify first - Name and Rank. Then clear three Needle Rats and one Bark Hound near Thornhearth.";
+  }
+  if (q.ratsKilled < TEETH_RATS_NEEDED) {
+    return `Good eyes. Needle Rats ${q.ratsKilled}/${TEETH_RATS_NEEDED} - keep the basin grass honest.`;
+  }
+  if (!q.houndDone) {
+    return "Rats down. One Bark Hound still packs the ashwood skirts - survive it or drive it off.";
+  }
+  return "Survive. Learn. Progress.";
+}
