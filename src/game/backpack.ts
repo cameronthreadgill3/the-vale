@@ -163,7 +163,10 @@ export function formatItemLoss(lost: ItemStack[]): string {
 }
 
 export function formatDeathToast(goldLost: number, itemsLost: ItemStack[]): string {
-  const lines = ["You fall — respawned at continent spawn."];
+  const lines = [
+    "You fall — respawned at continent spawn.",
+    "Bones mark the fall — walk them to clear.",
+  ];
   const itemPart = formatItemLoss(itemsLost);
   const lost: string[] = [];
   if (goldLost > 0) lost.push(`${goldLost}g carried gold`);
