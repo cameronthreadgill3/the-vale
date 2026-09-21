@@ -609,7 +609,7 @@ export function advanceCameraAndRender(args: {
       drawTile(ctx, kind, pal, sx, sy, tx, ty, map, _atmosT);
     }
   }
-  drawAshwoodTint(ctx, map, originX, originY, viewW, viewH);
+  drawAshwoodTint(ctx, map, originX, originY, viewW, viewH, _atmosT);
   drawSurfaceLight(ctx, map, originX, originY, viewW, viewH, _atmosT);
   drawParallaxHaze(ctx, map, originX, originY, viewW, viewH, _atmosT);
   tickAmbientFauna(dt, map, originX, originY, viewW, viewH, _atmosT);
