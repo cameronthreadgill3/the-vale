@@ -130,3 +130,16 @@ export function rollLoot(kindId: EnemyKindId, rng: () => number): ItemId[] {
 export function lootFloatLabel(id: ItemId): string {
   return getItem(id).name;
 }
+
+/** Short pack-pickup line: gold and/or item name × qty. Feel only — no rule changes. */
+export function formatPickupToast(gold: number, taken: ItemId[]): string | null {
+  const parts: string[] = [];
+  if (gold > 0) parts.push(`${gold}g`);
+  const counts = new Map<ItemId, number>();
+  for (const id of taken) counts.set(id, (counts.get(id) ?? 0) + 1);
+  for (const [id, qty] of counts) {
+    parts.push(`${getItem(id).name} ×${qty}`);
+  }
+  if (parts.length === 0) return null;
+  return `Picked up ${parts.join(" · ")}`;
+}

@@ -71,6 +71,7 @@ import {
   collectBodyMarkerDepthItem,
   tickBodyMarker,
 } from "@/game/bodyMarker";
+import { tickLootSparkles, drawLootSparkles } from "@/game/lootSparkle";
 
 /** Position-delta walk state (avoids patching assembled gameLoop). */
 let _lastPx = 0;
@@ -304,8 +305,10 @@ export function advanceCameraAndRender(args: {
   flushDepth(ctx, depth);
   drawProjectiles(ctx, projectiles, originX, originY);
   drawFloatTexts(ctx, floatTexts, originX, originY);
+  tickLootSparkles(dt);
   drawHollowTorchSpots(ctx, map, originX, originY, viewW, viewH, player, _atmosT);
   drawVignette(ctx, viewW, viewH);
+  drawLootSparkles(ctx, originX, originY, player);
   drawEnemyChrome(ctx, enemies, originX, originY);
   drawFolkNameLabels(ctx, folk, originX, originY, player);
   drawWorldWayfindLabels(ctx, map, docks, player, originX, originY);

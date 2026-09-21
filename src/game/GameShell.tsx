@@ -38,6 +38,7 @@ export function GameShell({
   arrivedFrom,
   shipSpawn,
   toast,
+  lootToast,
   continentName,
   inHollow,
   hollowIndex,
@@ -106,6 +107,7 @@ export function GameShell({
   arrivedFrom: ContinentId | null;
   shipSpawn: { x: number; y: number } | null;
   toast: string | null;
+  lootToast: string | null;
   continentName: string;
   inHollow: boolean;
   hollowIndex: number | null;
@@ -398,6 +400,15 @@ export function GameShell({
           className="pointer-events-none absolute left-1/2 top-[28%] z-20 w-[min(92vw,22rem)] -translate-x-1/2 whitespace-pre-line rounded border border-[#2a2e24] bg-[#0c0d0b]/92 px-3 py-2 text-center font-display text-xs leading-relaxed tracking-wide text-[#c9a227] shadow-xl backdrop-blur-md sm:px-4 sm:text-sm"
         >
           {toast}
+        </div>
+      )}
+
+      {lootToast && (
+        <div
+          role="status"
+          className="pointer-events-none absolute left-1/2 top-1/3 z-20 w-[min(92vw,20rem)] -translate-x-1/2 rounded border border-[#c9a227]/50 bg-[#0c0d0b]/92 px-3 py-1.5 text-center font-display text-xs tracking-wide text-[#d8c878] shadow-xl backdrop-blur-md sm:px-4 sm:text-sm"
+        >
+          {lootToast}
         </div>
       )}
 
