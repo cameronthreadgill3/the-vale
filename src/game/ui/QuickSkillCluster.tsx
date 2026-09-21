@@ -64,16 +64,17 @@ export function QuickSkillCluster({
         {showInteract && (
           <button
             type="button"
-            className="pointer-events-auto flex h-14 w-14 touch-none flex-col items-center justify-center rounded-full border border-[#2a2e24] bg-[#161812]/60 text-[11px] text-[#e8e6d9] shadow-md backdrop-blur-sm active:border-[#c9a227]/60"
+            aria-label="Interact"
+            className="pointer-events-auto flex h-16 w-16 touch-none flex-col items-center justify-center rounded-full border border-[#c9a227]/35 bg-[#161812]/78 text-xs text-[#e8e6d9] shadow-md backdrop-blur-sm active:border-[#c9a227]/70"
             onPointerDown={tapInteract}
           >
-            <span className="leading-tight">Interact</span>
-            <span className="text-[9px] uppercase tracking-wider text-[#6a7260]">
+            <span className="font-display leading-tight tracking-wide">Interact</span>
+            <span className="mt-0.5 text-[10px] uppercase tracking-wider text-[#a8b09a]">
               E
             </span>
           </button>
         )}
-        <div className="relative h-[9.5rem] w-[9.5rem]">
+        <div className="relative h-[9.75rem] w-[9.75rem]">
           <QuickSlotBtn
             slot={1}
             skill={quickSlots[0]}
@@ -98,17 +99,17 @@ export function QuickSkillCluster({
           <button
             type="button"
             aria-label="Attack"
-            className={`pointer-events-auto absolute left-1/2 top-1/2 flex h-[4.35rem] w-[4.35rem] -translate-x-1/2 -translate-y-1/2 touch-none flex-col items-center justify-center rounded-full border text-xs font-medium shadow-lg backdrop-blur-sm transition ${
+            className={`pointer-events-auto absolute left-1/2 top-1/2 flex h-[4.6rem] w-[4.6rem] -translate-x-1/2 -translate-y-1/2 touch-none flex-col items-center justify-center rounded-full border text-xs font-medium shadow-lg backdrop-blur-sm transition ${
               attackHeld
-                ? "border-[#c45c3e] bg-[#c45c3e]/45 text-[#e8e6d9]"
-                : "border-[#c45c3e]/55 bg-[#161812]/70 text-[#e8e6d9]"
+                ? "border-[#e07030] bg-[#e07030]/50 text-[#e8e6d9]"
+                : "border-[#e07030]/60 bg-[#161812]/80 text-[#e8e6d9]"
             }`}
             onPointerDown={attackDown}
             onPointerUp={attackUp}
             onPointerCancel={attackUp}
           >
             <span className="font-display text-sm tracking-wide">Attack</span>
-            <span className="mt-0.5 text-[9px] uppercase tracking-wider text-[#a8b09a]">
+            <span className="mt-0.5 text-[10px] uppercase tracking-wider text-[#e8c878]">
               Hold
             </span>
           </button>
@@ -135,17 +136,17 @@ function QuickSlotBtn({
     <button
       type="button"
       aria-label={`Quick skill ${slot}: ${skillName(skill)}`}
-      className={`pointer-events-auto flex h-12 w-12 touch-none flex-col items-center justify-center rounded-full border border-[#c9a227]/45 bg-[#161812]/80 text-[#e8e6d9] shadow-md backdrop-blur-sm active:border-[#c9a227]/80 ${className}`}
+      className={`pointer-events-auto flex h-[3.25rem] w-[3.25rem] min-h-12 min-w-12 touch-none flex-col items-center justify-center rounded-full border border-[#c9a227]/50 bg-[#161812]/85 text-[#e8e6d9] shadow-md backdrop-blur-sm active:border-[#c9a227]/80 ${className}`}
       onPointerDown={onPointerDown}
     >
-      <span className="text-[9px] uppercase leading-none tracking-wider text-[#c9a227]">
+      <span className="text-[10px] uppercase leading-none tracking-wider text-[#c9a227]">
         {slot}
       </span>
-      <span className="mt-0.5 text-[11px] font-medium leading-none">
+      <span className="mt-0.5 text-xs font-medium leading-none">
         {skillAbbrev(skill)}
       </span>
       {row ? (
-        <span className="mt-0.5 text-[8px] tabular-nums leading-none text-[#6a7260]">
+        <span className="mt-0.5 text-[9px] tabular-nums leading-none text-[#a8b09a]">
           {row.level}
         </span>
       ) : null}

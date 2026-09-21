@@ -48,6 +48,72 @@ body {
   box-shadow: inset 0 0 0 1px #0a0b08, 0 2px 0 #0a0b08;
 }
 
+/* Soft backing so HUD text stays readable over busy tiles. */
+.vale-hud-panel {
+  background: color-mix(in srgb, var(--vale-chrome) 90%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow:
+    inset 0 0 0 1px #0a0b08,
+    0 2px 0 #0a0b08,
+    0 4px 14px rgba(0, 0, 0, 0.42);
+}
+
+.vale-meter {
+  height: 0.55rem;
+  overflow: hidden;
+  border-radius: 2px;
+  background: #050604;
+  box-shadow: inset 0 0 0 1px #1a1410;
+}
+
+.vale-meter-ember {
+  background: #1a1410;
+  box-shadow: inset 0 0 0 1px #4a2818;
+}
+
+.vale-meter-low {
+  box-shadow: inset 0 0 0 1px #a03030;
+}
+
+.vale-meter-ember-sheen {
+  height: 2px;
+  background: rgba(248, 200, 80, 0.55);
+}
+
+@media (pointer: coarse), (max-width: 768px) {
+  .vale-hud {
+    max-height: calc(100dvh - 10.75rem);
+    overflow: hidden;
+  }
+
+  .vale-hud-quest {
+    max-height: min(7.25rem, 26dvh);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .vale-meter {
+    height: 0.65rem;
+  }
+
+  /* Keep the top HUD strip (quest + HP + path) out of the virtual stick. */
+  .game-root > .absolute.inset-x-0.top-0 {
+    max-height: calc(100dvh - 10.5rem);
+    overflow: hidden;
+  }
+}
+
+@media (max-height: 480px) {
+  .vale-hud {
+    max-height: calc(100dvh - 9.5rem);
+  }
+
+  .vale-hud-quest {
+    max-height: 4.5rem;
+  }
+}
+
 .image-rendering-pixelated,
 canvas.game-canvas {
   image-rendering: pixelated;
@@ -86,8 +152,62 @@ canvas.game-canvas {
   max-height: min(58vh, 28rem);
 }
 
+.vale-corner-dock {
+  position: absolute;
+  display: flex;
+  max-width: min(calc(100% - 1.5rem), 22rem);
+  flex-direction: column-reverse;
+  gap: 0.25rem;
+  bottom: 1.5rem;
+  left: 1.5rem;
+}
+
+.vale-overlay-above-chrome {
+  max-height: min(70dvh, 32rem);
+}
+
 @media (pointer: coarse), (max-width: 768px) {
+  .vale-corner-dock {
+    flex-direction: column;
+    left: auto;
+    bottom: auto;
+    right: max(0.75rem, env(safe-area-inset-right));
+    /* Clear account row + HP vitals so tabs do not sit on the stick. */
+    top: 16rem;
+    max-height: calc(100dvh - 26.5rem);
+  }
+
   .vale-corner-panel {
-    max-height: calc(100dvh - 13rem);
+    max-height: calc(100dvh - 27rem);
+  }
+
+  .vale-overlay-above-chrome {
+    bottom: 10.75rem;
+    max-height: calc(100dvh - 16.5rem);
+  }
+}
+
+@media (max-height: 520px) {
+  .vale-corner-dock {
+    flex-direction: column-reverse;
+    top: auto;
+    right: auto;
+    left: max(0.75rem, env(safe-area-inset-left));
+    /* Stick 7.5rem + inset 0.75rem + 1.75rem gap. */
+    bottom: 10rem;
+    max-height: calc(100dvh - 14.5rem);
+  }
+
+  .vale-corner-panel {
+    max-height: calc(100dvh - 16rem);
+  }
+
+  .vale-hud-extra {
+    display: none;
+  }
+
+  .vale-overlay-above-chrome {
+    bottom: 9.25rem;
+    max-height: calc(100dvh - 12rem);
   }
 }
