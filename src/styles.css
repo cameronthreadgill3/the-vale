@@ -1106,6 +1106,35 @@ canvas.game-canvas {
     bottom: 10.75rem;
     max-height: calc(100dvh - 16.5rem);
   }
+
+  /* Vault sheet clears the stick (7.5rem) and the taller attack cluster (9.75rem
+     plus the top skill's overflow). Inset is max(0.75rem, safe-area). */
+  .vale-bank-sheet.vale-overlay-above-chrome {
+    bottom: calc(11.2rem + max(0.75rem, env(safe-area-inset-bottom, 0px)));
+    max-height: calc(
+      100dvh - 17.2rem - max(0.75rem, env(safe-area-inset-bottom, 0px)) -
+        env(safe-area-inset-top, 0px)
+    );
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .vale-bank-sheet-head {
+    flex-shrink: 0;
+  }
+
+  .vale-bank-sheet-body {
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .vale-bank-close {
+    min-height: 2.75rem;
+    min-width: 4.75rem;
+    font-size: 0.875rem;
+  }
 }
 
 @media (max-height: 520px) {
@@ -1130,5 +1159,13 @@ canvas.game-canvas {
   .vale-overlay-above-chrome {
     bottom: 9.25rem;
     max-height: calc(100dvh - 12rem);
+  }
+
+  .vale-bank-sheet.vale-overlay-above-chrome {
+    bottom: calc(11.2rem + max(0.75rem, env(safe-area-inset-bottom, 0px)));
+    max-height: calc(
+      100dvh - 14.5rem - max(0.75rem, env(safe-area-inset-bottom, 0px)) -
+        env(safe-area-inset-top, 0px)
+    );
   }
 }

@@ -295,6 +295,7 @@ export function GameApp() {
   const lootToastGen = useRef(0);
   const lowHpWarnedRef = useRef(false);
   const [dialogue, setDialogue] = useState<{
+    folkId: string;
     name: string;
     line: string;
     hasShop: boolean;
@@ -304,6 +305,9 @@ export function GameApp() {
     bankId?: string;
     craftId?: string;
   } | null>(null);
+  const dialogueRef = useRef(dialogue);
+  dialogueRef.current = dialogue;
+  const [bankFolkId, setBankFolkId] = useState<string | null>(null);
   const [activeShopId, setActiveShopId] = useState<string | null>(null);
   const [activeDockId, setActiveDockId] = useState<string | null>(null);
   const [bankOpen, setBankOpen] = useState(false);
@@ -1050,6 +1054,7 @@ export function GameApp() {
       if (hook) line = hook;
     }
     setDialogue({
+      folkId,
       name: folk.name,
       line,
       hasShop: Boolean(folk.shopId),
@@ -1087,11 +1092,17 @@ export function GameApp() {
   }, []);
 
   const openBank = useCallback(() => {
+    setBankFolkId(dialogueRef.current?.folkId ?? null);
     setDialogue(null);
     setActiveShopId(null);
     setActiveDockId(null);
     setPackOpen(false);
     setBankOpen(true);
+  }, []);
+
+  const closeBank = useCallback(() => {
+    setBankOpen(false);
+    setBankFolkId(null);
   }, []);
 
   const handleDepositItem = useCallback(
@@ -2433,6 +2444,7 @@ export function GameApp() {
       dialogue={dialogue}
       shop={shop}
       bankOpen={bankOpen}
+      bankFolkId={bankOpen ? bankFolkId : null}
       packOpen={packOpen}
       craftOpen={craftOpen}
       premiumUnlocking={premiumUnlocking}
@@ -2451,7 +2463,7 @@ export function GameApp() {
       onCloseDialogue={() => setDialogue(null)}
       onCloseShop={() => setActiveShopId(null)}
       onOpenBank={openBank}
-      onCloseBank={() => setBankOpen(false)}
+      onCloseBank={closeBank}
       onDepositItem={handleDepositItem}
       onWithdrawItem={handleWithdrawItem}
       onDepositGold={handleDepositGold}

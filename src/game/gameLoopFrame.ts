@@ -145,3 +145,23 @@ export function computePrompt(
   candidates.sort((a, b) => a.dist - b.dist);
   return candidates[0]!.prompt;
 }
+
+/**
+ * Still in talk range of the clerk who opened the vault, including the depot door
+ * prompt (Cress can be spoken to from the counter or the door).
+ */
+export function isAtBankCounter(
+  px: number,
+  py: number,
+  folkId: string,
+  folk: { id: string; x: number; y: number; bankId?: string }[],
+): boolean {
+  const clerk = folk.find((f) => f.id === folkId);
+  if (!clerk?.bankId) return false;
+  if (nearTile(px, py, clerk.x, clerk.y, INTERACT_RADIUS)) return true;
+  if (folkId === THORNREACH_DEPOT.folkId) {
+    const door = THORNREACH_DEPOT.door;
+    if (nearTile(px, py, door.x, door.y, INTERACT_RADIUS)) return true;
+  }
+  return false;
+}
