@@ -73,7 +73,7 @@ export const FOLK: FolkDef[] = [
   {
     id: "mara-hearth",
     name: "Mara Hearth",
-    line: "General store — step inside. Coin for bread, oil, and luck-charms. If you bleed, find Noll in the hut north of the fountain; if you wander lost, ask Rook. Cress keeps the depot on the south-west cobbles.",
+    line: "General store — step inside. Coin for bread, oil, luck-charms, and ashwood edges if you mean to last the grass. If you bleed, find Noll in the hut north of the fountain; if you wander lost, ask Rook. Cress keeps the depot on the south-west cobbles.",
     continentId: "thornreach",
     x: 32,
     y: 17,
@@ -166,7 +166,7 @@ export const FOLK: FolkDef[] = [
   {
     id: "selene-tide",
     name: "Selene Tide",
-    line: "Salt fish and mist-tonics off the pier. Mind the tide when you board.",
+    line: "Salt fish, mist-tonics, and fog-wraps off the pier. Mind the tide when you board.",
     continentId: "mistmere",
     x: 28,
     y: 20,
@@ -176,7 +176,7 @@ export const FOLK: FolkDef[] = [
   {
     id: "choir-keeper",
     name: "Choir Keeper",
-    line: "The drowned hymn still hums underfoot. Buy rope if you mean to climb.",
+    line: "The drowned hymn still hums underfoot. Rope, oil, and choir-steel if you mean to climb.",
     continentId: "sunken-choir",
     x: 23,
     y: 16,
@@ -217,6 +217,12 @@ export const SHOPS: ShopDef[] = [
       { itemId: "hearth-bread", price: 4 },
       { itemId: "thorn-charm", price: 18 },
       { itemId: "lantern-oil", price: 8 },
+      { itemId: "fledgling-sword", price: 22 },
+      { itemId: "ashwood-hatchet", price: 28 },
+      { itemId: "reed-bow", price: 26 },
+      { itemId: "fledgling-vest", price: 16 },
+      { itemId: "basin-leathers", price: 34 },
+      { itemId: "basin-buckler", price: 16 },
     ],
   },
   {
@@ -256,6 +262,10 @@ export const SHOPS: ShopDef[] = [
       { itemId: "trail-rations", price: 5 },
       { itemId: "rope-coil", price: 10 },
       { itemId: "healing-draught", price: 14 },
+      { itemId: "reed-bow", price: 28 },
+      { itemId: "mistveil-wrap", price: 48 },
+      { itemId: "cloth-wraps", price: 12 },
+      { itemId: "thornleaf-wand", price: 26 },
     ],
   },
   {
@@ -271,6 +281,10 @@ export const SHOPS: ShopDef[] = [
       { itemId: "healing-draught", price: 13 },
       { itemId: "obsidian-shard", price: 20 },
       { itemId: "trail-rations", price: 6 },
+      { itemId: "bark-club", price: 36 },
+      { itemId: "thorn-mail", price: 56 },
+      { itemId: "choir-dirk", price: 72 },
+      { itemId: "bark-shield", price: 38 },
     ],
   },
 ];

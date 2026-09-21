@@ -15,7 +15,7 @@ import {
   type SkillId,
   xpForStartingLevel,
 } from "@/game/skills";
-import { isItemId, type ItemId } from "@/game/items";
+import { getItem, isItemId, type EquipSlot, type ItemId } from "@/game/items";
 import { maxHpFor, maxManaFor, usesMana } from "@/game/combat";
 import {
   canCarry,
@@ -23,8 +23,17 @@ import {
   summarizeDeathLoss,
   type ItemStack,
 } from "@/game/backpack";
+import {
+  canEquipItem,
+  emptyEquipment,
+  sanitizeEquipment,
+  starterKit,
+  type EquipmentLoadout,
+} from "@/game/equipment";
 
 import { getActiveCharacterKey, GUEST_CHARACTER_KEY } from "@/account/storageScope";
+
+export type { EquipmentLoadout } from "@/game/equipment";
 
 /** Guest key (offline). Active play uses getActiveCharacterKey(). */
 export const CHARACTER_STORAGE_KEY = GUEST_CHARACTER_KEY;
@@ -59,6 +68,8 @@ export interface ValeCharacter {
   mana: number;
   /** Simple item stacks. */
   inventory: InventoryStack[];
+  /** Worn weapon / armor / shield. */
+  equipment: EquipmentLoadout;
   /** Vault stacks — persist with the character; never drop on death. */
   bank: InventoryStack[];
   /** Gold stored in the vault. */
@@ -190,6 +201,7 @@ export function loadCharacter(): ValeCharacter | null {
           ? Math.max(0, Math.floor(rec.mana))
           : 0,
       inventory: sanitizeInventory(rec.inventory),
+      equipment: sanitizeEquipment(rec.equipment),
       bank: sanitizeInventory(rec.bank),
       bankGold:
         typeof rec.bankGold === "number" && Number.isFinite(rec.bankGold)
@@ -220,6 +232,7 @@ export function createCharacter(classId: ClassId): ValeCharacter {
     const start = cls.startingLevels[id] ?? 1;
     skillXp[id] = xpForStartingLevel(start);
   }
+  const kit = starterKit(classId);
   const character: ValeCharacter = {
     classId,
     skillXp,
@@ -231,7 +244,8 @@ export function createCharacter(classId: ClassId): ValeCharacter {
     gold: STARTING_GOLD,
     hp: 0,
     mana: 0,
-    inventory: [{ id: "trail-rations", qty: 2 }],
+    inventory: kit.inventory,
+    equipment: kit.equipment,
     bank: [],
     bankGold: 0,
     premiumBackpack: false,
@@ -325,16 +339,42 @@ export function markFolkMet(
   return next;
 }
 
+function cloneInventory(inventory: InventoryStack[]): InventoryStack[] {
+  return inventory.map((s) => ({ ...s }));
+}
+
+function bumpStack(inventory: InventoryStack[], itemId: ItemId, qty: number): InventoryStack[] {
+  const next = cloneInventory(inventory);
+  const stack = next.find((s) => s.id === itemId);
+  if (stack) stack.qty += qty;
+  else next.push({ id: itemId, qty });
+  return next;
+}
+
+function dropStack(
+  inventory: InventoryStack[],
+  itemId: ItemId,
+  qty: number,
+): InventoryStack[] | null {
+  const next = cloneInventory(inventory);
+  const idx = next.findIndex((s) => s.id === itemId);
+  if (idx < 0) return null;
+  const stack = next[idx]!;
+  if (stack.qty < qty) return null;
+  stack.qty -= qty;
+  if (stack.qty <= 0) next.splice(idx, 1);
+  return next;
+}
+
 export function addInventoryItem(
   character: ValeCharacter,
   itemId: ItemId,
   qty = 1,
 ): ValeCharacter {
-  const inventory = character.inventory.map((s) => ({ ...s }));
-  const stack = inventory.find((s) => s.id === itemId);
-  if (stack) stack.qty += qty;
-  else inventory.push({ id: itemId, qty });
-  const next = { ...character, inventory };
+  const next = {
+    ...character,
+    inventory: bumpStack(character.inventory, itemId, qty),
+  };
   saveCharacter(next);
   return next;
 }
@@ -363,14 +403,69 @@ export function removeInventoryItem(
   itemId: ItemId,
   qty = 1,
 ): ValeCharacter | null {
-  const inventory = character.inventory.map((s) => ({ ...s }));
-  const idx = inventory.findIndex((s) => s.id === itemId);
-  if (idx < 0) return null;
-  const stack = inventory[idx]!;
-  if (stack.qty < qty) return null;
-  stack.qty -= qty;
-  if (stack.qty <= 0) inventory.splice(idx, 1);
+  const inventory = dropStack(character.inventory, itemId, qty);
+  if (!inventory) return null;
   const next = { ...character, inventory };
+  saveCharacter(next);
+  return next;
+}
+
+export function unequipSlot(
+  character: ValeCharacter,
+  slot: EquipSlot,
+): ValeCharacter | null {
+  const worn = (character.equipment ?? emptyEquipment())[slot];
+  if (!worn) return null;
+  const check = canCarry(
+    character.inventory,
+    character.premiumBackpack,
+    worn,
+    1,
+  );
+  if (!check.ok) return null;
+  const next: ValeCharacter = {
+    ...character,
+    equipment: { ...(character.equipment ?? emptyEquipment()), [slot]: null },
+    inventory: bumpStack(character.inventory, worn, 1),
+  };
+  saveCharacter(next);
+  return next;
+}
+
+export function equipItem(
+  character: ValeCharacter,
+  itemId: ItemId,
+): ValeCharacter | null {
+  const item = getItem(itemId);
+  if (!item.slot || !canEquipItem(itemId, item.slot)) return null;
+  const slot = item.slot;
+  let inventory = dropStack(character.inventory, itemId, 1);
+  if (!inventory) return null;
+  const equipment: EquipmentLoadout = { ...(character.equipment ?? emptyEquipment()) };
+
+  const displaced: ItemId[] = [];
+  if (slot === "weapon" && item.twoHand && equipment.shield) {
+    displaced.push(equipment.shield);
+    equipment.shield = null;
+  }
+  if (slot === "shield" && equipment.weapon) {
+    const wielded = getItem(equipment.weapon);
+    if (wielded.twoHand) {
+      displaced.push(equipment.weapon);
+      equipment.weapon = null;
+    }
+  }
+  const previous = equipment[slot];
+  if (previous) displaced.push(previous);
+  equipment[slot] = itemId;
+
+  for (const id of displaced) {
+    const check = canCarry(inventory, character.premiumBackpack, id, 1);
+    if (!check.ok) return null;
+    inventory = bumpStack(inventory, id, 1);
+  }
+
+  const next: ValeCharacter = { ...character, inventory, equipment };
   saveCharacter(next);
   return next;
 }

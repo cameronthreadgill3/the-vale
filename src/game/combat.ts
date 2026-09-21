@@ -4,6 +4,7 @@ import type { ClassId, ValeClass } from "@/game/classes";
 import type { ValeCharacter } from "@/game/character";
 import { skillLevelFromXp, type SkillId } from "@/game/skills";
 import { levelFromXp } from "@/game/xp";
+import { emptyEquipment, equipmentAttack, equipmentDefense } from "@/game/equipment";
 
 /** --- Combat-feel tunables (first hunt polish) --- */
 /** Plaza fountain heal radius from spawn tile center (tiles). */
@@ -132,19 +133,24 @@ export function usesMana(classId: ClassId): boolean {
   return classId === "hearthmage" || classId === "verdant";
 }
 
-/** Physical / magic hit vs foe. Small random variance. */
+/** Physical / magic hit vs foe. Small random variance + worn weapon. */
 export function playerAttackDamage(
   character: ValeCharacter,
   profile: AttackProfile,
   rng: () => number,
 ): number {
   const skillLevel = skillLevelFromXp(character.skillXp[profile.skill]);
-  const base = 4 + skillLevel * 1.6;
+  const wielded = equipmentAttack(character.equipment ?? emptyEquipment());
+  let gear = wielded.attack;
+  if (wielded.weaponSkill && wielded.weaponSkill !== profile.skill) {
+    gear = Math.floor(gear * 0.5);
+  }
+  const base = 4 + skillLevel * 1.6 + gear;
   const roll = 0.85 + rng() * 0.3;
   return Math.max(1, Math.floor(base * profile.damageMult * roll));
 }
 
-/** Incoming damage reduced by shielding. */
+/** Incoming damage reduced by shielding skill and worn armor / shield. */
 export function mitigateDamage(
   character: ValeCharacter,
   raw: number,
@@ -153,7 +159,8 @@ export function mitigateDamage(
   const shieldLevel = skillLevelFromXp(character.skillXp.shielding);
   const reduction = Math.min(0.55, shieldLevel * 0.025);
   const roll = 0.9 + rng() * 0.2;
-  return Math.max(1, Math.floor(raw * (1 - reduction) * roll));
+  const gearDef = equipmentDefense(character.equipment ?? emptyEquipment());
+  return Math.max(1, Math.floor(raw * (1 - reduction) * roll) - gearDef);
 }
 
 export function enemyAttackDamage(enemyLevel: number, atk: number, rng: () => number): number {

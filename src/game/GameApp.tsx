@@ -18,6 +18,8 @@ import {
   applyDeath,
   setQuickSlot,
   tryAddInventoryItem,
+  equipItem,
+  unequipSlot,
   unlockPremiumBackpack,
   depositItem,
   withdrawItem,
@@ -61,7 +63,7 @@ import {
   skillSnapshot,
   type SkillId,
 } from "@/game/skills";
-import { isItemId } from "@/game/items";
+import { isItemId, type EquipSlot, type ItemId } from "@/game/items";
 import {
   getFolk,
   getShop,
@@ -571,18 +573,77 @@ export function GameApp() {
   );
 
   const handleCombatReward = useCallback(
-    (combatXpGain: number, skill: SkillId, skillXpGain: number, goldGain: number) => {
+    (
+      combatXpGain: number,
+      skill: SkillId,
+      skillXpGain: number,
+      goldGain: number,
+      loot?: ItemId[],
+    ) => {
       setCharacter((prev) => {
         if (!prev) return prev;
         let next = awardCombatXp(prev, combatXpGain);
         next = { ...next, skillXp: { ...next.skillXp } };
         awardSkillXp(next, skill, skillXpGain);
         next = setGold(next, next.gold + goldGain);
+        let leftover = false;
+        let leftoverReason: "weight" | "slots" | null = null;
+        if (loot && loot.length > 0) {
+          for (const id of loot) {
+            const added = tryAddInventoryItem(next, id, 1);
+            if (added.ok) {
+              next = added.character;
+            } else {
+              leftover = true;
+              leftoverReason = added.reason;
+            }
+          }
+        }
+        if (leftover) {
+          queueMicrotask(() =>
+            showToast(
+              leftoverReason
+                ? toastForCarryFail(leftoverReason)
+                : "Pack too heavy — loot left behind",
+            ),
+          );
+        }
         return { ...next, skillXp: { ...next.skillXp } };
       });
       setSkillTick((t) => t + 1);
     },
-    [],
+    [showToast],
+  );
+
+  const handleEquip = useCallback(
+    (itemId: string) => {
+      if (!isItemId(itemId)) return;
+      setCharacter((prev) => {
+        if (!prev) return prev;
+        const next = equipItem(prev, itemId);
+        if (!next) {
+          queueMicrotask(() => showToast("Cannot equip that"));
+          return prev;
+        }
+        return next;
+      });
+    },
+    [showToast],
+  );
+
+  const handleUnequip = useCallback(
+    (slot: EquipSlot) => {
+      setCharacter((prev) => {
+        if (!prev) return prev;
+        const next = unequipSlot(prev, slot);
+        if (!next) {
+          queueMicrotask(() => showToast(toastForCarryFail("slots")));
+          return prev;
+        }
+        return next;
+      });
+    },
+    [showToast],
   );
 
   const handleVitals = useCallback((hp: number, mana: number) => {
@@ -686,6 +747,8 @@ export function GameApp() {
       onBuy={buyItem}
       onSell={sellItem}
       onSail={sailTo}
+      onEquip={handleEquip}
+      onUnequip={handleUnequip}
       onCombatReward={handleCombatReward}
       onEnemyKill={handleEnemyKill}
       onIdentify={handleIdentify}
