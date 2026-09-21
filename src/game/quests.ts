@@ -13,13 +13,20 @@ export const ASHWOOD_QUEST_ID = "ashwood-watch" as const;
 export const HOLLOW_QUEST_ID = "hollow-watch" as const;
 export const GATE_QUEST_ID = "gate-watch" as const;
 export const MISTMERE_QUEST_ID = "mistmere-crossing" as const;
+export const WATCHLINE_QUEST_ID = "the-watchline-holds" as const;
+
+/** Depot clerk — Cress Ledger in folk.ts. */
+export const CRESS_FOLK_ID = "cress-ledger" as const;
+/** First Ashwood Watch cairn (West Watch) — recheck on the ashwood edge. */
+export const WATCHLINE_CAIRN_ID = "cairn-west" as const;
 
 export type QuestId =
   | typeof TEETH_QUEST_ID
   | typeof ASHWOOD_QUEST_ID
   | typeof HOLLOW_QUEST_ID
   | typeof GATE_QUEST_ID
-  | typeof MISTMERE_QUEST_ID;
+  | typeof MISTMERE_QUEST_ID
+  | typeof WATCHLINE_QUEST_ID;
 
 export type QuestStatus = "active" | "complete";
 
@@ -70,12 +77,24 @@ export interface MistmereQuestProgress {
   talkedOldReed: boolean;
 }
 
+export interface WatchlineQuestProgress {
+  id: typeof WATCHLINE_QUEST_ID;
+  status: QuestStatus;
+  /** Talked to Cress Ledger at the Thornreach depot. */
+  talkedCress: boolean;
+  /** Rechecked the first Ashwood Watch cairn (West Watch). */
+  cairnInspected: boolean;
+  /** Identified or cleared 1 Bark Hound. */
+  houndDone: boolean;
+}
+
 export type QuestLog = {
   [TEETH_QUEST_ID]?: TeethQuestProgress;
   [ASHWOOD_QUEST_ID]?: AshwoodQuestProgress;
   [HOLLOW_QUEST_ID]?: HollowQuestProgress;
   [GATE_QUEST_ID]?: GateWatchQuestProgress;
   [MISTMERE_QUEST_ID]?: MistmereQuestProgress;
+  [WATCHLINE_QUEST_ID]?: WatchlineQuestProgress;
 };
 
 export const TEETH_RATS_NEEDED = 3;
@@ -87,6 +106,7 @@ export const ASHWOOD_QUEST_TITLE = "Ashwood Watch";
 export const HOLLOW_QUEST_TITLE = "Hollow Watch";
 export const GATE_QUEST_TITLE = "Gate Watch";
 export const MISTMERE_QUEST_TITLE = "Mistmere Crossing";
+export const WATCHLINE_QUEST_TITLE = "The Watchline Holds";
 
 export const TEETH_START_TOAST =
   "Rook: Ashwood edge has wrong prey - Identify first.";
@@ -117,6 +137,12 @@ export const MISTMERE_START_TOAST =
 
 export const MISTMERE_COMPLETE_LINE =
   "Rook: Mistmere remembers your crossing. Survive. Learn. Progress.";
+
+export const WATCHLINE_START_TOAST =
+  "Rook: Old Reed's word is good. Cress will set it in the ledger; recheck the first cairn, then tell me the watchline holds.";
+
+export const WATCHLINE_COMPLETE_LINE =
+  "Rook: The line holds. Survive. Learn. Progress — now the road has a memory.";
 
 export const TEETH_REWARDS = {
   gold: 28,
@@ -151,6 +177,13 @@ export const MISTMERE_REWARDS = {
   combatXp: 100,
   skill: "distance" as SkillId,
   skillXp: 30,
+};
+
+export const WATCHLINE_REWARDS = {
+  gold: 55,
+  combatXp: 110,
+  skill: "shielding" as SkillId,
+  skillXp: 32,
 };
 
 export function loadQuestLog(): QuestLog {
@@ -214,6 +247,16 @@ export function emptyMistmereQuest(): MistmereQuestProgress {
     status: "active",
     reachedMistmere: false,
     talkedOldReed: false,
+  };
+}
+
+export function emptyWatchlineQuest(): WatchlineQuestProgress {
+  return {
+    id: WATCHLINE_QUEST_ID,
+    status: "active",
+    talkedCress: false,
+    cairnInspected: false,
+    houndDone: false,
   };
 }
 
@@ -308,6 +351,20 @@ export function sanitizeQuestLog(raw: unknown): QuestLog {
     };
   }
 
+  const watch = obj[WATCHLINE_QUEST_ID];
+  if (watch && typeof watch === "object") {
+    const w = watch as Record<string, unknown>;
+    const status: QuestStatus =
+      w.status === "complete" ? "complete" : "active";
+    log[WATCHLINE_QUEST_ID] = {
+      id: WATCHLINE_QUEST_ID,
+      status,
+      talkedCress: Boolean(w.talkedCress),
+      cairnInspected: Boolean(w.cairnInspected),
+      houndDone: Boolean(w.houndDone),
+    };
+  }
+
   return log;
 }
 
@@ -339,6 +396,11 @@ export function getMistmereQuest(
   return log?.[MISTMERE_QUEST_ID] ?? null;
 }
 
+export function getWatchlineQuest(
+  log: QuestLog | undefined,
+): WatchlineQuestProgress | null {
+  return log?.[WATCHLINE_QUEST_ID] ?? null;
+}
 
 export function isTeethActive(log: QuestLog | undefined): boolean {
   const q = getTeethQuest(log);
@@ -362,6 +424,11 @@ export function isGateWatchActive(log: QuestLog | undefined): boolean {
 
 export function isMistmereActive(log: QuestLog | undefined): boolean {
   const q = getMistmereQuest(log);
+  return Boolean(q && q.status === "active");
+}
+
+export function isWatchlineActive(log: QuestLog | undefined): boolean {
+  const q = getWatchlineQuest(log);
   return Boolean(q && q.status === "active");
 }
 
@@ -393,6 +460,10 @@ export function gateWatchObjectivesMet(q: GateWatchQuestProgress): boolean {
 
 export function mistmereObjectivesMet(q: MistmereQuestProgress): boolean {
   return q.reachedMistmere && q.talkedOldReed;
+}
+
+export function watchlineObjectivesMet(q: WatchlineQuestProgress): boolean {
+  return q.talkedCress && q.cairnInspected && q.houndDone;
 }
 
 /** HUD lines for Teeth sticky panel. */
@@ -473,6 +544,27 @@ export function mistmereHudLines(q: MistmereQuestProgress): string[] {
   ];
 }
 
+/** HUD lines for The Watchline Holds (consumed if HUD wires the helper). */
+export function watchlineHudLines(q: WatchlineQuestProgress): string[] {
+  if (q.status === "complete") {
+    return ["Complete - The watchline holds"];
+  }
+  return [
+    q.talkedCress
+      ? "[done] Talk to Cress (ledger)"
+      : "[ ] Talk to Cress at the depot (ledger)",
+    q.cairnInspected
+      ? "[done] Recheck West Watch cairn"
+      : "[ ] Recheck the first cairn (West Watch)",
+    q.houndDone
+      ? "[done] Bark Hound Identified / cleared"
+      : "[ ] Identify or clear 1 Bark Hound (Ashwood Edge)",
+    q.talkedCress && q.cairnInspected && q.houndDone
+      ? "[ ] Return to Rook (the line holds)"
+      : "[ ] Return to Rook when the line holds",
+  ];
+}
+
 
 export type QuestEventResult = {
   log: QuestLog;
@@ -487,6 +579,8 @@ export type QuestEventResult = {
   startedGateWatch?: boolean;
   /** Mistmere Crossing auto-started after Gate Watch. */
   startedMistmere?: boolean;
+  /** The Watchline Holds auto-started after Mistmere Crossing. */
+  startedWatchline?: boolean;
 };
 
 /** If Teeth is complete and Ashwood missing, start Ashwood Watch. */
@@ -561,6 +655,24 @@ export function ensureMistmereAfterGate(log: QuestLog): {
   };
 }
 
+/** If Mistmere Crossing is complete and Watchline Holds missing, start it. */
+export function ensureWatchlineAfterMistmere(log: QuestLog): {
+  log: QuestLog;
+  started: boolean;
+} {
+  const mist = getMistmereQuest(log);
+  if (!mist || mist.status !== "complete") {
+    return { log, started: false };
+  }
+  if (getWatchlineQuest(log)) {
+    return { log, started: false };
+  }
+  return {
+    log: withWatchlineQuest(log, emptyWatchlineQuest()),
+    started: true,
+  };
+}
+
 export function withTeethQuest(
   log: QuestLog | undefined,
   quest: TeethQuestProgress,
@@ -594,6 +706,13 @@ export function withMistmereQuest(
   quest: MistmereQuestProgress,
 ): QuestLog {
   return { ...(log ?? {}), [MISTMERE_QUEST_ID]: quest };
+}
+
+export function withWatchlineQuest(
+  log: QuestLog | undefined,
+  quest: WatchlineQuestProgress,
+): QuestLog {
+  return { ...(log ?? {}), [WATCHLINE_QUEST_ID]: quest };
 }
 
 function finishTeethIfReady(
@@ -658,6 +777,19 @@ export function applyIdentify(
   log: QuestLog,
   kindId: EnemyKindId,
 ): QuestEventResult | null {
+  const watch = getWatchlineQuest(log);
+  if (
+    watch &&
+    watch.status === "active" &&
+    !watch.houndDone &&
+    kindId === "bark-hound"
+  ) {
+    return {
+      log: withWatchlineQuest(log, { ...watch, houndDone: true }),
+      toast: "Identified: Bark Hound / F",
+    };
+  }
+
   const hollow = getHollowQuest(log);
   if (
     hollow &&
@@ -712,6 +844,19 @@ export function applyEnemyKill(
   log: QuestLog,
   kindId: EnemyKindId,
 ): QuestEventResult | null {
+  const watch = getWatchlineQuest(log);
+  if (
+    watch &&
+    watch.status === "active" &&
+    !watch.houndDone &&
+    kindId === "bark-hound"
+  ) {
+    return {
+      log: withWatchlineQuest(log, { ...watch, houndDone: true }),
+      toast: "Bark Hound driven off",
+    };
+  }
+
   const hollow = getHollowQuest(log);
   if (hollow && hollow.status === "active" && kindId === "shade-wisp") {
     let next = { ...hollow };
@@ -844,10 +989,39 @@ export function applyMistmereRookTalk(log: QuestLog): QuestEventResult | null {
   const mist = getMistmereQuest(log);
   if (!mist || mist.status !== "active") return null;
   if (!mistmereObjectivesMet(mist)) return null;
+  let out = withMistmereQuest(log, { ...mist, status: "complete" });
+  const ensured = ensureWatchlineAfterMistmere(out);
+  out = ensured.log;
   return {
-    log: withMistmereQuest(log, { ...mist, status: "complete" }),
-    toast: MISTMERE_COMPLETE_LINE,
+    log: out,
+    toast: ensured.started ? WATCHLINE_START_TOAST : MISTMERE_COMPLETE_LINE,
     completedId: MISTMERE_QUEST_ID,
+    startedWatchline: ensured.started,
+  };
+}
+
+/** Talk to Cress Ledger at the Thornreach depot (Old Reed's word). */
+export function applyWatchlineCressTalk(log: QuestLog): QuestEventResult | null {
+  const watch = getWatchlineQuest(log);
+  if (!watch || watch.status !== "active" || watch.talkedCress) {
+    return null;
+  }
+  const next: WatchlineQuestProgress = { ...watch, talkedCress: true };
+  return {
+    log: withWatchlineQuest(log, next),
+    toast: "Cress: Old Reed's word is in the ledger. Recheck the first cairn.",
+  };
+}
+
+/** Complete Watchline Holds when talking to Rook after the line is set. */
+export function applyWatchlineRookTalk(log: QuestLog): QuestEventResult | null {
+  const watch = getWatchlineQuest(log);
+  if (!watch || watch.status !== "active") return null;
+  if (!watchlineObjectivesMet(watch)) return null;
+  return {
+    log: withWatchlineQuest(log, { ...watch, status: "complete" }),
+    toast: WATCHLINE_COMPLETE_LINE,
+    completedId: WATCHLINE_QUEST_ID,
   };
 }
 
@@ -856,6 +1030,30 @@ export function applyCairnInspect(
   log: QuestLog,
   cairnId: string,
 ): QuestEventResult | null {
+  const watch = getWatchlineQuest(log);
+  if (watch && watch.status === "active") {
+    if (!ASHWOOD_CAIRN_IDS.includes(cairnId)) return null;
+    if (cairnId !== WATCHLINE_CAIRN_ID) {
+      return {
+        log,
+        toast: "Recheck the first cairn — West Watch on the ashwood edge.",
+      };
+    }
+    if (watch.cairnInspected) {
+      return {
+        log,
+        toast: "West Watch is already marked on the line.",
+      };
+    }
+    const next: WatchlineQuestProgress = { ...watch, cairnInspected: true };
+    return {
+      log: withWatchlineQuest(log, next),
+      toast: watchlineObjectivesMet(next)
+        ? "West Watch marked — Return to Rook"
+        : "West Watch marked — Identify or clear 1 Bark Hound",
+    };
+  }
+
   const ash = getAshwoodQuest(log);
   if (!ash || ash.status !== "active") return null;
   if (!ASHWOOD_CAIRN_IDS.includes(cairnId)) return null;
@@ -873,6 +1071,23 @@ export function applyCairnInspect(
 
 /** Rook line while sticky quests are active / complete. */
 export function rookQuestLine(log: QuestLog | undefined): string | null {
+  const watch = getWatchlineQuest(log);
+  if (watch) {
+    if (watch.status === "complete") {
+      return WATCHLINE_COMPLETE_LINE.replace(/^Rook:\s*/, "");
+    }
+    if (!watch.talkedCress) {
+      return "Old Reed's word is good. Cress at the depot will set it in the ledger — then recheck the first cairn.";
+    }
+    if (!watch.cairnInspected) {
+      return "The ledger holds. Recheck the first cairn on the ashwood edge — West Watch.";
+    }
+    if (!watch.houndDone) {
+      return "West Watch is marked. Identify or clear one Bark Hound on the ashwood edge, then tell me the line holds.";
+    }
+    return "The line is nearly set. Survive. Learn. Progress — tell me the watchline holds.";
+  }
+
   const mist = getMistmereQuest(log);
   if (mist) {
     if (mist.status === "complete") {

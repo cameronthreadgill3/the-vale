@@ -6,22 +6,27 @@ import {
   TEETH_RATS_NEEDED,
   ASHWOOD_CAIRNS_NEEDED,
   HOLLOW_WISPS_NEEDED,
+  WATCHLINE_CAIRN_ID,
+  CRESS_FOLK_ID,
   getTeethQuest,
   getAshwoodQuest,
   getHollowQuest,
   getGateWatchQuest,
   getMistmereQuest,
+  getWatchlineQuest,
   isTeethActive,
   isAshwoodActive,
   isHollowActive,
   isGateWatchActive,
   isMistmereActive,
+  isWatchlineActive,
   loadQuestLog,
   type TeethQuestProgress,
   type AshwoodQuestProgress,
   type HollowQuestProgress,
   type GateWatchQuestProgress,
   type MistmereQuestProgress,
+  type WatchlineQuestProgress,
 } from "@/game/quests";
 import { ASHWOOD_CAIRNS } from "@/game/cairns";
 import { huntZoneById } from "@/game/huntZones";
@@ -52,6 +57,10 @@ export function resolveQuestObjective(
   map: WorldMap,
 ): WayfindObjective | null {
   const log = loadQuestLog();
+  if (isWatchlineActive(log)) {
+    const q = getWatchlineQuest(log);
+    if (q) return objectiveForWatchline(q, player, enemies, folk, map);
+  }
   if (isMistmereActive(log)) {
     const q = getMistmereQuest(log);
     if (q) return objectiveForMistmere(q, player, folk, map);
@@ -73,6 +82,131 @@ export function resolveQuestObjective(
     if (q) return objectiveForTeeth(q, player, enemies, folk);
   }
   return null;
+}
+
+export function objectiveForWatchline(
+  q: WatchlineQuestProgress,
+  player: { x: number; y: number },
+  enemies: Enemy[],
+  folk: FolkDef[],
+  map: WorldMap,
+): WayfindObjective | null {
+  if (q.status !== "active") return null;
+  const rook = folk.find((f) => f.id === "rook");
+  const cress = folk.find((f) => f.id === CRESS_FOLK_ID);
+
+  if (!q.talkedCress) {
+    if (cress) {
+      return {
+        label: "Talk to Cress (ledger)",
+        x: (cress.x + 0.5) * TILE,
+        y: (cress.y + 0.5) * TILE,
+        kind: "folk",
+      };
+    }
+    const home = continentGateOnMap(map, "thornreach");
+    if (home) {
+      return {
+        label: "Gate to Cress (Thornreach depot)",
+        x: (home.x + 0.5) * TILE,
+        y: (home.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    return {
+      label: "Find Cress at Thornreach depot",
+      x: player.x + TILE * 4,
+      y: player.y + TILE * 2,
+      kind: "landmark",
+    };
+  }
+
+  if (!q.cairnInspected) {
+    const cairn = ASHWOOD_CAIRNS.find((c) => c.id === WATCHLINE_CAIRN_ID);
+    if (cairn && map.continentId === cairn.continentId && map.kind === "overworld") {
+      return {
+        label: "Recheck West Watch cairn",
+        x: (cairn.x + 0.5) * TILE,
+        y: (cairn.y + 0.5) * TILE,
+        kind: "cairn",
+      };
+    }
+    const home = continentGateOnMap(map, "thornreach");
+    if (home) {
+      return {
+        label: "Gate to West Watch (Thornreach)",
+        x: (home.x + 0.5) * TILE,
+        y: (home.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    return {
+      label: "Find West Watch cairn (ashwood edge)",
+      x: player.x - TILE * 6,
+      y: player.y - TILE * 4,
+      kind: "landmark",
+    };
+  }
+
+  if (!q.houndDone) {
+    const hound = nearestEnemy(player, enemies, "bark-hound");
+    if (hound) {
+      return {
+        label: "Identify or clear Bark Hound",
+        x: hound.x,
+        y: hound.y,
+        kind: "enemy",
+      };
+    }
+    const ashwood = cairnPixel("ashwood-edge", player.x + TILE * 6, player.y);
+    if (map.continentId === "thornreach" && map.kind === "overworld") {
+      return {
+        label: "Find Bark Hound (Ashwood Edge)",
+        x: ashwood.x,
+        y: ashwood.y,
+        kind: "landmark",
+      };
+    }
+    const home = continentGateOnMap(map, "thornreach");
+    if (home) {
+      return {
+        label: "Gate to Bark Hound (Ashwood Edge)",
+        x: (home.x + 0.5) * TILE,
+        y: (home.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    return {
+      label: "Find Bark Hound (Ashwood Edge)",
+      x: ashwood.x,
+      y: ashwood.y,
+      kind: "landmark",
+    };
+  }
+
+  if (rook) {
+    return {
+      label: "Return to Rook",
+      x: (rook.x + 0.5) * TILE,
+      y: (rook.y + 0.5) * TILE,
+      kind: "folk",
+    };
+  }
+  const home = continentGateOnMap(map, "thornreach");
+  if (home) {
+    return {
+      label: "Gate back to Rook (Thornreach)",
+      x: (home.x + 0.5) * TILE,
+      y: (home.y + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  return {
+    label: "Return to Rook (Thornreach)",
+    x: player.x + TILE * 8,
+    y: player.y - TILE * 2,
+    kind: "landmark",
+  };
 }
 
 export function objectiveForGateWatch(
