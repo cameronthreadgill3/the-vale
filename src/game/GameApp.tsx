@@ -56,6 +56,9 @@ import {
   WHARF_START_TOAST,
   WHARF_REWARDS,
   WHARF_COMPLETE_LINE,
+  GREEN_GATE_START_TOAST,
+  GREEN_GATE_REWARDS,
+  GREEN_GATE_COMPLETE_LINE,
   TEETH_QUEST_ID,
   ASHWOOD_QUEST_ID,
   HOLLOW_QUEST_ID,
@@ -65,6 +68,7 @@ import {
   ASHVEIL_QUEST_ID,
   CHOIR_COUNTS_QUEST_ID,
   WHARF_QUEST_ID,
+  GREEN_GATE_QUEST_ID,
   CRESS_FOLK_ID,
   OLD_REED_FOLK_ID,
   CHOIR_KEEPER_FOLK_ID,
@@ -79,6 +83,7 @@ import {
   getAshveilQuest,
   getChoirCountsQuest,
   getWharfQuest,
+  getGreenGateQuest,
   applyIdentify,
   applyEnemyKill,
   applyCairnInspect,
@@ -100,6 +105,8 @@ import {
   applyWharfNightglassReached,
   applyWharfVesperTalk,
   applyWharfRookTalk,
+  applyGreenGateReached,
+  applyGreenGateRookTalk,
   withTeethQuest,
   ensureAshwoodAfterTeeth,
   ensureHollowAfterAshwood,
@@ -109,6 +116,7 @@ import {
   ensureAshveilAfterWatchline,
   ensureChoirCountsAfterAshveil,
   ensureNightglassAfterChoir,
+  ensureGreenGateAfterWharf,
   rookQuestLine,
   loadQuestLog,
   saveQuestLog,
@@ -423,6 +431,20 @@ export function GameApp() {
           }
         }
       }
+      if (target === "verdant-spine") {
+        const green = applyGreenGateReached(loadQuestLog());
+        if (green) {
+          saveQuestLog(green.log);
+          if (green.toast) {
+            showToast(green.toast);
+            window.setTimeout(
+              () => setToast((t) => (t === green.toast ? null : t)),
+              2800,
+            );
+            return true;
+          }
+        }
+      }
       const dest = getContinent(target);
       if (paid > 0 || firstCrossing) {
         showToast(farePaidToast("gate", dest.name, paid));
@@ -519,6 +541,7 @@ export function GameApp() {
     }
     if (folkId === "rook" && character) {
       const turnIn =
+        applyGreenGateRookTalk(loadQuestLog()) ??
         applyWharfRookTalk(loadQuestLog()) ??
         applyChoirCountsRookTalk(loadQuestLog()) ??
         applyAshveilRookTalk(loadQuestLog()) ??
@@ -533,14 +556,28 @@ export function GameApp() {
             ...prev,
             skillXp: { ...prev.skillXp },
           };
-          if (turnIn.completedId === WHARF_QUEST_ID) {
+          if (turnIn.completedId === GREEN_GATE_QUEST_ID) {
+            next = awardCombatXp(next, GREEN_GATE_REWARDS.combatXp);
+            next = { ...next, skillXp: { ...next.skillXp } };
+            awardSkillXp(next, GREEN_GATE_REWARDS.skill, GREEN_GATE_REWARDS.skillXp);
+            next = setGold(next, next.gold + GREEN_GATE_REWARDS.gold);
+            next = { ...next, skillXp: { ...next.skillXp } };
+            queueMicrotask(() => {
+              showToast(GREEN_GATE_COMPLETE_LINE);
+              setSkillTick((t) => t + 1);
+            });
+          } else if (turnIn.completedId === WHARF_QUEST_ID) {
             next = awardCombatXp(next, WHARF_REWARDS.combatXp);
             next = { ...next, skillXp: { ...next.skillXp } };
             awardSkillXp(next, WHARF_REWARDS.skill, WHARF_REWARDS.skillXp);
             next = setGold(next, next.gold + WHARF_REWARDS.gold);
             next = { ...next, skillXp: { ...next.skillXp } };
             queueMicrotask(() => {
-              showToast(WHARF_COMPLETE_LINE);
+              showToast(
+                turnIn.startedGreenGate
+                  ? GREEN_GATE_START_TOAST
+                  : WHARF_COMPLETE_LINE,
+              );
               setSkillTick((t) => t + 1);
             });
           } else if (turnIn.completedId === CHOIR_COUNTS_QUEST_ID) {
@@ -900,6 +937,16 @@ export function GameApp() {
           }
         }
       }
+      if (dest === "verdant-spine") {
+        const green = applyGreenGateReached(loadQuestLog());
+        if (green) {
+          saveQuestLog(green.log);
+          if (green.toast) {
+            showToast(green.toast);
+            return;
+          }
+        }
+      }
       const c = getContinent(dest);
       if (paid > 0 || firstCrossing) {
         showToast(farePaidToast("ship", c.name, paid));
@@ -1015,6 +1062,19 @@ export function GameApp() {
     );
   }, [character]);
 
+  // Quest 10: auto-start The Green Gate Keeps once The Wharf Answers is complete.
+  useEffect(() => {
+    if (!character) return;
+    const ensured = ensureGreenGateAfterWharf(loadQuestLog());
+    if (!ensured.started) return;
+    saveQuestLog(ensured.log);
+    setToast(GREEN_GATE_START_TOAST);
+    window.setTimeout(
+      () => setToast((t) => (t === GREEN_GATE_START_TOAST ? null : t)),
+      3600,
+    );
+  }, [character]);
+
   // Mistmere Crossing: mark arrival whenever the walker stands on Mistmere.
   useEffect(() => {
     if (!character) return;
@@ -1059,6 +1119,19 @@ export function GameApp() {
     if (!character) return;
     if (character.continentId !== "nightglass-coast") return;
     const result = applyWharfNightglassReached(loadQuestLog());
+    if (!result) return;
+    saveQuestLog(result.log);
+    if (result.toast) {
+      setToast(result.toast);
+      window.setTimeout(() => setToast((t) => (t === result.toast ? null : t)), 2800);
+    }
+  }, [character]);
+
+  // The Green Gate Keeps: mark Verdant Spine arrival / gate.
+  useEffect(() => {
+    if (!character) return;
+    if (character.continentId !== "verdant-spine") return;
+    const result = applyGreenGateReached(loadQuestLog());
     if (!result) return;
     saveQuestLog(result.log);
     if (result.toast) {
@@ -1194,7 +1267,21 @@ export function GameApp() {
         next = setGold(next, next.gold + WHARF_REWARDS.gold);
         next = { ...next, skillXp: { ...next.skillXp } };
         queueMicrotask(() => {
-          showToast(WHARF_COMPLETE_LINE);
+          showToast(
+            result.startedGreenGate
+              ? GREEN_GATE_START_TOAST
+              : WHARF_COMPLETE_LINE,
+          );
+          setSkillTick((t) => t + 1);
+        });
+      } else if (result.completedId === GREEN_GATE_QUEST_ID) {
+        next = awardCombatXp(next, GREEN_GATE_REWARDS.combatXp);
+        next = { ...next, skillXp: { ...next.skillXp } };
+        awardSkillXp(next, GREEN_GATE_REWARDS.skill, GREEN_GATE_REWARDS.skillXp);
+        next = setGold(next, next.gold + GREEN_GATE_REWARDS.gold);
+        next = { ...next, skillXp: { ...next.skillXp } };
+        queueMicrotask(() => {
+          showToast(GREEN_GATE_COMPLETE_LINE);
           setSkillTick((t) => t + 1);
         });
       } else if (result.toast) {
@@ -1209,7 +1296,7 @@ export function GameApp() {
     (kindId: EnemyKindId) => {
       setCharacter((prev) => {
         if (!prev) return prev;
-        const result = applyIdentify(loadQuestLog(), kindId);
+        const result = applyIdentify(loadQuestLog(), kindId, prev.continentId);
         if (!result) return prev;
         return persistQuestResult(prev, result);
       });
@@ -1523,6 +1610,7 @@ export function GameApp() {
       ashveilQuest={getAshveilQuest(loadQuestLog())}
       choirCountsQuest={getChoirCountsQuest(loadQuestLog())}
       wharfQuest={getWharfQuest(loadQuestLog())}
+      greenGateQuest={getGreenGateQuest(loadQuestLog())}
       onVitals={handleVitals}
       onPlayerDeath={handlePlayerDeath}
       onPassivePrimary={(amount) => {

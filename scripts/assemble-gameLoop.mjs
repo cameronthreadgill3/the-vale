@@ -9,7 +9,13 @@ import { fileURLToPath } from "url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const dir = join(root, "scripts");
 function assemble(prefix, outRel) {
-  const files = readdirSync(dir).filter((f) => new RegExp("^" + prefix + "\\.\\d+$").test(f)).sort();
+  const files = readdirSync(dir)
+    .filter((f) => new RegExp("^" + prefix + "\\.\\d+$").test(f))
+    .sort((a, b) => {
+      const na = parseInt(a.slice(a.lastIndexOf(".") + 1), 10);
+      const nb = parseInt(b.slice(b.lastIndexOf(".") + 1), 10);
+      return na - nb;
+    });
   if (files.length === 0) return;
   const b64 = files.map((f) => readFileSync(join(dir, f), "utf8")).join("");
   const buf = Buffer.from(b64, "base64");

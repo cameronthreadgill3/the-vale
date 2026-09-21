@@ -154,3 +154,50 @@ export function ensureTeethPrey(
   for (let i = 0; i < extraHounds; i++) place("bark-hound", north);
   return enemies;
 }
+
+function tryPlaceOpen(
+  rng: Rng,
+  map: WorldMap,
+  blocked: Set<string>,
+  minDistFromSpawn: number,
+): { x: number; y: number } | null {
+  const spawn = map.spawn;
+  for (let attempt = 0; attempt < 40; attempt++) {
+    const tx = 2 + Math.floor(rng() * (map.width - 4));
+    const ty = 2 + Math.floor(rng() * (map.height - 4));
+    if (!walkable(map, tx, ty) || blocked.has(`${tx},${ty}`)) continue;
+    if (Math.hypot(tx - spawn.x, ty - spawn.y) < minDistFromSpawn) continue;
+    blocked.add(`${tx},${ty}`);
+    return { x: (tx + 0.5) * TILE, y: (ty + 0.5) * TILE };
+  }
+  return null;
+}
+
+/** Guarantee Gorse Foxes on Verdant Spine while The Green Gate Keeps is sticky. */
+export function ensureGorseFoxes(
+  enemies: Enemy[],
+  map: WorldMap,
+  continentId: ContinentId,
+  blockedTiles: { x: number; y: number }[],
+  need: number,
+): Enemy[] {
+  if (map.kind !== "overworld" || continentId !== "verdant-spine") return enemies;
+  const have = enemies.filter((e) => e.kind.id === "gorse-fox" && e.hp > 0).length;
+  const extra = Math.max(0, need - have);
+  if (extra === 0) return enemies;
+
+  const rng = rngFrom(`${WORLD_SEED}|foes|hunt|green-gate|verdant-spine`);
+  const blocked = new Set(blockedTiles.map((t) => `${t.x},${t.y}`));
+  for (const e of enemies) {
+    blocked.add(`${Math.floor(e.x / TILE)},${Math.floor(e.y / TILE)}`);
+  }
+  let serial = enemies.length;
+  for (let i = 0; i < extra; i++) {
+    const pos = tryPlaceOpen(rng, map, blocked, 6);
+    if (!pos) continue;
+    enemies.push(
+      makeEnemy("gorse-fox", pos.x, pos.y, `pad-gorse-fox-${serial++}`, rng() * 2),
+    );
+  }
+  return enemies;
+}

@@ -62,7 +62,9 @@ import {
   applyAshveilChamberReach,
   applyIdentify,
   getAshveilQuest,
+  getGreenGateQuest,
   isAshveilActive,
+  isGreenGateActive,
   loadQuestLog,
   notifyQuestUi,
   saveQuestLog,
@@ -86,6 +88,7 @@ let _gfxWarmed = false;
 
 const ASHVEIL_CHAMBER_REACH_TILES = 2.4;
 const ASHVEIL_IDENTIFY_TILES = 3.6;
+const GREEN_GATE_IDENTIFY_TILES = 3.6;
 
 /** Chamber reach + Ember Identify without patching assembled gameLoop. */
 function tickAshveilField(
@@ -131,6 +134,33 @@ function tickAshveilField(
         }
         break;
       }
+    }
+  }
+}
+
+/** Gorse Fox Identify on Verdant Spine without patching assembled gameLoop. */
+function tickGreenGateField(
+  player: { x: number; y: number },
+  map: WorldMap,
+  enemies: Enemy[],
+): void {
+  if (!isGreenGateActive(loadQuestLog())) return;
+  const log = loadQuestLog();
+  const q = getGreenGateQuest(log);
+  if (!q || q.status !== "active" || q.identifiedFox) return;
+  if (map.kind !== "overworld" || map.continentId !== "verdant-spine") return;
+
+  for (const e of enemies) {
+    if (e.ai === "dead" || e.hp <= 0) continue;
+    if (e.kind.id !== "gorse-fox") continue;
+    const dist = Math.hypot(e.x - player.x, e.y - player.y) / TILE;
+    if (dist <= GREEN_GATE_IDENTIFY_TILES) {
+      const result = applyIdentify(loadQuestLog(), "gorse-fox", "verdant-spine");
+      if (result) {
+        saveQuestLog(result.log);
+        notifyQuestUi(result.toast);
+      }
+      break;
     }
   }
 }
@@ -315,6 +345,7 @@ export function advanceCameraAndRender(args: {
 
 
   tickAshveilField(player, map, enemies);
+  tickGreenGateField(player, map, enemies);
   const objective = resolveQuestObjective(player, enemies, folk, map);
   const radarDots = collectRadarDots(player, enemies, folk, docks, map, objective);
   drawCompass(ctx, viewW);

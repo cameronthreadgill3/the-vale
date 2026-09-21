@@ -13,6 +13,7 @@ export {
   objectiveForAshveil,
   objectiveForChoirCounts,
   objectiveForWharf,
+  objectiveForGreenGate,
   tilesAway,
   type WayfindObjective,
   type RadarDot,
