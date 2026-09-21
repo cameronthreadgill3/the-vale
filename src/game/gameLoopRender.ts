@@ -4,6 +4,12 @@ import { type HudState, type PromptState } from "@/game/canvasConstants";
 import { levelFromXp, progressInLevel, xpToNext } from "@/game/xp";
 import { maxHpFor, maxManaFor } from "@/game/combat";
 import { resetCombatJuice, sampleHitSettle } from "@/game/combatJuice";
+import {
+  consumeRespawnSeed,
+  DEATH_HOLD_EASE,
+  DEATH_LOOK_BLEED,
+  deathHoldActive,
+} from "@/game/deathCamera";
 import { carriedWeight, maxSlotsFor, maxWeightFor } from "@/game/backpack";
 import { isInSafeZone, isSafeContinent, SAFE_ZONE_RADIUS_TILES } from "@/game/safeZone";
 import { getClass } from "@/game/classes";
@@ -145,10 +151,27 @@ function easeCamera(
   player: { x: number; y: number },
   dt: number,
 ): { camX: number; camY: number } {
+  // Respawn: start a short step north of the plaza. Later frames ease it home.
+  // One axis, so the arrival does not shake. A gate snap still cuts.
+  const seed = consumeRespawnSeed();
+  if (seed) {
+    _lookX = 0;
+    _lookY = 0;
+    _shadowLagX = 0;
+    _shadowLagY = 0;
+    resetCombatJuice();
+    return {
+      camX: player.x + seed.x,
+      camY: player.y - CAM_SOUTH + seed.y,
+    };
+  }
+
   const dx = player.x - _lastPx;
   const dy = player.y - _lastPy;
+  const holding = deathHoldActive();
   const jumped = _walkSampled && Math.hypot(dx, dy) > CAM_SNAP;
-  if (!_walkSampled || jumped) {
+  // A fall should settle onto the body, not cut there.
+  if ((!_walkSampled || jumped) && !holding) {
     _lookX = 0;
     _lookY = 0;
     _shadowLagX = 0;
@@ -164,7 +187,8 @@ function easeCamera(
   let wishY = 0;
   let lagX = 0;
   let lagY = 0;
-  if (dist > 0.35) {
+  // While fallen, do not lean the view along the killing knockback.
+  if (!holding && dist > 0.35) {
     const speed = dist / dtSafe;
     const aim = Math.min(1, speed / 90);
     wishX = (dx / dist) * CAM_LOOK * aim;
@@ -173,7 +197,8 @@ function easeCamera(
     lagX = (-dx / dist) * cap;
     lagY = (-dy / dist) * cap;
   }
-  const lookEase = 1 - Math.exp(-8 * dt);
+  const lookRate = holding ? DEATH_LOOK_BLEED : 8;
+  const lookEase = 1 - Math.exp(-lookRate * dt);
   _lookX += (wishX - _lookX) * lookEase;
   _lookY += (wishY - _lookY) * lookEase;
   const lagEase = 1 - Math.exp(-12 * dt);
@@ -182,7 +207,8 @@ function easeCamera(
 
   const targetX = player.x + _lookX;
   const targetY = player.y + _lookY - CAM_SOUTH;
-  const follow = 1 - Math.exp(-CAM_EASE * dt);
+  const followRate = holding ? DEATH_HOLD_EASE : CAM_EASE;
+  const follow = 1 - Math.exp(-followRate * dt);
   let nx = camX + (targetX - camX) * follow;
   let ny = camY + (targetY - camY) * follow;
   const ox = nx - player.x;
