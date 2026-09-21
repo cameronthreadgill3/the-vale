@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { type ValeClass } from "@/game/classes";
 import { type ContinentId } from "@/game/continents";
 import type { ValeCharacter } from "@/game/character";
@@ -11,6 +12,7 @@ import { VoyagePanel } from "@/game/ui/VoyagePanel";
 import { useGameCanvas } from "@/game/useGameCanvas";
 import { MobileControls, useShowMobileChrome } from "@/game/ui/MobileControls";
 import { GameShellHud } from "@/game/ui/GameShellHud";
+import { STARTER_TIP, STARTER_TIP_MS } from "@/game/wayfinding";
 import type { EnemyKindId } from "@/game/enemies";
 import type { TeethQuestProgress } from "@/game/quests";
 
@@ -100,6 +102,11 @@ export function GameShell({
 }) {
   const overlayOpen = Boolean(dialogue || shop || voyageDock);
   const showMobile = useShowMobileChrome();
+  const [starterTip, setStarterTip] = useState(true);
+  useEffect(() => {
+    const t = window.setTimeout(() => setStarterTip(false), STARTER_TIP_MS);
+    return () => window.clearTimeout(t);
+  }, []);
   const { canvasRef, keysRef, interactRequestRef, hud, prompt } = useGameCanvas({
     character,
     cls,
@@ -181,7 +188,9 @@ export function GameShell({
         <div className={`pointer-events-none absolute left-1/2 z-10 -translate-x-1/2 rounded border border-[#c9a227]/50 bg-[#161812]/95 px-4 py-2 text-center text-sm text-[#e8e6d9] shadow-lg backdrop-blur-md ${showMobile ? "bottom-40" : "bottom-24"}`}>
           {prompt.kind === "gate" && (
             <>
-              Gate to <span className="text-[#c9a227]">{prompt.name}</span>
+              <span className="text-[#e8e6d9]">Use gate</span>
+              {" → "}
+              <span className="text-[#c9a227]">{prompt.name}</span>
               <div className="mt-0.5 text-xs text-[#a8b09a]">
                 Walk in or press <span className="text-[#e8e6d9]">E</span>
               </div>
@@ -189,46 +198,69 @@ export function GameShell({
           )}
           {prompt.kind === "hollow" && (
             <>
-              Hollow entrance {(prompt.index + 1).toString()}
+              <span className="text-[#e8e6d9]">Enter hollow</span>
+              <span className="text-[#c9a227]"> · {(prompt.index + 1).toString()}</span>
               <div className="mt-0.5 text-xs text-[#a8b09a]">
-                Descend with <span className="text-[#e8e6d9]">E</span> or walk in
+                Press <span className="text-[#e8e6d9]">E</span> or walk in
               </div>
             </>
           )}
           {prompt.kind === "exit" && (
             <>
-              Exit hollow
+              <span className="text-[#e8e6d9]">Exit hollow</span>
               <div className="mt-0.5 text-xs text-[#a8b09a]">
-                Press <span className="text-[#e8e6d9]">E</span> or walk onto the exit tile
+                Press <span className="text-[#e8e6d9]">E</span> or walk onto the exit
               </div>
             </>
           )}
           {prompt.kind === "folk" && (
             <>
+              <span className="text-[#e8e6d9]">
+                {prompt.hasShop ? "Talk / Shop" : "Talk"}
+              </span>
+              {" · "}
               <span className="text-[#c9a227]">{prompt.name}</span>
               <div className="mt-0.5 text-xs text-[#a8b09a]">
-                Press <span className="text-[#e8e6d9]">E</span> to{" "}
-                {prompt.hasShop ? "talk / shop" : "talk"}
+                Press <span className="text-[#e8e6d9]">E</span>
               </div>
             </>
           )}
           {prompt.kind === "shop" && (
             <>
+              <span className="text-[#e8e6d9]">Shop</span>
+              {" · "}
               <span className="text-[#c9a227]">{prompt.name}</span>
               <div className="mt-0.5 text-xs text-[#a8b09a]">
-                Press <span className="text-[#e8e6d9]">E</span> to shop
+                Press <span className="text-[#e8e6d9]">E</span>
               </div>
             </>
           )}
           {prompt.kind === "ship" && (
             <>
-              Ship at <span className="text-[#7ab8c9]">{prompt.name}</span>
+              <span className="text-[#e8e6d9]">Board ship</span>
+              {" · "}
+              <span className="text-[#7ab8c9]">{prompt.name}</span>
               <div className="mt-0.5 text-xs text-[#a8b09a]">
-                Press <span className="text-[#e8e6d9]">E</span> to board
+                Press <span className="text-[#e8e6d9]">E</span>
               </div>
             </>
           )}
         </div>
+      )}
+
+      {starterTip && !overlayOpen && (
+        <button
+          type="button"
+          onClick={() => setStarterTip(false)}
+          className="absolute left-1/2 top-20 z-20 w-[min(92vw,28rem)] -translate-x-1/2 rounded border border-[#c9a227]/55 bg-[#161812]/95 px-3 py-2 text-left text-xs text-[#e8e6d9] shadow-lg backdrop-blur-md sm:text-sm"
+        >
+          <div className="font-display text-[11px] tracking-wide text-[#c9a227] sm:text-xs">
+            Thornreach — first steps
+          </div>
+          <div className="mt-1 text-[#c8c4b0]">{STARTER_TIP}</div>
+          <div className="mt-1 text-[10px] text-[#8a9080]">
+            Tap to dismiss · follow the yellow arrow to Rook</div>
+        </button>
       )}
 
       {toast && (
