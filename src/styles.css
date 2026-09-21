@@ -173,8 +173,8 @@ canvas.game-canvas {
     bottom: auto;
     right: max(0.75rem, env(safe-area-inset-right));
     /* Clear account row + HP vitals so tabs do not sit on the stick. */
-    top: 14.75rem;
-    max-height: calc(100dvh - 25.5rem);
+    top: 16rem;
+    max-height: calc(100dvh - 26.5rem);
   }
 
   .vale-corner-panel {
