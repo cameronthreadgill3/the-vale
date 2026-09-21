@@ -122,11 +122,22 @@ export function MobileControls({
   };
 
   useEffect(() => {
-    return () => {
-      clearMoveKeys(keysRef.current);
+    const releaseStuck = () => {
+      endJoystick();
       keysRef.current.Space = false;
     };
-  }, [keysRef]);
+    const onBlur = () => releaseStuck();
+    const onVisibility = () => {
+      if (document.hidden) releaseStuck();
+    };
+    window.addEventListener("blur", onBlur);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("blur", onBlur);
+      document.removeEventListener("visibilitychange", onVisibility);
+      releaseStuck();
+    };
+  }, [keysRef, endJoystick]);
 
   return (
     <div
@@ -147,6 +158,7 @@ export function MobileControls({
           onPointerMove={onStickMove}
           onPointerUp={onStickUp}
           onPointerCancel={onStickUp}
+          onLostPointerCapture={onStickUp}
           role="presentation"
           aria-label="Move"
         >

@@ -1,4 +1,6 @@
 import {
+  useCallback,
+  useEffect,
   useState,
   type MutableRefObject,
   type PointerEvent as ReactPointerEvent,
@@ -24,6 +26,11 @@ export function QuickSkillCluster({
 }) {
   const [attackHeld, setAttackHeld] = useState(false);
 
+  const releaseAttack = useCallback(() => {
+    keysRef.current.Space = false;
+    setAttackHeld(false);
+  }, [keysRef]);
+
   const attackDown = (e: ReactPointerEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -34,9 +41,21 @@ export function QuickSkillCluster({
   const attackUp = (e: ReactPointerEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    keysRef.current.Space = false;
-    setAttackHeld(false);
+    releaseAttack();
   };
+
+  useEffect(() => {
+    const onBlur = () => releaseAttack();
+    const onVisibility = () => {
+      if (document.hidden) releaseAttack();
+    };
+    window.addEventListener("blur", onBlur);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("blur", onBlur);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [releaseAttack]);
 
   const tapInteract = (e: ReactPointerEvent) => {
     e.preventDefault();
@@ -107,6 +126,7 @@ export function QuickSkillCluster({
             onPointerDown={attackDown}
             onPointerUp={attackUp}
             onPointerCancel={attackUp}
+            onLostPointerCapture={attackUp}
           >
             <span className="font-display text-sm tracking-wide">Attack</span>
             <span className="mt-0.5 text-[10px] uppercase tracking-wider text-[#e8c878]">
