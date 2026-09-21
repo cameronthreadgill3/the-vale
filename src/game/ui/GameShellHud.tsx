@@ -1,17 +1,24 @@
 import type { ValeClass } from "@/game/classes";
 import type { ValeCharacter } from "@/game/character";
 import type { HudState } from "@/game/canvasConstants";
+import {
+  TEETH_QUEST_TITLE,
+  teethHudLines,
+  type TeethQuestProgress,
+} from "@/game/quests";
 
 export function GameShellHud({
   cls,
   character,
   hud,
   locationLabel,
+  teethQuest,
 }: {
   cls: ValeClass;
   character: ValeCharacter;
   hud: HudState;
   locationLabel: string;
+  teethQuest: TeethQuestProgress | null;
 }) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-3">
@@ -28,6 +35,18 @@ export function GameShellHud({
         >
           {cls.name}
         </p>
+        {teethQuest && teethQuest.status === "active" && (
+          <div className="mt-2 max-w-xs rounded border border-[#2a2e24] bg-[#161812]/85 px-2.5 py-1.5 text-[10px] leading-relaxed text-[#a8b09a] backdrop-blur-sm sm:text-xs">
+            <div className="font-display text-[11px] tracking-wide text-[#c9a227] sm:text-xs">
+              {TEETH_QUEST_TITLE}
+            </div>
+            <ul className="mt-1 space-y-0.5">
+              {teethHudLines(teethQuest).map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
       <div className="rounded border border-[#2a2e24] bg-[#161812]/90 px-3 py-2 text-xs text-[#e8e6d9] backdrop-blur-sm sm:text-sm">
         <div className="font-display" style={{ color: cls.accent }}>

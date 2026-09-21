@@ -1,4 +1,4 @@
-/** Sticky quests — First Story Accession hunt on Thornreach. */
+/** Sticky quests - First Story Accession hunt on Thornreach. */
 
 import type { EnemyKindId } from "@/game/enemies";
 import type { SkillId } from "@/game/skills";
@@ -29,7 +29,7 @@ export const TEETH_RATS_NEEDED = 3;
 export const TEETH_QUEST_TITLE = "Teeth in the Grass";
 
 export const TEETH_START_TOAST =
-  "Rook: Ashwood edge has wrong prey — Identify first.";
+  "Rook: Ashwood edge has wrong prey - Identify first.";
 
 export const TEETH_COMPLETE_LINE =
   "Rook: Survive. Learn. Progress. The edge will remember your footing.";
@@ -94,16 +94,16 @@ export function teethObjectivesMet(q: TeethQuestProgress): boolean {
 /** HUD lines for the sticky quest panel (minimal). */
 export function teethHudLines(q: TeethQuestProgress): string[] {
   if (q.status === "complete") {
-    return ["Complete \u2014 Survive \u00b7 Learn \u00b7 Progress"];
+    return ["Complete - Survive / Learn / Progress"];
   }
   return [
     q.identifiedRat
-      ? "\u2713 Identify Needle Rat"
-      : "\u25cb Identify a Needle Rat (near look)",
-    `${q.ratsKilled >= TEETH_RATS_NEEDED ? "\u2713" : "\u25cb"} Defeat Needle Rats ${Math.min(q.ratsKilled, TEETH_RATS_NEEDED)}/${TEETH_RATS_NEEDED}`,
+      ? "[done] Identify Needle Rat"
+      : "[ ] Identify a Needle Rat (near look)",
+    `${q.ratsKilled >= TEETH_RATS_NEEDED ? "[done]" : "[ ]"} Defeat Needle Rats ${Math.min(q.ratsKilled, TEETH_RATS_NEEDED)}/${TEETH_RATS_NEEDED}`,
     q.houndDone
-      ? "\u2713 Survive / drive off Bark Hound"
-      : "\u25cb Survive or drive off 1 Bark Hound",
+      ? "[done] Survive / drive off Bark Hound"
+      : "[ ] Survive or drive off 1 Bark Hound",
   ];
 }
 
@@ -123,12 +123,11 @@ export function applyIdentify(
   if (kindId !== "needle-rat" && kindId !== "briar-mite" && kindId !== "bark-hound") {
     return null;
   }
-  // Prefer Needle Rat for the written objective; allow any early beast as fallback.
   const next: TeethQuestProgress = { ...q, identifiedRat: true };
   const toast =
     kindId === "needle-rat"
-      ? "Identified: Needle Rat \u00b7 F"
-      : `Identified: ${kindId === "bark-hound" ? "Bark Hound" : "Briar Mite"} \u00b7 F`;
+      ? "Identified: Needle Rat / F"
+      : `Identified: ${kindId === "bark-hound" ? "Bark Hound" : "Briar Mite"} / F`;
   return finishIfReady(next, toast);
 }
 
@@ -181,13 +180,13 @@ export function rookQuestLine(log: QuestLog | undefined): string | null {
     return TEETH_COMPLETE_LINE.replace(/^Rook:\s*/, "");
   }
   if (!q.identifiedRat) {
-    return "Ashwood edge has wrong prey. Identify first \u2014 Name and Rank. Then clear three Needle Rats and one Bark Hound near Thornhearth.";
+    return "Ashwood edge has wrong prey. Identify first - Name and Rank. Then clear three Needle Rats and one Bark Hound near Thornhearth.";
   }
   if (q.ratsKilled < TEETH_RATS_NEEDED) {
-    return `Good eyes. Needle Rats ${q.ratsKilled}/${TEETH_RATS_NEEDED} \u2014 keep the basin grass honest.`;
+    return `Good eyes. Needle Rats ${q.ratsKilled}/${TEETH_RATS_NEEDED} - keep the basin grass honest.`;
   }
   if (!q.houndDone) {
-    return "Rats down. One Bark Hound still packs the ashwood skirts \u2014 survive it or drive it off.";
+    return "Rats down. One Bark Hound still packs the ashwood skirts - survive it or drive it off.";
   }
   return "Survive. Learn. Progress.";
 }
