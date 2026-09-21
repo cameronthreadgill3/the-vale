@@ -49,17 +49,6 @@ function isCanopy(map: WorldMap, tx: number, ty: number): boolean {
   return tileAt(map, tx, ty) === "stone";
 }
 
-/** Canopy with a canopy neighbor — grove air, not a lone trunk. */
-function inGrove(map: WorldMap, tx: number, ty: number): boolean {
-  if (!isCanopy(map, tx, ty)) return false;
-  return (
-    isCanopy(map, tx + 1, ty) ||
-    isCanopy(map, tx - 1, ty) ||
-    isCanopy(map, tx, ty + 1) ||
-    isCanopy(map, tx, ty - 1)
-  );
-}
-
 function refreshAnchors(
   map: WorldMap,
   originX: number,
@@ -75,8 +64,13 @@ function refreshAnchors(
   const hits: Anchor[] = [];
   for (let ty = startTY; ty <= endTY; ty++) {
     for (let tx = startTX; tx <= endTX; tx++) {
-      if (!inGrove(map, tx, ty)) continue;
-      hits.push({ x: (tx + 0.5) * TILE, y: (ty + 0.62) * TILE });
+      if (!isCanopy(map, tx, ty)) continue;
+      const ax = (tx + 0.5) * TILE;
+      const ay = (ty + 0.62) * TILE;
+      if (ax < originX - 8 || ay < originY - 8 || ax > originX + viewW + 8 || ay > originY + viewH + 8) {
+        continue;
+      }
+      hits.push({ x: ax, y: ay });
     }
   }
   const step = Math.max(1, Math.ceil(hits.length / 24));
@@ -104,10 +98,10 @@ function ensurePool(): void {
 
 function activeCount(): number {
   if (ANCHORS.length === 0) return 0;
-  return Math.min(DRIFT_MAX, 2 + ANCHORS.length);
+  return Math.min(DRIFT_MAX, ANCHORS.length + Math.ceil(ANCHORS.length / 3));
 }
 
-function respawn(m: Drift): void {
+function respawn(m: Drift, originX: number, originY: number, viewW: number, viewH: number): void {
   const a = ANCHORS[(rand() * ANCHORS.length) | 0];
   if (!a) {
     m.active = false;
@@ -115,10 +109,10 @@ function respawn(m: Drift): void {
     return;
   }
   const roll = rand();
-  const kind: DriftKind = roll < 0.4 ? "leaf" : roll < 0.75 ? "ash" : "needle";
+  const kind: DriftKind = roll < 0.42 ? "leaf" : roll < 0.74 ? "ash" : "needle";
   m.kind = kind;
-  m.x = a.x + (rand() - 0.35) * 26;
-  m.y = a.y + (rand() - 0.45) * 18;
+  m.x = Math.max(originX + 6, Math.min(originX + viewW - 6, a.x + (rand() - 0.35) * 22));
+  m.y = Math.max(originY + 6, Math.min(originY + viewH - 6, a.y + (rand() - 0.4) * 16));
   m.seed = rand() * 20;
   m.active = true;
   if (kind === "leaf") {
@@ -185,7 +179,7 @@ export function tickAshDrift(
       continue;
     }
     if (!m.active || m.life <= 0) {
-      respawn(m);
+      respawn(m, originX, originY, viewW, viewH);
       continue;
     }
     m.life -= step;
@@ -206,7 +200,7 @@ export function tickAshDrift(
       m.y < originY - margin ||
       m.x > originX + viewW + margin ||
       m.y > originY + viewH + margin;
-    if (m.life <= 0 || outside) respawn(m);
+    if (m.life <= 0 || outside) respawn(m, originX, originY, viewW, viewH);
   }
 }
 
@@ -232,37 +226,37 @@ function drawDrift(
   if (m.kind === "leaf") {
     const wobble = Math.sin(timeSec * 2.6 + m.seed);
     const tilt = wobble > 0 ? 0 : 1;
-    ctx.fillStyle = `rgba(58, 74, 40, ${0.42 * fade})`;
+    ctx.fillStyle = `rgba(54, 72, 36, ${0.55 * fade})`;
     ctx.fillRect(sx + tilt, py + 2, 1, 1);
-    ctx.fillStyle = `rgba(92, 124, 68, ${0.58 * fade})`;
-    ctx.fillRect(sx + tilt, py, 3, 1);
-    ctx.fillStyle = `rgba(62, 86, 46, ${0.5 * fade})`;
-    ctx.fillRect(sx + 1 - tilt, py + 1, 2, 1);
+    ctx.fillStyle = `rgba(108, 142, 72, ${0.82 * fade})`;
+    ctx.fillRect(sx + tilt, py, 4, 1);
+    ctx.fillStyle = `rgba(70, 96, 48, ${0.72 * fade})`;
+    ctx.fillRect(sx + 1 - tilt, py + 1, 3, 1);
     // One bright tip, only on the turn, so the existing bloom can lift it.
-    if (wobble > 0.72) {
-      ctx.fillStyle = `rgba(228, 242, 220, ${0.92 * fade})`;
-      ctx.fillRect(sx + 2 + tilt, py, 1, 1);
+    if (wobble > 0.62) {
+      ctx.fillStyle = `rgba(228, 242, 220, ${0.95 * fade})`;
+      ctx.fillRect(sx + 3, py, 1, 1);
     }
     return;
   }
 
   if (m.kind === "ash") {
-    ctx.fillStyle = `rgba(148, 142, 130, ${0.38 * fade})`;
-    ctx.fillRect(sx, py, 2, 1);
-    ctx.fillStyle = `rgba(86, 82, 74, ${0.32 * fade})`;
-    ctx.fillRect(sx, py, 1, 1);
-    if (Math.sin(timeSec * 1.35 + m.seed) > 0.86) {
-      ctx.fillStyle = `rgba(236, 228, 210, ${0.88 * fade})`;
+    ctx.fillStyle = `rgba(168, 160, 146, ${0.62 * fade})`;
+    ctx.fillRect(sx, py, 2, 2);
+    ctx.fillStyle = `rgba(92, 86, 76, ${0.5 * fade})`;
+    ctx.fillRect(sx, py + 1, 1, 1);
+    if (Math.sin(timeSec * 1.35 + m.seed) > 0.78) {
+      ctx.fillStyle = `rgba(236, 228, 210, ${0.92 * fade})`;
       ctx.fillRect(sx + 1, py, 1, 1);
     }
     return;
   }
 
   const lean = Math.sin(timeSec * 3.1 + m.seed) > 0 ? 1 : 0;
-  ctx.fillStyle = `rgba(48, 62, 34, ${0.58 * fade})`;
+  ctx.fillStyle = `rgba(46, 62, 32, ${0.78 * fade})`;
   ctx.fillRect(sx, py, 1, 1);
-  ctx.fillRect(sx + lean, py + 1, 1, 2);
-  ctx.fillStyle = `rgba(168, 186, 140, ${0.36 * fade})`;
+  ctx.fillRect(sx + lean, py + 1, 1, 3);
+  ctx.fillStyle = `rgba(176, 196, 148, ${0.55 * fade})`;
   ctx.fillRect(sx, py, 1, 1);
 }
 
