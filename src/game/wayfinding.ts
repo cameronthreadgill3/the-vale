@@ -4,6 +4,7 @@ export {
   WAYFIND_RADAR_RANGE,
   resolveQuestObjective,
   objectiveForTeeth,
+  objectiveForLines,
   tilesAway,
   type WayfindObjective,
   type RadarDot,
