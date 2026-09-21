@@ -17,4 +17,3 @@ assemble("ga\\.b64", "src/game/GameApp.tsx");
 assemble("aa\\.b64", "src/account/AccountApp.tsx");
 assemble("qq\\.b64", "src/game/quests.ts");
 assemble("ch\\.b64", "src/game/character.ts");
-assemble("wf\\.b64", "src/game/wayfinding.ts");
