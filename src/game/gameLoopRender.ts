@@ -36,6 +36,7 @@ import { tickAshDrift, collectAshDriftDepthItems } from "@/game/gfx/ashDrift";
 import { tickFootstepDust } from "@/game/gfx/footstepDust";
 import { drawScreenVignette } from "@/game/gfx/screenVignette";
 import { tickAmbientFauna, drawAmbientFaunaFar, drawAmbientFaunaAbove } from "@/game/gfx/ambientFauna";
+import { drawChimneyWisps, drawDistantGroveSmoke } from "@/game/gfx/chimneySmoke";
 import { drawViewOverlay } from "@/game/gfx/viewOverlay";
 import type { ValeCharacter } from "@/game/character";
 import { FOLK, type FolkDef, type ShopDef, type ShipDock } from "@/game/folk";
@@ -611,9 +612,11 @@ export function advanceCameraAndRender(args: {
   drawAshwoodTint(ctx, map, originX, originY, viewW, viewH);
   drawSurfaceLight(ctx, map, originX, originY, viewW, viewH, _atmosT);
   drawParallaxHaze(ctx, map, originX, originY, viewW, viewH, _atmosT);
+  drawDistantGroveSmoke(ctx, map, originX, originY, viewW, viewH, _atmosT);
   tickAmbientFauna(dt, map, originX, originY, viewW, viewH, _atmosT);
   drawAmbientFaunaFar(ctx, originX, originY, viewW, viewH, _atmosT);
   drawTownOverlays(ctx, map, player, originX, originY, _atmosT);
+  drawChimneyWisps(ctx, map, originX, originY, viewW, viewH, _atmosT);
   if (map.kind === "overworld" && isSafeContinent(map.continentId)) {
     const fx = Math.floor((map.spawn.x + 0.5) * TILE - originX);
     const fy = Math.floor((map.spawn.y + 0.5) * TILE - originY);

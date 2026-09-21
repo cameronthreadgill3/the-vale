@@ -76,6 +76,7 @@ export {
 export { tickAshDrift, collectAshDriftDepthItems } from "@/game/gfx/ashDrift";
 export { tickFootstepDust, groundKicksDust, drawFootstepDust } from "@/game/gfx/footstepDust";
 export { tickAmbientFauna, drawAmbientFaunaFar, drawAmbientFaunaAbove } from "@/game/gfx/ambientFauna";
+export { drawDistantGroveSmoke, drawChimneyWisps } from "@/game/gfx/chimneySmoke";
 export { drawViewOverlay } from "@/game/gfx/viewOverlay";
 export { drawScreenVignette, combatFocusTarget } from "@/game/gfx/screenVignette";
 export {
