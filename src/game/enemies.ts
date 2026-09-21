@@ -1,1 +1,1 @@
-PLACEHOLDER_USE_LOCAL
+@/workspace/the-vale-combat/src/game/enemies.ts
