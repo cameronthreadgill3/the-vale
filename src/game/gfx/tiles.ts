@@ -6,6 +6,7 @@
  * Path-edge depth: inward turf contact and corner recess on walkways.
  * Ashwood canopy: leaf layers, south umbra, trunk–crown contact.
  * Structure-depth: wall under-eave / sill, recessed doorframes, gate arches.
+ * Plaza cobble keeps a cool wet lip on the north-west edge of each paver.
  * Cached OffscreenCanvas / canvas sheets — not redrawn every frame.
  * NOT CipSoft / Tibia assets — handcrafted pixel patterns only.
  */
@@ -94,6 +95,74 @@ function paintGrass(ctx: CanvasRenderingContext2D, base: string, variant: number
   }
 }
 
+/** Path pavers. The atmosphere pass reuses these origins for plaza glints. */
+const PATH_PAVERS: readonly [number, number][] = [
+  [0, 0], [8, 0], [16, 0], [24, 0],
+  [4, 8], [12, 8], [20, 8], [28, 8],
+  [0, 16], [8, 16], [16, 16], [24, 16],
+  [4, 24], [12, 24], [20, 24], [28, 24],
+];
+
+/** Denser plaza cobbles. Same list the wet-stone pass samples. */
+const COBBLE_PAVERS: readonly [number, number][] = [
+  [0, 0], [7, 0], [14, 0], [21, 0], [28, 0],
+  [3, 6], [10, 6], [17, 6], [24, 6],
+  [0, 12], [7, 12], [14, 12], [21, 12], [28, 12],
+  [4, 18], [11, 18], [18, 18], [25, 18],
+  [0, 24], [8, 24], [16, 24], [24, 24],
+];
+
+function paverNudge(index: number, variant: number): number {
+  return ((index + variant) % 3) - 1;
+}
+
+const CATCHES: [number, number][] = [
+  [0, 0],
+  [0, 0],
+  [0, 0],
+];
+const PUDDLE: [number, number] = [0, 0];
+
+function clipTile(n: number, max: number): number {
+  if (n < 0) return 0;
+  if (n > max) return max;
+  return n;
+}
+
+/**
+ * Three north-west lip pixels on path or plaza cobble.
+ * The returned array is reused on the next call — read it before then.
+ * Sites match the sheet nudge so a glint sits on stone, not mortar.
+ */
+export function wetStoneCatches(
+  kind: "path" | "cobble",
+  variant: number,
+): [number, number][] {
+  const stones = kind === "cobble" ? COBBLE_PAVERS : PATH_PAVERS;
+  const step = kind === "cobble" ? 7 : 5;
+  for (let n = 0; n < 3; n++) {
+    const i = (variant * 2 + n * step) % stones.length;
+    const [ox, oy] = stones[i]!;
+    CATCHES[n]![0] = clipTile(ox + paverNudge(i, variant) + 1, 30);
+    CATCHES[n]![1] = clipTile(oy + 1, 30);
+  }
+  return CATCHES;
+}
+
+/** South edge of one paver. A 3px glint fits without leaving the tile. */
+export function wetPuddleGlint(
+  kind: "path" | "cobble",
+  variant: number,
+): [number, number] {
+  const stones = kind === "cobble" ? COBBLE_PAVERS : PATH_PAVERS;
+  const i = (variant * 5 + 3) % stones.length;
+  const [ox, oy] = stones[i]!;
+  const stoneH = kind === "cobble" ? 5 : 6;
+  PUDDLE[0] = clipTile(ox + paverNudge(i, variant) + 1, 28);
+  PUDDLE[1] = clipTile(oy + stoneH, 31);
+  return PUDDLE;
+}
+
 /** NW spark + SE contact so path/cobble stones read as raised pavers. */
 function bevelStone(
   ctx: CanvasRenderingContext2D,
@@ -142,15 +211,9 @@ function paintPath(ctx: CanvasRenderingContext2D, base: string, variant: number)
   const moss = mixHex(base, "#3a5a30", 0.4);
   ctx.fillStyle = mortar;
   ctx.fillRect(0, 0, TILE_PX, TILE_PX);
-  const offsets = [
-    [0, 0], [8, 0], [16, 0], [24, 0],
-    [4, 8], [12, 8], [20, 8], [28, 8],
-    [0, 16], [8, 16], [16, 16], [24, 16],
-    [4, 24], [12, 24], [20, 24], [28, 24],
-  ];
-  for (let i = 0; i < offsets.length; i++) {
-    const [ox, oy] = offsets[i]!;
-    const shift = ((i + variant) % 3) - 1;
+  for (let i = 0; i < PATH_PAVERS.length; i++) {
+    const [ox, oy] = PATH_PAVERS[i]!;
+    const shift = paverNudge(i, variant);
     const tone = (i * 3 + variant) % 5;
     const c = tone === 0 ? lite : tone === 1 ? dark : tone === 2 ? moss : base;
     const w = 6 + ((i + variant) % 2);
@@ -180,28 +243,22 @@ function paintCobbleField(
   const moss = mixHex(base, "#3a5a32", 0.45);
   ctx.fillStyle = mortar;
   ctx.fillRect(0, 0, TILE_PX, TILE_PX);
-  const offsets = plaza
-    ? [
-        [0, 0], [7, 0], [14, 0], [21, 0], [28, 0],
-        [3, 6], [10, 6], [17, 6], [24, 6],
-        [0, 12], [7, 12], [14, 12], [21, 12], [28, 12],
-        [4, 18], [11, 18], [18, 18], [25, 18],
-        [0, 24], [8, 24], [16, 24], [24, 24],
-      ]
-    : [
-        [0, 0], [8, 0], [16, 0], [24, 0],
-        [4, 8], [12, 8], [20, 8], [28, 8],
-        [0, 16], [8, 16], [16, 16], [24, 16],
-        [4, 24], [12, 24], [20, 24], [28, 24],
-      ];
+  const offsets = plaza ? COBBLE_PAVERS : PATH_PAVERS;
   const stoneW = plaza ? 6 : 7;
   const stoneH = plaza ? 5 : 7;
+  const wetLip = mixHex(lite, "#c9dde4", 0.5);
   for (let i = 0; i < offsets.length; i++) {
     const [ox, oy] = offsets[i]!;
-    const shift = ((i + variant) % 3) - 1;
+    const shift = paverNudge(i, variant);
     const roll = (i + variant) % 4;
     const c = roll === 0 ? lite : roll === 1 ? base : roll === 2 ? mid : dark;
     bevelStone(ctx, ox + shift, oy, stoneW, stoneH, c, dark, lite);
+    if (plaza) {
+      px(ctx, ox + shift + 1, oy + 1, wetLip, 2, 1);
+      if ((i + variant) % 6 === 2) {
+        px(ctx, ox + shift + 2, oy + 2, mixHex(c, "#688492", 0.32), 2, 1);
+      }
+    }
     if (plaza && (i + variant) % 5 === 0) {
       px(ctx, ox + shift + 2, oy + stoneH - 1, moss, 2, 1);
     }
