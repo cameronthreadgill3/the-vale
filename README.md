@@ -255,6 +255,29 @@ After *The Coil Remembers* completes, Rook starts **The Choir Remembers** (`ensu
 
 Rewards: ~105g + ~210 combat XP + shielding skill XP. Yellow arrow: coastal dock toward Choir (or Mistmere/Nightglass gate) → nearest Briar Mite on Sunken Choir → nearest Bark Hound on Sunken Choir → return dock/gate(s) → Rook. Reuses existing docks, gates, and fauna (briar-mite / bark-hound pads while sticky) — no new geometry. Choir Keeper is optional flavor only. First Story Accession texture only — Survive · Learn · Progress. No Lucas transplant.
 
+### Seventeenth sticky quest — The Edge Remembers
+
+After *The Choir Remembers* completes, Rook starts **The Edge Remembers** (`ensureEdgeRemembersAfterChoir`): the Choir's water-measure is home — carry it to Cress's ledger, name the soft ash-vole on our own ashwood edge, quiet one bark-hound packing the home grass, and bring Thornreach's measure home.
+
+1. **Talk** to **Cress** (`cress-ledger`) at the Thornreach depot — enter the Choir water-measure in the ledger (flag only)
+2. **Stand** Thornreach overworld (already home after Rook, or return by dock/gate)
+3. **Identify** 1 **Ash-vole** (`ash-vole`) on Thornreach (near-field look / Name · Rank)
+4. **Defeat** 1 **Bark Hound** (`bark-hound`) on Thornreach
+5. Report to **Rook**
+
+Rewards: ~110g + ~220 combat XP + shielding skill XP. Yellow arrow: Cress → nearest Ash-vole on Thornreach → nearest Bark Hound on Thornreach → Rook. Reuses existing folk and fauna (ash-vole / bark-hound pads while sticky) — no new geometry. First Story Accession texture only — Survive · Learn · Progress. No Lucas transplant.
+
+### Eighteenth sticky quest — The Wharf Remembers
+
+After *The Edge Remembers* completes, Rook starts **The Wharf Remembers** (`ensureWharfRemembersAfterEdge`): the Edge's home measure is taken — the drowned count washes back to Nightglass. Walk the black strand, name the gorse-fox that hunts the wharf skirts, quiet one needle-rat packing the shore, and bring the Wharf's measure home.
+
+1. **Reach** Nightglass Coast overworld via a coastal dock (Mistmere Pier / Choir Landing → Nightglass, or Nightglass gates, also accepted)
+2. **Identify** 1 **Gorse Fox** (`gorse-fox`) on Nightglass Coast only (near-field look / Name · Rank)
+3. **Defeat** 1 **Needle Rat** (`needle-rat`) on Nightglass Coast only
+4. Return by dock/gate and report to **Rook**
+
+Rewards: ~110g + ~220 combat XP + magic skill XP. Yellow arrow: coastal dock toward Nightglass → nearest Gorse Fox on Nightglass Coast → nearest Needle Rat on Nightglass Coast → return dock/gate(s) → Rook. Reuses existing docks, gates, and fauna (gorse-fox / needle-rat pads while sticky) — no new geometry. Captain Vesper is optional flavor only — no Vesper talk or Bark Hound redo from *The Wharf Answers*. First Story Accession texture only — Survive · Learn · Progress. No Lucas transplant.
+
 ### Thornreach hollows (mini-dungeon + boss stub)
 
 Thornreach hollows read as a short dungeon: rooms and corridors, a single lit **↑ Surface** exit at the entrance (the deep room is no longer a second door), denser Shade Wisps the farther you walk, and a marked **Ashveil chamber** in the deepest room.
