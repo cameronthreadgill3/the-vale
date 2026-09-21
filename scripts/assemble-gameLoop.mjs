@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Assemble opaque b64 sources used by a few large modules.
- * GameApp.tsx and character.ts are first-class sources (not assembled).
+ * character.ts is first-class; GameApp.tsx assembles from ga.b64.* when present.
  */
 import { readFileSync, writeFileSync, readdirSync, unlinkSync } from "fs";
 import { join, dirname } from "path";
@@ -40,3 +40,4 @@ assemble("qq\\.b64", "src/game/quests.ts");
 assemble("en\\.b64", "src/game/enemies.ts");
 assemble("gs\\.b64", "src/game/GameShell.tsx");
 assemble("rd\\.b64", "README.md");
+assemble("ga\\.b64", "src/game/GameApp.tsx");
