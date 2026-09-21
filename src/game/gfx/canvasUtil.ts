@@ -88,7 +88,8 @@ export function drawSoftShadow(
 }
 
 /**
- * 1px north-west warm rim on a sprite draw. Blur stays off so the pixel edge stays crisp.
+ * 1px form light on a character draw: warm north-west rim, cool south-east shade.
+ * Matches the key light. Blur stays off so the pixel edge stays crisp.
  * Ground contact is drawn separately and does not pick up this shadow.
  */
 export function drawWithWarmRim(
@@ -96,7 +97,14 @@ export function drawWithWarmRim(
   draw: () => void,
 ): void {
   ctx.save();
-  ctx.shadowColor = "rgba(255, 216, 164, 0.72)";
+  ctx.shadowColor = "rgba(36, 58, 78, 0.42)";
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetX = 1;
+  ctx.shadowOffsetY = 1;
+  draw();
+  ctx.restore();
+  ctx.save();
+  ctx.shadowColor = "rgba(255, 216, 164, 0.8)";
   ctx.shadowBlur = 0;
   ctx.shadowOffsetX = -1;
   ctx.shadowOffsetY = -1;
@@ -122,14 +130,23 @@ export function paintVolume(
   fill: string,
   highlight = 1.2,
   shade = 0.74,
+  form = false,
 ): void {
   if (w < 2 || h < 2) return;
-  const hw = Math.max(1, Math.floor(w * 0.46));
-  const hh = Math.max(1, Math.floor(h * 0.34));
-  const sw = Math.max(1, Math.floor(w * 0.38));
-  const sh = Math.max(1, Math.floor(h * 0.36));
+  const hw = Math.max(1, Math.floor(w * (form ? 0.4 : 0.46)));
+  const hh = Math.max(1, Math.floor(h * (form ? 0.3 : 0.34)));
+  const sw = Math.max(1, Math.floor(w * (form ? 0.42 : 0.38)));
+  const sh = Math.max(1, Math.floor(h * (form ? 0.4 : 0.36)));
   px(ctx, x, y, shadeHex(fill, highlight), hw, hh);
   px(ctx, x + (w - sw), y + (h - sh), shadeHex(fill, shade), sw, sh);
+  if (!form || w < 5 || h < 4) return;
+  // 1px L rim so the mass turns instead of reading as a flat lit card.
+  const rimH = shadeHex(fill, Math.min(1.4, highlight + 0.12));
+  const rimS = shadeHex(fill, Math.max(0.55, shade * 0.88));
+  px(ctx, x, y, rimH, w - 1, 1);
+  px(ctx, x, y + 1, rimH, 1, Math.max(1, Math.floor(h * 0.42)));
+  px(ctx, x + 1, y + h - 1, rimS, w - 2, 1);
+  px(ctx, x + w - 1, y + Math.floor(h * 0.4), rimS, 1, Math.max(1, h - Math.floor(h * 0.4) - 1));
 }
 
 /**

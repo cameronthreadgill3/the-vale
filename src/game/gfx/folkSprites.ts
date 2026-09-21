@@ -1,11 +1,35 @@
 /**
  * Distinct clothed pixel folk (original Vale art, character polish).
  * Cached per folk-id + color. Labels stay in folkCanvas.
- * Pass 4: outfit silhouettes that don't blur; painted volume kept.
+ * Pass 5: idle breath with hair sway and cloth hang, form volume.
  */
-import { makeCanvas, ctx2d, px, shadeHex, mixHex, paintVolume, drawSoftShadow, drawWithWarmRim, addPixelVolume, GROUND_SHADOW_ALPHA } from "@/game/gfx/canvasUtil";
+import { makeCanvas, ctx2d, px, shadeHex, mixHex, paintVolume as paintVolumeBlock, drawSoftShadow, drawWithWarmRim, addPixelVolume, GROUND_SHADOW_ALPHA } from "@/game/gfx/canvasUtil";
 
 export const FOLK_FRAME = 32;
+
+/** Breath pose for the sheet currently being painted (0 rest, 1 lifted). */
+let breath = 0;
+
+function hairSway(): number {
+  return breath ? 1 : 0;
+}
+
+function clothHang(): number {
+  return breath ? 1 : 0;
+}
+
+function paintVolume(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  fill: string,
+  highlight = 1.16,
+  shade = 0.74,
+): void {
+  paintVolumeBlock(ctx, x, y, w, h, fill, highlight, shade, true);
+}
 
 type Sheet = HTMLCanvasElement | OffscreenCanvas;
 const cache = new Map<string, Sheet>();
@@ -108,19 +132,20 @@ function head(
   px(ctx, 16, 8, "#1a1410", 2, 2);
   px(ctx, 14, 8, "#f4eee4", 1, 1);
   px(ctx, 16, 8, "#f4eee4", 1, 1);
-  px(ctx, 13, 5, hair, 6, 3);
-  paintVolume(ctx, 13, 5, 6, 3, hair, 1.18, 0.72);
-  px(ctx, 13, 6, hair, 2, 3);
-  px(ctx, 18, 6, hair, 2, 2);
+  const hx = hairSway();
+  px(ctx, 13 + hx, 5, hair, 6, 3);
+  paintVolume(ctx, 13 + hx, 5, 6, 3, hair, 1.18, 0.72);
+  px(ctx, 13 + hx, 6, hair, 2, 3);
+  px(ctx, 18 + hx, 6, hair, 2, 2);
   if (opts?.bun) {
-    px(ctx, 19, 4, OUT, 4, 4);
-    px(ctx, 19, 4, hair, 3, 3);
-    paintVolume(ctx, 19, 4, 3, 3, hair, 1.16, 0.74);
+    px(ctx, 19 + hx, 4, OUT, 4, 4);
+    px(ctx, 19 + hx, 4, hair, 3, 3);
+    paintVolume(ctx, 19 + hx, 4, 3, 3, hair, 1.16, 0.74);
   }
   if (opts?.beard) {
-    px(ctx, 14, 11, hair, 4, 3);
-    paintVolume(ctx, 14, 11, 4, 3, hair, 1.12, 0.75);
-    px(ctx, 15, 13, mixHex(hair, "#c8c0b0", 0.3), 2, 2);
+    px(ctx, 14 + hx, 11, hair, 4, 3);
+    paintVolume(ctx, 14 + hx, 11, 4, 3, hair, 1.12, 0.75);
+    px(ctx, 15 + hx, 13, mixHex(hair, "#c8c0b0", 0.3), 2, 2);
   }
 }
 
@@ -128,12 +153,13 @@ function paintWatch(ctx: CanvasRenderingContext2D, color: string): void {
   const dark = shadeHex(color, 0.6);
   body(ctx, color, dark, { pants: "#3a4030" });
   head(ctx, "#2a2418");
-  // cloak
-  px(ctx, 8, 12, dark, 3, 10);
-  paintVolume(ctx, 8, 12, 3, 10, dark, 1.16, 0.7);
-  px(ctx, 21, 12, dark, 3, 10);
-  paintVolume(ctx, 21, 12, 3, 10, dark, 1.1, 0.68);
-  px(ctx, 10, 20, shadeHex(color, 0.45), 12, 3);
+  // cloak — hem hangs on the breath while the body lifts
+  const hang = clothHang();
+  px(ctx, 8, 12 + hang, dark, 3, 10);
+  paintVolume(ctx, 8, 12 + hang, 3, 10, dark, 1.16, 0.7);
+  px(ctx, 21, 12 + hang, dark, 3, 10);
+  paintVolume(ctx, 21, 12 + hang, 3, 10, dark, 1.1, 0.68);
+  px(ctx, 10, 20 + hang, shadeHex(color, 0.45), 12, 3);
   // bronze badge
   px(ctx, 14, 14, "#c9a227", 3, 3);
   px(ctx, 15, 15, "#e8d070", 1, 1);
@@ -201,12 +227,13 @@ function paintTide(ctx: CanvasRenderingContext2D, color: string): void {
   const dark = shadeHex(color, 0.6);
   body(ctx, color, dark);
   head(ctx, "#3a2a18");
-  // scarf
+  // scarf — neck stays, tail hangs
+  const hang = clothHang();
   px(ctx, 12, 11, "#d8e8f0", 8, 3);
   paintVolume(ctx, 12, 11, 8, 3, "#d8e8f0", 1.14, 0.82);
-  px(ctx, 20, 12, "#d8e8f0", 3, 6);
-  px(ctx, 22, 16, "#d8e8f0", 3, 5);
-  px(ctx, 24, 19, "#c8d8e0", 2, 3);
+  px(ctx, 20, 12 + hang, "#d8e8f0", 3, 6);
+  px(ctx, 22, 16 + hang, "#d8e8f0", 3, 5);
+  px(ctx, 24, 19 + hang, "#c8d8e0", 2, 3);
   // fish at hip
   px(ctx, 20, 19, "#c97a4a", 4, 2);
   paintVolume(ctx, 20, 19, 4, 2, "#c97a4a", 1.16, 0.78);
@@ -226,8 +253,10 @@ function paintChoir(ctx: CanvasRenderingContext2D, color: string): void {
   px(ctx, 14, 8, "#1a1410", 2, 2);
   px(ctx, 14, 8, "#f4eee4", 1, 1);
   px(ctx, 12, 4, shadeHex(color, 0.35), 8, 3);
-  px(ctx, 11, 6, dark, 2, 6);
-  px(ctx, 19, 6, dark, 2, 6);
+  const hx = hairSway();
+  const hang = clothHang();
+  px(ctx, 11 + hx, 6 + hang, dark, 2, 6);
+  px(ctx, 19 + hx, 6 + hang, dark, 2, 6);
   px(ctx, 12, 16, "#c9a227", 8, 1);
   // hymn book
   px(ctx, 8, 16, "#e8e0c8", 4, 5);
@@ -239,11 +268,13 @@ function paintPilgrim(ctx: CanvasRenderingContext2D, color: string): void {
   const ash = mixHex(color, "#6a6860", 0.4);
   const dark = shadeHex(ash, 0.6);
   body(ctx, ash, dark, { skirt: true });
-  px(ctx, 12, 4, dark, 8, 8);
-  paintVolume(ctx, 12, 4, 8, 8, dark, 1.16, 0.7);
+  const hx = hairSway();
+  const hang = clothHang();
+  px(ctx, 12 + hx, 4 + hang, dark, 8, 8);
+  paintVolume(ctx, 12 + hx, 4 + hang, 8, 8, dark, 1.16, 0.7);
   px(ctx, 13, 7, SKIN, 4, 4);
   paintVolume(ctx, 13, 7, 4, 4, SKIN, 1.12, 0.8);
-  px(ctx, 12, 4, shadeHex(ash, 0.4), 8, 3);
+  px(ctx, 12 + hx, 4 + hang, shadeHex(ash, 0.4), 8, 3);
   px(ctx, 7, 8, "#5a5048", 2, 18);
   paintVolume(ctx, 7, 8, 2, 18, "#5a5048", 1.14, 0.7);
   px(ctx, 6, 6, "#c97a4a", 4, 3);
@@ -264,8 +295,9 @@ function paintCaptain(ctx: CanvasRenderingContext2D, color: string): void {
   px(ctx, 9, 4, "#1a1814", 3, 2);
   px(ctx, 20, 4, "#1a1814", 3, 2);
   // coat tails
-  px(ctx, 10, 20, dark, 3, 6);
-  px(ctx, 19, 20, dark, 3, 6);
+  const hang = clothHang();
+  px(ctx, 10, 20 + hang, dark, 3, 6);
+  px(ctx, 19, 20 + hang, dark, 3, 6);
   // sash
   px(ctx, 12, 16, "#c9a227", 8, 2);
   paintVolume(ctx, 12, 16, 8, 2, "#c9a227", 1.16, 0.78);
@@ -321,7 +353,8 @@ function paintCooper(ctx: CanvasRenderingContext2D, color: string): void {
   px(ctx, 21, 20, "#c9a227", 4, 1);
 }
 
-function paintFolk(color: string, folkId: string | undefined): Sheet {
+function paintFolk(color: string, folkId: string | undefined, phase = 0): Sheet {
+  breath = phase ? 1 : 0;
   const c = makeCanvas(FOLK_FRAME, FOLK_FRAME);
   const ctx = ctx2d(c);
   switch (lookFor(folkId)) {
@@ -364,15 +397,16 @@ function paintFolk(color: string, folkId: string | undefined): Sheet {
     default:
       paintGeneric(ctx, color);
   }
-  addPixelVolume(ctx, FOLK_FRAME, FOLK_FRAME, 0.15, 0.2);
+  addPixelVolume(ctx, FOLK_FRAME, FOLK_FRAME, 0.17, 0.24);
   return c;
 }
 
-export function getFolkSheet(color: string, folkId?: string): Sheet {
-  const key = `${folkId ?? "anon"}|${color}`;
+export function getFolkSheet(color: string, folkId?: string, phase = 0): Sheet {
+  const pose = phase ? 1 : 0;
+  const key = `${folkId ?? "anon"}|${color}|b${pose}`;
   let sheet = cache.get(key);
   if (!sheet) {
-    sheet = paintFolk(color, folkId);
+    sheet = paintFolk(color, folkId, pose);
     cache.set(key, sheet);
   }
   return sheet;
@@ -386,7 +420,7 @@ export function drawFolkSprite(
   folkId?: string,
   lift = 0,
 ): void {
-  const sheet = getFolkSheet(color, folkId);
+  const sheet = getFolkSheet(color, folkId, lift < 0 ? 1 : 0);
   const size = 44;
   // Contact stays planted while the body takes a 1px idle breath.
   drawSoftShadow(ctx, sx, sy + size * 0.34, size * 0.36, size * 0.13, GROUND_SHADOW_ALPHA);
@@ -405,5 +439,8 @@ export function drawFolkSprite(
 export function warmFolkSheets(
   folk: { id: string; color: string }[],
 ): void {
-  for (const f of folk) getFolkSheet(f.color, f.id);
+  for (const f of folk) {
+    getFolkSheet(f.color, f.id, 0);
+    getFolkSheet(f.color, f.id, 1);
+  }
 }
