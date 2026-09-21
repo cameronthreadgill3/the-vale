@@ -85,7 +85,7 @@ export function drawShipDocks(
     const dsx = Math.floor(dk.x * TILE - originX);
     const dsy = Math.floor(dk.y * TILE - originY);
     ctx.fillStyle = "#4a3d28";
-    ctx.fillRect(dsx + 4, dsy + 12, TILE - 8, 8);
+    ctx.fillRect(dsx + 2, dsy + 10, TILE - 4, 10);
     ctx.fillStyle = "#7ab8c9";
     ctx.beginPath();
     ctx.moveTo(dsx + 6, dsy + 10);
@@ -94,8 +94,8 @@ export function drawShipDocks(
     ctx.lineTo(dsx + 8, dsy + 18);
     ctx.closePath();
     ctx.fill();
-    ctx.strokeStyle = "#e8e6d9";
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = "#f0f0e8";
+    ctx.lineWidth = 2;
     ctx.stroke();
   }
 }
@@ -125,21 +125,21 @@ function drawFloatingLabel(
   label: string,
   color = "#e8e6d9",
 ): void {
-  ctx.font = "600 11px Figtree, system-ui, sans-serif";
+  ctx.font = "700 12px Figtree, system-ui, sans-serif";
   ctx.textAlign = "center";
   ctx.textBaseline = "bottom";
-  const padX = 5;
+  const padX = 6;
   const padY = 3;
   const w = ctx.measureText(label).width;
   const bx = x - w / 2 - padX;
-  const by = y - 14 - padY;
-  ctx.fillStyle = "rgba(12,13,11,0.75)";
-  ctx.fillRect(bx, by, w + padX * 2, 14 + padY);
-  ctx.strokeStyle = "rgba(201,162,39,0.35)";
-  ctx.lineWidth = 1;
-  ctx.strokeRect(bx, by, w + padX * 2, 14 + padY);
+  const by = y - 16 - padY;
+  ctx.fillStyle = "rgba(8,9,7,0.88)";
+  ctx.fillRect(bx, by, w + padX * 2, 16 + padY);
+  ctx.strokeStyle = "rgba(240,208,96,0.7)";
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(bx, by, w + padX * 2, 16 + padY);
   ctx.fillStyle = color;
-  ctx.fillText(label, x, y - 4);
+  ctx.fillText(label, x, y - 5);
 }
 
 export function drawNamedFolk(
@@ -156,22 +156,22 @@ export function drawNamedFolk(
     const fsy = Math.floor((f.y + 0.5) * TILE - originY);
     ctx.fillStyle = "rgba(0,0,0,0.35)";
     ctx.beginPath();
-    ctx.ellipse(fsx, fsy + 6, 9, 4.5, 0, 0, Math.PI * 2);
+    ctx.ellipse(fsx, fsy + 7, 11, 5.5, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = f.color;
     ctx.beginPath();
-    ctx.arc(fsx, fsy - 1, 9, 0, Math.PI * 2);
+    ctx.arc(fsx, fsy - 1, 11, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = "#e8e6d9";
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.5;
     ctx.stroke();
     ctx.strokeStyle = "#0c0d0b";
     ctx.lineWidth = 1;
     ctx.stroke();
     ctx.fillStyle = "#e8e6d9";
-    ctx.fillRect(fsx - 2, fsy - 12, 4, 3);
-    if (player && Math.hypot(px - (f.x + 0.5), py - (f.y + 0.5)) <= 5.5) {
-      drawFloatingLabel(ctx, fsx, fsy - 12, f.name, "#c9a227");
+    ctx.fillRect(fsx - 2.5, fsy - 14, 5, 4);
+    if (player && Math.hypot(px - (f.x + 0.5), py - (f.y + 0.5)) <= 8) {
+      drawFloatingLabel(ctx, fsx, fsy - 14, f.name, "#f0d060");
     }
   }
 }
