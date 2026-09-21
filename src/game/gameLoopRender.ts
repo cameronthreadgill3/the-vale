@@ -683,7 +683,7 @@ export function advanceCameraAndRender(args: {
   };
   const depth: DepthItem[] = [
     ...collectFolkDepthItems(folk, originX, originY, _atmosT),
-    ...collectEnemyDepthItems(enemies, originX, originY, groundShift),
+    ...collectEnemyDepthItems(enemies, originX, originY, groundShift, player),
     ...collectMoteDepthItems(originX, originY, _atmosT),
     ...collectAshDriftDepthItems(originX, originY, _atmosT),
     {

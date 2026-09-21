@@ -70,6 +70,11 @@ export { tickAshDrift, collectAshDriftDepthItems } from "@/game/gfx/ashDrift";
 export { drawViewOverlay } from "@/game/gfx/viewOverlay";
 export { drawScreenVignette, combatFocusTarget } from "@/game/gfx/screenVignette";
 export {
+  drawDirectionalRim,
+  drawOrbDirectionalRim,
+  rimStrengthForDistance,
+} from "@/game/gfx/directionalRim";
+export {
   makeCanvas,
   ctx2d,
   px,

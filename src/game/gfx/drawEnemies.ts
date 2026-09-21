@@ -10,8 +10,10 @@ import {
 } from "@/game/gfx/creatures";
 import { creatureHitLeft, drawSilhouetteFlash, tickCreatureHits } from "@/game/gfx/hitFlash";
 import { drawContactShadow } from "@/game/gfx/contactShadow";
+import { rimStrengthForDistance } from "@/game/gfx/directionalRim";
 import type { DepthItem } from "@/game/gfx/depth";
 import { flushDepth } from "@/game/gfx/depth";
+import { TILE } from "@/game/world";
 
 function creatureSpriteId(id: string): CreatureKindId {
   return id as CreatureKindId;
@@ -100,6 +102,8 @@ export function collectEnemyDepthItems(
   originX: number,
   originY: number,
   groundShift: { x: number; y: number } = { x: 0, y: 0 },
+  /** World position. Creatures past a few tiles skip the rim. */
+  player?: { x: number; y: number },
 ): DepthItem[] {
   const items: DepthItem[] = [];
   const seen = new Set<string>();
@@ -154,6 +158,9 @@ export function collectEnemyDepthItems(
         );
         const moving = e.ai === "chase" || e.ai === "idle";
         const frame = creatureWalkFrame(_animT + hashId(e.id) * 4, moving);
+        const rim = player
+          ? rimStrengthForDistance(Math.hypot(e.x - player.x, e.y - player.y), TILE)
+          : 1;
         drawCreatureSprite(
           ctx,
           creatureSpriteId(e.kind.id),
@@ -164,6 +171,7 @@ export function collectEnemyDepthItems(
           e.kind.radius,
           e.flash > 0,
           frame,
+          rim,
         );
         paintCreatureHit(ctx, e, sx, sy, frame);
       },
