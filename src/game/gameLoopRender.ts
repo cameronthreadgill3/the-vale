@@ -15,12 +15,13 @@ import {
 import { cairnsOnContinent, drawCairns } from "@/game/cairns";
 import { drawProfessionNodes, professionNodesOnContinent } from "@/game/professions";
 import {
-  drawFloatTexts,
   drawProjectiles,
   type Enemy,
   type FloatText,
   type Projectile,
 } from "@/game/enemies";
+import { drawCombatFloats, easeCombatFloats } from "@/game/gfx/damageFloats";
+import { HIT_FLASH_SEC } from "@/game/gfx/hitFlash";
 import { collectEnemyDepthItems, drawEnemyChrome, tickEnemyGfx } from "@/game/gfx/drawEnemies";
 import {
   drawVignette,
@@ -108,6 +109,8 @@ let _facing: Facing = "south";
 let _walkPhase = 0;
 let _moving = false;
 let _lastPlayerFlash = 0;
+/** Drawn flash window. The assembled loop only holds playerFlash for ~0.18s. */
+let _hitFlashVis = 0;
 let _walkSampled = false;
 let _atmosT = 0;
 let _gfxWarmed = false;
@@ -666,8 +669,10 @@ export function advanceCameraAndRender(args: {
   const idleLift = !_moving && Math.sin(_atmosT * 1.65) > 0.05 ? -1 : 0;
   syncAmbient(map.kind);
   if (_moving && !paused && walkFrame % 2 === 0) playFootstep();
+  if (playerFlash > _lastPlayerFlash + 0.02) _hitFlashVis = HIT_FLASH_SEC;
   if (playerFlash > _lastPlayerFlash + 0.2) playHit("player");
   _lastPlayerFlash = playerFlash;
+  _hitFlashVis = Math.max(0, _hitFlashVis - dt);
 
   tickMotes(dt, map, originX, originY, viewW, viewH);
   const groundShift = {
@@ -689,7 +694,7 @@ export function advanceCameraAndRender(args: {
           py,
           _facing,
           walkFrame,
-          playerFlash,
+          _hitFlashVis,
           accent,
           idleLift,
           _shadowLagX + groundShift.x,
@@ -732,7 +737,6 @@ export function advanceCameraAndRender(args: {
   flushDepth(ctx, depth);
   drawKeyLight(ctx, viewW, viewH);
   drawProjectiles(ctx, projectiles, originX, originY);
-  drawFloatTexts(ctx, floatTexts, originX, originY);
   tickLootSparkles(dt);
   drawHollowTorchSpots(ctx, map, originX, originY, viewW, viewH, player, _atmosT);
   const outdoor = map.kind === "overworld";
@@ -756,6 +760,8 @@ export function advanceCameraAndRender(args: {
   drawEnemyChrome(ctx, enemies, originX, originY);
   drawFolkNameLabels(ctx, folk, originX, originY, player);
   drawWorldWayfindLabels(ctx, map, docks, player, originX, originY);
+  if (!paused) easeCombatFloats(floatTexts, dt);
+  drawCombatFloats(ctx, floatTexts, originX, originY);
 
 
   tickAshveilField(player, map, enemies);

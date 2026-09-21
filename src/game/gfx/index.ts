@@ -45,6 +45,15 @@ export {
   warmCreatureSheets,
 } from "@/game/gfx/creatures";
 export { drawEnemies, tickEnemyGfx, collectEnemyDepthItems, drawEnemyChrome } from "@/game/gfx/drawEnemies";
+export {
+  punchCreatureHit,
+  tickCreatureHits,
+  creatureHitLeft,
+  drawSilhouetteFlash,
+  drawOrbHitFlash,
+  HIT_FLASH_SEC,
+} from "@/game/gfx/hitFlash";
+export { easeCombatFloats, drawCombatFloats } from "@/game/gfx/damageFloats";
 export { drawFolkSprite, getFolkSheet, FOLK_FRAME, warmFolkSheets } from "@/game/gfx/folkSprites";
 export {
   drawVignette,

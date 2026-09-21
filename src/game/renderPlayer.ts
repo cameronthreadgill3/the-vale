@@ -8,6 +8,7 @@ import {
   type Facing,
 } from "@/game/playerSprites";
 import { drawContactShadow } from "@/game/gfx/contactShadow";
+import { drawOrbHitFlash } from "@/game/gfx/hitFlash";
 
 export function drawPlayer(
   ctx: CanvasRenderingContext2D,
@@ -55,9 +56,6 @@ export function drawPlayer(
   ctx.lineWidth = 2;
   ctx.stroke();
   if (playerFlash > 0) {
-    ctx.fillStyle = "rgba(255,80,60," + Math.min(0.45, playerFlash * 2) + ")";
-    ctx.beginPath();
-    ctx.arc(px, py, PLAYER_RADIUS, 0, Math.PI * 2);
-    ctx.fill();
+    drawOrbHitFlash(ctx, px, py, PLAYER_RADIUS, playerFlash);
   }
 }

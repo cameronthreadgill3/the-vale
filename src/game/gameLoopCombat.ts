@@ -22,6 +22,7 @@ import { spawnLootSparkle } from "@/game/lootSparkle";
 import type { MutableRefObject } from "react";
 import type { MouseState } from "@/game/gameLoopPointers";
 import { playHit } from "@/game/audio";
+import { punchCreatureHit } from "@/game/gfx/hitFlash";
 
 export function createPlayerAttack(opts: {
   characterRef: MutableRefObject<ValeCharacter>;
@@ -83,6 +84,7 @@ export function createPlayerAttack(opts: {
     const dmg = playerAttackDamage(snap, profile, opts.combatRng);
     target.hp -= dmg;
     target.flash = 0.15;
+    punchCreatureHit(target);
     playHit("enemy");
     pushFloat(target.x, target.y - 10, String(dmg), "#e8e6d9");
     if (profile.style !== "melee") {

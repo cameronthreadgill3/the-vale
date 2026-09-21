@@ -4,8 +4,11 @@ import { isHollowBoss } from "@/game/enemies";
 import {
   drawCreatureSprite,
   creatureWalkFrame,
+  getCreatureSheet,
+  CREATURE_FRAME,
   type CreatureKindId,
 } from "@/game/gfx/creatures";
+import { creatureHitLeft, drawSilhouetteFlash, tickCreatureHits } from "@/game/gfx/hitFlash";
 import { drawContactShadow } from "@/game/gfx/contactShadow";
 import type { DepthItem } from "@/game/gfx/depth";
 import { flushDepth } from "@/game/gfx/depth";
@@ -24,6 +27,7 @@ const _trails = new Map<string, ShadowTrail>();
 export function tickEnemyGfx(dt: number): void {
   _animT += dt;
   _gfxDt = dt;
+  tickCreatureHits(dt);
 }
 
 function creatureDrawSize(id: string, radius: number): number {
@@ -57,6 +61,38 @@ function hashId(id: string): number {
   let n = 0;
   for (let i = 0; i < id.length; i++) n = (n * 33 + id.charCodeAt(i)) | 0;
   return (n >>> 0) / 4294967296;
+}
+
+function paintCreatureHit(
+  ctx: CanvasRenderingContext2D,
+  e: Enemy,
+  sx: number,
+  sy: number,
+  frame: number,
+): void {
+  const left = creatureHitLeft(e);
+  if (left <= 0) return;
+  const size = creatureDrawSize(e.kind.id, e.kind.radius);
+  const sheet = getCreatureSheet(
+    creatureSpriteId(e.kind.id),
+    e.kind.color,
+    e.kind.colorDark,
+    false,
+    frame,
+  );
+  drawSilhouetteFlash(
+    ctx,
+    sheet,
+    0,
+    0,
+    CREATURE_FRAME,
+    CREATURE_FRAME,
+    Math.floor(sx - size / 2),
+    Math.floor(sy - size / 2 - 2),
+    size,
+    size,
+    left,
+  );
 }
 
 export function collectEnemyDepthItems(
@@ -104,6 +140,7 @@ export function collectEnemyDepthItems(
             ctx.fill();
           }
           ctx.globalAlpha = 1;
+          paintCreatureHit(ctx, e, sx, sy, 0);
           return;
         }
         // Wider soft penumbra around the sprite's tighter contact so the oval reads as ground.
@@ -128,6 +165,7 @@ export function collectEnemyDepthItems(
           e.flash > 0,
           frame,
         );
+        paintCreatureHit(ctx, e, sx, sy, frame);
       },
     });
   }
