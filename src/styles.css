@@ -870,6 +870,42 @@ body {
 }
 
 /*
+ * Kettle only. Craft sheet positioning lives here so the bank dock,
+ * vault sheet, shop counter, and shared inv-panel layout stay untouched.
+ */
+.vale-craft-sheet {
+  position: absolute;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  max-height: min(70dvh, 32rem);
+}
+
+.vale-craft-sheet .vale-craft-well {
+  border-left: 3px solid color-mix(in srgb, var(--vale-gold) 62%, #3a3420);
+}
+
+.vale-craft-sheet .vale-craft-meter .vale-skill-meter-fill {
+  background: #c9a227;
+}
+
+.vale-craft-sheet .vale-craft-have {
+  color: #7ab85a;
+}
+
+.vale-craft-sheet .vale-craft-short {
+  color: #c45c3e;
+}
+
+.vale-craft-sheet .vale-craft-yield {
+  font-family: "IBM Plex Mono", ui-monospace, "Courier New", monospace;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: #f0d060;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.55);
+}
+
+/*
  * Character select and account gate — same lip, well, and type rhythm
  * as dialogue, skills, and the vault. Page-only; in-world panels stay put.
  */
