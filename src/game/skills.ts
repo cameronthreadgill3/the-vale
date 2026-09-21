@@ -67,3 +67,47 @@ export function skillSnapshot(xp: number) {
     next: xpToNext(level),
   };
 }
+
+/** Three hotbar slots — tap/1–3 to train (cast) that skill. */
+export type QuickSlots = [SkillId, SkillId, SkillId];
+
+/** Class-biased default hotbar (favored / starting skills). */
+export function defaultQuickSlots(classId: string): QuickSlots {
+  switch (classId) {
+    case "warden":
+      return ["sword", "shielding", "club"];
+    case "thornblade":
+      return ["axe", "sword", "fist"];
+    case "pathfinder":
+      return ["distance", "fist", "sword"];
+    case "hearthmage":
+      return ["magic", "club", "shielding"];
+    case "verdant":
+      return ["magic", "shielding", "distance"];
+    case "hollowborn":
+      return ["fist", "distance", "shielding"];
+    default:
+      return ["sword", "shielding", "magic"];
+  }
+}
+
+export function isSkillId(v: unknown): v is SkillId {
+  return typeof v === "string" && (SKILL_IDS as string[]).includes(v);
+}
+
+export function sanitizeQuickSlots(
+  raw: unknown,
+  classId: string,
+): QuickSlots {
+  const fallback = defaultQuickSlots(classId);
+  if (!Array.isArray(raw) || raw.length < 3) return fallback;
+  const out: SkillId[] = [];
+  for (let i = 0; i < 3; i++) {
+    out.push(isSkillId(raw[i]) ? raw[i] : fallback[i]);
+  }
+  return [out[0], out[1], out[2]];
+}
+
+export function skillName(id: SkillId): string {
+  return SKILLS.find((s) => s.id === id)?.name ?? id;
+}
