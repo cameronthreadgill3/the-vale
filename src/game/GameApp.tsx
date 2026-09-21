@@ -44,11 +44,16 @@ import {
   MISTMERE_START_TOAST,
   MISTMERE_REWARDS,
   MISTMERE_COMPLETE_LINE,
+  WATCHLINE_START_TOAST,
+  WATCHLINE_REWARDS,
+  WATCHLINE_COMPLETE_LINE,
   TEETH_QUEST_ID,
   ASHWOOD_QUEST_ID,
   HOLLOW_QUEST_ID,
   GATE_QUEST_ID,
   MISTMERE_QUEST_ID,
+  WATCHLINE_QUEST_ID,
+  CRESS_FOLK_ID,
   emptyTeethQuest,
   getTeethQuest,
   getAshwoodQuest,
@@ -64,11 +69,14 @@ import {
   applyMistmereReached,
   applyMistmereOldReedTalk,
   applyMistmereRookTalk,
+  applyWatchlineCressTalk,
+  applyWatchlineRookTalk,
   withTeethQuest,
   ensureAshwoodAfterTeeth,
   ensureHollowAfterAshwood,
   ensureGateWatchAfterHollow,
   ensureMistmereAfterGate,
+  ensureWatchlineAfterMistmere,
   rookQuestLine,
   loadQuestLog,
   saveQuestLog,
@@ -330,8 +338,19 @@ export function GameApp() {
         }
       }
     }
+    if (folkId === CRESS_FOLK_ID) {
+      const cress = applyWatchlineCressTalk(loadQuestLog());
+      if (cress) {
+        saveQuestLog(cress.log);
+        if (cress.toast) {
+          line = cress.toast.replace(/^Cress:\s*/, "");
+          queueMicrotask(() => showToast(cress.toast!));
+        }
+      }
+    }
     if (folkId === "rook" && character) {
       const turnIn =
+        applyWatchlineRookTalk(loadQuestLog()) ??
         applyMistmereRookTalk(loadQuestLog()) ??
         applyGateWatchRookTalk(loadQuestLog());
       if (turnIn) {
@@ -342,14 +361,28 @@ export function GameApp() {
             ...prev,
             skillXp: { ...prev.skillXp },
           };
-          if (turnIn.completedId === MISTMERE_QUEST_ID) {
+          if (turnIn.completedId === WATCHLINE_QUEST_ID) {
+            next = awardCombatXp(next, WATCHLINE_REWARDS.combatXp);
+            next = { ...next, skillXp: { ...next.skillXp } };
+            awardSkillXp(next, WATCHLINE_REWARDS.skill, WATCHLINE_REWARDS.skillXp);
+            next = setGold(next, next.gold + WATCHLINE_REWARDS.gold);
+            next = { ...next, skillXp: { ...next.skillXp } };
+            queueMicrotask(() => {
+              showToast(WATCHLINE_COMPLETE_LINE);
+              setSkillTick((t) => t + 1);
+            });
+          } else if (turnIn.completedId === MISTMERE_QUEST_ID) {
             next = awardCombatXp(next, MISTMERE_REWARDS.combatXp);
             next = { ...next, skillXp: { ...next.skillXp } };
             awardSkillXp(next, MISTMERE_REWARDS.skill, MISTMERE_REWARDS.skillXp);
             next = setGold(next, next.gold + MISTMERE_REWARDS.gold);
             next = { ...next, skillXp: { ...next.skillXp } };
             queueMicrotask(() => {
-              showToast(MISTMERE_COMPLETE_LINE);
+              showToast(
+                turnIn.startedWatchline
+                  ? WATCHLINE_START_TOAST
+                  : MISTMERE_COMPLETE_LINE,
+              );
               setSkillTick((t) => t + 1);
             });
           } else if (turnIn.completedId === GATE_QUEST_ID) {
@@ -636,6 +669,16 @@ export function GameApp() {
     window.setTimeout(() => setToast((t) => (t === MISTMERE_START_TOAST ? null : t)), 3600);
   }, [character]);
 
+  // Quest 6: auto-start The Watchline Holds once Mistmere Crossing is complete.
+  useEffect(() => {
+    if (!character) return;
+    const ensured = ensureWatchlineAfterMistmere(loadQuestLog());
+    if (!ensured.started) return;
+    saveQuestLog(ensured.log);
+    setToast(WATCHLINE_START_TOAST);
+    window.setTimeout(() => setToast((t) => (t === WATCHLINE_START_TOAST ? null : t)), 3600);
+  }, [character]);
+
   // Mistmere Crossing: mark arrival whenever the walker stands on Mistmere.
   useEffect(() => {
     if (!character) return;
@@ -722,7 +765,19 @@ export function GameApp() {
         next = setGold(next, next.gold + MISTMERE_REWARDS.gold);
         next = { ...next, skillXp: { ...next.skillXp } };
         queueMicrotask(() => {
-          showToast(MISTMERE_COMPLETE_LINE);
+          showToast(
+            result.startedWatchline ? WATCHLINE_START_TOAST : MISTMERE_COMPLETE_LINE,
+          );
+          setSkillTick((t) => t + 1);
+        });
+      } else if (result.completedId === WATCHLINE_QUEST_ID) {
+        next = awardCombatXp(next, WATCHLINE_REWARDS.combatXp);
+        next = { ...next, skillXp: { ...next.skillXp } };
+        awardSkillXp(next, WATCHLINE_REWARDS.skill, WATCHLINE_REWARDS.skillXp);
+        next = setGold(next, next.gold + WATCHLINE_REWARDS.gold);
+        next = { ...next, skillXp: { ...next.skillXp } };
+        queueMicrotask(() => {
+          showToast(WATCHLINE_COMPLETE_LINE);
           setSkillTick((t) => t + 1);
         });
       } else if (result.toast) {
