@@ -147,11 +147,14 @@ export function MobileControls({
 
   return (
     <div
-      className="vale-touch-root pointer-events-auto absolute"
+      className="vale-touch-root pointer-events-auto"
       style={{
+        position: "absolute",
         left: "max(0.75rem, env(safe-area-inset-left, 0px))",
         bottom: "max(0.75rem, env(safe-area-inset-bottom, 0px))",
-        zIndex: 80,
+        zIndex: 200,
+        pointerEvents: "auto",
+        touchAction: "none",
       }}
     >
       <div

@@ -73,11 +73,14 @@ export function QuickSkillCluster({
 
   return (
     <div
-      className="vale-touch-root pointer-events-none absolute"
+      className="vale-touch-root"
       style={{
+        position: "absolute",
         right: "max(0.75rem, env(safe-area-inset-right, 0px))",
         bottom: "max(0.75rem, env(safe-area-inset-bottom, 0px))",
-        zIndex: 80,
+        zIndex: 200,
+        pointerEvents: "none",
+        touchAction: "none",
       }}
     >
       <div className="flex items-end gap-2">

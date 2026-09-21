@@ -1192,10 +1192,12 @@ canvas.game-canvas {
   overscroll-behavior: none;
 }
 
-/* Thumb controls sit above the vault. The stick is only its own box —
-   never a full-screen pointer-events layer (iOS drops taps through those). */
+/* Stick and Attack. Fixed to the visual viewport, above any vault chrome.
+   The box is only the control — never a full-screen hit layer. */
 .vale-touch-root {
-  z-index: 80 !important;
+  position: absolute !important;
+  z-index: 200 !important;
+  transform: translateZ(0);
 }
 
 /* Thumb-friendly panel chrome on coarse pointers / narrow viewports */
@@ -1258,20 +1260,22 @@ canvas.game-canvas {
     max-height: calc(100dvh - 16.5rem);
   }
 
-  /* Fallback if the dock class is not on the node yet. Same band as
-     .vale-bank-sheet-dock. Avoid nesting max()/100dvh — Safari drops the
-     declaration and the sheet falls back onto the stick. */
+  /* Fallback if the dock class is missing. Bottom-anchored only — do not
+     set top, or a tall sheet grows down over the stick. */
   .vale-bank-sheet.vale-overlay-above-chrome {
     position: absolute !important;
-    z-index: 30 !important;
+    z-index: 20 !important;
     left: calc(0.75rem + env(safe-area-inset-left, 0px)) !important;
     right: calc(0.75rem + env(safe-area-inset-right, 0px)) !important;
-    top: calc(0.5rem + env(safe-area-inset-top, 0px)) !important;
-    bottom: calc(13rem + env(safe-area-inset-bottom, 0px)) !important;
+    top: auto !important;
+    bottom: calc(12.75rem + env(safe-area-inset-bottom, 0px)) !important;
     width: auto !important;
     max-width: 28rem !important;
     height: auto !important;
-    max-height: none !important;
+    max-height: calc(
+      100svh - 14rem - env(safe-area-inset-bottom, 0px) -
+        env(safe-area-inset-top, 0px)
+    ) !important;
     margin-left: auto !important;
     margin-right: auto !important;
     transform: none !important;
@@ -1279,6 +1283,8 @@ canvas.game-canvas {
     flex-direction: column !important;
     overflow: hidden !important;
     pointer-events: auto !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
   }
 
   .vale-bank-sheet-head {
@@ -1328,26 +1334,28 @@ canvas.game-canvas {
 
   .vale-bank-sheet.vale-overlay-above-chrome,
   .vale-bank-sheet-dock {
-    top: calc(0.35rem + env(safe-area-inset-top, 0px)) !important;
-    bottom: calc(13rem + env(safe-area-inset-bottom, 0px)) !important;
-    max-height: none !important;
+    top: auto !important;
+    bottom: calc(12.75rem + env(safe-area-inset-bottom, 0px)) !important;
   }
 }
 
-/* Phone vault only (class is added with the mobile chrome hook).
-   Top + bottom lock the sheet into the band above the stick / Attack.
-   There is no full-screen backdrop. */
+/* Phone vault. Bottom edge stays above the stick and Attack.
+   There is no full-screen backdrop and no backdrop-filter (that layer
+   was painting over the controls on iOS). */
 .vale-bank-sheet-dock {
   position: absolute !important;
-  z-index: 30 !important;
+  z-index: 20 !important;
   left: calc(0.75rem + env(safe-area-inset-left, 0px)) !important;
   right: calc(0.75rem + env(safe-area-inset-right, 0px)) !important;
-  top: calc(0.5rem + env(safe-area-inset-top, 0px)) !important;
-  bottom: calc(13rem + env(safe-area-inset-bottom, 0px)) !important;
+  top: auto !important;
+  bottom: calc(12.75rem + env(safe-area-inset-bottom, 0px)) !important;
   width: auto !important;
   max-width: 28rem !important;
   height: auto !important;
-  max-height: none !important;
+  max-height: calc(
+    100svh - 14rem - env(safe-area-inset-bottom, 0px) -
+      env(safe-area-inset-top, 0px)
+  ) !important;
   margin-left: auto !important;
   margin-right: auto !important;
   transform: none !important;
@@ -1355,6 +1363,25 @@ canvas.game-canvas {
   flex-direction: column !important;
   overflow: hidden !important;
   pointer-events: auto !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.vale-bank-close-pin {
+  position: absolute !important;
+  z-index: 180 !important;
+  top: calc(0.35rem + env(safe-area-inset-top, 0px)) !important;
+  right: calc(0.75rem + env(safe-area-inset-right, 0px)) !important;
+  bottom: auto !important;
+  left: auto !important;
+  min-height: 4rem !important;
+  min-width: 8.5rem !important;
+  padding: 0.9rem 1.4rem !important;
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+  line-height: 1.1 !important;
+  pointer-events: auto !important;
+  touch-action: manipulation;
 }
 
 .vale-bank-sheet-dock .vale-bank-sheet-head {

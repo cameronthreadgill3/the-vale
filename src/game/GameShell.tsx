@@ -204,11 +204,13 @@ export function GameShell({
   onCraft: (recipeId: string) => void;
 }) {
   // Pack is HUD chrome like Skills — do not pause E / movement while it is open.
-  // The vault is the same on touch: joystick and Attack stay up, and walking
-  // off the clerk closes the sheet. Dialogue, shop, craft, and voyage still pause.
+  // The vault must not unmount the stick or Attack. Dialogue, shop, craft,
+  // and voyage still pause. bankOpen forces the stick on even if the coarse
+  // pointer query missed (that is what made controls vanish on phones).
   const movementBlocked = Boolean(dialogue || shop || voyageDock || craftOpen);
   const worldUiOpen = movementBlocked || bankOpen;
   const showMobile = useShowMobileChrome();
+  const showStick = showMobile || bankOpen;
   const [starterTip, setStarterTip] = useState(true);
   useEffect(() => {
     const t = window.setTimeout(() => setStarterTip(false), STARTER_TIP_MS);
@@ -556,18 +558,18 @@ export function GameShell({
         />
       )}
 
-      {!movementBlocked && (
+      {(!movementBlocked || bankOpen) && (
         <QuickSkillCluster
           keysRef={keysRef}
           interactRequestRef={interactRequestRef}
           quickSlots={quickSlots}
           skills={skills}
           onTrain={onTrain}
-          showInteract={showMobile}
+          showInteract={showStick}
         />
       )}
 
-      {showMobile && !movementBlocked && (
+      {showStick && (!movementBlocked || bankOpen) && (
         <MobileControls keysRef={keysRef} />
       )}
     </div>
