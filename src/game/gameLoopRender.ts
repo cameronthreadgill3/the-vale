@@ -9,7 +9,8 @@ import { getClass } from "@/game/classes";
 import {
   drawShipDocks,
   drawShopMarkers,
-  drawNamedFolk,
+  collectFolkDepthItems,
+  drawFolkNameLabels,
 } from "@/game/folkCanvas";
 import { cairnsOnContinent, drawCairns } from "@/game/cairns";
 import {
@@ -19,19 +20,30 @@ import {
   type FloatText,
   type Projectile,
 } from "@/game/enemies";
-import { drawEnemies, tickEnemyGfx } from "@/game/gfx/drawEnemies";
+import { collectEnemyDepthItems, drawEnemyChrome, tickEnemyGfx } from "@/game/gfx/drawEnemies";
 import {
   drawVignette,
   drawAshwoodTint,
   drawHollowTorchSpots,
 } from "@/game/gfx/atmosphere";
 import type { ValeCharacter } from "@/game/character";
-import type { FolkDef, ShopDef, ShipDock } from "@/game/folk";
+import { FOLK, type FolkDef, type ShopDef, type ShipDock } from "@/game/folk";
 import { computePrompt } from "@/game/gameLoopFrame";
 import { drawPlayer } from "@/game/renderPlayer";
 import type { Facing } from "@/game/playerSprites";
 import { WALK_FPS } from "@/game/playerSprites";
 import { drawTile } from "@/game/gfx/drawTile";
+import {
+  getAshwoodCanopySheet,
+  paletteColor,
+  tileVariantAt,
+  CANOPY_PX,
+  TILE_PX,
+  warmTileSheets,
+} from "@/game/gfx/tiles";
+import { warmCreatureSheets } from "@/game/gfx/creatures";
+import { warmFolkSheets } from "@/game/gfx/folkSprites";
+import { flushDepth, type DepthItem } from "@/game/gfx/depth";
 import {
   resolveQuestObjective,
   tilesAway,
@@ -49,6 +61,7 @@ let _facing: Facing = "south";
 let _walkPhase = 0;
 let _moving = false;
 let _atmosT = 0;
+let _gfxWarmed = false;
 
 export function advanceCameraAndRender(args: {
   ctx: CanvasRenderingContext2D;
@@ -95,13 +108,21 @@ export function advanceCameraAndRender(args: {
   const endTX = Math.min(map.width - 1, Math.ceil((originX + viewW) / TILE) + 1);
   const endTY = Math.min(map.height - 1, Math.ceil((originY + viewH) / TILE) + 1);
   const pal = map.palette;
+  if (!_gfxWarmed) {
+    warmTileSheets(pal);
+    warmCreatureSheets();
+    warmFolkSheets(FOLK);
+    _gfxWarmed = true;
+  }
   ctx.imageSmoothingEnabled = false;
+  _atmosT += dt;
+  tickEnemyGfx(dt);
   for (let ty = startTY; ty <= endTY; ty++) {
     for (let tx = startTX; tx <= endTX; tx++) {
       const kind = map.tiles[ty]![tx]!;
       const sx = Math.floor(tx * TILE - originX);
       const sy = Math.floor(ty * TILE - originY);
-      drawTile(ctx, kind, pal, sx, sy, tx, ty);
+      drawTile(ctx, kind, pal, sx, sy, tx, ty, map, _atmosT);
     }
   }
   drawAshwoodTint(ctx, map, originX, originY, viewW, viewH);
@@ -132,13 +153,8 @@ export function advanceCameraAndRender(args: {
     drawCairns(ctx, cairnsOnContinent(map.continentId), originX, originY, TILE);
   }
   drawShopMarkers(ctx, shops, folk, originX, originY);
-  drawNamedFolk(ctx, folk, originX, originY, player);
   mouse.worldX = originX + mouse.x;
   mouse.worldY = originY + mouse.y;
-  _atmosT += dt;
-  tickEnemyGfx(dt);
-  drawEnemies(ctx, enemies, originX, originY);
-  drawProjectiles(ctx, projectiles, originX, originY);
   const px = Math.floor(player.x - originX);
   const py = Math.floor(player.y - originY);
   const dx = player.x - _lastPx;
@@ -156,10 +172,51 @@ export function advanceCameraAndRender(args: {
   _lastPx = player.x;
   _lastPy = player.y;
   const walkFrame = _moving ? (Math.floor(_walkPhase) % 4) : 0;
-  drawPlayer(ctx, character, px, py, _facing, walkFrame, playerFlash, accent);
+
+  const depth: DepthItem[] = [
+    ...collectFolkDepthItems(folk, originX, originY),
+    ...collectEnemyDepthItems(enemies, originX, originY),
+    {
+      y: player.y,
+      x: player.x,
+      draw: (c) => {
+        drawPlayer(c, character, px, py, _facing, walkFrame, playerFlash, accent);
+      },
+    },
+  ];
+  if (map.kind === "overworld") {
+    const canopyPad = 2;
+    const cStartTX = Math.max(0, startTX - canopyPad);
+    const cStartTY = Math.max(0, startTY - canopyPad);
+    const cEndTX = Math.min(map.width - 1, endTX + canopyPad);
+    const cEndTY = Math.min(map.height - 1, endTY + canopyPad);
+    const stoneColor = paletteColor(pal, "stone");
+    const drawSize = Math.round(CANOPY_PX * (TILE / TILE_PX));
+    for (let ty = cStartTY; ty <= cEndTY; ty++) {
+      for (let tx = cStartTX; tx <= cEndTX; tx++) {
+        if (map.tiles[ty]![tx] !== "stone") continue;
+        const variant = tileVariantAt(tx, ty);
+        const sheet = getAshwoodCanopySheet(stoneColor, variant);
+        const dx0 = Math.floor(tx * TILE - originX + TILE / 2 - drawSize / 2);
+        const dy0 = Math.floor(ty * TILE - originY + 8 - drawSize * 0.72);
+        depth.push({
+          y: (ty + 0.92) * TILE,
+          x: (tx + 0.5) * TILE,
+          draw: (c) => {
+            c.imageSmoothingEnabled = false;
+            c.drawImage(sheet as CanvasImageSource, dx0, dy0, drawSize, drawSize);
+          },
+        });
+      }
+    }
+  }
+  flushDepth(ctx, depth);
+  drawProjectiles(ctx, projectiles, originX, originY);
   drawFloatTexts(ctx, floatTexts, originX, originY);
   drawHollowTorchSpots(ctx, map, originX, originY, viewW, viewH, player, _atmosT);
   drawVignette(ctx, viewW, viewH);
+  drawEnemyChrome(ctx, enemies, originX, originY);
+  drawFolkNameLabels(ctx, folk, originX, originY, player);
   drawWorldWayfindLabels(ctx, map, docks, player, originX, originY);
 
 

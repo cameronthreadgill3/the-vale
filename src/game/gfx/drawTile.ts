@@ -1,20 +1,34 @@
-/** Draw cached procedural tiles onto the game canvas (pass 2: edges + anim). */
+/** Draw cached procedural tiles onto the game canvas (pass 3: edges, shores, anim). */
 import type { BiomePalette } from "@/game/continents";
 import type { GroundTile, WorldMap } from "@/game/world";
 import { TILE } from "@/game/world";
 import {
   getTileSheet,
   getGrassEdgeSheet,
+  getWaterShoreSheet,
   paletteColor,
   tileVariantAt,
   fountainFrameAt,
   TILE_PX,
+  type TileMode,
 } from "@/game/gfx/tiles";
+import { drawSoftShadow } from "@/game/gfx/canvasUtil";
 
 /** Subtle classic-client grid (optional). */
 export const DRAW_TILE_GRID = true;
 
 const HARD = new Set<GroundTile>(["path", "dirt", "water", "stone", "gate", "hollow", "exit"]);
+const LAND = new Set<GroundTile>([
+  "grass",
+  "grassAlt",
+  "dirt",
+  "path",
+  "stone",
+  "flower",
+  "gate",
+  "hollow",
+  "exit",
+]);
 
 function neighbor(
   map: WorldMap | undefined,
@@ -27,7 +41,7 @@ function neighbor(
   const x = tx + dx;
   const y = ty + dy;
   if (x < 0 || y < 0 || x >= map.width || y >= map.height) return null;
-  return map.tiles[y]![x]! as GroundTile;
+  return map.tiles[y]![x]!;
 }
 
 export function drawTile(
@@ -43,13 +57,21 @@ export function drawTile(
 ): void {
   const color = paletteColor(pal, kind);
   const variant = tileVariantAt(tx, ty);
+  const mode: TileMode = map?.kind === "hollow" ? "hollow" : "overworld";
   const anim =
-    kind === "flower" || kind === "water" ? fountainFrameAt(timeSec) : 0;
-  const sheet = getTileSheet(kind, color, variant, anim);
+    kind === "flower" ||
+    kind === "water" ||
+    (kind === "stone" && mode === "hollow")
+      ? fountainFrameAt(timeSec)
+      : 0;
+  const sheet = getTileSheet(kind, color, variant, anim, mode);
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(sheet as CanvasImageSource, sx, sy, TILE + 1, TILE + 1);
 
-  // Grass/path soft edges toward harder tiles
+  if (kind === "stone" && mode === "overworld") {
+    drawSoftShadow(ctx, sx + TILE / 2, sy + TILE - 3, 11, 5, 0.3);
+  }
+
   if (kind === "grass" || kind === "grassAlt") {
     const gColor = paletteColor(pal, "grass");
     const n = neighbor(map, tx, ty, 0, -1);
@@ -67,6 +89,26 @@ export function drawTile(
     }
     if (e && HARD.has(e)) {
       ctx.drawImage(getGrassEdgeSheet(gColor, "e", variant) as CanvasImageSource, sx, sy, TILE + 1, TILE + 1);
+    }
+  }
+
+  if (kind === "water") {
+    const wColor = paletteColor(pal, "water");
+    const n = neighbor(map, tx, ty, 0, -1);
+    const s = neighbor(map, tx, ty, 0, 1);
+    const w = neighbor(map, tx, ty, -1, 0);
+    const e = neighbor(map, tx, ty, 1, 0);
+    if (n && LAND.has(n)) {
+      ctx.drawImage(getWaterShoreSheet(wColor, "n", variant, anim) as CanvasImageSource, sx, sy, TILE + 1, TILE + 1);
+    }
+    if (s && LAND.has(s)) {
+      ctx.drawImage(getWaterShoreSheet(wColor, "s", variant, anim) as CanvasImageSource, sx, sy, TILE + 1, TILE + 1);
+    }
+    if (w && LAND.has(w)) {
+      ctx.drawImage(getWaterShoreSheet(wColor, "w", variant, anim) as CanvasImageSource, sx, sy, TILE + 1, TILE + 1);
+    }
+    if (e && LAND.has(e)) {
+      ctx.drawImage(getWaterShoreSheet(wColor, "e", variant, anim) as CanvasImageSource, sx, sy, TILE + 1, TILE + 1);
     }
   }
 

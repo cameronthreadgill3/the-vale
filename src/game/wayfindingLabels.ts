@@ -37,20 +37,7 @@ export function drawWorldWayfindLabels(
     if (Math.hypot(ptx - (sx + 0.5), pty - (sy + 0.5)) <= range) {
       const fx = Math.floor((sx + 0.5) * TILE - originX);
       const fy = Math.floor((sy + 0.5) * TILE - originY);
-      ctx.save();
-      ctx.fillStyle = "#5a9ec9";
-      ctx.strokeStyle = "#e8e6d9";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(fx, fy, 7, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = "#a8d4e8";
-      ctx.beginPath();
-      ctx.arc(fx, fy - 2, 3, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-      drawFloatingLabel(ctx, fx, fy - 14, "Fountain · Safe", "#7ab8c9");
+      drawFloatingLabel(ctx, fx, fy - 18, "Fountain · Safe", "#7ab8c9");
     }
     for (const dk of docks) {
       if (Math.hypot(ptx - (dk.x + 0.5), pty - (dk.y + 0.5)) > range) continue;

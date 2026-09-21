@@ -1,8 +1,10 @@
 /**
  * Procedural 4×4 class walk sheets — chunky outlined pixel figures
  * (original Vale art, Tibia-adjacent proportions — NOT CipSoft sprites).
+ * Pass 3: clearer 4-frame stride, arm swing, facing silhouettes.
  */
 import type { ClassId } from "@/game/classes";
+import { makeCanvas, ctx2d, px, shadeHex } from "@/game/gfx/canvasUtil";
 
 export const FRAME = 32;
 export const COLS = 4;
@@ -12,34 +14,34 @@ export const SHEET = FRAME * COLS;
 type Facing = "south" | "west" | "east" | "north";
 const FACINGS: Facing[] = ["south", "west", "east", "north"];
 
-const P: Record<ClassId, { a: string; b: string; c: string }> = {
-  pathfinder: { a: "#3d7a45", b: "#2a5530", c: "#c9a227" },
-  thornblade: { a: "#c45c3e", b: "#7a3018", c: "#e8e6d9" },
-  hearthmage: { a: "#3a5a9e", b: "#243868", c: "#c9a227" },
-  verdant: { a: "#8bc46a", b: "#5a9e4a", c: "#e8f0d8" },
-  hollowborn: { a: "#e09050", b: "#a86830", c: "#f0d0a8" },
-  warden: { a: "#e8e6d9", b: "#3a6aaa", c: "#6b8cae" },
+const P: Record<ClassId, { a: string; b: string; c: string; hair: string }> = {
+  pathfinder: { a: "#3d7a45", b: "#2a5530", c: "#c9a227", hair: "#3a3028" },
+  thornblade: { a: "#c45c3e", b: "#7a3018", c: "#e8e6d9", hair: "#2a1810" },
+  hearthmage: { a: "#c97a2a", b: "#7a4510", c: "#e8b86a", hair: "#4a3020" },
+  verdant: { a: "#5a9e4a", b: "#3e6a28", c: "#b8e090", hair: "#3a4830" },
+  hollowborn: { a: "#8a7a9e", b: "#4a3e5c", c: "#c4b8d8", hair: "#2a2438" },
+  warden: { a: "#6b8cae", b: "#3a5570", c: "#e8e6d9", hair: "#3a3028" },
 };
 
 const SKIN = "#d4a574";
+const SKIN_D = "#b07a50";
 const BOOT = "#2a2218";
 const OUT = "#0e0c0a";
 const STEEL = "#8a929a";
+const STEEL_D = "#5a6268";
 const WOOD = "#6b4423";
 
 function bob(frame: number): number {
   return frame === 1 || frame === 3 ? -1 : 0;
 }
 function spread(frame: number): number {
+  return frame === 1 ? 3 : frame === 3 ? -3 : frame === 2 ? 1 : 0;
+}
+function armSwing(frame: number): number {
   return frame === 1 ? 2 : frame === 3 ? -2 : 0;
 }
 
-function rect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, fill: string): void {
-  ctx.fillStyle = fill;
-  ctx.fillRect(Math.floor(x), Math.floor(y), Math.floor(w), Math.floor(h));
-}
-
-function outlinedRect(
+function outlined(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
@@ -47,43 +49,97 @@ function outlinedRect(
   h: number,
   fill: string,
 ): void {
-  rect(ctx, x - 1, y - 1, w + 2, h + 2, OUT);
-  rect(ctx, x, y, w, h, fill);
+  px(ctx, x - 1, y - 1, OUT, w + 2, h + 2);
+  px(ctx, x, y, fill, w, h);
 }
 
-function head(ctx: CanvasRenderingContext2D, cx: number, cy: number): void {
-  outlinedRect(ctx, cx - 4, cy - 5, 8, 8, SKIN);
-  rect(ctx, cx - 3, cy - 6, 6, 3, "#3a3028");
+function drawHead(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  facing: Facing,
+  hair: string,
+): void {
+  outlined(ctx, cx - 4, cy - 5, 8, 8, SKIN);
+  if (facing === "north") {
+    px(ctx, cx - 4, cy - 6, hair, 8, 7);
+    px(ctx, cx - 3, cy - 1, hair, 6, 2);
+  } else if (facing === "south") {
+    px(ctx, cx - 3, cy - 6, hair, 6, 3);
+    px(ctx, cx - 4, cy - 5, hair, 2, 3);
+    px(ctx, cx + 2, cy - 5, hair, 2, 2);
+    px(ctx, cx - 2, cy - 1, SKIN_D, 1, 1);
+    px(ctx, cx + 1, cy - 1, SKIN_D, 1, 1);
+    px(ctx, cx - 1, cy + 1, SKIN_D, 2, 1);
+  } else {
+    const s = facing === "west" ? -1 : 1;
+    px(ctx, cx - 3, cy - 6, hair, 6, 3);
+    px(ctx, cx + s * 3, cy - 5, hair, 2, 4);
+    px(ctx, cx + s * 2, cy - 1, SKIN_D, 1, 1);
+  }
 }
 
-function legs(
+function drawLegs(
   ctx: CanvasRenderingContext2D,
   cx: number,
   cy: number,
   facing: Facing,
   frame: number,
+  pant: string,
 ): void {
   const b = bob(frame);
   const s = spread(frame);
   if (facing === "south" || facing === "north") {
-    outlinedRect(ctx, cx - 5 - s / 2, cy + 6 + b, 4, 7, BOOT);
-    outlinedRect(ctx, cx + 1 + s / 2, cy + 6 + b, 4, 7, BOOT);
+    outlined(ctx, cx - 5 - s, cy + 6 + b, 4, 5, pant);
+    outlined(ctx, cx + 1 + s, cy + 6 + b, 4, 5, pant);
+    outlined(ctx, cx - 5 - s, cy + 10 + b, 4, 5, BOOT);
+    outlined(ctx, cx + 1 + s, cy + 10 + b, 4, 5, BOOT);
   } else {
-    outlinedRect(ctx, cx - 2, cy + 6 + b, 5, 7, BOOT);
+    const dir = facing === "west" ? -1 : 1;
+    const front = frame === 1 ? dir * 3 : frame === 3 ? dir * -2 : dir;
+    outlined(ctx, cx - 2 + front, cy + 6 + b, 5, 5, pant);
+    outlined(ctx, cx - 2, cy + 6 + b, 5, 5, pant);
+    outlined(ctx, cx - 2 + front, cy + 10 + b, 5, 4, BOOT);
+    outlined(ctx, cx - 1, cy + 11 + b, 4, 4, BOOT);
   }
 }
 
-function torso(
+function drawTorso(
   ctx: CanvasRenderingContext2D,
   cx: number,
   cy: number,
   frame: number,
   color: string,
-  wide = false,
+  wide: boolean,
 ): void {
   const b = bob(frame);
   const w = wide ? 12 : 10;
-  outlinedRect(ctx, cx - w / 2, cy - 4 + b, w, 12, color);
+  outlined(ctx, cx - w / 2, cy - 4 + b, w, 11, color);
+}
+
+function drawArms(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  facing: Facing,
+  frame: number,
+  sleeve: string,
+): void {
+  const b = bob(frame);
+  const sw = armSwing(frame);
+  if (facing === "south") {
+    outlined(ctx, cx - 8, cy - 2 + b + sw, 3, 7, sleeve);
+    px(ctx, cx - 8, cy + 4 + b + sw, SKIN, 3, 3);
+    outlined(ctx, cx + 5, cy - 2 + b - sw, 3, 7, sleeve);
+    px(ctx, cx + 5, cy + 4 + b - sw, SKIN, 3, 3);
+  } else if (facing === "north") {
+    outlined(ctx, cx - 8, cy - 2 + b - sw, 3, 7, sleeve);
+    outlined(ctx, cx + 5, cy - 2 + b + sw, 3, 7, sleeve);
+  } else {
+    const near = facing === "east" ? 1 : -1;
+    outlined(ctx, cx + near * 6, cy - 1 + b + sw, 3, 7, sleeve);
+    px(ctx, cx + near * 6, cy + 5 + b + sw, SKIN, 3, 3);
+  }
 }
 
 function drawClass(
@@ -96,90 +152,105 @@ function drawClass(
 ): void {
   const p = P[id];
   const b = bob(frame);
-  const side = facing === "west" ? -1 : 1;
+  const side = facing === "west" ? -1 : facing === "east" ? 1 : 0;
+  const sw = armSwing(frame);
 
   if (id === "hollowborn") {
-    const s = spread(frame);
-    if (facing === "south" || facing === "north") {
-      outlinedRect(ctx, cx - 5 - s / 2, cy + 5 + b, 4, 8, p.c);
-      outlinedRect(ctx, cx + 1 + s / 2, cy + 5 + b, 4, 8, p.c);
-    } else {
-      outlinedRect(ctx, cx - 2, cy + 5 + b, 5, 8, p.c);
+    drawLegs(ctx, cx, cy, facing, frame, p.c);
+    drawTorso(ctx, cx, cy, frame, p.a, true);
+    px(ctx, cx - 6, cy + 4 + b, p.b, 12, 3);
+    drawArms(ctx, cx, cy, facing, frame, p.b);
+    drawHead(ctx, cx, cy - 8 + b, facing, p.hair);
+    outlined(ctx, cx - 5, cy - 12 + b, 10, 5, p.b);
+    if (facing === "south") px(ctx, cx - 3, cy - 9 + b, SKIN, 6, 2);
+    // fist puffs on stride
+    if (frame === 1 || frame === 3) {
+      const fx = facing === "west" ? cx - 10 : cx + 7;
+      px(ctx, fx, cy + 2 + b, p.c, 3, 3);
     }
-    outlinedRect(ctx, cx - 6, cy - 3 + b, 12, 10, p.a);
-    rect(ctx, cx - 6, cy + 4 + b, 12, 3, p.b);
-    outlinedRect(ctx, cx - 5, cy - 10 + b, 10, 9, p.c);
-    rect(ctx, cx + (facing === "west" ? -8 : 6), cy + 1 + b, 4, 4, p.c);
     return;
   }
 
-  legs(ctx, cx, cy, facing, frame);
-  torso(ctx, cx, cy, frame, p.a, id === "thornblade" || id === "warden");
-  head(ctx, cx, cy - 8 + b);
+  // weapons behind body when facing north
+  const weaponFirst = facing === "north";
+  const drawWeapon = () => {
+    if (id === "pathfinder") {
+      const bx = facing === "west" ? cx - 10 : facing === "east" ? cx + 10 : facing === "north" ? cx - 8 : cx + 8;
+      px(ctx, bx, cy - 4 + b, WOOD, 2, 12);
+      px(ctx, bx - 3, cy - 5 + b, WOOD, 8, 2);
+      px(ctx, bx - 2, cy + 7 + b, WOOD, 6, 2);
+      if (facing === "south" || facing === "east") {
+        px(ctx, cx - 4, cy - 2 + b, p.b, 3, 5);
+      }
+    } else if (id === "thornblade") {
+      const hx = facing === "north" || facing === "south" ? cx + 9 : cx + (side || 1) * 10;
+      outlined(ctx, hx - 1, cy - 12 + b + sw, 3, 18, STEEL);
+      px(ctx, hx - 3, cy - 12 + b + sw, STEEL_D, 7, 5);
+      px(ctx, hx - 2, cy - 14 + b + sw, p.a, 5, 3);
+      if (facing !== "north") {
+        const sx = facing === "west" ? cx - 10 : facing === "east" ? cx + 8 : cx - 10;
+        outlined(ctx, sx - 3, cy - 1 + b, 7, 7, STEEL);
+        px(ctx, sx - 1, cy + 1 + b, p.b, 3, 3);
+      }
+    } else if (id === "hearthmage") {
+      const stx = facing === "north" ? cx - 8 : facing === "south" ? cx + 8 : cx + (side || 1) * 9;
+      outlined(ctx, stx - 1, cy - 14 + b, 3, 24, WOOD);
+      outlined(ctx, stx - 3, cy - 16 + b, 7, 5, "#e07030");
+      px(ctx, stx - 1, cy - 15 + b, "#f0d060", 3, 3);
+    } else if (id === "verdant") {
+      const ox = facing === "west" ? -9 : facing === "east" ? 9 : 8;
+      outlined(ctx, cx + ox - 1, cy - 10 + b, 3, 18, WOOD);
+      outlined(ctx, cx + ox - 3, cy - 12 + b, 7, 5, p.c);
+      px(ctx, cx + ox - 1, cy - 14 + b, "#6ab84a", 3, 3);
+    } else if (id === "warden") {
+      const hx = facing === "north" || facing === "south" ? cx + 9 : cx + (side || 1) * 10;
+      outlined(ctx, hx - 1, cy - 10 + b + sw, 3, 16, STEEL);
+      const sx = facing === "west" ? cx - 11 : facing === "east" ? cx + 8 : cx - 11;
+      if (facing !== "north") {
+        outlined(ctx, sx - 5, cy - 4 + b, 10, 11, p.c);
+        px(ctx, sx - 4, cy - 3 + b, STEEL, 8, 9);
+        px(ctx, sx - 1, cy - 1 + b, p.b, 3, 7);
+        px(ctx, sx - 3, cy + 1 + b, p.b, 7, 3);
+      }
+    }
+  };
+
+  if (weaponFirst) drawWeapon();
+  drawLegs(ctx, cx, cy, facing, frame, shadeHex(p.a, 0.55));
+  drawTorso(ctx, cx, cy, frame, p.a, id === "thornblade" || id === "warden");
+  drawArms(ctx, cx, cy, facing, frame, p.b);
+  drawHead(ctx, cx, cy - 8 + b, facing, p.hair);
 
   if (id === "pathfinder") {
-    // hood
-    outlinedRect(ctx, cx - 6, cy - 12 + b, 12, 6, p.b);
-    if (facing !== "north") rect(ctx, cx - 6, cy - 9 + b, 12, 4, p.b);
-    // bow
-    ctx.strokeStyle = WOOD;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    const bx = facing === "west" ? cx - 9 : facing === "east" ? cx + 9 : cx + 8;
-    ctx.arc(bx, cy + b, 7, facing === "west" ? Math.PI - 1.1 : -1.1, facing === "west" ? Math.PI + 1.1 : 1.1);
-    ctx.stroke();
+    outlined(ctx, cx - 6, cy - 13 + b, 12, 6, p.b);
+    if (facing !== "north") px(ctx, cx - 5, cy - 10 + b, p.b, 10, 4);
+    if (facing === "south") px(ctx, cx - 3, cy - 8 + b, SKIN, 6, 2);
+    // quiver
+    outlined(ctx, cx + (facing === "west" ? -8 : 5), cy - 2 + b, 4, 8, WOOD);
+    px(ctx, cx + (facing === "west" ? -7 : 6), cy - 4 + b, p.c, 2, 3);
   } else if (id === "thornblade") {
-    rect(ctx, cx - 6, cy + 2 + b, 12, 4, p.b);
-    outlinedRect(ctx, cx - 5, cy - 14 + b, 10, 4, "#2a2218");
-    const sx = facing === "west" ? cx - 10 : facing === "east" ? cx + 10 : cx - 10;
-    outlinedRect(ctx, sx - 4, cy - 2 + b, 8, 8, STEEL);
-    rect(ctx, sx - 2, cy + b, 4, 4, p.a);
-    const hx = facing === "north" || facing === "south" ? cx + 9 : cx + side * 10;
-    outlinedRect(ctx, hx - 1, cy - 10 + b, 3, 16, STEEL);
+    px(ctx, cx - 6, cy + 2 + b, p.b, 12, 4);
+    outlined(ctx, cx - 5, cy - 14 + b, 10, 4, "#2a2218");
+    if (facing === "south") px(ctx, cx - 2, cy - 9 + b, SKIN, 4, 2);
   } else if (id === "hearthmage") {
-    rect(ctx, cx - 5, cy + 4 + b, 10, 5, p.b);
-    // hat
-    outlinedRect(ctx, cx - 8, cy - 12 + b, 16, 4, p.a);
-    rect(ctx, cx - 5, cy - 18 + b, 10, 8, p.a);
-    rect(ctx, cx - 1, cy - 20 + b, 2, 3, p.c);
-    const stx = facing === "north" ? cx - 7 : facing === "south" ? cx + 8 : cx + side * 9;
-    outlinedRect(ctx, stx - 1, cy - 14 + b, 3, 24, WOOD);
-    outlinedRect(ctx, stx - 3, cy - 16 + b, 7, 5, "#6a9ad4");
+    px(ctx, cx - 5, cy + 4 + b, p.b, 10, 5);
+    outlined(ctx, cx - 8, cy - 12 + b, 16, 4, p.a);
+    px(ctx, cx - 5, cy - 18 + b, p.a, 10, 8);
+    px(ctx, cx - 4, cy - 17 + b, p.b, 8, 5);
+    px(ctx, cx - 1, cy - 20 + b, p.c, 2, 3);
   } else if (id === "verdant") {
-    rect(ctx, cx - 5, cy + b, 10, 3, p.c);
-    outlinedRect(ctx, cx - 5, cy - 12 + b, 10, 5, "#c8a060");
-    const ox = facing === "west" ? -8 : 8;
-    outlinedRect(ctx, cx + ox - 2, cy - 3 + b, 5, 5, "#b8e090");
+    px(ctx, cx - 5, cy + b, p.c, 10, 3);
+    outlined(ctx, cx - 5, cy - 13 + b, 10, 5, "#c8a060");
+    px(ctx, cx - 6, cy - 12 + b, p.c, 2, 3);
+    px(ctx, cx + 4, cy - 12 + b, p.c, 2, 3);
   } else if (id === "warden") {
-    // tabard cross
-    rect(ctx, cx - 1, cy - 2 + b, 3, 8, p.b);
-    rect(ctx, cx - 4, cy + 1 + b, 8, 3, p.b);
-    outlinedRect(ctx, cx - 6, cy - 12 + b, 12, 6, STEEL);
-    if (facing === "south") rect(ctx, cx - 3, cy - 9 + b, 6, 2, OUT);
-    const sx = facing === "west" ? cx - 10 : facing === "east" ? cx + 10 : cx - 10;
-    outlinedRect(ctx, sx - 5, cy - 4 + b, 10, 10, p.a);
-    rect(ctx, sx - 1, cy - 1 + b, 3, 7, p.b);
-    rect(ctx, sx - 3, cy + 1 + b, 7, 3, p.b);
-    const hx = facing === "north" || facing === "south" ? cx + 9 : cx + side * 10;
-    outlinedRect(ctx, hx - 1, cy - 10 + b, 3, 16, STEEL);
+    px(ctx, cx - 1, cy - 2 + b, p.b, 3, 8);
+    px(ctx, cx - 4, cy + 1 + b, p.b, 8, 3);
+    outlined(ctx, cx - 6, cy - 13 + b, 12, 6, STEEL);
+    if (facing === "south") px(ctx, cx - 3, cy - 10 + b, OUT, 6, 2);
   }
-}
 
-function makeCanvas(w: number, h: number): HTMLCanvasElement | OffscreenCanvas {
-  if (typeof document !== "undefined") {
-    const c = document.createElement("canvas");
-    c.width = w;
-    c.height = h;
-    return c;
-  }
-  if (typeof OffscreenCanvas !== "undefined") return new OffscreenCanvas(w, h);
-  throw new Error("No canvas available");
-}
-
-function ctx2d(c: HTMLCanvasElement | OffscreenCanvas): CanvasRenderingContext2D {
-  const ctx = c.getContext("2d");
-  if (!ctx) throw new Error("2d context unavailable");
-  return ctx as CanvasRenderingContext2D;
+  if (!weaponFirst) drawWeapon();
 }
 
 export function paintClassSheet(classId: ClassId): HTMLCanvasElement | OffscreenCanvas {
