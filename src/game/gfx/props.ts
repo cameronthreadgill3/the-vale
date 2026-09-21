@@ -2,7 +2,7 @@
  * Original procedural plaza props (crates, barrels, benches, lanterns).
  * Vale art only — not CipSoft / Tibia sprites.
  */
-import { makeCanvas, ctx2d, px, shadeHex, mixHex } from "@/game/gfx/canvasUtil";
+import { makeCanvas, ctx2d, px, shadeHex, mixHex, paintVolume, addPixelVolume } from "@/game/gfx/canvasUtil";
 import { TILE_PX } from "@/game/gfx/tiles";
 import type { TownPropKind } from "@/game/world/town";
 
@@ -15,9 +15,11 @@ function paintCrate(ctx: CanvasRenderingContext2D): void {
   const lite = shadeHex(wood, 1.2);
   px(ctx, 8, 12, dark, 16, 14);
   px(ctx, 9, 13, wood, 14, 12);
+  paintVolume(ctx, 9, 13, 14, 12, wood, 1.18, 0.72);
   px(ctx, 9, 13, lite, 14, 2);
   px(ctx, 9, 18, dark, 14, 1);
   px(ctx, 15, 13, dark, 1, 12);
+  px(ctx, 9, 24, shadeHex(dark, 0.85), 14, 2);
 }
 
 function paintBarrel(ctx: CanvasRenderingContext2D): void {
@@ -26,9 +28,11 @@ function paintBarrel(ctx: CanvasRenderingContext2D): void {
   const band = "#8a8070";
   px(ctx, 10, 10, dark, 12, 16);
   px(ctx, 11, 11, wood, 10, 14);
+  paintVolume(ctx, 11, 11, 10, 14, wood, 1.2, 0.7);
   px(ctx, 11, 14, band, 10, 2);
   px(ctx, 11, 20, band, 10, 2);
   px(ctx, 12, 12, shadeHex(wood, 1.2), 2, 12);
+  px(ctx, 11, 24, shadeHex(dark, 0.85), 10, 2);
 }
 
 function paintBench(ctx: CanvasRenderingContext2D): void {
@@ -59,6 +63,7 @@ function paintStall(ctx: CanvasRenderingContext2D): void {
   px(ctx, 24, 16, pole, 2, 12);
   px(ctx, 4, 8, dark, 24, 10);
   px(ctx, 5, 9, cloth, 22, 7);
+  paintVolume(ctx, 5, 9, 22, 7, cloth, 1.16, 0.74);
   px(ctx, 5, 9, "#e8d8a0", 22, 2);
 }
 
@@ -111,6 +116,7 @@ function paintProp(kind: TownPropKind): Sheet {
       paintCobblePatch(ctx);
       break;
   }
+  if (kind !== "cobble-patch") addPixelVolume(ctx, TILE_PX, TILE_PX, 0.1, 0.16);
   return c;
 }
 

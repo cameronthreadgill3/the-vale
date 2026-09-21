@@ -210,7 +210,7 @@ function blitCairn(
   sy: number,
   sheet: Sheet,
 ): void {
-  drawSoftShadow(ctx, sx, sy + 9, 13, 5, GROUND_SHADOW_ALPHA);
+  drawSoftShadow(ctx, sx, sy + 10, 14, 5.5, GROUND_SHADOW_ALPHA);
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(
     sheet as CanvasImageSource,
