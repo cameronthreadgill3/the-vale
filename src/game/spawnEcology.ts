@@ -375,3 +375,61 @@ export function ensureAshenRats(
   }
   return enemies;
 }
+
+/** Guarantee Needle Rats on Embercoil while The Embercoil Gate Opens is sticky. */
+export function ensureEmberRats(
+  enemies: Enemy[],
+  map: WorldMap,
+  continentId: ContinentId,
+  blockedTiles: { x: number; y: number }[],
+  need: number,
+): Enemy[] {
+  if (map.kind !== "overworld" || continentId !== "embercoil") return enemies;
+  const have = enemies.filter((e) => e.kind.id === "needle-rat" && e.hp > 0).length;
+  const extra = Math.max(0, need - have);
+  if (extra === 0) return enemies;
+
+  const rng = rngFrom(`${WORLD_SEED}|foes|hunt|embercoil-gate|embercoil`);
+  const blocked = new Set(blockedTiles.map((t) => `${t.x},${t.y}`));
+  for (const e of enemies) {
+    blocked.add(`${Math.floor(e.x / TILE)},${Math.floor(e.y / TILE)}`);
+  }
+  let serial = enemies.length;
+  for (let i = 0; i < extra; i++) {
+    const pos = tryPlaceOpen(rng, map, blocked, 6);
+    if (!pos) continue;
+    enemies.push(
+      makeEnemy("needle-rat", pos.x, pos.y, `pad-needle-rat-${serial++}`, rng() * 2),
+    );
+  }
+  return enemies;
+}
+
+/** Light Bark Hound pad on Embercoil while The Embercoil Gate Opens is sticky. */
+export function ensureEmberHounds(
+  enemies: Enemy[],
+  map: WorldMap,
+  continentId: ContinentId,
+  blockedTiles: { x: number; y: number }[],
+  need: number,
+): Enemy[] {
+  if (map.kind !== "overworld" || continentId !== "embercoil") return enemies;
+  const have = enemies.filter((e) => e.kind.id === "bark-hound" && e.hp > 0).length;
+  const extra = Math.max(0, need - have);
+  if (extra === 0) return enemies;
+
+  const rng = rngFrom(`${WORLD_SEED}|foes|hunt|embercoil-hound|embercoil`);
+  const blocked = new Set(blockedTiles.map((t) => `${t.x},${t.y}`));
+  for (const e of enemies) {
+    blocked.add(`${Math.floor(e.x / TILE)},${Math.floor(e.y / TILE)}`);
+  }
+  let serial = enemies.length;
+  for (let i = 0; i < extra; i++) {
+    const pos = tryPlaceOpen(rng, map, blocked, 6);
+    if (!pos) continue;
+    enemies.push(
+      makeEnemy("bark-hound", pos.x, pos.y, `pad-bark-hound-${serial++}`, rng() * 2),
+    );
+  }
+  return enemies;
+}

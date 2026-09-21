@@ -29,6 +29,7 @@ import {
   getSpineQuest,
   getPaleQuest,
   getAshenQuest,
+  getEmbercoilQuest,
   isTeethActive,
   isAshwoodActive,
   isHollowActive,
@@ -42,6 +43,7 @@ import {
   isSpineActive,
   isPaleActive,
   isAshenActive,
+  isEmbercoilActive,
   loadQuestLog,
   type TeethQuestProgress,
   type AshwoodQuestProgress,
@@ -56,6 +58,7 @@ import {
   type SpineQuestProgress,
   type PaleQuestProgress,
   type AshenQuestProgress,
+  type EmbercoilQuestProgress,
 } from "@/game/quests";
 import { ASHWOOD_CAIRNS } from "@/game/cairns";
 import { huntZoneById } from "@/game/huntZones";
@@ -86,6 +89,10 @@ export function resolveQuestObjective(
   map: WorldMap,
 ): WayfindObjective | null {
   const log = loadQuestLog();
+  if (isEmbercoilActive(log)) {
+    const q = getEmbercoilQuest(log);
+    if (q) return objectiveForEmbercoil(q, player, enemies, folk, map);
+  }
   if (isAshenActive(log)) {
     const q = getAshenQuest(log);
     if (q) return objectiveForAshen(q, player, enemies, folk, map);
@@ -686,6 +693,202 @@ export function objectiveForAshen(
       label: "Gate back to Rook (Thornreach)",
       x: (home.x + 0.5) * TILE,
       y: (home.y + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  const toPaleHome = continentGateOnMap(map, "pale-wastes");
+  if (toPaleHome) {
+    return {
+      label: "Gate toward Rook (Pale Wastes)",
+      x: (toPaleHome.x + 0.5) * TILE,
+      y: (toPaleHome.y + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  return {
+    label: "Return to Rook (Thornreach)",
+    x: player.x + TILE * 8,
+    y: player.y - TILE * 2,
+    kind: "landmark",
+  };
+}
+
+export function objectiveForEmbercoil(
+  q: EmbercoilQuestProgress,
+  player: { x: number; y: number },
+  enemies: Enemy[],
+  folk: FolkDef[],
+  map: WorldMap,
+): WayfindObjective | null {
+  if (q.status !== "active") return null;
+  const rook = folk.find((f) => f.id === "rook");
+
+  if (!q.reachedEmbercoil) {
+    const gate = continentGateOnMap(map, "embercoil");
+    if (gate) {
+      return {
+        label: "Reach Embercoil gate",
+        x: (gate.x + 0.5) * TILE,
+        y: (gate.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    if (map.continentId !== "ashen-marches") {
+      const toAshen = continentGateOnMap(map, "ashen-marches");
+      if (toAshen) {
+        return {
+          label: "Gate to Embercoil (Ashen Marches)",
+          x: (toAshen.x + 0.5) * TILE,
+          y: (toAshen.y + 0.5) * TILE,
+          kind: "landmark",
+        };
+      }
+    }
+    const toPale = continentGateOnMap(map, "pale-wastes");
+    if (toPale) {
+      return {
+        label: "Gate to Embercoil (Pale Wastes)",
+        x: (toPale.x + 0.5) * TILE,
+        y: (toPale.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    return {
+      label: "Find Embercoil gate (Ashen Marches)",
+      x: player.x + TILE * 8,
+      y: player.y - TILE * 2,
+      kind: "landmark",
+    };
+  }
+
+  if (!q.identifiedRat) {
+    const rat = nearestEnemy(player, enemies, "needle-rat");
+    if (rat) {
+      return { label: "Identify Needle Rat", x: rat.x, y: rat.y, kind: "enemy" };
+    }
+    if (map.continentId === "embercoil" && map.kind === "overworld") {
+      return {
+        label: "Find Needle Rat (Embercoil)",
+        x: player.x + TILE * 6,
+        y: player.y - TILE * 4,
+        kind: "landmark",
+      };
+    }
+    const toEmber = continentGateOnMap(map, "embercoil");
+    if (toEmber) {
+      return {
+        label: "Gate to Needle Rat (Embercoil)",
+        x: (toEmber.x + 0.5) * TILE,
+        y: (toEmber.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    if (map.continentId !== "ashen-marches") {
+      const toAshen = continentGateOnMap(map, "ashen-marches");
+      if (toAshen) {
+        return {
+          label: "Gate toward Embercoil",
+          x: (toAshen.x + 0.5) * TILE,
+          y: (toAshen.y + 0.5) * TILE,
+          kind: "landmark",
+        };
+      }
+    }
+    const toPale = continentGateOnMap(map, "pale-wastes");
+    if (toPale) {
+      return {
+        label: "Gate toward Embercoil",
+        x: (toPale.x + 0.5) * TILE,
+        y: (toPale.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    return {
+      label: "Find Needle Rat (Embercoil)",
+      x: player.x + TILE * 6,
+      y: player.y - TILE * 4,
+      kind: "landmark",
+    };
+  }
+
+  if (!q.houndDone) {
+    const hound = nearestEnemy(player, enemies, "bark-hound");
+    if (hound) {
+      return {
+        label: "Defeat Bark Hound (0/1)",
+        x: hound.x,
+        y: hound.y,
+        kind: "enemy",
+      };
+    }
+    if (map.continentId === "embercoil" && map.kind === "overworld") {
+      return {
+        label: "Find Bark Hound (Embercoil)",
+        x: player.x + TILE * 6,
+        y: player.y - TILE * 4,
+        kind: "landmark",
+      };
+    }
+    const toEmber = continentGateOnMap(map, "embercoil");
+    if (toEmber) {
+      return {
+        label: "Gate to Bark Hound (Embercoil)",
+        x: (toEmber.x + 0.5) * TILE,
+        y: (toEmber.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    if (map.continentId !== "ashen-marches") {
+      const toAshen = continentGateOnMap(map, "ashen-marches");
+      if (toAshen) {
+        return {
+          label: "Gate toward Embercoil",
+          x: (toAshen.x + 0.5) * TILE,
+          y: (toAshen.y + 0.5) * TILE,
+          kind: "landmark",
+        };
+      }
+    }
+    const toPale = continentGateOnMap(map, "pale-wastes");
+    if (toPale) {
+      return {
+        label: "Gate toward Embercoil",
+        x: (toPale.x + 0.5) * TILE,
+        y: (toPale.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    return {
+      label: "Find Bark Hound (Embercoil)",
+      x: player.x + TILE * 6,
+      y: player.y - TILE * 4,
+      kind: "landmark",
+    };
+  }
+
+  if (rook) {
+    return {
+      label: "Return to Rook",
+      x: (rook.x + 0.5) * TILE,
+      y: (rook.y + 0.5) * TILE,
+      kind: "folk",
+    };
+  }
+  const home = continentGateOnMap(map, "thornreach");
+  if (home) {
+    return {
+      label: "Gate back to Rook (Thornreach)",
+      x: (home.x + 0.5) * TILE,
+      y: (home.y + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  const toAshenHome = continentGateOnMap(map, "ashen-marches");
+  if (toAshenHome) {
+    return {
+      label: "Gate toward Rook (Ashen Marches)",
+      x: (toAshenHome.x + 0.5) * TILE,
+      y: (toAshenHome.y + 0.5) * TILE,
       kind: "landmark",
     };
   }
