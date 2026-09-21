@@ -23,6 +23,7 @@ export const SPINE_QUEST_ID = "the-spine-remembers" as const;
 export const PALE_QUEST_ID = "the-pale-gate-opens" as const;
 export const ASHEN_QUEST_ID = "the-ashen-gate-opens" as const;
 export const EMBERCOIL_QUEST_ID = "the-embercoil-gate-opens" as const;
+export const COIL_QUEST_ID = "the-coil-remembers" as const;
 
 /** Depot clerk — Cress Ledger in folk.ts. */
 export const CRESS_FOLK_ID = "cress-ledger" as const;
@@ -57,7 +58,8 @@ export type QuestId =
   | typeof SPINE_QUEST_ID
   | typeof PALE_QUEST_ID
   | typeof ASHEN_QUEST_ID
-  | typeof EMBERCOIL_QUEST_ID;
+  | typeof EMBERCOIL_QUEST_ID
+  | typeof COIL_QUEST_ID;
 
 export type QuestStatus = "active" | "complete";
 
@@ -213,6 +215,17 @@ export interface EmbercoilQuestProgress {
   houndDone: boolean;
 }
 
+export interface CoilQuestProgress {
+  id: typeof COIL_QUEST_ID;
+  status: QuestStatus;
+  /** Reached Embercoil overworld (travel, stand, or arrive via Ashen / Pale gate). */
+  reachedCoil: boolean;
+  /** First successful Identify of an Ash-vole on Embercoil. */
+  identifiedVole: boolean;
+  /** Gorse Fox defeated on Embercoil (target 1; continent-scoped). */
+  foxDone: boolean;
+}
+
 export type QuestLog = {
   [TEETH_QUEST_ID]?: TeethQuestProgress;
   [ASHWOOD_QUEST_ID]?: AshwoodQuestProgress;
@@ -228,6 +241,7 @@ export type QuestLog = {
   [PALE_QUEST_ID]?: PaleQuestProgress;
   [ASHEN_QUEST_ID]?: AshenQuestProgress;
   [EMBERCOIL_QUEST_ID]?: EmbercoilQuestProgress;
+  [COIL_QUEST_ID]?: CoilQuestProgress;
 };
 
 export const TEETH_RATS_NEEDED = 3;
@@ -248,6 +262,7 @@ export const SPINE_QUEST_TITLE = "The Spine Remembers";
 export const PALE_QUEST_TITLE = "The Pale Gate Opens";
 export const ASHEN_QUEST_TITLE = "The Ashen Gate Opens";
 export const EMBERCOIL_QUEST_TITLE = "The Embercoil Gate Opens";
+export const COIL_QUEST_TITLE = "The Coil Remembers";
 
 export const TEETH_START_TOAST =
   "Rook: Ashwood edge has wrong prey - Identify first.";
@@ -332,6 +347,12 @@ export const EMBERCOIL_START_TOAST =
 
 export const EMBERCOIL_COMPLETE_LINE =
   "Rook: The embercoil gate opened, and the slag ridges know your footing. Survive. Learn. Progress — the far road runs hot now.";
+
+export const COIL_START_TOAST =
+  "Rook: The embercoil gate opened, and the slag ridges know your footing. Walk the coil itself — name the soft ash-vole that shares the heat, quiet one gorse-fox on the glow skirts, and bring the coil's measure home. Survive. Learn. Progress.";
+
+export const COIL_COMPLETE_LINE =
+  "Rook: The coil remembers your footing. Soft prey named, the glow skirts quieted. Survive. Learn. Progress — the far road holds the heat.";
 
 export const TEETH_REWARDS = {
   gold: 28,
@@ -429,6 +450,13 @@ export const EMBERCOIL_REWARDS = {
   combatXp: 190,
   skill: "magic" as SkillId,
   skillXp: 55,
+};
+
+export const COIL_REWARDS = {
+  gold: 100,
+  combatXp: 200,
+  skill: "distance" as SkillId,
+  skillXp: 58,
 };
 
 export function loadQuestLog(): QuestLog {
@@ -596,6 +624,16 @@ export function emptyEmbercoilQuest(): EmbercoilQuestProgress {
     reachedEmbercoil: false,
     identifiedRat: false,
     houndDone: false,
+  };
+}
+
+export function emptyCoilQuest(): CoilQuestProgress {
+  return {
+    id: COIL_QUEST_ID,
+    status: "active",
+    reachedCoil: false,
+    identifiedVole: false,
+    foxDone: false,
   };
 }
 
@@ -819,6 +857,20 @@ export function sanitizeQuestLog(raw: unknown): QuestLog {
     };
   }
 
+  const coil = obj[COIL_QUEST_ID];
+  if (coil && typeof coil === "object") {
+    const c = coil as Record<string, unknown>;
+    const status: QuestStatus =
+      c.status === "complete" ? "complete" : "active";
+    log[COIL_QUEST_ID] = {
+      id: COIL_QUEST_ID,
+      status,
+      reachedCoil: Boolean(c.reachedCoil),
+      identifiedVole: Boolean(c.identifiedVole),
+      foxDone: Boolean(c.foxDone),
+    };
+  }
+
   return log;
 }
 
@@ -904,6 +956,12 @@ export function getEmbercoilQuest(
   return log?.[EMBERCOIL_QUEST_ID] ?? null;
 }
 
+export function getCoilQuest(
+  log: QuestLog | undefined,
+): CoilQuestProgress | null {
+  return log?.[COIL_QUEST_ID] ?? null;
+}
+
 export function isTeethActive(log: QuestLog | undefined): boolean {
   const q = getTeethQuest(log);
   return Boolean(q && q.status === "active");
@@ -971,6 +1029,11 @@ export function isAshenActive(log: QuestLog | undefined): boolean {
 
 export function isEmbercoilActive(log: QuestLog | undefined): boolean {
   const q = getEmbercoilQuest(log);
+  return Boolean(q && q.status === "active");
+}
+
+export function isCoilActive(log: QuestLog | undefined): boolean {
+  const q = getCoilQuest(log);
   return Boolean(q && q.status === "active");
 }
 
@@ -1045,6 +1108,10 @@ export function ashenObjectivesMet(q: AshenQuestProgress): boolean {
 
 export function embercoilObjectivesMet(q: EmbercoilQuestProgress): boolean {
   return q.reachedEmbercoil && q.identifiedRat && q.houndDone;
+}
+
+export function coilObjectivesMet(q: CoilQuestProgress): boolean {
+  return q.reachedCoil && q.identifiedVole && q.foxDone;
 }
 
 /** HUD lines for Teeth sticky panel. */
@@ -1326,6 +1393,27 @@ export function embercoilHudLines(q: EmbercoilQuestProgress): string[] {
   ];
 }
 
+/** HUD lines for The Coil Remembers. */
+export function coilHudLines(q: CoilQuestProgress): string[] {
+  if (q.status === "complete") {
+    return ["Complete - The coil remembers"];
+  }
+  return [
+    q.reachedCoil
+      ? "[done] Reach Embercoil"
+      : "[ ] Reach Embercoil (Ashen Marches gate)",
+    q.identifiedVole
+      ? "[done] Identify Ash-vole"
+      : "[ ] Identify an Ash-vole (near look)",
+    q.foxDone
+      ? "[done] Defeat Gorse Fox 1/1"
+      : "[ ] Defeat Gorse Fox 0/1 (Embercoil)",
+    q.reachedCoil && q.identifiedVole && q.foxDone
+      ? "[ ] Return to Rook (the coil's measure)"
+      : "[ ] Return to Rook with the coil's measure",
+  ];
+}
+
 
 export type QuestEventResult = {
   log: QuestLog;
@@ -1358,6 +1446,8 @@ export type QuestEventResult = {
   startedAshen?: boolean;
   /** The Embercoil Gate Opens auto-started after The Ashen Gate Opens. */
   startedEmbercoil?: boolean;
+  /** The Coil Remembers auto-started after The Embercoil Gate Opens. */
+  startedCoil?: boolean;
 };
 
 /** If Teeth is complete and Ashwood missing, start Ashwood Watch. */
@@ -1594,6 +1684,24 @@ export function ensureEmbercoilAfterAshen(log: QuestLog): {
   };
 }
 
+/** If The Embercoil Gate Opens is complete and The Coil Remembers missing, start it. */
+export function ensureCoilAfterEmbercoil(log: QuestLog): {
+  log: QuestLog;
+  started: boolean;
+} {
+  const embercoil = getEmbercoilQuest(log);
+  if (!embercoil || embercoil.status !== "complete") {
+    return { log, started: false };
+  }
+  if (getCoilQuest(log)) {
+    return { log, started: false };
+  }
+  return {
+    log: withCoilQuest(log, emptyCoilQuest()),
+    started: true,
+  };
+}
+
 export function withTeethQuest(
   log: QuestLog | undefined,
   quest: TeethQuestProgress,
@@ -1692,6 +1800,13 @@ export function withEmbercoilQuest(
   return { ...(log ?? {}), [EMBERCOIL_QUEST_ID]: quest };
 }
 
+export function withCoilQuest(
+  log: QuestLog | undefined,
+  quest: CoilQuestProgress,
+): QuestLog {
+  return { ...(log ?? {}), [COIL_QUEST_ID]: quest };
+}
+
 function finishTeethIfReady(
   log: QuestLog,
   next: TeethQuestProgress,
@@ -1755,6 +1870,24 @@ export function applyIdentify(
   kindId: EnemyKindId,
   continentId?: ContinentId,
 ): QuestEventResult | null {
+  const coil = getCoilQuest(log);
+  if (
+    coil &&
+    coil.status === "active" &&
+    !coil.identifiedVole &&
+    kindId === "ash-vole" &&
+    continentId === "embercoil"
+  ) {
+    return {
+      log: withCoilQuest(log, {
+        ...coil,
+        reachedCoil: true,
+        identifiedVole: true,
+      }),
+      toast: "Identified: Ash-vole / F",
+    };
+  }
+
   const embercoil = getEmbercoilQuest(log);
   if (
     embercoil &&
@@ -1930,6 +2063,26 @@ export function applyEnemyKill(
   kindId: EnemyKindId,
   continentId?: ContinentId,
 ): QuestEventResult | null {
+  const coil = getCoilQuest(log);
+  if (
+    coil &&
+    coil.status === "active" &&
+    kindId === "gorse-fox" &&
+    continentId === "embercoil" &&
+    !coil.foxDone
+  ) {
+    return {
+      log: withCoilQuest(log, {
+        ...coil,
+        reachedCoil: true,
+        foxDone: true,
+      }),
+      toast: coil.identifiedVole
+        ? "Gorse Fox 1/1 — Return to Rook"
+        : "Gorse Fox 1/1 — Name the Ash-vole",
+    };
+  }
+
   const embercoil = getEmbercoilQuest(log);
   if (
     embercoil &&
@@ -2596,10 +2749,43 @@ export function applyEmbercoilRookTalk(log: QuestLog): QuestEventResult | null {
   const q = getEmbercoilQuest(log);
   if (!q || q.status !== "active") return null;
   if (!embercoilObjectivesMet(q)) return null;
+  let out = withEmbercoilQuest(log, { ...q, status: "complete" });
+  const ensured = ensureCoilAfterEmbercoil(out);
+  out = ensured.log;
   return {
-    log: withEmbercoilQuest(log, { ...q, status: "complete" }),
-    toast: EMBERCOIL_COMPLETE_LINE,
+    log: out,
+    toast: ensured.started ? COIL_START_TOAST : EMBERCOIL_COMPLETE_LINE,
     completedId: EMBERCOIL_QUEST_ID,
+    startedCoil: ensured.started,
+  };
+}
+
+/** Mark Embercoil reached for The Coil Remembers (travel, stand, or arrival). */
+export function applyCoilReached(log: QuestLog): QuestEventResult | null {
+  const q = getCoilQuest(log);
+  if (!q || q.status !== "active" || q.reachedCoil) {
+    return null;
+  }
+  return {
+    log: withCoilQuest(log, { ...q, reachedCoil: true }),
+    toast:
+      q.identifiedVole && q.foxDone
+        ? "Embercoil marked — Return to Rook with the coil's measure"
+        : q.identifiedVole
+          ? "Embercoil marked — Quiet one gorse-fox on the glow skirts"
+          : "Embercoil marked — Name the soft ash-vole that shares the heat",
+  };
+}
+
+/** Complete The Coil Remembers when talking to Rook after the coil is measured. */
+export function applyCoilRookTalk(log: QuestLog): QuestEventResult | null {
+  const q = getCoilQuest(log);
+  if (!q || q.status !== "active") return null;
+  if (!coilObjectivesMet(q)) return null;
+  return {
+    log: withCoilQuest(log, { ...q, status: "complete" }),
+    toast: COIL_COMPLETE_LINE,
+    completedId: COIL_QUEST_ID,
   };
 }
 
@@ -2649,6 +2835,23 @@ export function applyCairnInspect(
 
 /** Rook line while sticky quests are active / complete. */
 export function rookQuestLine(log: QuestLog | undefined): string | null {
+  const coil = getCoilQuest(log);
+  if (coil) {
+    if (coil.status === "complete") {
+      return COIL_COMPLETE_LINE.replace(/^Rook:\s*/, "");
+    }
+    if (!coil.reachedCoil) {
+      return "The embercoil gate opened, and the slag ridges know your footing. Walk the coil itself — name the soft ash-vole that shares the heat, quiet one gorse-fox on the glow skirts, and bring the coil's measure home.";
+    }
+    if (!coil.identifiedVole) {
+      return "The coil is underfoot. Identify an Ash-vole on Embercoil — Name and Rank — then quiet one gorse-fox on the glow skirts.";
+    }
+    if (!coil.foxDone) {
+      return "The vole is named. Quiet one Gorse Fox on Embercoil, then bring the coil's measure home.";
+    }
+    return "The coil remembers. Survive. Learn. Progress — the far road holds the heat when you tell me.";
+  }
+
   const embercoil = getEmbercoilQuest(log);
   if (embercoil) {
     if (embercoil.status === "complete") {

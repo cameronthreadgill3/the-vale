@@ -71,6 +71,9 @@ import {
   EMBERCOIL_START_TOAST,
   EMBERCOIL_REWARDS,
   EMBERCOIL_COMPLETE_LINE,
+  COIL_START_TOAST,
+  COIL_REWARDS,
+  COIL_COMPLETE_LINE,
   TEETH_QUEST_ID,
   ASHWOOD_QUEST_ID,
   HOLLOW_QUEST_ID,
@@ -85,6 +88,7 @@ import {
   PALE_QUEST_ID,
   ASHEN_QUEST_ID,
   EMBERCOIL_QUEST_ID,
+  COIL_QUEST_ID,
   CRESS_FOLK_ID,
   OLD_REED_FOLK_ID,
   CHOIR_KEEPER_FOLK_ID,
@@ -105,6 +109,7 @@ import {
   getPaleQuest,
   getAshenQuest,
   getEmbercoilQuest,
+  getCoilQuest,
   applyIdentify,
   applyEnemyKill,
   applyCairnInspect,
@@ -137,6 +142,8 @@ import {
   applyAshenRookTalk,
   applyEmbercoilReached,
   applyEmbercoilRookTalk,
+  applyCoilReached,
+  applyCoilRookTalk,
   withTeethQuest,
   ensureAshwoodAfterTeeth,
   ensureHollowAfterAshwood,
@@ -151,6 +158,7 @@ import {
   ensurePaleAfterSpine,
   ensureAshenAfterPale,
   ensureEmbercoilAfterAshen,
+  ensureCoilAfterEmbercoil,
   rookQuestLine,
   loadQuestLog,
   saveQuestLog,
@@ -532,6 +540,18 @@ export function GameApp() {
             return true;
           }
         }
+        const coil = applyCoilReached(loadQuestLog());
+        if (coil) {
+          saveQuestLog(coil.log);
+          if (coil.toast) {
+            showToast(coil.toast);
+            window.setTimeout(
+              () => setToast((t) => (t === coil.toast ? null : t)),
+              2800,
+            );
+            return true;
+          }
+        }
       }
       const dest = getContinent(target);
       if (paid > 0 || firstCrossing) {
@@ -639,6 +659,7 @@ export function GameApp() {
     }
     if (folkId === "rook" && character) {
       const turnIn =
+        applyCoilRookTalk(loadQuestLog()) ??
         applyEmbercoilRookTalk(loadQuestLog()) ??
         applyAshenRookTalk(loadQuestLog()) ??
         applyPaleRookTalk(loadQuestLog()) ??
@@ -658,14 +679,26 @@ export function GameApp() {
             ...prev,
             skillXp: { ...prev.skillXp },
           };
-          if (turnIn.completedId === EMBERCOIL_QUEST_ID) {
+          if (turnIn.completedId === COIL_QUEST_ID) {
+            next = awardCombatXp(next, COIL_REWARDS.combatXp);
+            next = { ...next, skillXp: { ...next.skillXp } };
+            awardSkillXp(next, COIL_REWARDS.skill, COIL_REWARDS.skillXp);
+            next = setGold(next, next.gold + COIL_REWARDS.gold);
+            next = { ...next, skillXp: { ...next.skillXp } };
+            queueMicrotask(() => {
+              showToast(COIL_COMPLETE_LINE);
+              setSkillTick((t) => t + 1);
+            });
+          } else if (turnIn.completedId === EMBERCOIL_QUEST_ID) {
             next = awardCombatXp(next, EMBERCOIL_REWARDS.combatXp);
             next = { ...next, skillXp: { ...next.skillXp } };
             awardSkillXp(next, EMBERCOIL_REWARDS.skill, EMBERCOIL_REWARDS.skillXp);
             next = setGold(next, next.gold + EMBERCOIL_REWARDS.gold);
             next = { ...next, skillXp: { ...next.skillXp } };
             queueMicrotask(() => {
-              showToast(EMBERCOIL_COMPLETE_LINE);
+              showToast(
+                turnIn.startedCoil ? COIL_START_TOAST : EMBERCOIL_COMPLETE_LINE,
+              );
               setSkillTick((t) => t + 1);
             });
           } else if (turnIn.completedId === ASHEN_QUEST_ID) {
@@ -1138,6 +1171,14 @@ export function GameApp() {
             return;
           }
         }
+        const coil = applyCoilReached(loadQuestLog());
+        if (coil) {
+          saveQuestLog(coil.log);
+          if (coil.toast) {
+            showToast(coil.toast);
+            return;
+          }
+        }
       }
       const c = getContinent(dest);
       if (paid > 0 || firstCrossing) {
@@ -1319,6 +1360,19 @@ export function GameApp() {
     );
   }, [character]);
 
+  // Quest 15: auto-start The Coil Remembers once The Embercoil Gate Opens is complete.
+  useEffect(() => {
+    if (!character) return;
+    const ensured = ensureCoilAfterEmbercoil(loadQuestLog());
+    if (!ensured.started) return;
+    saveQuestLog(ensured.log);
+    setToast(COIL_START_TOAST);
+    window.setTimeout(
+      () => setToast((t) => (t === COIL_START_TOAST ? null : t)),
+      3600,
+    );
+  }, [character]);
+
   // Mistmere Crossing: mark arrival whenever the walker stands on Mistmere.
   useEffect(() => {
     if (!character) return;
@@ -1419,16 +1473,25 @@ export function GameApp() {
     }
   }, [character]);
 
-  // The Embercoil Gate Opens: mark Embercoil arrival.
+  // The Embercoil Gate Opens / The Coil Remembers: mark Embercoil arrival.
   useEffect(() => {
     if (!character) return;
     if (character.continentId !== "embercoil") return;
     const embercoil = applyEmbercoilReached(loadQuestLog());
-    if (!embercoil) return;
-    saveQuestLog(embercoil.log);
-    if (embercoil.toast) {
-      setToast(embercoil.toast);
-      window.setTimeout(() => setToast((t) => (t === embercoil.toast ? null : t)), 2800);
+    if (embercoil) {
+      saveQuestLog(embercoil.log);
+      if (embercoil.toast) {
+        setToast(embercoil.toast);
+        window.setTimeout(() => setToast((t) => (t === embercoil.toast ? null : t)), 2800);
+      }
+      return;
+    }
+    const coil = applyCoilReached(loadQuestLog());
+    if (!coil) return;
+    saveQuestLog(coil.log);
+    if (coil.toast) {
+      setToast(coil.toast);
+      window.setTimeout(() => setToast((t) => (t === coil.toast ? null : t)), 2800);
     }
   }, [character]);
 
@@ -1623,7 +1686,19 @@ export function GameApp() {
         next = setGold(next, next.gold + EMBERCOIL_REWARDS.gold);
         next = { ...next, skillXp: { ...next.skillXp } };
         queueMicrotask(() => {
-          showToast(EMBERCOIL_COMPLETE_LINE);
+          showToast(
+            result.startedCoil ? COIL_START_TOAST : EMBERCOIL_COMPLETE_LINE,
+          );
+          setSkillTick((t) => t + 1);
+        });
+      } else if (result.completedId === COIL_QUEST_ID) {
+        next = awardCombatXp(next, COIL_REWARDS.combatXp);
+        next = { ...next, skillXp: { ...next.skillXp } };
+        awardSkillXp(next, COIL_REWARDS.skill, COIL_REWARDS.skillXp);
+        next = setGold(next, next.gold + COIL_REWARDS.gold);
+        next = { ...next, skillXp: { ...next.skillXp } };
+        queueMicrotask(() => {
+          showToast(COIL_COMPLETE_LINE);
           setSkillTick((t) => t + 1);
         });
       } else if (result.toast) {
@@ -1957,6 +2032,7 @@ export function GameApp() {
       paleQuest={getPaleQuest(loadQuestLog())}
       ashenQuest={getAshenQuest(loadQuestLog())}
       embercoilQuest={getEmbercoilQuest(loadQuestLog())}
+      coilQuest={getCoilQuest(loadQuestLog())}
       onVitals={handleVitals}
       onPlayerDeath={handlePlayerDeath}
       onPassivePrimary={(amount) => {

@@ -433,3 +433,61 @@ export function ensureEmberHounds(
   }
   return enemies;
 }
+
+/** Guarantee Ash-voles on Embercoil while The Coil Remembers is sticky. */
+export function ensureCoilVoles(
+  enemies: Enemy[],
+  map: WorldMap,
+  continentId: ContinentId,
+  blockedTiles: { x: number; y: number }[],
+  need: number,
+): Enemy[] {
+  if (map.kind !== "overworld" || continentId !== "embercoil") return enemies;
+  const have = enemies.filter((e) => e.kind.id === "ash-vole" && e.hp > 0).length;
+  const extra = Math.max(0, need - have);
+  if (extra === 0) return enemies;
+
+  const rng = rngFrom(`${WORLD_SEED}|foes|hunt|coil-remembers|embercoil`);
+  const blocked = new Set(blockedTiles.map((t) => `${t.x},${t.y}`));
+  for (const e of enemies) {
+    blocked.add(`${Math.floor(e.x / TILE)},${Math.floor(e.y / TILE)}`);
+  }
+  let serial = enemies.length;
+  for (let i = 0; i < extra; i++) {
+    const pos = tryPlaceOpen(rng, map, blocked, 6);
+    if (!pos) continue;
+    enemies.push(
+      makeEnemy("ash-vole", pos.x, pos.y, `pad-ash-vole-${serial++}`, rng() * 2),
+    );
+  }
+  return enemies;
+}
+
+/** Light Gorse Fox pad on Embercoil while The Coil Remembers is sticky. */
+export function ensureCoilFoxes(
+  enemies: Enemy[],
+  map: WorldMap,
+  continentId: ContinentId,
+  blockedTiles: { x: number; y: number }[],
+  need: number,
+): Enemy[] {
+  if (map.kind !== "overworld" || continentId !== "embercoil") return enemies;
+  const have = enemies.filter((e) => e.kind.id === "gorse-fox" && e.hp > 0).length;
+  const extra = Math.max(0, need - have);
+  if (extra === 0) return enemies;
+
+  const rng = rngFrom(`${WORLD_SEED}|foes|hunt|coil-fox|embercoil`);
+  const blocked = new Set(blockedTiles.map((t) => `${t.x},${t.y}`));
+  for (const e of enemies) {
+    blocked.add(`${Math.floor(e.x / TILE)},${Math.floor(e.y / TILE)}`);
+  }
+  let serial = enemies.length;
+  for (let i = 0; i < extra; i++) {
+    const pos = tryPlaceOpen(rng, map, blocked, 6);
+    if (!pos) continue;
+    enemies.push(
+      makeEnemy("gorse-fox", pos.x, pos.y, `pad-gorse-fox-${serial++}`, rng() * 2),
+    );
+  }
+  return enemies;
+}
