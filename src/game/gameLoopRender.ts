@@ -69,6 +69,7 @@ import {
   getEmbercoilQuest,
   getCoilQuest,
   getChoirRemembersQuest,
+  getEdgeRemembersQuest,
   isAshveilActive,
   isGreenGateActive,
   isSpineActive,
@@ -77,6 +78,7 @@ import {
   isEmbercoilActive,
   isCoilActive,
   isChoirRemembersActive,
+  isEdgeRemembersActive,
   loadQuestLog,
   notifyQuestUi,
   saveQuestLog,
@@ -107,6 +109,7 @@ const ASHEN_IDENTIFY_TILES = 3.6;
 const EMBERCOIL_IDENTIFY_TILES = 3.6;
 const COIL_IDENTIFY_TILES = 3.6;
 const CHOIR_REMEMBERS_IDENTIFY_TILES = 3.6;
+const EDGE_REMEMBERS_IDENTIFY_TILES = 3.6;
 
 /** Chamber reach + Ember Identify without patching assembled gameLoop. */
 function tickAshveilField(
@@ -345,6 +348,33 @@ function tickChoirRemembersField(
   }
 }
 
+/** Ash-vole Identify on Thornreach without patching assembled gameLoop. */
+function tickEdgeRemembersField(
+  player: { x: number; y: number },
+  map: WorldMap,
+  enemies: Enemy[],
+): void {
+  if (!isEdgeRemembersActive(loadQuestLog())) return;
+  const log = loadQuestLog();
+  const q = getEdgeRemembersQuest(log);
+  if (!q || q.status !== "active" || q.identifiedVole) return;
+  if (map.kind !== "overworld" || map.continentId !== "thornreach") return;
+
+  for (const e of enemies) {
+    if (e.ai === "dead" || e.hp <= 0) continue;
+    if (e.kind.id !== "ash-vole") continue;
+    const dist = Math.hypot(e.x - player.x, e.y - player.y) / TILE;
+    if (dist <= EDGE_REMEMBERS_IDENTIFY_TILES) {
+      const result = applyIdentify(loadQuestLog(), "ash-vole", "thornreach");
+      if (result) {
+        saveQuestLog(result.log);
+        notifyQuestUi(result.toast);
+      }
+      break;
+    }
+  }
+}
+
 export function advanceCameraAndRender(args: {
   ctx: CanvasRenderingContext2D;
   canvas: HTMLCanvasElement;
@@ -532,6 +562,7 @@ export function advanceCameraAndRender(args: {
   tickEmbercoilField(player, map, enemies);
   tickCoilField(player, map, enemies);
   tickChoirRemembersField(player, map, enemies);
+  tickEdgeRemembersField(player, map, enemies);
   const objective = resolveQuestObjective(player, enemies, folk, map);
   const radarDots = collectRadarDots(player, enemies, folk, docks, map, objective);
   drawCompass(ctx, viewW);

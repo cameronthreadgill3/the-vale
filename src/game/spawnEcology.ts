@@ -549,3 +549,61 @@ export function ensureChoirHounds(
   }
   return enemies;
 }
+
+/** Guarantee Ash-voles on Thornreach while The Edge Remembers is sticky. */
+export function ensureEdgeVoles(
+  enemies: Enemy[],
+  map: WorldMap,
+  continentId: ContinentId,
+  blockedTiles: { x: number; y: number }[],
+  need: number,
+): Enemy[] {
+  if (map.kind !== "overworld" || continentId !== "thornreach") return enemies;
+  const have = enemies.filter((e) => e.kind.id === "ash-vole" && e.hp > 0).length;
+  const extra = Math.max(0, need - have);
+  if (extra === 0) return enemies;
+
+  const rng = rngFrom(`${WORLD_SEED}|foes|hunt|edge-remembers|thornreach`);
+  const blocked = new Set(blockedTiles.map((t) => `${t.x},${t.y}`));
+  for (const e of enemies) {
+    blocked.add(`${Math.floor(e.x / TILE)},${Math.floor(e.y / TILE)}`);
+  }
+  let serial = enemies.length;
+  for (let i = 0; i < extra; i++) {
+    const pos = tryPlaceOpen(rng, map, blocked, 6);
+    if (!pos) continue;
+    enemies.push(
+      makeEnemy("ash-vole", pos.x, pos.y, `pad-ash-vole-${serial++}`, rng() * 2),
+    );
+  }
+  return enemies;
+}
+
+/** Light Bark Hound pad on Thornreach while The Edge Remembers is sticky. */
+export function ensureEdgeHounds(
+  enemies: Enemy[],
+  map: WorldMap,
+  continentId: ContinentId,
+  blockedTiles: { x: number; y: number }[],
+  need: number,
+): Enemy[] {
+  if (map.kind !== "overworld" || continentId !== "thornreach") return enemies;
+  const have = enemies.filter((e) => e.kind.id === "bark-hound" && e.hp > 0).length;
+  const extra = Math.max(0, need - have);
+  if (extra === 0) return enemies;
+
+  const rng = rngFrom(`${WORLD_SEED}|foes|hunt|edge-hound|thornreach`);
+  const blocked = new Set(blockedTiles.map((t) => `${t.x},${t.y}`));
+  for (const e of enemies) {
+    blocked.add(`${Math.floor(e.x / TILE)},${Math.floor(e.y / TILE)}`);
+  }
+  let serial = enemies.length;
+  for (let i = 0; i < extra; i++) {
+    const pos = tryPlaceOpen(rng, map, blocked, 6);
+    if (!pos) continue;
+    enemies.push(
+      makeEnemy("bark-hound", pos.x, pos.y, `pad-bark-hound-${serial++}`, rng() * 2),
+    );
+  }
+  return enemies;
+}
