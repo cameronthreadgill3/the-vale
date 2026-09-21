@@ -1,4 +1,7 @@
-/** Procedural 4x4 class walk sheets (stand-ins). Rows S/W/E/N, cols walk frames. */
+/**
+ * Procedural 4×4 class walk sheets — chunky outlined pixel figures
+ * (original Vale art, Tibia-adjacent proportions — NOT CipSoft sprites).
+ */
 import type { ClassId } from "@/game/classes";
 
 export const FRAME = 32;
@@ -19,8 +22,8 @@ const P: Record<ClassId, { a: string; b: string; c: string }> = {
 };
 
 const SKIN = "#d4a574";
-const BOOT = "#3a3228";
-const OUT = "#1a1814";
+const BOOT = "#2a2218";
+const OUT = "#0e0c0a";
 const STEEL = "#8a929a";
 const WOOD = "#6b4423";
 
@@ -31,157 +34,134 @@ function spread(frame: number): number {
   return frame === 1 ? 2 : frame === 3 ? -2 : 0;
 }
 
-function circ(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, fill: string, stroke?: string): void {
+function rect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, fill: string): void {
   ctx.fillStyle = fill;
-  ctx.beginPath();
-  ctx.arc(x, y, r, 0, Math.PI * 2);
-  ctx.fill();
-  if (stroke) {
-    ctx.strokeStyle = stroke;
-    ctx.lineWidth = 1;
-    ctx.stroke();
-  }
+  ctx.fillRect(Math.floor(x), Math.floor(y), Math.floor(w), Math.floor(h));
 }
 
-function body(ctx: CanvasRenderingContext2D, cx: number, cy: number, facing: Facing, frame: number, color: string, wide = false): void {
+function outlinedRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  fill: string,
+): void {
+  rect(ctx, x - 1, y - 1, w + 2, h + 2, OUT);
+  rect(ctx, x, y, w, h, fill);
+}
+
+function head(ctx: CanvasRenderingContext2D, cx: number, cy: number): void {
+  outlinedRect(ctx, cx - 4, cy - 5, 8, 8, SKIN);
+  rect(ctx, cx - 3, cy - 6, 6, 3, "#3a3028");
+}
+
+function legs(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  facing: Facing,
+  frame: number,
+): void {
   const b = bob(frame);
   const s = spread(frame);
-  const w = wide ? 10 : 8;
-  ctx.fillStyle = BOOT;
   if (facing === "south" || facing === "north") {
-    ctx.fillRect(cx - 4 - s / 2, cy + 6 + b, 3, 6);
-    ctx.fillRect(cx + 1 + s / 2, cy + 6 + b, 3, 6);
+    outlinedRect(ctx, cx - 5 - s / 2, cy + 6 + b, 4, 7, BOOT);
+    outlinedRect(ctx, cx + 1 + s / 2, cy + 6 + b, 4, 7, BOOT);
   } else {
-    ctx.fillRect(cx - 2, cy + 6 + b, 4, 6);
+    outlinedRect(ctx, cx - 2, cy + 6 + b, 5, 7, BOOT);
   }
-  ctx.fillStyle = color;
-  ctx.fillRect(cx - w / 2, cy - 4 + b, w, 11);
-  circ(ctx, cx, cy - 8 + b, 4.5, SKIN, OUT);
 }
 
-function drawClass(ctx: CanvasRenderingContext2D, id: ClassId, cx: number, cy: number, facing: Facing, frame: number): void {
+function torso(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  frame: number,
+  color: string,
+  wide = false,
+): void {
+  const b = bob(frame);
+  const w = wide ? 12 : 10;
+  outlinedRect(ctx, cx - w / 2, cy - 4 + b, w, 12, color);
+}
+
+function drawClass(
+  ctx: CanvasRenderingContext2D,
+  id: ClassId,
+  cx: number,
+  cy: number,
+  facing: Facing,
+  frame: number,
+): void {
   const p = P[id];
   const b = bob(frame);
   const side = facing === "west" ? -1 : 1;
 
   if (id === "hollowborn") {
     const s = spread(frame);
-    ctx.fillStyle = p.c;
     if (facing === "south" || facing === "north") {
-      ctx.fillRect(cx - 4 - s / 2, cy + 5 + b, 3, 7);
-      ctx.fillRect(cx + 1 + s / 2, cy + 5 + b, 3, 7);
-    } else ctx.fillRect(cx - 2, cy + 5 + b, 4, 7);
-    ctx.fillStyle = p.a;
-    ctx.fillRect(cx - 5, cy - 3 + b, 10, 9);
-    ctx.fillStyle = p.b;
-    ctx.fillRect(cx - 5, cy + 3 + b, 10, 3);
-    circ(ctx, cx, cy - 8 + b, 5, p.c, OUT);
-    ctx.fillStyle = p.c;
-    ctx.fillRect(cx + (facing === "west" ? -7 : 6), cy + 1 + b, 3, 3);
+      outlinedRect(ctx, cx - 5 - s / 2, cy + 5 + b, 4, 8, p.c);
+      outlinedRect(ctx, cx + 1 + s / 2, cy + 5 + b, 4, 8, p.c);
+    } else {
+      outlinedRect(ctx, cx - 2, cy + 5 + b, 5, 8, p.c);
+    }
+    outlinedRect(ctx, cx - 6, cy - 3 + b, 12, 10, p.a);
+    rect(ctx, cx - 6, cy + 4 + b, 12, 3, p.b);
+    outlinedRect(ctx, cx - 5, cy - 10 + b, 10, 9, p.c);
+    rect(ctx, cx + (facing === "west" ? -8 : 6), cy + 1 + b, 4, 4, p.c);
     return;
   }
 
-  body(ctx, cx, cy, facing, frame, p.a, id === "thornblade" || id === "warden");
+  legs(ctx, cx, cy, facing, frame);
+  torso(ctx, cx, cy, frame, p.a, id === "thornblade" || id === "warden");
+  head(ctx, cx, cy - 8 + b);
 
   if (id === "pathfinder") {
-    ctx.fillStyle = p.b;
-    ctx.beginPath();
-    ctx.ellipse(cx, cy - 9 + b, 6, 5.5, 0, facing === "north" ? 0 : Math.PI, facing === "north" ? Math.PI * 2 : 0);
-    ctx.fill();
-    if (facing !== "north") ctx.fillRect(cx - 6, cy - 9 + b, 12, 4);
+    // hood
+    outlinedRect(ctx, cx - 6, cy - 12 + b, 12, 6, p.b);
+    if (facing !== "north") rect(ctx, cx - 6, cy - 9 + b, 12, 4, p.b);
+    // bow
     ctx.strokeStyle = WOOD;
     ctx.lineWidth = 2;
     ctx.beginPath();
-    const bx = facing === "west" ? cx - 8 : facing === "east" ? cx + 8 : cx + 7;
-    ctx.arc(bx, cy + b, 6.5, facing === "west" ? Math.PI - 1.1 : -1.1, facing === "west" ? Math.PI + 1.1 : 1.1);
+    const bx = facing === "west" ? cx - 9 : facing === "east" ? cx + 9 : cx + 8;
+    ctx.arc(bx, cy + b, 7, facing === "west" ? Math.PI - 1.1 : -1.1, facing === "west" ? Math.PI + 1.1 : 1.1);
     ctx.stroke();
   } else if (id === "thornblade") {
-    ctx.fillStyle = p.b;
-    ctx.fillRect(cx - 6, cy + 2 + b, 12, 4);
-    ctx.fillStyle = "#2a2218";
-    ctx.fillRect(cx - 4, cy - 12 + b, 8, 3);
-    const sx = facing === "west" ? cx - 9 : facing === "east" ? cx + 9 : cx - 9;
-    circ(ctx, sx, cy + 1 + b, 5, STEEL, "#4a5258");
-    circ(ctx, sx, cy + 1 + b, 2, p.a);
-    ctx.strokeStyle = STEEL;
-    ctx.lineWidth = 2;
-    const hx = facing === "north" || facing === "south" ? cx + 8 : cx + side * 9;
-    ctx.beginPath();
-    ctx.moveTo(hx, cy - 8 + b);
-    ctx.lineTo(hx, cy + 6 + b);
-    ctx.stroke();
+    rect(ctx, cx - 6, cy + 2 + b, 12, 4, p.b);
+    outlinedRect(ctx, cx - 5, cy - 14 + b, 10, 4, "#2a2218");
+    const sx = facing === "west" ? cx - 10 : facing === "east" ? cx + 10 : cx - 10;
+    outlinedRect(ctx, sx - 4, cy - 2 + b, 8, 8, STEEL);
+    rect(ctx, sx - 2, cy + b, 4, 4, p.a);
+    const hx = facing === "north" || facing === "south" ? cx + 9 : cx + side * 10;
+    outlinedRect(ctx, hx - 1, cy - 10 + b, 3, 16, STEEL);
   } else if (id === "hearthmage") {
-    ctx.fillStyle = p.b;
-    ctx.fillRect(cx - 5, cy + 4 + b, 10, 5);
-    ctx.fillStyle = p.a;
-    ctx.beginPath();
-    ctx.moveTo(cx, cy - 20 + b);
-    ctx.lineTo(cx - 7, cy - 10 + b);
-    ctx.lineTo(cx + 7, cy - 10 + b);
-    ctx.closePath();
-    ctx.fill();
-    ctx.fillRect(cx - 8, cy - 11 + b, 16, 3);
-    circ(ctx, cx, cy - 18 + b, 1.5, p.c);
-    const stx = facing === "north" ? cx - 6 : facing === "south" ? cx + 7 : cx + side * 8;
-    ctx.strokeStyle = WOOD;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(stx, cy - 14 + b);
-    ctx.lineTo(stx, cy + 10 + b);
-    ctx.stroke();
-    circ(ctx, stx, cy - 15 + b, 3, "#6a9ad4", p.c);
+    rect(ctx, cx - 5, cy + 4 + b, 10, 5, p.b);
+    // hat
+    outlinedRect(ctx, cx - 8, cy - 12 + b, 16, 4, p.a);
+    rect(ctx, cx - 5, cy - 18 + b, 10, 8, p.a);
+    rect(ctx, cx - 1, cy - 20 + b, 2, 3, p.c);
+    const stx = facing === "north" ? cx - 7 : facing === "south" ? cx + 8 : cx + side * 9;
+    outlinedRect(ctx, stx - 1, cy - 14 + b, 3, 24, WOOD);
+    outlinedRect(ctx, stx - 3, cy - 16 + b, 7, 5, "#6a9ad4");
   } else if (id === "verdant") {
-    ctx.fillStyle = p.c;
-    ctx.fillRect(cx - 5, cy + b, 10, 2);
-    ctx.fillStyle = "#c8a060";
-    ctx.beginPath();
-    ctx.ellipse(cx, cy - 10 + b, 5, 3.5, 0, Math.PI, 0);
-    ctx.fill();
-    const ox = facing === "west" ? -7 : 7;
-    circ(ctx, cx + ox, cy - 2 + b, 2.5, "#b8e090", p.b);
+    rect(ctx, cx - 5, cy + b, 10, 3, p.c);
+    outlinedRect(ctx, cx - 5, cy - 12 + b, 10, 5, "#c8a060");
+    const ox = facing === "west" ? -8 : 8;
+    outlinedRect(ctx, cx + ox - 2, cy - 3 + b, 5, 5, "#b8e090");
   } else if (id === "warden") {
-    ctx.strokeStyle = p.b;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(cx, cy - 3 + b);
-    ctx.lineTo(cx, cy + 5 + b);
-    ctx.moveTo(cx - 3, cy + 1 + b);
-    ctx.lineTo(cx + 3, cy + 1 + b);
-    ctx.stroke();
-    ctx.fillStyle = STEEL;
-    ctx.beginPath();
-    ctx.ellipse(cx, cy - 9 + b, 5.5, 5, 0, Math.PI, 0);
-    ctx.fill();
-    ctx.fillRect(cx - 5.5, cy - 9 + b, 11, 4);
-    if (facing === "south") {
-      ctx.fillStyle = OUT;
-      ctx.fillRect(cx - 3, cy - 8 + b, 6, 2);
-    }
-    const sx = facing === "west" ? cx - 9 : facing === "east" ? cx + 9 : cx - 9;
-    ctx.fillStyle = p.a;
-    ctx.beginPath();
-    ctx.moveTo(sx - 5, cy - 4 + b);
-    ctx.lineTo(sx + 5, cy - 4 + b);
-    ctx.lineTo(sx + 5, cy + 3 + b);
-    ctx.lineTo(sx, cy + 8 + b);
-    ctx.lineTo(sx - 5, cy + 3 + b);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = p.b;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(sx, cy - 2 + b);
-    ctx.lineTo(sx, cy + 5 + b);
-    ctx.moveTo(sx - 3, cy + 1 + b);
-    ctx.lineTo(sx + 3, cy + 1 + b);
-    ctx.stroke();
-    const hx = facing === "north" || facing === "south" ? cx + 8 : cx + side * 9;
-    ctx.strokeStyle = STEEL;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(hx, cy - 8 + b);
-    ctx.lineTo(hx, cy + 6 + b);
-    ctx.stroke();
+    // tabard cross
+    rect(ctx, cx - 1, cy - 2 + b, 3, 8, p.b);
+    rect(ctx, cx - 4, cy + 1 + b, 8, 3, p.b);
+    outlinedRect(ctx, cx - 6, cy - 12 + b, 12, 6, STEEL);
+    if (facing === "south") rect(ctx, cx - 3, cy - 9 + b, 6, 2, OUT);
+    const sx = facing === "west" ? cx - 10 : facing === "east" ? cx + 10 : cx - 10;
+    outlinedRect(ctx, sx - 5, cy - 4 + b, 10, 10, p.a);
+    rect(ctx, sx - 1, cy - 1 + b, 3, 7, p.b);
+    rect(ctx, sx - 3, cy + 1 + b, 7, 3, p.b);
+    const hx = facing === "north" || facing === "south" ? cx + 9 : cx + side * 10;
+    outlinedRect(ctx, hx - 1, cy - 10 + b, 3, 16, STEEL);
   }
 }
 
