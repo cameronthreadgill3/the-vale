@@ -1,7 +1,16 @@
+import { useEffect, useRef, useState } from "react";
 import type { ValeClass } from "@/game/classes";
 import type { ValeCharacter } from "@/game/character";
 import { getItem } from "@/game/items";
 import type { HudState } from "@/game/canvasConstants";
+import {
+  armAudio,
+  isAudioMuted,
+  playToast,
+  setAudioMuted,
+  subscribeAudioMuted,
+  watchOverlayToasts,
+} from "@/game/audio";
 import { LOW_HP_RATIO } from "@/game/combat";
 import {
   TEETH_QUEST_TITLE,
@@ -88,6 +97,7 @@ export function GameShellHud({
   watchlineQuest: WatchlineQuestProgress | null;
   onOpenPack: () => void;
 }) {
+  const [muted, setMuted] = useState(isAudioMuted);
   const quest = activeQuest(
     watchlineQuest,
     mistmereQuest,
@@ -100,6 +110,28 @@ export function GameShellHud({
   const hpLow = hpRatio <= LOW_HP_RATIO;
   const packHeavy = hud.weight >= hud.maxWeight;
   const packHigh = hud.weight / Math.max(1, hud.maxWeight) >= 0.8;
+  const questPing = quest ? `${quest.title}:${quest.lines.join("|")}` : "";
+  const prevQuestPing = useRef<string | null>(null);
+
+  useEffect(() => {
+    armAudio();
+    return subscribeAudioMuted(setMuted);
+  }, []);
+
+  useEffect(() => {
+    const root = document.querySelector(".game-root");
+    if (!root) return;
+    return watchOverlayToasts(root);
+  }, []);
+
+  useEffect(() => {
+    if (prevQuestPing.current === null) {
+      prevQuestPing.current = questPing;
+      return;
+    }
+    if (questPing && questPing !== prevQuestPing.current) playToast();
+    prevQuestPing.current = questPing;
+  }, [questPing]);
 
   return (
     <div className="vale-hud grid w-full grid-cols-[minmax(0,1fr)_auto] items-start gap-2 sm:gap-3">
@@ -214,6 +246,17 @@ export function GameShellHud({
             Safe — no beasts here
           </div>
         )}
+        <button
+          type="button"
+          className="pointer-events-auto mt-0.5 w-full rounded-sm py-1 text-left text-[11px] uppercase tracking-wider text-[#8a9080] hover:text-[#c9a227]"
+          aria-pressed={muted}
+          onClick={() => {
+            armAudio();
+            setAudioMuted(!muted);
+          }}
+        >
+          {muted ? "Sound off" : "Sound on"}
+        </button>
       </div>
     </div>
   );
