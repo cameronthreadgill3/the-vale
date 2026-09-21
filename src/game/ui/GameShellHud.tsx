@@ -4,10 +4,13 @@ import type { HudState } from "@/game/canvasConstants";
 import {
   TEETH_QUEST_TITLE,
   ASHWOOD_QUEST_TITLE,
+  HOLLOW_QUEST_TITLE,
   teethHudLines,
   ashwoodHudLines,
+  hollowHudLines,
   type TeethQuestProgress,
   type AshwoodQuestProgress,
+  type HollowQuestProgress,
 } from "@/game/quests";
 
 export function GameShellHud({
@@ -17,6 +20,7 @@ export function GameShellHud({
   locationLabel,
   teethQuest,
   ashwoodQuest,
+  hollowQuest,
 }: {
   cls: ValeClass;
   character: ValeCharacter;
@@ -24,6 +28,7 @@ export function GameShellHud({
   locationLabel: string;
   teethQuest: TeethQuestProgress | null;
   ashwoodQuest: AshwoodQuestProgress | null;
+  hollowQuest: HollowQuestProgress | null;
 }) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-3">
@@ -52,7 +57,18 @@ export function GameShellHud({
             )}
           </div>
         )}
-        {ashwoodQuest && ashwoodQuest.status === "active" ? (
+        {hollowQuest && hollowQuest.status === "active" ? (
+          <div className="vale-chrome mt-2 max-w-xs rounded-sm px-2.5 py-1.5 text-[10px] leading-relaxed text-[#9aa288] sm:text-xs">
+            <div className="font-display text-[11px] tracking-wide text-[#c9a227] sm:text-xs">
+              {HOLLOW_QUEST_TITLE}
+            </div>
+            <ul className="mt-1 space-y-0.5">
+              {hollowHudLines(hollowQuest).map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+          </div>
+        ) : ashwoodQuest && ashwoodQuest.status === "active" ? (
           <div className="vale-chrome mt-2 max-w-xs rounded-sm px-2.5 py-1.5 text-[10px] leading-relaxed text-[#9aa288] sm:text-xs">
             <div className="font-display text-[11px] tracking-wide text-[#c9a227] sm:text-xs">
               {ASHWOOD_QUEST_TITLE}
