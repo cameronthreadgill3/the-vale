@@ -1,4 +1,4 @@
-/** Draw cached procedural tiles onto the game canvas (pass 3: edges, shores, anim). */
+/** Draw cached procedural tiles onto the game canvas (edges, shores, path contact, anim). */
 import type { BiomePalette } from "@/game/continents";
 import type { GroundTile, WorldMap } from "@/game/world";
 import { TILE } from "@/game/world";
@@ -8,6 +8,8 @@ import {
   getGrassSpillSheet,
   getGrassCornerSheet,
   getHardLipSheet,
+  getPathContactSheet,
+  getHardCornerSheet,
   getTreeDuffSheet,
   getWaterShoreSheet,
   paletteColor,
@@ -94,6 +96,37 @@ function blit(
   ctx.drawImage(sheet, sx, sy, TILE + 1, TILE + 1);
 }
 
+/** Soft contact where turf overhangs a walkway. Light from the north-west. */
+const TURF_OCCLUSION: Record<
+  EdgeDir,
+  { ox: number; oy: number; rx: number; ry: number; alpha: number }
+> = {
+  n: { ox: TILE / 2, oy: 5, rx: 15, ry: 3.4, alpha: 0.18 },
+  w: { ox: 5, oy: TILE / 2 + 2, rx: 3.4, ry: 12, alpha: 0.14 },
+  s: { ox: TILE / 2 + 1, oy: TILE - 4, rx: 14, ry: 2.8, alpha: 0.1 },
+  e: { ox: TILE - 4, oy: TILE / 2 + 2, rx: 2.8, ry: 11, alpha: 0.1 },
+};
+
+const CORNER_OCCLUSION: Record<CornerDir, { ox: number; oy: number }> = {
+  nw: { ox: 7, oy: 7 },
+  ne: { ox: TILE - 6, oy: 8 },
+  sw: { ox: 8, oy: TILE - 5 },
+  se: { ox: TILE - 5, oy: TILE - 4 },
+};
+
+function drawTurfOcclusion(
+  ctx: CanvasRenderingContext2D,
+  sx: number,
+  sy: number,
+  hit: Record<EdgeDir, boolean>,
+): void {
+  for (const dir of ["n", "w", "s", "e"] as const) {
+    if (!hit[dir]) continue;
+    const o = TURF_OCCLUSION[dir];
+    drawSoftShadow(ctx, sx + o.ox, sy + o.oy, o.rx, o.ry, o.alpha);
+  }
+}
+
 export function drawTile(
   ctx: CanvasRenderingContext2D,
   kind: GroundTile,
@@ -155,14 +188,34 @@ export function drawTile(
     }
   } else if (SPILL_ON.has(kind)) {
     const gColor = paletteColor(pal, "grass");
+    const turfHit: Record<EdgeDir, boolean> = { n: false, s: false, e: false, w: false };
+    const walkway = kind === "path" || kind === "cobble" || kind === "dirt";
     for (const { dir, dx, dy } of CARDINALS) {
       const n = neighbor(map, tx, ty, dx, dy);
       if (n && GRASS.has(n)) {
-        if (kind === "path" || kind === "cobble" || kind === "dirt") {
+        turfHit[dir] = true;
+        if (walkway) {
           blit(ctx, getHardLipSheet(color, dir, variant) as CanvasImageSource, sx, sy);
+          blit(ctx, getPathContactSheet(color, dir, variant) as CanvasImageSource, sx, sy);
         }
-        blit(ctx, getGrassSpillSheet(gColor, dir, variant) as CanvasImageSource, sx, sy);
       }
+    }
+    if (walkway) {
+      // Soft contact under the blades so the lip highlight stays readable.
+      drawTurfOcclusion(ctx, sx, sy, turfHit);
+      for (const { corner, dx, dy, a, b } of CORNERS) {
+        if (turfHit[a] || turfHit[b]) continue;
+        const n = neighbor(map, tx, ty, dx, dy);
+        if (n && GRASS.has(n)) {
+          blit(ctx, getHardCornerSheet(color, corner, variant) as CanvasImageSource, sx, sy);
+          const o = CORNER_OCCLUSION[corner];
+          drawSoftShadow(ctx, sx + o.ox, sy + o.oy, 6, 3.2, 0.13);
+        }
+      }
+    }
+    for (const dir of ["n", "s", "e", "w"] as const) {
+      if (!turfHit[dir]) continue;
+      blit(ctx, getGrassSpillSheet(gColor, dir, variant) as CanvasImageSource, sx, sy);
     }
   }
 

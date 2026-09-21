@@ -4,6 +4,7 @@
  */
 import { TILE, type WorldMap } from "@/game/world";
 import { tileVariantAt } from "@/game/gfx/tiles";
+import { drawSoftShadow } from "@/game/gfx/canvasUtil";
 
 function torchFlicker(timeSec: number, seed: number): number {
   return (
@@ -90,6 +91,10 @@ export function drawAshwoodTint(
       ctx.fillStyle = silver;
       ctx.fillRect(sx - 10, sy - 18, TILE + 20, TILE + 16);
       ctx.globalAlpha = 1;
+      // Flat crown contact under the leaves, south of the silver rim.
+      // Weaker in dense groves so the round umbra still does the pooling.
+      const crown = Math.max(0.1, 0.2 - grove * 0.012);
+      drawSoftShadow(ctx, sx + 18, sy + 16, 20 + Math.min(4, grove), 7, crown);
     }
   }
   ctx.restore();

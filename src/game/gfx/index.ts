@@ -6,6 +6,8 @@ export {
   getGrassSpillSheet,
   getGrassCornerSheet,
   getHardLipSheet,
+  getPathContactSheet,
+  getHardCornerSheet,
   getTreeDuffSheet,
   getWaterShoreSheet,
   getAshwoodCanopySheet,
