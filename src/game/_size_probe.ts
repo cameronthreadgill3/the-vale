@@ -1,0 +1,12 @@
+export const SIZE_TEST = true;
+export const N0 = 0;
+export const N1 = 1;
+export const N2 = 2;
+export const N3 = 3;
+export const N4 = 4;
+export const N5 = 5;
+export const N6 = 6;
+export const N7 = 7;
+export const N8 = 8;
+export const N9 = 9;
+export const N10 = 10;
