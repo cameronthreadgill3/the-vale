@@ -1,7 +1,7 @@
 /**
  * Distinct clothed pixel folk (original Vale art, character polish).
  * Cached per folk-id + color. Labels stay in folkCanvas.
- * Subtle NW/SE volume matching class sheets — outfits stay readable.
+ * Pass 4: outfit silhouettes that don't blur; painted volume kept.
  */
 import { makeCanvas, ctx2d, px, shadeHex, mixHex, paintVolume, drawSoftShadow, addPixelVolume, GROUND_SHADOW_ALPHA } from "@/game/gfx/canvasUtil";
 
@@ -24,6 +24,10 @@ type Look =
   | "choir"
   | "pilgrim"
   | "captain"
+  | "crafter"
+  | "lantern"
+  | "scribe"
+  | "cooper"
   | "generic";
 
 const LOOK_BY_ID: Record<string, Look> = {
@@ -38,6 +42,10 @@ const LOOK_BY_ID: Record<string, Look> = {
   "choir-keeper": "choir",
   "ash-pilgrim": "pilgrim",
   "nightglass-pilot": "captain",
+  "sera-kettle": "crafter",
+  "liska-ash": "lantern",
+  "wren-quill": "scribe",
+  "bram-cooper": "cooper",
 };
 
 function lookFor(folkId: string | undefined): Look {
@@ -95,10 +103,11 @@ function head(
   px(ctx, 13, 6, OUT, 6, 7);
   px(ctx, 14, 7, SKIN, 4, 5);
   paintVolume(ctx, 14, 7, 4, 5, SKIN, 1.14, 0.8);
-  px(ctx, 15, 9, SKIN_D, 2, 1);
-  px(ctx, 14, 10, SKIN_D, 1, 1);
-  px(ctx, 15, 8, "#3a2418", 1, 1);
-  px(ctx, 16, 8, "#3a2418", 1, 1);
+  px(ctx, 15, 10, SKIN_D, 2, 1);
+  px(ctx, 14, 8, "#1a1410", 2, 2);
+  px(ctx, 16, 8, "#1a1410", 2, 2);
+  px(ctx, 14, 8, "#f4eee4", 1, 1);
+  px(ctx, 16, 8, "#f4eee4", 1, 1);
   px(ctx, 13, 5, hair, 6, 3);
   paintVolume(ctx, 13, 5, 6, 3, hair, 1.18, 0.72);
   px(ctx, 13, 6, hair, 2, 3);
@@ -134,6 +143,9 @@ function paintWatch(ctx: CanvasRenderingContext2D, color: string): void {
   px(ctx, 22, 3, "#8a929a", 4, 4);
   paintVolume(ctx, 22, 3, 4, 4, "#8a929a", 1.2, 0.72);
   px(ctx, 12, 17, "#c9a227", 8, 1);
+  px(ctx, 6, 14, "#6b4423", 4, 8);
+  paintVolume(ctx, 6, 14, 4, 8, "#8a929a", 1.18, 0.7);
+  px(ctx, 7, 16, "#c9a227", 2, 2);
 }
 
 function paintShop(ctx: CanvasRenderingContext2D, color: string): void {
@@ -148,6 +160,9 @@ function paintShop(ctx: CanvasRenderingContext2D, color: string): void {
   // coin pouch
   px(ctx, 20, 19, "#6b4423", 3, 3);
   paintVolume(ctx, 20, 19, 3, 3, "#6b4423", 1.16, 0.74);
+  // loaf
+  px(ctx, 8, 18, "#c97a4a", 4, 3);
+  paintVolume(ctx, 8, 18, 4, 3, "#c97a4a", 1.16, 0.78);
 }
 
 function paintHealer(ctx: CanvasRenderingContext2D, color: string): void {
@@ -162,6 +177,8 @@ function paintHealer(ctx: CanvasRenderingContext2D, color: string): void {
   px(ctx, 8, 16, "#6b4423", 4, 5);
   paintVolume(ctx, 8, 16, 4, 5, "#6b4423", 1.16, 0.74);
   px(ctx, 9, 17, "#c9a227", 2, 1);
+  px(ctx, 21, 16, "#8ab87a", 3, 4);
+  px(ctx, 22, 17, "#e8f0e0", 1, 2);
 }
 
 function paintGuide(ctx: CanvasRenderingContext2D, color: string): void {
@@ -171,6 +188,7 @@ function paintGuide(ctx: CanvasRenderingContext2D, color: string): void {
   // straw hat
   px(ctx, 11, 5, "#c9a227", 10, 2);
   paintVolume(ctx, 11, 5, 10, 2, "#c9a227", 1.16, 0.78);
+  px(ctx, 9, 6, "#c9a227", 14, 2);
   px(ctx, 13, 2, "#b89040", 6, 4);
   paintVolume(ctx, 13, 2, 6, 4, "#b89040", 1.18, 0.74);
   // staff
@@ -187,6 +205,8 @@ function paintTide(ctx: CanvasRenderingContext2D, color: string): void {
   px(ctx, 12, 11, "#d8e8f0", 8, 3);
   paintVolume(ctx, 12, 11, 8, 3, "#d8e8f0", 1.14, 0.82);
   px(ctx, 20, 12, "#d8e8f0", 3, 6);
+  px(ctx, 22, 16, "#d8e8f0", 3, 5);
+  px(ctx, 24, 19, "#c8d8e0", 2, 3);
   // fish at hip
   px(ctx, 20, 19, "#c97a4a", 4, 2);
   paintVolume(ctx, 20, 19, 4, 2, "#c97a4a", 1.16, 0.78);
@@ -199,8 +219,12 @@ function paintChoir(ctx: CanvasRenderingContext2D, color: string): void {
   // deep hood hides hair
   px(ctx, 12, 4, dark, 8, 9);
   paintVolume(ctx, 12, 4, 8, 9, dark, 1.16, 0.7);
+  px(ctx, 14, 2, dark, 4, 3);
+  px(ctx, 15, 1, shadeHex(color, 0.35), 2, 2);
   px(ctx, 13, 7, SKIN, 4, 4);
   paintVolume(ctx, 13, 7, 4, 4, SKIN, 1.12, 0.8);
+  px(ctx, 14, 8, "#1a1410", 2, 2);
+  px(ctx, 14, 8, "#f4eee4", 1, 1);
   px(ctx, 12, 4, shadeHex(color, 0.35), 8, 3);
   px(ctx, 11, 6, dark, 2, 6);
   px(ctx, 19, 6, dark, 2, 6);
@@ -223,6 +247,8 @@ function paintPilgrim(ctx: CanvasRenderingContext2D, color: string): void {
   px(ctx, 7, 8, "#5a5048", 2, 18);
   paintVolume(ctx, 7, 8, 2, 18, "#5a5048", 1.14, 0.7);
   px(ctx, 6, 6, "#c97a4a", 4, 3);
+  px(ctx, 5, 4, "#c97a4a", 4, 3);
+  px(ctx, 6, 3, "#e8d0a8", 2, 2);
 }
 
 function paintCaptain(ctx: CanvasRenderingContext2D, color: string): void {
@@ -235,6 +261,11 @@ function paintCaptain(ctx: CanvasRenderingContext2D, color: string): void {
   paintVolume(ctx, 12, 2, 8, 3, "#2a2438", 1.2, 0.7);
   px(ctx, 10, 5, "#1a1814", 3, 2);
   px(ctx, 19, 5, "#1a1814", 3, 2);
+  px(ctx, 9, 4, "#1a1814", 3, 2);
+  px(ctx, 20, 4, "#1a1814", 3, 2);
+  // coat tails
+  px(ctx, 10, 20, dark, 3, 6);
+  px(ctx, 19, 20, dark, 3, 6);
   // sash
   px(ctx, 12, 16, "#c9a227", 8, 2);
   paintVolume(ctx, 12, 16, 8, 2, "#c9a227", 1.16, 0.78);
@@ -246,6 +277,48 @@ function paintGeneric(ctx: CanvasRenderingContext2D, color: string): void {
   body(ctx, color, dark);
   head(ctx, "#3a3028");
   px(ctx, 12, 17, "#c9a227", 8, 1);
+}
+
+function paintCrafter(ctx: CanvasRenderingContext2D, color: string): void {
+  const dark = shadeHex(color, 0.65);
+  body(ctx, color, dark, { skirt: true });
+  head(ctx, "#4a3a28", { bun: true });
+  px(ctx, 13, 14, "#6a5040", 6, 7);
+  paintVolume(ctx, 13, 14, 6, 7, "#6a5040", 1.14, 0.72);
+  px(ctx, 20, 17, "#8a929a", 4, 5);
+  paintVolume(ctx, 20, 17, 4, 5, "#c9a227", 1.16, 0.75);
+  px(ctx, 21, 16, "#e8d070", 2, 2);
+}
+
+function paintLantern(ctx: CanvasRenderingContext2D, color: string): void {
+  const dark = shadeHex(color, 0.6);
+  body(ctx, color, dark);
+  head(ctx, "#3a3020");
+  px(ctx, 21, 10, "#6b4423", 3, 8);
+  px(ctx, 20, 8, "#c97a2a", 5, 5);
+  paintVolume(ctx, 20, 8, 5, 5, "#e8b86a", 1.22, 0.78);
+  px(ctx, 22, 9, "#fff4c8", 2, 2);
+}
+
+function paintScribe(ctx: CanvasRenderingContext2D, color: string): void {
+  const dark = shadeHex(color, 0.65);
+  body(ctx, color, dark);
+  head(ctx, "#2a2418");
+  px(ctx, 8, 15, "#e8e0c8", 5, 6);
+  paintVolume(ctx, 8, 15, 5, 6, "#e8e0c8", 1.12, 0.8);
+  px(ctx, 9, 16, "#6a3a4a", 3, 4);
+  px(ctx, 21, 14, "#2a2418", 2, 6);
+  px(ctx, 20, 13, "#c9a227", 3, 2);
+}
+
+function paintCooper(ctx: CanvasRenderingContext2D, color: string): void {
+  const dark = shadeHex(color, 0.6);
+  body(ctx, color, dark, { pants: "#4a3a28" });
+  head(ctx, "#3a2a18", { beard: true });
+  px(ctx, 20, 16, "#6b4423", 6, 7);
+  paintVolume(ctx, 20, 16, 6, 7, "#6b4423", 1.16, 0.72);
+  px(ctx, 21, 18, "#c9a227", 4, 1);
+  px(ctx, 21, 20, "#c9a227", 4, 1);
 }
 
 function paintFolk(color: string, folkId: string | undefined): Sheet {
@@ -275,6 +348,18 @@ function paintFolk(color: string, folkId: string | undefined): Sheet {
       break;
     case "captain":
       paintCaptain(ctx, color);
+      break;
+    case "crafter":
+      paintCrafter(ctx, color);
+      break;
+    case "lantern":
+      paintLantern(ctx, color);
+      break;
+    case "scribe":
+      paintScribe(ctx, color);
+      break;
+    case "cooper":
+      paintCooper(ctx, color);
       break;
     default:
       paintGeneric(ctx, color);

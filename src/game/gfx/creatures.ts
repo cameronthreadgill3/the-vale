@@ -1,7 +1,7 @@
 /**
  * Original creature pixel sprites for The Vale (character/creature polish).
  * Needle Rat, Bark Hound, Ash-vole, Gorse Fox, Briar Mite, Shade Wisp,
- * Ashveil Ember — 4 walk/bob frames. Painted NW/SE volume on dedicated paints.
+ * Pass 4: sharper silhouettes at play scale; painted volume kept.
  */
 import { makeCanvas, ctx2d, px, shadeHex, paintVolume, drawSoftShadow, addPixelVolume, GROUND_SHADOW_ALPHA } from "@/game/gfx/canvasUtil";
 
@@ -58,6 +58,12 @@ function paintNeedleRat(ctx: CanvasRenderingContext2D, flash: boolean, frame: nu
   px(ctx, 10, 14 + by, shadeHex(ridge, 1.22), 4, 2);
   px(ctx, 12, 13 + by, dark, 2, 2);
   px(ctx, 16, 13 + by, dark, 2, 2);
+  // dorsal needles — the tell vs round vole
+  px(ctx, 10, 8 + by, ridge, 2, 6);
+  px(ctx, 14, 6 + by, dark, 2, 8);
+  px(ctx, 14, 5 + by, ridge, 2, 3);
+  px(ctx, 18, 8 + by, ridge, 2, 5);
+  px(ctx, 11, 9 + by, dark, 1, 4);
   // head / snout
   px(ctx, 19, 11 + by, dark, 10, 10);
   px(ctx, 20, 12 + by, fur, 9, 8);
@@ -66,10 +72,10 @@ function paintNeedleRat(ctx: CanvasRenderingContext2D, flash: boolean, frame: nu
   px(ctx, 26, 15 + by, belly, 5, 4);
   paintVolume(ctx, 26, 15 + by, 5, 4, belly, 1.14, 0.78);
   // needle teeth
-  px(ctx, 28, 16 + by + jaw, tooth, 1, 3);
-  px(ctx, 29, 15 + by + jaw, tooth, 1, 4);
-  px(ctx, 30, 16 + by + jaw, tooth, 1, 3);
-  px(ctx, 27, 17 + by + jaw, tooth, 1, 2);
+  px(ctx, 28, 16 + by + jaw, tooth, 1, 5);
+  px(ctx, 29, 15 + by + jaw, tooth, 1, 6);
+  px(ctx, 30, 16 + by + jaw, tooth, 1, 5);
+  px(ctx, 31, 17 + by + jaw, tooth, 1, 3);
   // whiskers
   px(ctx, 26, 14 + by, "#d8d0c0", 4, 1);
   px(ctx, 26, 18 + by, "#d8d0c0", 3, 1);
@@ -96,7 +102,8 @@ function paintNeedleRat(ctx: CanvasRenderingContext2D, flash: boolean, frame: nu
   px(ctx, 3, 14 + by + tail, dark, 3, 3);
   px(ctx, 2, 11 + by, fur, 3, 4);
   paintVolume(ctx, 2, 11 + by, 3, 4, fur, 1.16, 0.74);
-  px(ctx, 1, 9 + by - tail, ridge, 2, 3);
+  px(ctx, 1, 8 + by - tail, ridge, 2, 4);
+  px(ctx, 0, 5 + by - tail, tooth, 1, 4);
   px(ctx, 7, 13 + by, "#1a1814", 1, 12);
   px(ctx, 8, 24 + by, "#1a1814", 16, 1);
 }
@@ -121,6 +128,10 @@ function paintBarkHound(ctx: CanvasRenderingContext2D, flash: boolean, frame: nu
   // bark plates
   px(ctx, 8, 12 + by + hack, plate, 5, 3);
   paintVolume(ctx, 8, 12 + by + hack, 5, 3, plate, 1.2, 0.75);
+  px(ctx, 7, 6 + by + hack, plate, 6, 6);
+  px(ctx, 8, 5 + by, dark, 4, 3);
+  px(ctx, 13, 5 + by + hack, plate, 6, 6);
+  px(ctx, 14, 4 + by, dark, 4, 3);
   px(ctx, 14, 11 + by + hack, dark, 6, 3);
   px(ctx, 9, 16 + by, plate, 7, 2);
   px(ctx, 12, 18 + by, dark, 5, 2);
@@ -148,21 +159,20 @@ function paintBarkHound(ctx: CanvasRenderingContext2D, flash: boolean, frame: nu
   // legs — lifted paw on stride
   const liftL = frame === 1 ? -2 : 0;
   const liftR = frame === 3 ? -2 : 0;
-  px(ctx, 7 + s, 22 + by + liftL, dark, 3, 7 - liftL);
+  px(ctx, 7 + s, 22 + by + liftL, dark, 4, 7 - liftL);
   px(ctx, 12 - s, 23 + by + liftR, dark, 3, 6 - liftR);
-  px(ctx, 16 + s, 22 + by + liftL, dark, 3, 7 - liftL);
+  px(ctx, 16 + s, 22 + by + liftL, dark, 4, 7 - liftL);
   px(ctx, 21 - s, 23 + by + liftR, dark, 3, 6 - liftR);
   px(ctx, 7 + s, 28 + by, plate, 3, 1);
   px(ctx, 16 + s, 28 + by, plate, 3, 1);
   px(ctx, 7 + s, 28 + by, "#1a1814", 3, 1);
   px(ctx, 16 + s, 28 + by, "#1a1814", 3, 1);
-  // tail
+  // cropped hanging tail (not a fox plume)
   const tw = frame === 3 ? 1 : 0;
-  px(ctx, 3, 14 + by, bark, 4, 4);
-  paintVolume(ctx, 3, 14 + by, 4, 4, bark, 1.16, 0.72);
-  px(ctx, 1, 11 + by - tw, dark, 4, 4);
-  px(ctx, 0, 8 + by, plate, 3, 4);
-  px(ctx, 5, 24 + by, "#1a1814", 18, 1);
+  px(ctx, 2, 16 + by, bark, 4, 5);
+  paintVolume(ctx, 2, 16 + by, 4, 5, bark, 1.16, 0.72);
+  px(ctx, 1, 20 + by + tw, dark, 3, 5);
+  px(ctx, 2, 24 + by, plate, 2, 3);
 }
 
 function paintBriarMite(ctx: CanvasRenderingContext2D, flash: boolean, frame: number): void {
@@ -192,6 +202,11 @@ function paintBriarMite(ctx: CanvasRenderingContext2D, flash: boolean, frame: nu
   px(ctx, 21, 10 + by, thorn, 2, 4);
   px(ctx, 11, 10 + by, thorn, 2, 3);
   px(ctx, 18, 9 + by, thorn, 2, 4);
+  px(ctx, 6, 12 + by, thorn, 3, 2);
+  px(ctx, 23, 12 + by, thorn, 3, 2);
+  px(ctx, 5, 16 + by, dark, 3, 2);
+  px(ctx, 24, 16 + by, dark, 3, 2);
+  px(ctx, 14, 5 + by, thorn, 2, 3);
   // mandibles
   px(ctx, 21 + open, 17 + by, dark, 4, 3);
   px(ctx, 24 + open, 18 + by, "#e8e6d9", 1, 3);
@@ -221,6 +236,8 @@ function paintShadeWisp(ctx: CanvasRenderingContext2D, flash: boolean, frame: nu
   const pulse = frame === 1 || frame === 3 ? 1 : 0;
   // outer flame — darker envelope, hotter NW core (keep diamond, don't flatten)
   px(ctx, 13 + sway, 5 + by, dark, 6, 6);
+  px(ctx, 14 + sway, 2 + by, dark, 4, 5);
+  px(ctx, 15 + sway, 1 + by, hot, 2, 3);
   px(ctx, 11 + sway, 10 + by, dark, 10, 9);
   px(ctx, 9 + sway, 16 + by, dark, 14, 10);
   px(ctx, 14 + sway, 6 + by, dark, 4, 5);
@@ -343,6 +360,8 @@ function paintAshveilEmber(ctx: CanvasRenderingContext2D, flash: boolean, frame:
   px(ctx, 11 + sway, 6 + by, emberH, 2, 2);
   px(ctx, 19 + sway, 6 + by, ember, 3, 4);
   px(ctx, 20 + sway, 5 + by, emberH, 2, 2);
+  px(ctx, 8 + sway, 8 + by, ember, 3, 3);
+  px(ctx, 22 + sway, 7 + by, ember, 3, 3);
   if (pulse || lick) {
     px(ctx, 16 + sway, 2 + by - lick, spark, 1, 2);
     px(ctx, 10 + sway, 5 + by, spark, 1, 2);
@@ -377,6 +396,7 @@ function paintAshVole(ctx: CanvasRenderingContext2D, flash: boolean, frame: numb
   const puff = frame === 1 || frame === 3;
   // chubby oval — lower and rounder than Needle Rat; SE belly, NW back
   px(ctx, 7, 16 + by, dark, 16, 10);
+  px(ctx, 8, 17 + by, dark, 18, 8);
   px(ctx, 9, 15 + by, fur, 13, 9);
   paintVolume(ctx, 9, 15 + by, 13, 9, fur, 1.16, 0.72);
   px(ctx, 10, 17 + by, ash, 10, 3);
@@ -496,6 +516,8 @@ function paintGorseFox(ctx: CanvasRenderingContext2D, flash: boolean, frame: num
   px(ctx, 1, 9 + by - tw, gorseDark, 4, 5);
   px(ctx, 0, 7 + by - tw, gorse, 3, 4);
   paintVolume(ctx, 0, 7 + by - tw, 3, 4, gorse, 1.18, 0.78);
+  px(ctx, 0, 3 + by - tw, gorse, 4, 5);
+  px(ctx, 1, 2 + by - tw, gorseDark, 2, 3);
   px(ctx, 1, 8 + by - tw, gorse, 2, 2);
   px(ctx, 3, 10 + by, gorse, 2, 2);
   px(ctx, 2, 13 + by, gorseDark, 2, 2);

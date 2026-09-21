@@ -107,10 +107,10 @@ export function paintVolume(
   shade = 0.74,
 ): void {
   if (w < 2 || h < 2) return;
-  const hw = Math.max(1, Math.floor(w * 0.42));
-  const hh = Math.max(1, Math.floor(h * 0.3));
-  const sw = Math.max(1, Math.floor(w * 0.36));
-  const sh = Math.max(1, Math.floor(h * 0.34));
+  const hw = Math.max(1, Math.floor(w * 0.46));
+  const hh = Math.max(1, Math.floor(h * 0.34));
+  const sw = Math.max(1, Math.floor(w * 0.38));
+  const sh = Math.max(1, Math.floor(h * 0.36));
   px(ctx, x, y, shadeHex(fill, highlight), hw, hh);
   px(ctx, x + (w - sw), y + (h - sh), shadeHex(fill, shade), sw, sh);
 }
