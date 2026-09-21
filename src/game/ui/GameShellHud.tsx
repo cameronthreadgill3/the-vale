@@ -307,7 +307,7 @@ export function GameShellHud({
             <div className="vale-objective-line">
               {hud.objectiveLabel}
               {typeof hud.objectiveDist === "number" && (
-                <span className="ml-1 font-sans text-[11px] tracking-normal text-[#c8c4b0] sm:text-xs">
+                <span className="vale-objective-dist">
                   · {hud.objectiveDist} tiles
                 </span>
               )}
