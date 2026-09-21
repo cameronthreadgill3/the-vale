@@ -141,6 +141,7 @@ import {
 } from "@/game/travelFares";
 import { maxHpFor, LOW_HP_RATIO, LOW_HP_TOAST } from "@/game/combat";
 import { canCarry, formatDeathToast, toastForCarryFail, DEATH_TOAST_MS } from "@/game/backpack";
+import { formatPickupToast } from "@/game/loot";
 import { clearBodyMarker } from "@/game/bodyMarker";
 import {
   consumePremiumQuery,
@@ -182,6 +183,8 @@ export function GameApp() {
   /** Bumps GameShell remount on death so deadLock / spawn reset even on same continent. */
   const [worldEpoch, setWorldEpoch] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
+  const [lootToast, setLootToast] = useState<string | null>(null);
+  const lootToastGen = useRef(0);
   const lowHpWarnedRef = useRef(false);
   const [dialogue, setDialogue] = useState<{
     name: string;
@@ -249,6 +252,15 @@ export function GameApp() {
   const showToast = useCallback((msg: string, ms = 2200) => {
     setToast(msg);
     window.setTimeout(() => setToast((t) => (t === msg ? null : t)), ms);
+  }, []);
+
+  const showLootToast = useCallback((msg: string, ms = 1800) => {
+    lootToastGen.current += 1;
+    const gen = lootToastGen.current;
+    setLootToast(msg);
+    window.setTimeout(() => {
+      if (lootToastGen.current === gen) setLootToast(null);
+    }, ms);
   }, []);
 
   useEffect(() => {
@@ -1193,16 +1205,22 @@ export function GameApp() {
         next = setGold(next, next.gold + goldGain);
         let leftover = false;
         let leftoverReason: "weight" | "slots" | null = null;
+        const taken: ItemId[] = [];
         if (loot && loot.length > 0) {
           for (const id of loot) {
             const added = tryAddInventoryItem(next, id, 1);
             if (added.ok) {
               next = added.character;
+              taken.push(id);
             } else {
               leftover = true;
               leftoverReason = added.reason;
             }
           }
+        }
+        const pickupLine = formatPickupToast(goldGain, taken);
+        if (pickupLine) {
+          queueMicrotask(() => showLootToast(pickupLine));
         }
         if (leftover) {
           queueMicrotask(() =>
@@ -1217,7 +1235,7 @@ export function GameApp() {
       });
       setSkillTick((t) => t + 1);
     },
-    [showToast],
+    [showLootToast, showToast],
   );
 
   const handleEquip = useCallback(
@@ -1317,6 +1335,7 @@ export function GameApp() {
       arrivedFrom={arrivedFrom}
       shipSpawn={shipSpawn}
       toast={toast}
+      lootToast={lootToast}
       continentName={continent.name}
       inHollow={inHollow}
       hollowIndex={character.hollowIndex}

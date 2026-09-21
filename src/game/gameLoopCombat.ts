@@ -18,6 +18,7 @@ import type { ValeCharacter } from "@/game/character";
 import type { SkillId } from "@/game/skills";
 import type { ItemId } from "@/game/items";
 import { rollLoot, lootFloatLabel } from "@/game/loot";
+import { spawnLootSparkle } from "@/game/lootSparkle";
 import type { MutableRefObject } from "react";
 import type { MouseState } from "@/game/gameLoopPointers";
 import { playHit } from "@/game/audio";
@@ -101,6 +102,7 @@ export function createPlayerAttack(opts: {
         target.kind.goldMin +
         Math.floor(opts.combatRng() * (target.kind.goldMax - target.kind.goldMin + 1));
       pushFloat(target.x, target.y - 22, `+${goldGain}g`, "#c9a227");
+      if (goldGain > 0) spawnLootSparkle(target.x, target.y, "gold");
       const loot = rollLoot(target.kind.id, opts.combatRng);
       loot.forEach((id, i) => {
         pushFloat(
@@ -109,6 +111,7 @@ export function createPlayerAttack(opts: {
           `+${lootFloatLabel(id)}`,
           "#d8c878",
         );
+        spawnLootSparkle(target.x + i * 3, target.y, "item");
       });
       opts.onCombatReward.current(
         target.kind.xpBase,
