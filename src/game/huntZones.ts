@@ -2,7 +2,7 @@
 
 import { TILE, clearArea, type WorldMap } from "@/game/world/types";
 import type { ContinentId } from "@/game/continents";
-import { drawSoftShadow } from "@/game/gfx/canvasUtil";
+import { drawHuntCairnSprite } from "@/game/gfx/cairn";
 
 export type HuntPreyId =
   | "briar-mite"
@@ -181,7 +181,7 @@ export function stampHuntCairnTiles(map: WorldMap): void {
   }
 }
 
-/** Stacked-stone cairn at each hunt-ground center. */
+/** Stacked-stone cairn at each hunt-ground center (cached pixel sheet). */
 export function drawHuntCairns(
   ctx: CanvasRenderingContext2D,
   continentId: ContinentId,
@@ -191,45 +191,6 @@ export function drawHuntCairns(
   for (const z of huntZonesFor(continentId)) {
     const sx = Math.floor((z.cairn.x + 0.5) * TILE - originX);
     const sy = Math.floor((z.cairn.y + 0.5) * TILE - originY);
-    drawSoftShadow(ctx, sx, sy + 6, 12, 5, 0.35);
-    ctx.fillStyle = "#5a564c";
-    ctx.beginPath();
-    ctx.ellipse(sx, sy + 5, 11, 6, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#3a3830";
-    ctx.beginPath();
-    ctx.ellipse(sx - 5, sy + 3, 6, 5, -0.35, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(sx + 6, sy + 2, 5, 4, 0.25, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#8a8680";
-    ctx.beginPath();
-    ctx.ellipse(sx - 1, sy - 2, 6, 5, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#c9c4b8";
-    ctx.beginPath();
-    ctx.ellipse(sx + 1, sy - 6, 4, 3.5, 0.1, 0, Math.PI * 2);
-    ctx.fill();
-    // Tall hunt-post so the cairn reads from the plaza approach.
-    ctx.fillStyle = "#4a3a28";
-    ctx.fillRect(sx - 1, sy - 22, 3, 16);
-    ctx.fillStyle = z.labelColor;
-    ctx.fillRect(sx - 5, sy - 24, 11, 5);
-    ctx.strokeStyle = "#0c0d0b";
-    ctx.lineWidth = 1;
-    ctx.strokeRect(sx - 5, sy - 24, 11, 5);
-    ctx.fillStyle = "#0c0d0b";
-    ctx.font = "700 7px \"IBM Plex Mono\", ui-monospace, monospace";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(`${z.recMin}–${z.recMax}`, sx, sy - 21);
-    // Pale chalk mark on the top stone.
-    ctx.strokeStyle = z.labelColor;
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(sx - 3, sy - 7);
-    ctx.lineTo(sx + 3, sy - 5);
-    ctx.stroke();
+    drawHuntCairnSprite(ctx, sx, sy, z.labelColor, z.recMin, z.recMax);
   }
 }
