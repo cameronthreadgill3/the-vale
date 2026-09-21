@@ -3,12 +3,13 @@
  * More variants, shoreline/grass transitions, animated water + fountain,
  * ashwood trunk vs dense canopy overlay, hollow cave walls with torch flicker.
  * Ground-depth overlays: grass lips, walkway recess, tree duff, inner corners.
+ * Structure-depth: wall under-eave / sill, recessed doorframes, gate arches.
  * Cached OffscreenCanvas / canvas sheets — not redrawn every frame.
  * NOT CipSoft / Tibia assets — handcrafted pixel patterns only.
  */
 import type { BiomePalette } from "@/game/continents";
 import type { GroundTile } from "@/game/world";
-import { makeCanvas, ctx2d, px, shadeHex, mixHex, addPixelVolume } from "@/game/gfx/canvasUtil";
+import { makeCanvas, ctx2d, px, shadeHex, mixHex, addPixelVolume, paintVolume } from "@/game/gfx/canvasUtil";
 
 export const TILE_PX = 32;
 export const TILE_VARIANTS = 8;
@@ -208,24 +209,41 @@ function paintCobbleField(
 function paintWall(ctx: CanvasRenderingContext2D, base: string, variant: number): void {
   const plaster = mixHex(base, "#8a7a5a", 0.55);
   const plasterDark = shadeHex(plaster, 0.72);
+  const plasterLite = shadeHex(plaster, 1.16);
   const timber = mixHex(base, "#3a2a18", 0.5);
   const timberLite = shadeHex(timber, 1.25);
+  const timberDark = shadeHex(timber, 0.58);
   const out = shadeHex(timber, 0.55);
   ctx.fillStyle = plasterDark;
   ctx.fillRect(0, 0, TILE_PX, TILE_PX);
   px(ctx, 1, 1, plaster, 30, 30);
+  paintVolume(ctx, 4, 8, 24, 16, plaster, 1.12, 0.78);
+  // under-eave — roof overhang sits on the north plaster, not a flat card
+  px(ctx, 3, 3, shadeHex(plaster, 0.58), 26, 5);
+  px(ctx, 3, 3, shadeHex(plaster, 0.46), 26, 2);
+  px(ctx, 5, 7, plasterLite, 8, 2);
+  // south sill contact
+  px(ctx, 3, 24, shadeHex(plaster, 0.7), 26, 5);
+  px(ctx, 3, 28, shadeHex(plaster, 0.52), 26, 1);
   px(ctx, 0, 0, timber, TILE_PX, 3);
   px(ctx, 0, 29, timber, TILE_PX, 3);
   px(ctx, 0, 0, timber, 3, TILE_PX);
   px(ctx, 29, 0, timber, 3, TILE_PX);
   px(ctx, 1, 1, timberLite, 30, 1);
+  px(ctx, 1, 1, timberLite, 1, 28);
+  px(ctx, 30, 2, timberDark, 1, 28);
+  px(ctx, 0, 31, timberDark, TILE_PX, 1);
   const by = 12 + (variant % 3);
   px(ctx, 3, by, timber, 26, 3);
   px(ctx, 3, by, timberLite, 26, 1);
+  px(ctx, 3, by + 3, timberDark, 26, 1);
   if (variant % 2 === 0) {
+    px(ctx, 11, 5, timberDark, 10, 8);
     px(ctx, 12, 6, out, 8, 6);
     px(ctx, 13, 7, mixHex(base, "#3a5060", 0.4), 6, 4);
+    px(ctx, 13, 7, shadeHex(mixHex(base, "#3a5060", 0.4), 0.62), 3, 4);
     px(ctx, 16, 7, out, 1, 4);
+    px(ctx, 13, 10, timberDark, 6, 1);
   }
 }
 
@@ -240,6 +258,7 @@ function paintFloor(ctx: CanvasRenderingContext2D, base: string, variant: number
     const shift = ((i + variant) % 2) * 4;
     px(ctx, 0, y, plank, TILE_PX, 8);
     px(ctx, 0, y, plankDark, TILE_PX, 1);
+    px(ctx, 0, y + 7, shadeHex(plank, 0.78), TILE_PX, 1);
     px(ctx, shift, y + 2, plankLite, 8, 1);
     px(ctx, 12 + (variant % 5), y + 5, plankDark, 3, 1);
   }
@@ -248,19 +267,35 @@ function paintFloor(ctx: CanvasRenderingContext2D, base: string, variant: number
 function paintDoor(ctx: CanvasRenderingContext2D, base: string, variant: number): void {
   const plaster = mixHex(base, "#8a7a5a", 0.5);
   const timber = mixHex(base, "#3a2a18", 0.55);
+  const timberLite = shadeHex(timber, 1.22);
+  const timberDark = shadeHex(timber, 0.58);
   const board = mixHex(base, "#6a4a28", 0.4);
   const boardLite = shadeHex(board, 1.2);
+  const boardDark = shadeHex(board, 0.62);
   const floor = mixHex(base, "#5a4830", 0.4);
   ctx.fillStyle = plaster;
   ctx.fillRect(0, 0, TILE_PX, TILE_PX);
+  px(ctx, 0, 0, shadeHex(plaster, 1.12), TILE_PX, 2);
+  px(ctx, TILE_PX - 2, 0, shadeHex(plaster, 0.78), 2, TILE_PX);
   px(ctx, 0, 24, floor, TILE_PX, 8);
-  px(ctx, 4, 2, timber, 24, 28);
-  px(ctx, 6, 4, board, 20, 24);
-  px(ctx, 7, 5, boardLite, 2, 20);
-  px(ctx, 6, 12, timber, 20, 2);
-  px(ctx, 22, 14, "#c9a227", 2, 2);
+  px(ctx, 0, 26, shadeHex(floor, 0.55), TILE_PX, 1);
+  px(ctx, 5, 27, shadeHex(floor, 1.12), 22, 1);
+  // recessed jamb, then timber frame, then boards
+  px(ctx, 4, 1, timberDark, 24, 26);
+  px(ctx, 5, 2, timber, 22, 24);
+  px(ctx, 6, 3, timberLite, 20, 1);
+  px(ctx, 6, 3, timberLite, 1, 22);
+  px(ctx, 25, 4, timberDark, 1, 21);
+  px(ctx, 7, 4, boardDark, 18, 21);
+  px(ctx, 8, 5, board, 16, 19);
+  paintVolume(ctx, 8, 5, 16, 19, board, 1.14, 0.72);
+  px(ctx, 8, 5, boardLite, 2, 17);
+  px(ctx, 8, 13, timber, 16, 2);
+  px(ctx, 8, 15, timberDark, 16, 1);
+  px(ctx, 21, 14, "#c9a227", 2, 2);
   if (variant % 2 === 0) {
-    px(ctx, 20, 4, shadeHex(floor, 1.1), 6, 24);
+    px(ctx, 21, 5, shadeHex(board, 0.32), 3, 19);
+    px(ctx, 21, 5, shadeHex(board, 0.2), 1, 19);
   }
 }
 
@@ -418,13 +453,29 @@ function paintGate(ctx: CanvasRenderingContext2D, base: string, variant: number)
   const dark = shadeHex(base, 0.4);
   const mid = shadeHex(base, 0.75);
   const lite = mixHex(base, "#f0e8c0", 0.4);
-  ctx.fillStyle = dark;
+  const stone = mixHex(base, "#5a4a30", 0.35);
+  const stoneDark = shadeHex(stone, 0.55);
+  const voidC = shadeHex(base, 0.18);
+  ctx.fillStyle = stoneDark;
   ctx.fillRect(0, 0, TILE_PX, TILE_PX);
-  px(ctx, 2, 2, mid, 28, 28);
-  px(ctx, 4, 4, dark, 24, 24);
-  px(ctx, 6, 6, lite, 20, 20);
-  px(ctx, 14, 4, dark, 4, 24);
-  px(ctx, 8, 14, dark, 16, 4);
+  // pillars
+  bevelStone(ctx, 1, 4, 7, 26, mid, dark, lite);
+  bevelStone(ctx, 24, 4, 7, 26, shadeHex(mid, 0.92), dark, lite);
+  px(ctx, 2, 6, lite, 2, 16);
+  px(ctx, 28, 12, shadeHex(dark, 0.85), 2, 16);
+  // arch + under-eave
+  bevelStone(ctx, 3, 1, 26, 8, mid, dark, lite);
+  px(ctx, 8, 2, lite, 16, 2);
+  px(ctx, 8, 7, shadeHex(dark, 0.7), 16, 2);
+  // recessed opening
+  px(ctx, 8, 8, dark, 16, 20);
+  px(ctx, 9, 9, voidC, 14, 18);
+  px(ctx, 9, 9, shadeHex(voidC, 0.55), 5, 18);
+  px(ctx, 9, 9, shadeHex(voidC, 0.4), 14, 3);
+  // iron cross kept as the gold-gate landmark, set back in the opening
+  px(ctx, 14, 10, dark, 4, 16);
+  px(ctx, 10, 15, dark, 12, 4);
+  px(ctx, 15, 11, shadeHex(dark, 1.15), 2, 14);
   px(ctx, 8, 8, base, 2, 2);
   px(ctx, 22, 8, base, 2, 2);
   px(ctx, 8, 22, base, 2, 2);
@@ -433,11 +484,16 @@ function paintGate(ctx: CanvasRenderingContext2D, base: string, variant: number)
     px(ctx, 10, 10, lite, 2, 2);
     px(ctx, 20, 20, lite, 2, 2);
   }
+  // threshold
+  px(ctx, 8, 27, dark, 16, 4);
+  px(ctx, 9, 27, lite, 14, 1);
+  px(ctx, 9, 30, shadeHex(dark, 0.7), 14, 1);
 }
 
 function paintHollowPortal(ctx: CanvasRenderingContext2D, base: string, variant: number): void {
   const stone = mixHex(base, "#1a1814", 0.4);
   const stoneLite = shadeHex(stone, 1.4);
+  const stoneDark = shadeHex(stone, 0.62);
   const voidC = "#08060a";
   const rim = mixHex(base, "#c9a227", 0.3);
   for (let y = 0; y < TILE_PX; y++) {
@@ -445,8 +501,12 @@ function paintHollowPortal(ctx: CanvasRenderingContext2D, base: string, variant:
       px(ctx, x, y, (x + y + variant) & 1 ? stone : shadeHex(stone, 0.82));
     }
   }
-  px(ctx, 5, 6, stoneLite, 22, 22);
+  px(ctx, 5, 6, stoneDark, 22, 22);
+  px(ctx, 6, 7, stoneLite, 20, 2);
+  px(ctx, 6, 7, stoneLite, 2, 18);
   px(ctx, 7, 8, voidC, 18, 18);
+  px(ctx, 8, 9, shadeHex(voidC, 0.55), 6, 16);
+  px(ctx, 8, 9, shadeHex(voidC, 0.4), 16, 3);
   px(ctx, 9, 10, shadeHex(base, 0.45), 14, 14);
   px(ctx, 11, 12, voidC, 10, 12);
   px(ctx, 7, 7, rim, 18, 1);
@@ -454,6 +514,7 @@ function paintHollowPortal(ctx: CanvasRenderingContext2D, base: string, variant:
   px(ctx, 24, 7, rim, 1, 18);
   px(ctx, 7, 24, rim, 18, 1);
   px(ctx, 15, 14, rim, 2, 2);
+  px(ctx, 7, 26, stoneDark, 18, 3);
 }
 
 function paintExit(ctx: CanvasRenderingContext2D, base: string, _variant: number): void {
@@ -461,11 +522,14 @@ function paintExit(ctx: CanvasRenderingContext2D, base: string, _variant: number
   const lite = mixHex(base, "#e8d8a0", 0.45);
   ctx.fillStyle = dark;
   ctx.fillRect(0, 0, TILE_PX, TILE_PX);
-  px(ctx, 4, 4, base, 24, 24);
+  bevelStone(ctx, 4, 4, 24, 24, base, dark, lite);
   px(ctx, 6, 6, lite, 20, 20);
   px(ctx, 8, 8, dark, 16, 16);
+  px(ctx, 9, 9, shadeHex(dark, 0.7), 5, 14);
+  px(ctx, 9, 9, shadeHex(dark, 0.55), 14, 3);
   px(ctx, 10, 10, base, 12, 12);
   px(ctx, 14, 12, lite, 4, 10);
+  px(ctx, 8, 26, shadeHex(dark, 0.7), 16, 2);
 }
 
 function paintTile(
