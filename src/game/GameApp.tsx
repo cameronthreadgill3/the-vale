@@ -248,6 +248,7 @@ import {
   formatDeathToast,
   toastForCarryFail,
   DEATH_TOAST_MS,
+  type DeathToastCopy,
 } from "@/game/backpack";
 import { formatPickupToast } from "@/game/loot";
 import { clearBodyMarker } from "@/game/bodyMarker";
@@ -291,6 +292,7 @@ export function GameApp() {
   /** Bumps GameShell remount on death so deadLock / spawn reset even on same continent. */
   const [worldEpoch, setWorldEpoch] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
+  const [deathToast, setDeathToast] = useState<DeathToastCopy | null>(null);
   const [lootToast, setLootToast] = useState<string | null>(null);
   const lootToastGen = useRef(0);
   const lowHpWarnedRef = useRef(false);
@@ -362,8 +364,17 @@ export function GameApp() {
   }, []);
 
   const showToast = useCallback((msg: string, ms = 2200) => {
+    setDeathToast(null);
     setToast(msg);
     window.setTimeout(() => setToast((t) => (t === msg ? null : t)), ms);
+  }, []);
+
+  const showDeathToast = useCallback((copy: DeathToastCopy) => {
+    setToast(null);
+    setDeathToast(copy);
+    window.setTimeout(() => {
+      setDeathToast((current) => (current === copy ? null : current));
+    }, DEATH_TOAST_MS);
   }, []);
 
   const showLootToast = useCallback((msg: string, ms = 2400) => {
@@ -2390,11 +2401,11 @@ export function GameApp() {
 
   const handlePlayerDeath = useCallback(() => {
     lowHpWarnedRef.current = false;
-    let toastMsg = formatDeathToast(0, []);
+    let toastCopy = formatDeathToast(0, []);
     setCharacter((prev) => {
       if (!prev) return prev;
       const result = applyDeath(prev);
-      toastMsg = formatDeathToast(result.goldLost, result.itemsLost);
+      toastCopy = formatDeathToast(result.goldLost, result.itemsLost);
       return result.character;
     });
     setArrivedFrom(null);
@@ -2408,8 +2419,8 @@ export function GameApp() {
     setMapOpen(false);
     setSkillsOpen(false);
     setWorldEpoch((e) => e + 1);
-    showToast(toastMsg, DEATH_TOAST_MS);
-  }, [showToast]);
+    showDeathToast(toastCopy);
+  }, [showDeathToast]);
 
   if (!character) {
     return <ClassSelectOverlay onPick={pickClass} />;
@@ -2437,6 +2448,7 @@ export function GameApp() {
       arrivedFrom={arrivedFrom}
       shipSpawn={shipSpawn}
       toast={toast}
+      deathToast={deathToast}
       lootToast={lootToast}
       continentName={continent.name}
       inHollow={inHollow}

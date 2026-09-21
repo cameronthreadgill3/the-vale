@@ -162,19 +162,35 @@ export function formatItemLoss(lost: ItemStack[]): string {
     .join(", ");
 }
 
-export function formatDeathToast(goldLost: number, itemsLost: ItemStack[]): string {
-  const lines = [
-    "You fall — respawned at continent spawn.",
-    "Bones mark the fall — walk them to clear.",
-  ];
+/** Structured death / respawn copy so the toast can set type rhythm. Words stay the same. */
+export interface DeathToastCopy {
+  title: string;
+  respawn: string;
+  bones: string;
+  loss: string;
+  safe: string;
+  lostSomething: boolean;
+}
+
+export function formatDeathToast(
+  goldLost: number,
+  itemsLost: ItemStack[],
+): DeathToastCopy {
   const itemPart = formatItemLoss(itemsLost);
   const lost: string[] = [];
   if (goldLost > 0) lost.push(`${goldLost}g carried gold`);
   if (itemPart) lost.push(itemPart);
-  if (lost.length > 0) lines.push(`Lost: ${lost.join(" · ")}`);
-  else lines.push("No carried gold or items lost.");
-  lines.push("Banked gold and items are safe.");
-  return lines.join("\n");
+  const lostSomething = lost.length > 0;
+  return {
+    title: "You fall",
+    respawn: "Respawned at continent spawn.",
+    bones: "Bones mark the fall — walk them to clear.",
+    loss: lostSomething
+      ? `Lost: ${lost.join(" · ")}`
+      : "No carried gold or items lost.",
+    safe: "Banked gold and items are safe.",
+    lostSomething,
+  };
 }
 
 export function summarizeDeathLoss(

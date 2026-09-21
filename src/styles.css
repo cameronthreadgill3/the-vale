@@ -373,6 +373,84 @@ body {
   }
 }
 
+/*
+ * Death / respawn toast — same lip, shade, and type stack as dialogue
+ * and the vault, sized as a notice. Generic toasts stay on .vale-toast.
+ */
+.vale-death-toast {
+  overflow: hidden;
+  text-align: left;
+  color: var(--vale-ink);
+  background:
+    linear-gradient(180deg, rgba(232, 220, 176, 0.09) 0%, transparent 22%),
+    linear-gradient(180deg, rgba(28, 32, 22, 0.97) 0%, rgba(12, 14, 10, 0.96) 100%);
+  border: 1px solid color-mix(in srgb, var(--vale-gold) 40%, #24281c);
+  border-left: 3px solid color-mix(in srgb, var(--vale-gold) 62%, #3a3420);
+  border-radius: 0.5rem;
+  box-shadow:
+    0 0 0 1px #050604,
+    inset 0 1px 0 rgba(244, 236, 210, 0.2),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.62),
+    inset -1px 0 0 rgba(0, 0, 0, 0.4),
+    inset 0 16px 20px rgba(201, 162, 39, 0.045),
+    inset 0 -14px 18px rgba(0, 0, 0, 0.34),
+    0 14px 30px rgba(0, 0, 0, 0.52);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.vale-death-toast::after {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  left: 12px;
+  right: 12px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(201, 162, 39, 0.62),
+    transparent
+  );
+}
+
+.vale-death-respawn {
+  margin: 0.4rem 0 0;
+  font-size: 0.9375rem;
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: 0.012em;
+  color: #f3f0e4;
+}
+
+.vale-death-bones {
+  margin: 0.45rem 0 0;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  letter-spacing: 0.015em;
+  color: #c3c8b4;
+}
+
+.vale-death-loss {
+  margin-top: 0.55rem;
+  padding: 0.4rem 0.65rem;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  letter-spacing: 0.012em;
+  color: #f6e7b0;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.45);
+}
+
+.vale-death-toast[data-loss="none"] .vale-death-loss {
+  color: #b4bba6;
+  text-shadow: none;
+}
+
+.vale-death-toast .vale-screen-hint {
+  margin-top: 0.45rem;
+}
+
 /* Skills / Map dock — recessed tray, raised keys, same lip as the journal. */
 .vale-tab-bar {
   position: relative;

@@ -22,6 +22,8 @@ import { MobileControls, useShowMobileChrome } from "@/game/ui/MobileControls";
 import { QuickSkillCluster } from "@/game/ui/QuickSkillCluster";
 import { CornerTabs } from "@/game/ui/CornerTabs";
 import { GameShellHud } from "@/game/ui/GameShellHud";
+import { DeathToast } from "@/game/ui/DeathToast";
+import type { DeathToastCopy } from "@/game/backpack";
 import { STARTER_TIP, STARTER_TIP_MS } from "@/game/wayfinding";
 import type { EnemyKindId } from "@/game/enemies";
 import type { TeethQuestProgress, AshwoodQuestProgress, HollowQuestProgress, GateWatchQuestProgress, MistmereQuestProgress, WatchlineQuestProgress, AshveilQuestProgress, ChoirCountsQuestProgress, WharfQuestProgress, GreenGateQuestProgress, SpineQuestProgress, PaleQuestProgress, AshenQuestProgress, EmbercoilQuestProgress, CoilQuestProgress, ChoirRemembersQuestProgress, EdgeRemembersQuestProgress, WharfRemembersQuestProgress, MereRemembersQuestProgress, PaleRemembersQuestProgress } from "@/game/quests";
@@ -38,6 +40,7 @@ export function GameShell({
   arrivedFrom,
   shipSpawn,
   toast,
+  deathToast,
   lootToast,
   continentName,
   inHollow,
@@ -120,6 +123,7 @@ export function GameShell({
   arrivedFrom: ContinentId | null;
   shipSpawn: { x: number; y: number } | null;
   toast: string | null;
+  deathToast: DeathToastCopy | null;
   lootToast: string | null;
   continentName: string;
   inHollow: boolean;
@@ -437,13 +441,17 @@ export function GameShell({
         </button>
       )}
 
-      {toast && (
-        <div
-          role="status"
-          className="vale-toast pointer-events-none absolute left-1/2 top-[28%] z-20 w-[min(92vw,22rem)] -translate-x-1/2 whitespace-pre-line px-4 py-2.5 text-center text-sm leading-relaxed text-[#e8e6d9] sm:px-5"
-        >
-          {toast}
-        </div>
+      {deathToast ? (
+        <DeathToast copy={deathToast} />
+      ) : (
+        toast && (
+          <div
+            role="status"
+            className="vale-toast pointer-events-none absolute left-1/2 top-[28%] z-20 w-[min(92vw,22rem)] -translate-x-1/2 whitespace-pre-line px-4 py-2.5 text-center text-sm leading-relaxed text-[#e8e6d9] sm:px-5"
+          >
+            {toast}
+          </div>
+        )
       )}
 
       {lootToast && (
