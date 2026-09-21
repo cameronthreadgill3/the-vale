@@ -5,12 +5,15 @@ import {
   TEETH_QUEST_TITLE,
   ASHWOOD_QUEST_TITLE,
   HOLLOW_QUEST_TITLE,
+  MISTMERE_QUEST_TITLE,
   teethHudLines,
   ashwoodHudLines,
   hollowHudLines,
+  mistmereHudLines,
   type TeethQuestProgress,
   type AshwoodQuestProgress,
   type HollowQuestProgress,
+  type MistmereQuestProgress,
 } from "@/game/quests";
 
 export function GameShellHud({
@@ -21,6 +24,7 @@ export function GameShellHud({
   teethQuest,
   ashwoodQuest,
   hollowQuest,
+  mistmereQuest,
 }: {
   cls: ValeClass;
   character: ValeCharacter;
@@ -29,6 +33,7 @@ export function GameShellHud({
   teethQuest: TeethQuestProgress | null;
   ashwoodQuest: AshwoodQuestProgress | null;
   hollowQuest: HollowQuestProgress | null;
+  mistmereQuest: MistmereQuestProgress | null;
 }) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-3">
@@ -57,7 +62,18 @@ export function GameShellHud({
             )}
           </div>
         )}
-        {hollowQuest && hollowQuest.status === "active" ? (
+        {mistmereQuest && mistmereQuest.status === "active" ? (
+          <div className="vale-chrome mt-2 max-w-xs rounded-sm px-2.5 py-1.5 text-[10px] leading-relaxed text-[#9aa288] sm:text-xs">
+            <div className="font-display text-[11px] tracking-wide text-[#c9a227] sm:text-xs">
+              {MISTMERE_QUEST_TITLE}
+            </div>
+            <ul className="mt-1 space-y-0.5">
+              {mistmereHudLines(mistmereQuest).map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+          </div>
+        ) : hollowQuest && hollowQuest.status === "active" ? (
           <div className="vale-chrome mt-2 max-w-xs rounded-sm px-2.5 py-1.5 text-[10px] leading-relaxed text-[#9aa288] sm:text-xs">
             <div className="font-display text-[11px] tracking-wide text-[#c9a227] sm:text-xs">
               {HOLLOW_QUEST_TITLE}
