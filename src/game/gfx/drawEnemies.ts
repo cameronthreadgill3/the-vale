@@ -6,7 +6,7 @@ import {
   creatureWalkFrame,
   type CreatureKindId,
 } from "@/game/gfx/creatures";
-import { drawSoftShadow, GROUND_SHADOW_ALPHA } from "@/game/gfx/canvasUtil";
+import { drawContactShadow } from "@/game/gfx/contactShadow";
 import type { DepthItem } from "@/game/gfx/depth";
 import { flushDepth } from "@/game/gfx/depth";
 
@@ -15,10 +15,42 @@ function creatureSpriteId(id: string): CreatureKindId {
 }
 
 let _animT = 0;
+let _gfxDt = 1 / 60;
+
+type ShadowTrail = { x: number; y: number; px: number; py: number };
+const _trails = new Map<string, ShadowTrail>();
 
 /** Advance shared creature anim clock (call once per render frame). */
 export function tickEnemyGfx(dt: number): void {
   _animT += dt;
+  _gfxDt = dt;
+}
+
+function creatureDrawSize(id: string, radius: number): number {
+  if (id === "ashveil-ember") return Math.max(40, Math.min(64, Math.round(radius * 3.4)));
+  return Math.max(28, Math.min(56, Math.round(radius * 3.1)));
+}
+
+/** Short lag opposite the step so the blob stays on the ground while the sprite leads. */
+function shadowTrail(id: string, x: number, y: number): { x: number; y: number } {
+  const prev = _trails.get(id);
+  let tx = 0;
+  let ty = 0;
+  if (prev) {
+    const dx = x - prev.px;
+    const dy = y - prev.py;
+    const mag = Math.hypot(dx, dy);
+    if (mag > 0.2 && mag < 48) {
+      const cap = Math.min(2.6, mag * 0.55);
+      tx = (-dx / mag) * cap;
+      ty = (-dy / mag) * cap;
+    }
+    const ease = 1 - Math.exp(-14 * _gfxDt);
+    tx = prev.x + (tx - prev.x) * ease;
+    ty = prev.y + (ty - prev.y) * ease;
+  }
+  _trails.set(id, { x: tx, y: ty, px: x, py: y });
+  return { x: tx, y: ty };
 }
 
 function hashId(id: string): number {
@@ -31,19 +63,35 @@ export function collectEnemyDepthItems(
   enemies: Enemy[],
   originX: number,
   originY: number,
+  groundShift: { x: number; y: number } = { x: 0, y: 0 },
 ): DepthItem[] {
   const items: DepthItem[] = [];
+  const seen = new Set<string>();
   for (const e of enemies) {
+    seen.add(e.id);
     const sx = Math.floor(e.x - originX);
     const sy = Math.floor(e.y - originY);
+    const trail = shadowTrail(e.id, e.x, e.y);
+    const shiftX = groundShift.x + trail.x;
+    const shiftY = groundShift.y + trail.y;
     items.push({
       y: e.y,
       x: e.x,
       draw: (ctx) => {
+        const size = creatureDrawSize(e.kind.id, e.kind.radius);
+        const footY = sy + size * 0.34;
+        const floating = e.kind.id === "shade-wisp";
         if (e.ai === "dead") {
           const fade = Math.max(0, e.corpseT / 1.4);
+          drawContactShadow(
+            ctx,
+            sx + shiftX,
+            footY + shiftY,
+            size * 0.42,
+            size * 0.15,
+            fade * 0.4,
+          );
           ctx.globalAlpha = fade * 0.55;
-          drawSoftShadow(ctx, sx, sy + 4, e.kind.radius * 0.95, e.kind.radius * 0.36, GROUND_SHADOW_ALPHA);
           ctx.fillStyle = e.kind.colorDark;
           ctx.beginPath();
           ctx.ellipse(sx, sy + 2, e.kind.radius * 0.9, e.kind.radius * 0.4, 0, 0, Math.PI * 2);
@@ -58,6 +106,15 @@ export function collectEnemyDepthItems(
           ctx.globalAlpha = 1;
           return;
         }
+        // Wider soft penumbra around the sprite's tighter contact so the oval reads as ground.
+        drawContactShadow(
+          ctx,
+          sx + shiftX,
+          footY + shiftY,
+          size * (floating ? 0.34 : e.kind.id === "ashveil-ember" ? 0.64 : 0.58),
+          size * (floating ? 0.12 : 0.22),
+          floating ? 0.2 : 0.36,
+        );
         const moving = e.ai === "chase" || e.ai === "idle";
         const frame = creatureWalkFrame(_animT + hashId(e.id) * 4, moving);
         drawCreatureSprite(
@@ -73,6 +130,9 @@ export function collectEnemyDepthItems(
         );
       },
     });
+  }
+  for (const id of _trails.keys()) {
+    if (!seen.has(id)) _trails.delete(id);
   }
   return items;
 }
