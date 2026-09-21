@@ -13,10 +13,8 @@ export function ContinentMapPanel({
     <div className="p-3.5">
       <div className="mb-2.5 flex items-center justify-between gap-2">
         <div>
-          <div className="font-display text-sm tracking-wide text-[#c9a227]">
-            Continents
-          </div>
-          <div className="mt-0.5 text-[10px] uppercase tracking-wider text-[#8a9080]">
+          <div className="vale-screen-title">Continents</div>
+          <div className="vale-screen-kicker">
             Discovered via gates · M to close
           </div>
         </div>

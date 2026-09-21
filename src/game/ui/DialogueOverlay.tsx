@@ -20,17 +20,15 @@ export function DialogueOverlay({
   onOpenCraft?: () => void;
 }) {
   return (
-    <div className="vale-panel vale-text-screen pointer-events-auto absolute bottom-24 left-1/2 z-30 w-[min(100%-2rem,26rem)] -translate-x-1/2 px-4 py-3.5 max-md:bottom-8">
-      <div className="font-display text-sm tracking-wide text-[#c9a227]">
-        {name}
-      </div>
-      <p className="mt-2 text-sm leading-[1.65] text-[#e8e6d9]">{line}</p>
-      <div className="mt-3.5 flex flex-wrap justify-end gap-2">
+    <div className="vale-panel vale-text-screen pointer-events-auto absolute bottom-24 left-1/2 z-30 w-[min(100%-2rem,26rem)] -translate-x-1/2 px-4 py-4 max-md:bottom-8">
+      <div className="vale-screen-title">{name}</div>
+      <p className="vale-screen-body">{line}</p>
+      <div className="vale-screen-actions">
         {hasBank && onOpenBank && (
           <button
             type="button"
             onClick={onOpenBank}
-            className="vale-tap vale-ghost-btn px-4 py-2.5 text-sm text-[#c9a227]"
+            className="vale-tap vale-ghost-btn vale-ghost-btn-accent px-4 py-2.5 text-sm"
           >
             Open bank
           </button>
@@ -39,7 +37,7 @@ export function DialogueOverlay({
           <button
             type="button"
             onClick={onOpenShop}
-            className="vale-tap vale-ghost-btn px-4 py-2.5 text-sm"
+            className="vale-tap vale-ghost-btn vale-ghost-btn-accent px-4 py-2.5 text-sm"
           >
             Shop
           </button>
@@ -48,7 +46,7 @@ export function DialogueOverlay({
           <button
             type="button"
             onClick={onOpenCraft}
-            className="vale-tap vale-ghost-btn px-4 py-2.5 text-sm text-[#c9a227]"
+            className="vale-tap vale-ghost-btn vale-ghost-btn-accent px-4 py-2.5 text-sm"
           >
             Craft
           </button>

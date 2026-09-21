@@ -69,10 +69,8 @@ export function SkillsPanel({
     <div className="p-3.5">
       <div className="mb-2.5 flex items-center justify-between gap-2">
         <div>
-          <div className="font-display text-sm tracking-wide text-[#c9a227]">
-            Skills
-          </div>
-          <div className="mt-0.5 text-[10px] uppercase tracking-wider text-[#8a9080]">
+          <div className="vale-screen-title">Skills</div>
+          <div className="vale-screen-kicker">
             Click to train · 1–3 assign a quick slot
           </div>
         </div>
@@ -179,10 +177,8 @@ export function SkillsPanel({
       </ul>
       {professions && professions.length > 0 ? (
         <div className="mt-3.5 border-t border-[#3a3e32]/80 pt-2.5">
-          <div className="font-display text-sm tracking-wide text-[#c9a227]">
-            Professions
-          </div>
-          <div className="mb-2 mt-0.5 text-[10px] uppercase tracking-wider text-[#8a9080]">
+          <div className="vale-screen-title">Professions</div>
+          <div className="vale-screen-kicker mb-2">
             Thornreach lite · gather · fish · kettle
           </div>
           <ul className="flex flex-col gap-1.5">

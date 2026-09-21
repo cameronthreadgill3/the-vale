@@ -34,7 +34,7 @@ export function CornerTabs({
         />
       </div>
       {open && (
-        <div className="vale-surface vale-panel vale-corner-panel pointer-events-auto w-[min(100vw-1.5rem,22rem)] overflow-auto">
+        <div className="vale-text-screen vale-panel vale-corner-panel pointer-events-auto w-[min(100vw-1.5rem,22rem)] overflow-auto">
           {skillsOpen ? skillsPanel : mapPanel}
         </div>
       )}

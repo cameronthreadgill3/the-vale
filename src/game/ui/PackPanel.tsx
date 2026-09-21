@@ -50,13 +50,11 @@ export function PackPanel({
   const equipment = character.equipment ?? emptyEquipment();
 
   return (
-    <div className="vale-panel vale-overlay-above-chrome vale-surface pointer-events-auto absolute bottom-4 left-1/2 z-30 w-[min(100%-2rem,24rem)] -translate-x-1/2 p-3.5 sm:bottom-6">
+    <div className="vale-panel vale-overlay-above-chrome vale-text-screen pointer-events-auto absolute bottom-4 left-1/2 z-30 w-[min(100%-2rem,24rem)] -translate-x-1/2 p-3.5 sm:bottom-6">
       <div className="mb-2 flex items-center justify-between gap-2">
         <div>
-          <div className="font-display text-sm tracking-wide text-[#c9a227]">
-            Pack
-          </div>
-          <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] uppercase tracking-wider text-[#6a7260]">
+          <div className="vale-screen-title">Pack</div>
+          <div className="vale-screen-kicker flex flex-wrap gap-x-3 gap-y-0.5">
             <span>{formatWeightChrome(weight, maxW)}</span>
             <span>{formatSlotsChrome(slots, maxS)}</span>
             {character.premiumBackpack ? <span>Premium</span> : null}
@@ -65,7 +63,7 @@ export function PackPanel({
         <button
           type="button"
           onClick={onClose}
-          className="vale-tap-sm rounded px-3 py-2 text-xs text-[#a8b09a] hover:text-[#e8e6d9]"
+          className="vale-tap-sm vale-ghost-btn px-3 py-2 text-xs text-[#a8b09a]"
         >
           Close
         </button>
@@ -81,9 +79,7 @@ export function PackPanel({
         />
       </div>
 
-      <div className="mb-1 text-[10px] uppercase tracking-wider text-[#6a7260]">
-        Worn
-      </div>
+      <div className="vale-screen-kicker mb-1">Worn</div>
       <ul className="mb-3 flex flex-col gap-1">
         {EQUIP_SLOTS.map((slot) => {
           const id = equipment[slot];
@@ -91,7 +87,7 @@ export function PackPanel({
           return (
             <li
               key={slot}
-              className="flex items-center justify-between gap-2 rounded border border-[#2a2e24]/80 px-2 py-2"
+              className="vale-ledger-line flex items-center justify-between gap-2 px-2 py-2"
             >
               <div className="min-w-0 flex-1">
                 <div className="text-[10px] uppercase tracking-wider text-[#6a7260]">
@@ -122,9 +118,7 @@ export function PackPanel({
         })}
       </ul>
 
-      <div className="mb-1 text-[10px] uppercase tracking-wider text-[#6a7260]">
-        Pack items
-      </div>
+      <div className="vale-screen-kicker mb-1">Pack items</div>
       {character.inventory.length === 0 ? (
         <p className="mb-3 px-1 text-xs text-[#6a7260]">Empty pack.</p>
       ) : (
@@ -135,7 +129,7 @@ export function PackPanel({
             return (
               <li
                 key={stack.id}
-                className="flex items-center justify-between gap-2 rounded px-2 py-1.5 text-xs text-[#e8e6d9]"
+                className="vale-ledger-line flex items-center justify-between gap-2 px-2 py-1.5 text-xs text-[#e8e6d9]"
               >
                 <div className="min-w-0 flex-1">
                   <div className="truncate">
@@ -165,8 +159,8 @@ export function PackPanel({
         </ul>
       )}
 
-      <div className="vale-chrome mb-2 px-3 py-2.5">
-        <div className="font-display text-[11px] tracking-wide text-[#c9a227]">
+      <div className="vale-ledger-line mb-2 px-3 py-2.5">
+        <div className="vale-screen-title vale-screen-title-sm">
           Premium Backpack
         </div>
         {character.premiumBackpack ? (
@@ -207,8 +201,8 @@ export function PackPanel({
         )}
       </div>
 
-      <div className="vale-chrome mb-2 px-3 py-2.5">
-        <div className="font-display text-[11px] tracking-wide text-[#c9a227]">
+      <div className="vale-ledger-line mb-2 px-3 py-2.5">
+        <div className="vale-screen-title vale-screen-title-sm">
           Professions
         </div>
         <div className="mt-1 flex flex-col gap-0.5 text-[10px] text-[#a8b09a]">

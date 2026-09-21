@@ -302,14 +302,12 @@ export function GameShellHud({
           {cls.name}
         </p>
         {hud.objectiveLabel && (
-          <div className="vale-hud-panel vale-chrome mt-2 max-w-xs px-3 py-2 text-[12px] leading-snug text-[#f0d060] sm:text-sm">
-            <div className="text-[10px] uppercase tracking-wider text-[#c9a227]/90">
-              Objective
-            </div>
-            <div className="font-display tracking-wide">
+          <div className="vale-journal mt-2 max-w-xs px-3 py-2.5">
+            <div className="vale-screen-kicker">Objective</div>
+            <div className="vale-objective-line">
               {hud.objectiveLabel}
               {typeof hud.objectiveDist === "number" && (
-                <span className="ml-1 font-sans text-[11px] text-[#c8c4b0] sm:text-xs">
+                <span className="ml-1 font-sans text-[11px] tracking-normal text-[#c8c4b0] sm:text-xs">
                   · {hud.objectiveDist} tiles
                 </span>
               )}
@@ -433,11 +431,9 @@ export function GameShellHud({
 function QuestHudCard({ title, lines }: { title: string; lines: string[] }) {
   const current = lines.findIndex((line) => line.startsWith("[ ]"));
   return (
-    <div className="vale-hud-quest vale-hud-panel vale-chrome pointer-events-auto mt-2 max-w-xs px-3 py-2 text-[11px] leading-[1.55] text-[#d4d0bc] sm:text-xs">
-      <div className="font-display text-[12px] tracking-wide text-[#c9a227] sm:text-sm">
-        {title}
-      </div>
-      <ul className="mt-1.5 space-y-1">
+    <div className="vale-hud-quest vale-journal pointer-events-auto mt-2 max-w-xs px-3 py-2.5">
+      <div className="vale-journal-title">{title}</div>
+      <ul className="vale-journal-steps">
         {lines.map((line, i) => {
           const done = line.startsWith("[done]");
           const isNow = i === current;
@@ -446,13 +442,13 @@ function QuestHudCard({ title, lines }: { title: string; lines: string[] }) {
               key={line}
               className={
                 done
-                  ? "text-[#6a7260]"
+                  ? "vale-journal-step vale-journal-step-done"
                   : isNow
-                    ? "text-[#f0d060]"
-                    : "text-[#d4d0bc]"
+                    ? "vale-journal-step vale-journal-step-now"
+                    : "vale-journal-step"
               }
             >
-              {isNow ? <span className="text-[#c9a227]">▸ </span> : null}
+              {isNow ? <span className="vale-journal-mark">▸ </span> : null}
               {line}
             </li>
           );
