@@ -11,6 +11,7 @@ export {
   objectiveForMistmere,
   objectiveForWatchline,
   objectiveForAshveil,
+  objectiveForChoirCounts,
   tilesAway,
   type WayfindObjective,
   type RadarDot,

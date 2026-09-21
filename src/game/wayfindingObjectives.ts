@@ -1,6 +1,6 @@
 /** Wayfinding objectives + distance helpers. */
 import { TILE, type WorldMap } from "@/game/world";
-import type { FolkDef } from "@/game/folk";
+import { getDock, type FolkDef } from "@/game/folk";
 import type { Enemy } from "@/game/enemies";
 import {
   TEETH_RATS_NEEDED,
@@ -8,6 +8,10 @@ import {
   HOLLOW_WISPS_NEEDED,
   WATCHLINE_CAIRN_ID,
   CRESS_FOLK_ID,
+  OLD_REED_FOLK_ID,
+  CHOIR_KEEPER_FOLK_ID,
+  MISTMERE_PIER_DOCK_ID,
+  CHOIR_LANDING_DOCK_ID,
   getTeethQuest,
   getAshwoodQuest,
   getHollowQuest,
@@ -15,6 +19,7 @@ import {
   getMistmereQuest,
   getWatchlineQuest,
   getAshveilQuest,
+  getChoirCountsQuest,
   isTeethActive,
   isAshwoodActive,
   isHollowActive,
@@ -22,6 +27,7 @@ import {
   isMistmereActive,
   isWatchlineActive,
   isAshveilActive,
+  isChoirCountsActive,
   loadQuestLog,
   type TeethQuestProgress,
   type AshwoodQuestProgress,
@@ -30,6 +36,7 @@ import {
   type MistmereQuestProgress,
   type WatchlineQuestProgress,
   type AshveilQuestProgress,
+  type ChoirCountsQuestProgress,
 } from "@/game/quests";
 import { ASHWOOD_CAIRNS } from "@/game/cairns";
 import { huntZoneById } from "@/game/huntZones";
@@ -60,6 +67,10 @@ export function resolveQuestObjective(
   map: WorldMap,
 ): WayfindObjective | null {
   const log = loadQuestLog();
+  if (isChoirCountsActive(log)) {
+    const q = getChoirCountsQuest(log);
+    if (q) return objectiveForChoirCounts(q, player, folk, map);
+  }
   if (isAshveilActive(log)) {
     const q = getAshveilQuest(log);
     if (q) return objectiveForAshveil(q, player, enemies, folk, map);
@@ -89,6 +100,174 @@ export function resolveQuestObjective(
     if (q) return objectiveForTeeth(q, player, enemies, folk);
   }
   return null;
+}
+
+export function objectiveForChoirCounts(
+  q: ChoirCountsQuestProgress,
+  player: { x: number; y: number },
+  folk: FolkDef[],
+  map: WorldMap,
+): WayfindObjective | null {
+  if (q.status !== "active") return null;
+  const rook = folk.find((f) => f.id === "rook");
+  const reed = folk.find((f) => f.id === OLD_REED_FOLK_ID);
+  const keeper = folk.find((f) => f.id === CHOIR_KEEPER_FOLK_ID);
+
+  if (!q.talkedOldReed) {
+    if (reed) {
+      return {
+        label: "Talk to Old Reed",
+        x: (reed.x + 0.5) * TILE,
+        y: (reed.y + 0.5) * TILE,
+        kind: "folk",
+      };
+    }
+    const gate = continentGateOnMap(map, "mistmere");
+    if (gate) {
+      return {
+        label: "Cross Mistmere gate",
+        x: (gate.x + 0.5) * TILE,
+        y: (gate.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    return {
+      label: "Find Mistmere gate (Thornreach)",
+      x: player.x + TILE * 8,
+      y: player.y - TILE * 2,
+      kind: "landmark",
+    };
+  }
+
+  if (!q.reachedChoir) {
+    if (keeper) {
+      return {
+        label: "Talk to Choir Keeper",
+        x: (keeper.x + 0.5) * TILE,
+        y: (keeper.y + 0.5) * TILE,
+        kind: "folk",
+      };
+    }
+    const landing = dockOnMap(map, CHOIR_LANDING_DOCK_ID);
+    if (landing) {
+      return {
+        label: "Choir Landing",
+        x: (landing.x + 0.5) * TILE,
+        y: (landing.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    const pier = dockOnMap(map, MISTMERE_PIER_DOCK_ID);
+    if (pier) {
+      return {
+        label: "Board Mistmere Pier",
+        x: (pier.x + 0.5) * TILE,
+        y: (pier.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    const toMist = continentGateOnMap(map, "mistmere");
+    if (toMist) {
+      return {
+        label: "Gate to Mistmere Pier",
+        x: (toMist.x + 0.5) * TILE,
+        y: (toMist.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    return {
+      label: "Find Mistmere Pier",
+      x: player.x + TILE * 8,
+      y: player.y + TILE * 4,
+      kind: "landmark",
+    };
+  }
+
+  if (!q.talkedChoirKeeper) {
+    if (keeper) {
+      return {
+        label: "Talk to Choir Keeper",
+        x: (keeper.x + 0.5) * TILE,
+        y: (keeper.y + 0.5) * TILE,
+        kind: "folk",
+      };
+    }
+    const landing = dockOnMap(map, CHOIR_LANDING_DOCK_ID);
+    if (landing) {
+      return {
+        label: "Choir Landing / Choir Keeper",
+        x: (landing.x + 0.5) * TILE,
+        y: (landing.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    const pier = dockOnMap(map, MISTMERE_PIER_DOCK_ID);
+    if (pier) {
+      return {
+        label: "Sail to Choir Landing",
+        x: (pier.x + 0.5) * TILE,
+        y: (pier.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    const toMist = continentGateOnMap(map, "mistmere");
+    if (toMist) {
+      return {
+        label: "Gate to Mistmere Pier",
+        x: (toMist.x + 0.5) * TILE,
+        y: (toMist.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    return {
+      label: "Find Choir Keeper (Choir Landing)",
+      x: player.x + TILE * 6,
+      y: player.y,
+      kind: "landmark",
+    };
+  }
+
+  if (rook) {
+    return {
+      label: "Return to Rook",
+      x: (rook.x + 0.5) * TILE,
+      y: (rook.y + 0.5) * TILE,
+      kind: "folk",
+    };
+  }
+  const home = continentGateOnMap(map, "thornreach");
+  if (home) {
+    return {
+      label: "Gate back to Rook (Thornreach)",
+      x: (home.x + 0.5) * TILE,
+      y: (home.y + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  const toMistHome = continentGateOnMap(map, "mistmere");
+  if (toMistHome) {
+    return {
+      label: "Gate toward Rook (Mistmere)",
+      x: (toMistHome.x + 0.5) * TILE,
+      y: (toMistHome.y + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  const landingHome = dockOnMap(map, CHOIR_LANDING_DOCK_ID);
+  if (landingHome) {
+    return {
+      label: "Sail toward Rook (Mistmere)",
+      x: (landingHome.x + 0.5) * TILE,
+      y: (landingHome.y + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  return {
+    label: "Return to Rook (Thornreach)",
+    x: player.x + TILE * 8,
+    y: player.y - TILE * 2,
+    kind: "landmark",
+  };
 }
 
 export function objectiveForWatchline(
@@ -456,6 +635,16 @@ function continentGateOnMap(
   if (!map.gates || map.gates.length === 0) return null;
   const g = map.gates.find((x) => x.targetContinentId === targetContinentId);
   return g ? { x: g.x, y: g.y } : null;
+}
+
+function dockOnMap(
+  map: WorldMap,
+  dockId: string,
+): { x: number; y: number } | null {
+  if (map.kind !== "overworld") return null;
+  const dock = getDock(dockId);
+  if (!dock || dock.continentId !== map.continentId) return null;
+  return { x: dock.x, y: dock.y };
 }
 
 export function objectiveForHollow(

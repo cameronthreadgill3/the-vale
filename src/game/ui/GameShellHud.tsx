@@ -22,6 +22,7 @@ import {
   MISTMERE_QUEST_TITLE,
   WATCHLINE_QUEST_TITLE,
   ASHVEIL_QUEST_TITLE,
+  CHOIR_COUNTS_QUEST_TITLE,
   teethHudLines,
   ashwoodHudLines,
   hollowHudLines,
@@ -29,6 +30,7 @@ import {
   mistmereHudLines,
   watchlineHudLines,
   ashveilHudLines,
+  choirCountsHudLines,
   type TeethQuestProgress,
   type AshwoodQuestProgress,
   type HollowQuestProgress,
@@ -36,6 +38,7 @@ import {
   type MistmereQuestProgress,
   type WatchlineQuestProgress,
   type AshveilQuestProgress,
+  type ChoirCountsQuestProgress,
 } from "@/game/quests";
 
 function equippedLine(character: ValeCharacter): string {
@@ -49,6 +52,7 @@ function equippedLine(character: ValeCharacter): string {
 }
 
 function activeQuest(
+  choirCountsQuest: ChoirCountsQuestProgress | null,
   ashveilQuest: AshveilQuestProgress | null,
   watchlineQuest: WatchlineQuestProgress | null,
   mistmereQuest: MistmereQuestProgress | null,
@@ -57,6 +61,9 @@ function activeQuest(
   ashwoodQuest: AshwoodQuestProgress | null,
   teethQuest: TeethQuestProgress | null,
 ): { title: string; lines: string[] } | null {
+  if (choirCountsQuest?.status === "active") {
+    return { title: CHOIR_COUNTS_QUEST_TITLE, lines: choirCountsHudLines(choirCountsQuest) };
+  }
   if (ashveilQuest?.status === "active") {
     return { title: ASHVEIL_QUEST_TITLE, lines: ashveilHudLines(ashveilQuest) };
   }
@@ -93,6 +100,7 @@ export function GameShellHud({
   mistmereQuest,
   watchlineQuest,
   ashveilQuest,
+  choirCountsQuest,
   onOpenPack,
 }: {
   cls: ValeClass;
@@ -106,10 +114,12 @@ export function GameShellHud({
   mistmereQuest: MistmereQuestProgress | null;
   watchlineQuest: WatchlineQuestProgress | null;
   ashveilQuest: AshveilQuestProgress | null;
+  choirCountsQuest: ChoirCountsQuestProgress | null;
   onOpenPack: () => void;
 }) {
   const [muted, setMuted] = useState(isAudioMuted);
   const quest = activeQuest(
+    choirCountsQuest,
     ashveilQuest,
     watchlineQuest,
     mistmereQuest,

@@ -50,6 +50,9 @@ import {
   ASHVEIL_START_TOAST,
   ASHVEIL_REWARDS,
   ASHVEIL_COMPLETE_LINE,
+  CHOIR_COUNTS_START_TOAST,
+  CHOIR_COUNTS_REWARDS,
+  CHOIR_COUNTS_COMPLETE_LINE,
   TEETH_QUEST_ID,
   ASHWOOD_QUEST_ID,
   HOLLOW_QUEST_ID,
@@ -57,7 +60,10 @@ import {
   MISTMERE_QUEST_ID,
   WATCHLINE_QUEST_ID,
   ASHVEIL_QUEST_ID,
+  CHOIR_COUNTS_QUEST_ID,
   CRESS_FOLK_ID,
+  OLD_REED_FOLK_ID,
+  CHOIR_KEEPER_FOLK_ID,
   emptyTeethQuest,
   getTeethQuest,
   getAshwoodQuest,
@@ -66,6 +72,7 @@ import {
   getMistmereQuest,
   getWatchlineQuest,
   getAshveilQuest,
+  getChoirCountsQuest,
   applyIdentify,
   applyEnemyKill,
   applyCairnInspect,
@@ -78,6 +85,11 @@ import {
   applyWatchlineCressTalk,
   applyWatchlineRookTalk,
   applyAshveilRookTalk,
+  applyChoirCountsMistmereReached,
+  applyChoirCountsOldReedTalk,
+  applyChoirCountsChoirReached,
+  applyChoirCountsChoirKeeperTalk,
+  applyChoirCountsRookTalk,
   withTeethQuest,
   ensureAshwoodAfterTeeth,
   ensureHollowAfterAshwood,
@@ -85,6 +97,7 @@ import {
   ensureMistmereAfterGate,
   ensureWatchlineAfterMistmere,
   ensureAshveilAfterWatchline,
+  ensureChoirCountsAfterAshveil,
   rookQuestLine,
   loadQuestLog,
   saveQuestLog,
@@ -340,6 +353,32 @@ export function GameApp() {
             return true;
           }
         }
+        const choirMist = applyChoirCountsMistmereReached(loadQuestLog());
+        if (choirMist) {
+          saveQuestLog(choirMist.log);
+          if (choirMist.toast) {
+            showToast(choirMist.toast);
+            window.setTimeout(
+              () => setToast((t) => (t === choirMist.toast ? null : t)),
+              2800,
+            );
+            return true;
+          }
+        }
+      }
+      if (target === "sunken-choir") {
+        const choirLand = applyChoirCountsChoirReached(loadQuestLog());
+        if (choirLand) {
+          saveQuestLog(choirLand.log);
+          if (choirLand.toast) {
+            showToast(choirLand.toast);
+            window.setTimeout(
+              () => setToast((t) => (t === choirLand.toast ? null : t)),
+              2800,
+            );
+            return true;
+          }
+        }
       }
       const dest = getContinent(target);
       if (paid > 0 || firstCrossing) {
@@ -384,13 +423,32 @@ export function GameApp() {
     setBankOpen(false);
     setPackOpen(false);
     let line = folk.line;
-    if (folkId === "old-reed") {
-      const reed = applyMistmereOldReedTalk(loadQuestLog());
-      if (reed) {
-        saveQuestLog(reed.log);
-        if (reed.toast) {
-          line = reed.toast.replace(/^Old Reed:\s*/, "");
-          queueMicrotask(() => showToast(reed.toast!));
+    if (folkId === OLD_REED_FOLK_ID) {
+      const choirReed = applyChoirCountsOldReedTalk(loadQuestLog());
+      if (choirReed) {
+        saveQuestLog(choirReed.log);
+        if (choirReed.toast) {
+          line = choirReed.toast.replace(/^Old Reed:\s*/, "");
+          queueMicrotask(() => showToast(choirReed.toast!));
+        }
+      } else {
+        const reed = applyMistmereOldReedTalk(loadQuestLog());
+        if (reed) {
+          saveQuestLog(reed.log);
+          if (reed.toast) {
+            line = reed.toast.replace(/^Old Reed:\s*/, "");
+            queueMicrotask(() => showToast(reed.toast!));
+          }
+        }
+      }
+    }
+    if (folkId === CHOIR_KEEPER_FOLK_ID) {
+      const keeper = applyChoirCountsChoirKeeperTalk(loadQuestLog());
+      if (keeper) {
+        saveQuestLog(keeper.log);
+        if (keeper.toast) {
+          line = keeper.toast.replace(/^Choir Keeper:\s*/, "");
+          queueMicrotask(() => showToast(keeper.toast!));
         }
       }
     }
@@ -406,6 +464,7 @@ export function GameApp() {
     }
     if (folkId === "rook" && character) {
       const turnIn =
+        applyChoirCountsRookTalk(loadQuestLog()) ??
         applyAshveilRookTalk(loadQuestLog()) ??
         applyWatchlineRookTalk(loadQuestLog()) ??
         applyMistmereRookTalk(loadQuestLog()) ??
@@ -418,14 +477,32 @@ export function GameApp() {
             ...prev,
             skillXp: { ...prev.skillXp },
           };
-          if (turnIn.completedId === ASHVEIL_QUEST_ID) {
+          if (turnIn.completedId === CHOIR_COUNTS_QUEST_ID) {
+            next = awardCombatXp(next, CHOIR_COUNTS_REWARDS.combatXp);
+            next = { ...next, skillXp: { ...next.skillXp } };
+            awardSkillXp(
+              next,
+              CHOIR_COUNTS_REWARDS.skill,
+              CHOIR_COUNTS_REWARDS.skillXp,
+            );
+            next = setGold(next, next.gold + CHOIR_COUNTS_REWARDS.gold);
+            next = { ...next, skillXp: { ...next.skillXp } };
+            queueMicrotask(() => {
+              showToast(CHOIR_COUNTS_COMPLETE_LINE);
+              setSkillTick((t) => t + 1);
+            });
+          } else if (turnIn.completedId === ASHVEIL_QUEST_ID) {
             next = awardCombatXp(next, ASHVEIL_REWARDS.combatXp);
             next = { ...next, skillXp: { ...next.skillXp } };
             awardSkillXp(next, ASHVEIL_REWARDS.skill, ASHVEIL_REWARDS.skillXp);
             next = setGold(next, next.gold + ASHVEIL_REWARDS.gold);
             next = { ...next, skillXp: { ...next.skillXp } };
             queueMicrotask(() => {
-              showToast(ASHVEIL_COMPLETE_LINE);
+              showToast(
+                turnIn.startedChoirCounts
+                  ? CHOIR_COUNTS_START_TOAST
+                  : ASHVEIL_COMPLETE_LINE,
+              );
               setSkillTick((t) => t + 1);
             });
           } else if (turnIn.completedId === WATCHLINE_QUEST_ID) {
@@ -698,6 +775,24 @@ export function GameApp() {
             return;
           }
         }
+        const choirMist = applyChoirCountsMistmereReached(loadQuestLog());
+        if (choirMist) {
+          saveQuestLog(choirMist.log);
+          if (choirMist.toast) {
+            showToast(choirMist.toast);
+            return;
+          }
+        }
+      }
+      if (dest === "sunken-choir") {
+        const choirLand = applyChoirCountsChoirReached(loadQuestLog());
+        if (choirLand) {
+          saveQuestLog(choirLand.log);
+          if (choirLand.toast) {
+            showToast(choirLand.toast);
+            return;
+          }
+        }
       }
       const c = getContinent(dest);
       if (paid > 0 || firstCrossing) {
@@ -788,11 +883,50 @@ export function GameApp() {
     window.setTimeout(() => setToast((t) => (t === ASHVEIL_START_TOAST ? null : t)), 3600);
   }, [character]);
 
+  // Quest 8: auto-start The Choir Counts once Ashveil Under the Watchline is complete.
+  useEffect(() => {
+    if (!character) return;
+    const ensured = ensureChoirCountsAfterAshveil(loadQuestLog());
+    if (!ensured.started) return;
+    saveQuestLog(ensured.log);
+    setToast(CHOIR_COUNTS_START_TOAST);
+    window.setTimeout(
+      () => setToast((t) => (t === CHOIR_COUNTS_START_TOAST ? null : t)),
+      3600,
+    );
+  }, [character]);
+
   // Mistmere Crossing: mark arrival whenever the walker stands on Mistmere.
   useEffect(() => {
     if (!character) return;
     if (character.continentId !== "mistmere") return;
     const result = applyMistmereReached(loadQuestLog());
+    if (!result) return;
+    saveQuestLog(result.log);
+    if (result.toast) {
+      setToast(result.toast);
+      window.setTimeout(() => setToast((t) => (t === result.toast ? null : t)), 2800);
+    }
+  }, [character]);
+
+  // The Choir Counts: mark Mistmere arrival.
+  useEffect(() => {
+    if (!character) return;
+    if (character.continentId !== "mistmere") return;
+    const result = applyChoirCountsMistmereReached(loadQuestLog());
+    if (!result) return;
+    saveQuestLog(result.log);
+    if (result.toast) {
+      setToast(result.toast);
+      window.setTimeout(() => setToast((t) => (t === result.toast ? null : t)), 2800);
+    }
+  }, [character]);
+
+  // The Choir Counts: mark Sunken Choir / Choir Landing arrival.
+  useEffect(() => {
+    if (!character) return;
+    if (character.continentId !== "sunken-choir") return;
+    const result = applyChoirCountsChoirReached(loadQuestLog());
     if (!result) return;
     saveQuestLog(result.log);
     if (result.toast) {
@@ -898,7 +1032,25 @@ export function GameApp() {
         next = setGold(next, next.gold + ASHVEIL_REWARDS.gold);
         next = { ...next, skillXp: { ...next.skillXp } };
         queueMicrotask(() => {
-          showToast(ASHVEIL_COMPLETE_LINE);
+          showToast(
+            result.startedChoirCounts
+              ? CHOIR_COUNTS_START_TOAST
+              : ASHVEIL_COMPLETE_LINE,
+          );
+          setSkillTick((t) => t + 1);
+        });
+      } else if (result.completedId === CHOIR_COUNTS_QUEST_ID) {
+        next = awardCombatXp(next, CHOIR_COUNTS_REWARDS.combatXp);
+        next = { ...next, skillXp: { ...next.skillXp } };
+        awardSkillXp(
+          next,
+          CHOIR_COUNTS_REWARDS.skill,
+          CHOIR_COUNTS_REWARDS.skillXp,
+        );
+        next = setGold(next, next.gold + CHOIR_COUNTS_REWARDS.gold);
+        next = { ...next, skillXp: { ...next.skillXp } };
+        queueMicrotask(() => {
+          showToast(CHOIR_COUNTS_COMPLETE_LINE);
           setSkillTick((t) => t + 1);
         });
       } else if (result.toast) {
@@ -1221,6 +1373,7 @@ export function GameApp() {
       mistmereQuest={getMistmereQuest(loadQuestLog())}
       watchlineQuest={getWatchlineQuest(loadQuestLog())}
       ashveilQuest={getAshveilQuest(loadQuestLog())}
+      choirCountsQuest={getChoirCountsQuest(loadQuestLog())}
       onVitals={handleVitals}
       onPlayerDeath={handlePlayerDeath}
       onPassivePrimary={(amount) => {
