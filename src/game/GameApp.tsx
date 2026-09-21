@@ -294,7 +294,7 @@ export function GameApp() {
               setSkillTick((t) => t + 1);
             });
           } else if (turnIn.toast) {
-            voidMicrotask(() => showToast(turnIn.toast!));
+            queueMicrotask(() => showToast(turnIn.toast!));
           }
           return next;
         });
@@ -354,7 +354,7 @@ export function GameApp() {
         const result = withdrawItem(prev, itemId, 1);
         if (!result.ok) {
           if (result.reason !== "missing") {
-            voidMicrotask(() => showToast(toastForCarryFail(result.reason)));
+            queueMicrotask(() => showToast(toastForCarryFail(result.reason)));
           }
           return prev;
         }
@@ -437,7 +437,24 @@ export function GameApp() {
           1,
         );
         if (!carry.ok) {
-          voidMicrotask(() => showToast(toastForCarryFail(carry.reason)));
+          queueMicrotask(() => showToast(toastForCarryFail(carry.reason)));
           return prev;
         }
         let next = setGold(prev, prev.gold - price);
+        const added = tryAddInventoryItem(next, itemId, 1);
+        if (!added.ok) {
+          queueMicrotask(() => showToast(toastForCarryFail(added.reason)));
+          return prev;
+        }
+        queueMicrotask(() => showToast(`Bought for ${price}g`));
+        return added.character;
+      });
+    },
+    [showToast],
+  );
+
+  const sellItem = useCallback(
+    (itemId: string, price: number) => {
+      if (!isItemId(itemId)) return;
+      setCharacter((prev) => {
+        if (!prev) return prev;
