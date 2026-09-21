@@ -35,6 +35,18 @@ export function GameShellHud({
         >
           {cls.name}
         </p>
+        {hud.objectiveLabel && (
+          <div className="mt-2 max-w-xs rounded border border-[#c9a227]/50 bg-[#161812]/92 px-2.5 py-1.5 text-[11px] leading-snug text-[#f0d060] backdrop-blur-sm sm:text-xs">
+            <span className="font-display tracking-wide">
+              → {hud.objectiveLabel}
+            </span>
+            {typeof hud.objectiveDist === "number" && (
+              <span className="ml-1 text-[#a8b09a]">
+                · {hud.objectiveDist} tiles
+              </span>
+            )}
+          </div>
+        )}
         {teethQuest && teethQuest.status === "active" && (
           <div className="mt-2 max-w-xs rounded border border-[#2a2e24] bg-[#161812]/85 px-2.5 py-1.5 text-[10px] leading-relaxed text-[#a8b09a] backdrop-blur-sm sm:text-xs">
             <div className="font-display text-[11px] tracking-wide text-[#c9a227] sm:text-xs">

@@ -25,6 +25,10 @@ export type HudState = {
   maxHp: number;
   mana: number;
   maxMana: number;
+  /** Active quest objective line (wayfinding). */
+  objectiveLabel?: string | null;
+  /** Distance to objective in tiles. */
+  objectiveDist?: number | null;
 };
 
 /** Combat pacing / ranges (seconds, tiles). */
