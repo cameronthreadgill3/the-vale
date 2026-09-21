@@ -3,13 +3,15 @@ import { CLASSES, type ClassId } from "@/game/classes";
 import { playerSpritePreviewUrl, preloadAllPlayerSprites } from "@/game/playerSprites";
 
 export function ClassSelectOverlay({ onPick }: { onPick: (id: ClassId) => void }) {
-  const [previews, setPreviews] = useState<Partial<Record<ClassId, string>>>({{}});
+  const [previews, setPreviews] = useState<Partial<Record<ClassId, string>>>(
+    Object.create(null) as Partial<Record<ClassId, string>>,
+  );
 
   useEffect(() => {
     let cancelled = false;
     void preloadAllPlayerSprites().then(() => {
       if (cancelled) return;
-      const next: Partial<Record<ClassId, string>> = {};
+      const next: Partial<Record<ClassId, string>> = Object.create(null);
       for (const c of CLASSES) {
         next[c.id] = playerSpritePreviewUrl(c.id);
       }
