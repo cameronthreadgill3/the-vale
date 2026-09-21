@@ -22,13 +22,14 @@ export function spawnEnemiesForQuest(
     isTeethActive(loadQuestLog());
   if (!boost) return enemies;
 
+  // Softer plaza pack: fewer sticky fauna near Thornhearth.
   const needRats = Math.max(
     0,
-    5 - enemies.filter((e) => e.kind.id === "needle-rat").length,
+    3 - enemies.filter((e) => e.kind.id === "needle-rat").length,
   );
   const needHounds = Math.max(
     0,
-    2 - enemies.filter((e) => e.kind.id === "bark-hound").length,
+    1 - enemies.filter((e) => e.kind.id === "bark-hound").length,
   );
   if (needRats === 0 && needHounds === 0) return enemies;
 
@@ -56,14 +57,19 @@ export function spawnEnemiesForQuest(
       if (Math.hypot(tx - spawn.x, ty - spawn.y) < minDist) continue;
       blocked.add(`${tx},${ty}`);
       const kind = ENEMY_KINDS[kindId];
+      const px = (tx + 0.5) * TILE;
+      const py = (ty + 0.5) * TILE;
       enemies.push({
         id: `quest-${kindId}-${serial++}`,
         kind,
-        x: (tx + 0.5) * TILE,
-        y: (ty + 0.5) * TILE,
+        x: px,
+        y: py,
+        homeX: px,
+        homeY: py,
         hp: kind.maxHp,
         ai: "idle",
         attackCd: 0,
+        windUpT: 0,
         wanderT: rng() * 2,
         wanderDx: 0,
         wanderDy: 0,
@@ -74,7 +80,7 @@ export function spawnEnemiesForQuest(
     }
   };
 
-  for (let i = 0; i < needRats; i++) place("needle-rat", 5);
-  for (let i = 0; i < needHounds; i++) place("bark-hound", 7);
+  for (let i = 0; i < needRats; i++) place("needle-rat", 8);
+  for (let i = 0; i < needHounds; i++) place("bark-hound", 11);
   return enemies;
 }
