@@ -40,6 +40,11 @@ export { drawFolkSprite, getFolkSheet, FOLK_FRAME, warmFolkSheets } from "@/game
 export {
   drawVignette,
   drawAshwoodTint,
+  drawParallaxHaze,
+  drawSurfaceLight,
+  drawKeyLight,
+  tickMotes,
+  collectMoteDepthItems,
   drawHollowTorchSpots,
   drawHollowDungeonMarkers,
 } from "@/game/gfx/atmosphere";
@@ -51,6 +56,7 @@ export {
   mixHex,
   paintVolume,
   drawSoftShadow,
+  drawWithWarmRim,
   addPixelVolume,
   GROUND_SHADOW_ALPHA,
 } from "@/game/gfx/canvasUtil";

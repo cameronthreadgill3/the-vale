@@ -1,6 +1,7 @@
 /** Class walk sprites — generated stand-in sheets (no binary PNG assets). */
 
 import type { ClassId } from "@/game/classes";
+import { drawWithWarmRim } from "@/game/gfx/canvasUtil";
 import {
   COLS,
   FRAME,
@@ -160,7 +161,9 @@ export function drawPlayerSprite(
   }
 
   ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(img, col * fw, row * fh, fw, fh, dx, dy, size, size);
+  drawWithWarmRim(ctx, () => {
+    ctx.drawImage(img, col * fw, row * fh, fw, fh, dx, dy, size, size);
+  });
 
   if (opts?.flash && opts.flash > 0) {
     ctx.save();
