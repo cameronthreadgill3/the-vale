@@ -11,6 +11,7 @@ export function CharacterSlots({
   onSignOut,
   onImportGuest,
   guestAvailable,
+  signOutLabel = "Sign out",
 }: {
   user: ValeAccountUser;
   slots: SlotArray;
@@ -20,6 +21,7 @@ export function CharacterSlots({
   onSignOut: () => void;
   onImportGuest?: () => void;
   guestAvailable?: boolean;
+  signOutLabel?: string;
 }) {
   return (
     <div
@@ -48,16 +50,18 @@ export function CharacterSlots({
             onClick={onSignOut}
             className="rounded border border-[#2a2e24] bg-[#161812] px-3 py-1.5 text-xs text-[#a8b09a] hover:border-[#c9a227]/50 hover:text-[#e8e6d9]"
           >
-            Sign out
+            {signOutLabel}
           </button>
         </div>
 
         <p className="mt-3 text-xs text-[#6a7260]">
           Four paths per account. Saves sync to{" "}
-          {user.demo
-            ? "local demo storage"
-            : "Clerk user metadata (compact snapshots — migrate to Postgres for production)"}
-          .
+          {user.id === "offline"
+            ? "local offline storage (this browser)"
+            : user.demo
+              ? "local demo storage"
+              : "Clerk user metadata (compact snapshots — migrate to Postgres for production)"}
+          . New characters begin on Thornreach with Teeth in the Grass.
         </p>
 
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
