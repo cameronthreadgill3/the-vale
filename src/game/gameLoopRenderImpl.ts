@@ -23,7 +23,17 @@ import type { ValeCharacter } from "@/game/character";
 import type { FolkDef, ShopDef, ShipDock } from "@/game/folk";
 import { computePrompt } from "@/game/gameLoopFrame";
 import { drawPlayer } from "@/game/renderPlayer";
-import type { Facing } from "@/game/playerSprites";
+import {
+  facingFromMove,
+  WALK_FPS,
+  type Facing,
+} from "@/game/playerSprites";
+
+let _walkFacing: Facing = "south";
+let _walkFrame = 0;
+let _walkAccum = 0;
+let _lastPx: number | null = null;
+let _lastPy: number | null = null;
 
 export function advanceCameraAndRender(args: {
   ctx: CanvasRenderingContext2D;
@@ -56,8 +66,34 @@ export function advanceCameraAndRender(args: {
   const {
     ctx, canvas, map, player, dt, enemies, floatTexts, projectiles,
     docks, folk, shops, mouse, playerFlash, accent, character, paused,
-    facing = "south", walkFrame = 0, setHud, setPrompt, promptRef,
+    facing: facingArg,
+    walkFrame: walkFrameArg,
+    setHud, setPrompt, promptRef,
   } = args;
+
+  let facing: Facing = facingArg ?? _walkFacing;
+  let walkFrame = walkFrameArg ?? _walkFrame;
+  if (_lastPx != null && _lastPy != null) {
+    const mdx = player.x - _lastPx;
+    const mdy = player.y - _lastPy;
+    const moved = Math.hypot(mdx, mdy) > 0.05;
+    if (moved) {
+      facing = facingFromMove(mdx, mdy, _walkFacing);
+      _walkAccum += Math.min(0.05, args.dt) * WALK_FPS;
+      while (_walkAccum >= 1) {
+        _walkAccum -= 1;
+        _walkFrame = (_walkFrame + 1) % 4;
+      }
+      walkFrame = _walkFrame;
+    } else {
+      _walkFrame = 0;
+      _walkAccum = 0;
+      walkFrame = 0;
+    }
+    _walkFacing = facing;
+  }
+  _lastPx = player.x;
+  _lastPy = player.y;
 
   camX += (player.x - camX) * Math.min(1, 8 * dt);
   camY += (player.y - camY) * Math.min(1, 8 * dt);
