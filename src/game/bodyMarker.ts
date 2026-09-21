@@ -121,18 +121,30 @@ function bonesSheet(): HTMLCanvasElement | OffscreenCanvas {
 function drawBones(ctx: CanvasRenderingContext2D, sx: number, sy: number, alpha: number): void {
   ctx.save();
   ctx.globalAlpha = alpha;
-  drawSoftShadow(ctx, sx, sy + 3, 9, 4, 0.45 * alpha);
-  ctx.fillStyle = "rgba(72, 36, 28, 0.28)";
+  drawSoftShadow(ctx, sx, sy + 5, 14, 6, 0.55 * alpha);
+  ctx.fillStyle = "rgba(58, 28, 22, 0.42)";
   ctx.beginPath();
-  ctx.ellipse(sx, sy + 3, 8, 3.5, 0, 0, Math.PI * 2);
+  ctx.ellipse(sx, sy + 4, 13, 5.5, 0, 0, Math.PI * 2);
   ctx.fill();
   const img = bonesSheet();
   ctx.imageSmoothingEnabled = false;
+  const dw = SHEET_W * 2;
+  const dh = SHEET_H * 2;
   ctx.drawImage(
     img as CanvasImageSource,
-    Math.floor(sx - SHEET_W / 2),
-    Math.floor(sy - SHEET_H / 2),
+    Math.floor(sx - dw / 2),
+    Math.floor(sy - dh / 2 + 1),
+    dw,
+    dh,
   );
+  ctx.font = "9px \"IBM Plex Mono\", ui-monospace, monospace";
+  ctx.textAlign = "center";
+  ctx.fillStyle = "rgba(12, 13, 11, 0.78)";
+  const label = "bones";
+  const tw = ctx.measureText(label).width;
+  ctx.fillRect(Math.floor(sx - tw / 2 - 3), Math.floor(sy - 18), tw + 6, 11);
+  ctx.fillStyle = "#c8c4b0";
+  ctx.fillText(label, sx, sy - 10);
   ctx.restore();
 }
 
