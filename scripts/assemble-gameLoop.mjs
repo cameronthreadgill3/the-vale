@@ -13,10 +13,7 @@ function assemble(prefix, outRel) {
   console.log("assembled", outRel, buf.length, "from", files.length, "b64 parts");
 }
 assemble("gl\\.b64", "src/game/gameLoop.ts");
-assemble("ga\\.b64", "src/game/GameApp.tsx");
+// Quest 4+: GameApp, GameShell, quests, README are first-class sources (not assembled).
 assemble("aa\\.b64", "src/account/AccountApp.tsx");
-assemble("qq\\.b64", "src/game/quests.ts");
 assemble("ch\\.b64", "src/game/character.ts");
 assemble("en\\.b64", "src/game/enemies.ts");
-assemble("gs\\.b64", "src/game/GameShell.tsx");
-assemble("rd\\.b64", "README.md");
