@@ -36,6 +36,7 @@ import { tickAshDrift, collectAshDriftDepthItems } from "@/game/gfx/ashDrift";
 import { tickFootstepDust } from "@/game/gfx/footstepDust";
 import { drawScreenVignette } from "@/game/gfx/screenVignette";
 import { tickAmbientFauna, drawAmbientFaunaFar, drawAmbientFaunaAbove } from "@/game/gfx/ambientFauna";
+import { collectChimneyDepthItems, drawDistantGroveSmoke } from "@/game/gfx/chimneySmoke";
 import { drawViewOverlay } from "@/game/gfx/viewOverlay";
 import type { ValeCharacter } from "@/game/character";
 import { FOLK, type FolkDef, type ShopDef, type ShipDock } from "@/game/folk";
@@ -705,6 +706,7 @@ export function advanceCameraAndRender(args: {
     ...collectMoteDepthItems(originX, originY, _atmosT),
     ...collectAshDriftDepthItems(originX, originY, _atmosT),
     ...collectPathLampDepthItems(map, originX, originY, viewW, viewH, _atmosT),
+    ...collectChimneyDepthItems(map, originX, originY, viewW, viewH, _atmosT),
     {
       y: player.y,
       x: player.x,
@@ -757,6 +759,7 @@ export function advanceCameraAndRender(args: {
   const bodyMarkerItem = collectBodyMarkerDepthItem(map, originX, originY);
   if (bodyMarkerItem) depth.push(bodyMarkerItem);
   flushDepth(ctx, depth);
+  drawDistantGroveSmoke(ctx, map, originX, originY, viewW, viewH, _atmosT);
   drawAmbientFaunaAbove(ctx, originX, originY, viewW, viewH, _atmosT);
   drawKeyLight(ctx, viewW, viewH);
   drawProjectiles(ctx, projectiles, originX, originY);
