@@ -32,6 +32,7 @@ import {
   collectMoteDepthItems,
   drawHollowTorchSpots,
 } from "@/game/gfx/atmosphere";
+import { drawViewOverlay } from "@/game/gfx/viewOverlay";
 import type { ValeCharacter } from "@/game/character";
 import { FOLK, type FolkDef, type ShopDef, type ShipDock } from "@/game/folk";
 import { computePrompt } from "@/game/gameLoopFrame";
@@ -734,6 +735,22 @@ export function advanceCameraAndRender(args: {
   drawFloatTexts(ctx, floatTexts, originX, originY);
   tickLootSparkles(dt);
   drawHollowTorchSpots(ctx, map, originX, originY, viewW, viewH, player, _atmosT);
+  const outdoor = map.kind === "overworld";
+  let plaza = 0;
+  if (outdoor && map.continentId === "thornreach") {
+    const dx = player.x / TILE - (map.spawn.x + 0.5);
+    const dy = player.y / TILE - (map.spawn.y + 0.5);
+    const dist = Math.hypot(dx, dy);
+    plaza = dist >= 12 ? 0 : 1 - dist / 12;
+  }
+  drawViewOverlay(ctx, {
+    dt,
+    timeSec: _atmosT,
+    viewW,
+    viewH,
+    outdoor,
+    plaza,
+  });
   drawVignette(ctx, viewW, viewH);
   drawLootSparkles(ctx, originX, originY, player);
   drawEnemyChrome(ctx, enemies, originX, originY);
