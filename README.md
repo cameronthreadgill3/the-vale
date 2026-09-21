@@ -70,6 +70,16 @@ After class select on Thornreach, Rook flags the ashwood edge: wrong prey. A min
 
 Rewards: modest gold + combat XP + shielding skill XP, with a short Survive · Learn · Progress line. Progress persists in `vale-character-v1`. Early Thornreach fauna is briefly denser while the hunt is active.
 
+
+### Wayfinding (where to go)
+
+New cues so you are never lost on Thornreach:
+
+1. **Quest arrow + HUD line** — Active *Teeth in the Grass* shows a yellow edge/on-screen arrow toward the current objective (nearest Needle Rat, Bark Hound, or Rook) plus a HUD line like `→ Identify Needle Rat · 12 tiles`.
+2. **Labeled landmarks + compass** — Larger high-contrast markers; names for folk, **Gate → Continent**, hollow entrance/exit, ship docks, and the plaza **Fountain** within ~8 tiles. Top-center compass (N/E/S/W) with a tiny radar of nearby interactables (gold) and the quest target (bright).
+3. **Starter tip + clear prompts** — First 60s on load: soft tip *Talk to Rook (watch) · Ashwood edge for the hunt · Fountain heals*. Nearest interactable prompts read as actions: `Talk · Rook`, `Enter hollow`, `Use gate → …`, `Board ship · …`.
+
+
 ### Classes
 
 Warden, Thornblade, Pathfinder, Hearthmage, Verdant, Hollowborn — each with accent color, starting skill biases, and a primary skill that gains tiny XP while moving.
