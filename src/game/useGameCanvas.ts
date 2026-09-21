@@ -7,6 +7,7 @@ import { levelFromXp, progressInLevel, xpToNext } from "@/game/xp";
 import { maxHpFor, maxManaFor } from "@/game/combat";
 import { type PromptState, type HudState } from "@/game/canvasConstants";
 import { useGameLoopEffect } from "@/game/gameLoop";
+import type { EnemyKindId } from "@/game/enemies";
 
 export function useGameCanvas(opts: {
   character: ValeCharacter;
@@ -30,6 +31,8 @@ export function useGameCanvas(opts: {
     skillXp: number,
     gold: number,
   ) => void;
+  onEnemyKill: (kindId: EnemyKindId) => void;
+  onIdentify: (kindId: EnemyKindId) => void;
   onVitals: (hp: number, mana: number) => void;
   onPlayerDeath: () => void;
 }) {
@@ -50,6 +53,8 @@ export function useGameCanvas(opts: {
     onOpenShop,
     onOpenShip,
     onCombatReward,
+    onEnemyKill,
+    onIdentify,
     onVitals,
     onPlayerDeath,
   } = opts;
@@ -75,6 +80,8 @@ export function useGameCanvas(opts: {
 
   const characterRef = useRef<ValeCharacter>(character);
   const onCombatRewardRef = useRef(onCombatReward);
+  const onEnemyKillRef = useRef(onEnemyKill);
+  const onIdentifyRef = useRef(onIdentify);
   const onVitalsRef = useRef(onVitals);
   const onPlayerDeathRef = useRef(onPlayerDeath);
   const overlayOpenRef = useRef(overlayOpen);
@@ -92,6 +99,8 @@ export function useGameCanvas(opts: {
   openShipRef.current = onOpenShip;
   primaryRef.current = cls.primarySkill;
   onCombatRewardRef.current = onCombatReward;
+  onEnemyKillRef.current = onEnemyKill;
+  onIdentifyRef.current = onIdentify;
   onVitalsRef.current = onVitals;
   onPlayerDeathRef.current = onPlayerDeath;
   overlayOpenRef.current = overlayOpen;
@@ -156,6 +165,8 @@ export function useGameCanvas(opts: {
     setPrompt,
     characterRef,
     onCombatReward: onCombatRewardRef,
+    onEnemyKill: onEnemyKillRef,
+    onIdentify: onIdentifyRef,
     onVitals: onVitalsRef,
     onPlayerDeath: onPlayerDeathRef,
     overlayOpenRef,
