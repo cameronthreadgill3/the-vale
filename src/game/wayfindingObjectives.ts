@@ -24,6 +24,7 @@ import {
   getAshveilQuest,
   getChoirCountsQuest,
   getWharfQuest,
+  getGreenGateQuest,
   isTeethActive,
   isAshwoodActive,
   isHollowActive,
@@ -33,6 +34,7 @@ import {
   isAshveilActive,
   isChoirCountsActive,
   isWharfActive,
+  isGreenGateActive,
   loadQuestLog,
   type TeethQuestProgress,
   type AshwoodQuestProgress,
@@ -43,6 +45,7 @@ import {
   type AshveilQuestProgress,
   type ChoirCountsQuestProgress,
   type WharfQuestProgress,
+  type GreenGateQuestProgress,
 } from "@/game/quests";
 import { ASHWOOD_CAIRNS } from "@/game/cairns";
 import { huntZoneById } from "@/game/huntZones";
@@ -73,6 +76,10 @@ export function resolveQuestObjective(
   map: WorldMap,
 ): WayfindObjective | null {
   const log = loadQuestLog();
+  if (isGreenGateActive(log)) {
+    const q = getGreenGateQuest(log);
+    if (q) return objectiveForGreenGate(q, player, enemies, folk, map);
+  }
   if (isWharfActive(log)) {
     const q = getWharfQuest(log);
     if (q) return objectiveForWharf(q, player, enemies, folk, map);
@@ -110,6 +117,110 @@ export function resolveQuestObjective(
     if (q) return objectiveForTeeth(q, player, enemies, folk);
   }
   return null;
+}
+
+export function objectiveForGreenGate(
+  q: GreenGateQuestProgress,
+  player: { x: number; y: number },
+  enemies: Enemy[],
+  folk: FolkDef[],
+  map: WorldMap,
+): WayfindObjective | null {
+  if (q.status !== "active") return null;
+  const rook = folk.find((f) => f.id === "rook");
+
+  if (!q.gateReached) {
+    const gate = continentGateOnMap(map, "verdant-spine");
+    if (gate) {
+      return {
+        label: "Reach Verdant Spine gate",
+        x: (gate.x + 0.5) * TILE,
+        y: (gate.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    const home = continentGateOnMap(map, "thornreach");
+    if (home) {
+      return {
+        label: "Gate to Verdant Spine (Thornreach)",
+        x: (home.x + 0.5) * TILE,
+        y: (home.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    return {
+      label: "Find Verdant Spine gate (Thornreach)",
+      x: player.x + TILE * 8,
+      y: player.y - TILE * 2,
+      kind: "landmark",
+    };
+  }
+
+  if (!q.identifiedFox || !q.foxKilled) {
+    const fox = nearestEnemy(player, enemies, "gorse-fox");
+    if (fox) {
+      const label = !q.identifiedFox
+        ? "Identify Gorse Fox"
+        : "Defeat Gorse Fox (0/1)";
+      return { label, x: fox.x, y: fox.y, kind: "enemy" };
+    }
+    if (map.continentId === "verdant-spine" && map.kind === "overworld") {
+      return {
+        label: "Find Gorse Fox (Verdant Spine)",
+        x: player.x + TILE * 6,
+        y: player.y - TILE * 4,
+        kind: "landmark",
+      };
+    }
+    const toSpine = continentGateOnMap(map, "verdant-spine");
+    if (toSpine) {
+      return {
+        label: "Gate to Gorse Fox (Verdant Spine)",
+        x: (toSpine.x + 0.5) * TILE,
+        y: (toSpine.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    const home = continentGateOnMap(map, "thornreach");
+    if (home) {
+      return {
+        label: "Gate toward Verdant Spine",
+        x: (home.x + 0.5) * TILE,
+        y: (home.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    return {
+      label: "Find Gorse Fox (Verdant Spine)",
+      x: player.x + TILE * 6,
+      y: player.y - TILE * 4,
+      kind: "landmark",
+    };
+  }
+
+  if (rook) {
+    return {
+      label: "Return to Rook",
+      x: (rook.x + 0.5) * TILE,
+      y: (rook.y + 0.5) * TILE,
+      kind: "folk",
+    };
+  }
+  const home = continentGateOnMap(map, "thornreach");
+  if (home) {
+    return {
+      label: "Gate back to Rook (Thornreach)",
+      x: (home.x + 0.5) * TILE,
+      y: (home.y + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  return {
+    label: "Return to Rook (Thornreach)",
+    x: player.x + TILE * 8,
+    y: player.y - TILE * 2,
+    kind: "landmark",
+  };
 }
 
 export function objectiveForWharf(

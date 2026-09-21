@@ -18,6 +18,7 @@ export const WATCHLINE_QUEST_ID = "the-watchline-holds" as const;
 export const ASHVEIL_QUEST_ID = "ashveil-under-the-watchline" as const;
 export const CHOIR_COUNTS_QUEST_ID = "the-choir-counts" as const;
 export const WHARF_QUEST_ID = "the-wharf-answers" as const;
+export const GREEN_GATE_QUEST_ID = "the-green-gate-keeps" as const;
 
 /** Depot clerk — Cress Ledger in folk.ts. */
 export const CRESS_FOLK_ID = "cress-ledger" as const;
@@ -45,7 +46,8 @@ export type QuestId =
   | typeof WATCHLINE_QUEST_ID
   | typeof ASHVEIL_QUEST_ID
   | typeof CHOIR_COUNTS_QUEST_ID
-  | typeof WHARF_QUEST_ID;
+  | typeof WHARF_QUEST_ID
+  | typeof GREEN_GATE_QUEST_ID;
 
 export type QuestStatus = "active" | "complete";
 
@@ -144,6 +146,17 @@ export interface WharfQuestProgress {
   houndDone: boolean;
 }
 
+export interface GreenGateQuestProgress {
+  id: typeof GREEN_GATE_QUEST_ID;
+  status: QuestStatus;
+  /** Reached Verdant Spine gate (travel or stand/interact on verdant-spine-bound gate). */
+  gateReached: boolean;
+  /** First successful Identify of a Gorse Fox on Verdant Spine. */
+  identifiedFox: boolean;
+  /** Gorse Fox defeated on Verdant Spine (target 1). */
+  foxKilled: boolean;
+}
+
 export type QuestLog = {
   [TEETH_QUEST_ID]?: TeethQuestProgress;
   [ASHWOOD_QUEST_ID]?: AshwoodQuestProgress;
@@ -154,6 +167,7 @@ export type QuestLog = {
   [ASHVEIL_QUEST_ID]?: AshveilQuestProgress;
   [CHOIR_COUNTS_QUEST_ID]?: ChoirCountsQuestProgress;
   [WHARF_QUEST_ID]?: WharfQuestProgress;
+  [GREEN_GATE_QUEST_ID]?: GreenGateQuestProgress;
 };
 
 export const TEETH_RATS_NEEDED = 3;
@@ -165,10 +179,98 @@ export const ASHWOOD_QUEST_TITLE = "Ashwood Watch";
 export const HOLLOW_QUEST_TITLE = "Hollow Watch";
 export const GATE_QUEST_TITLE = "Gate Watch";
 export const MISTMERE_QUEST_TITLE = "Mistmere Crossing";
-export const WATCHLINE_QUEST_TITLE = "The Watchline Holds";
+export const WAE_COMPLETE_LINE.replace(/^Rook:\s*/, "");
+    }
+    if (!watch.talkedCress) {
+      return "Old Reed's word is good. Cress at the depot will set it in the ledger — then recheck the first cairn.";
+    }
+    if (!watch.cairnInspected) {
+      return "The ledger holds. Recheck the first cairn on the ashwood edge — West Watch.";
+    }
+    if (!watch.houndDone) {
+      return "West Watch is marked. Identify or clear one Bark Hound on the ashwood edge, then tell me the line holds.";
+    }
+    return "The line is nearly set. Survive. Learn. Progress — tell me the watchline holds.";
+  }
+
+  const mist = getMistmereQuest(log);
+  if (mist) {
+    if (mist.status === "complete") {
+      return MISTMERE_COMPLETE_LINE.replace(/^Rook:\s*/, "");
+    }
+    if (!mist.reachedMistmere) {
+      return "Gate Watch is done. Cross the Mistmere gate — Old Reed walks the reed-path on the far shore.";
+    }
+    if (!mist.talkedOldReed) {
+      return "You stand on Mistmere. Find Old Reed — fog guide of the reed-path — then bring his word home.";
+    }
+    return "Old Reed spoke. Survive. Learn. Progress — the crossing ends when you tell me.";
+  }
+
+  const gate = getGateWatchQuest(log);
+  if (gate) {
+    if (gate.status === "complete") {
+      return "The gate is known. Cross to Mistmere when ready — Old Reed still walks the reed-path.";
+    }
+    if (!gate.gateReached) {
+      return "Walk Gate Watch. The Mistmere gate sits on Thornreach — stand the tile, travel, or press E. Know the road before you leave.";
+    }
+    return "The Mistmere gate is marked. Survive. Learn. Progress — the watch ends here.";
+  }
+
+  const hollow = getHollowQuest(log);
+  if (hollow) {
+    if (hollow.status === "complete") {
+      return "Hollow quieted. Walk Gate Watch — the Mistmere gate on Thornreach still waits.";
+    }
+    if (!hollow.enteredHollow) {
+      return "Something wrong under the nearest Thornreach hollow. Descend, Identify the shade flicker, then clear two wisps.";
+    }
+    if (!hollow.identifiedWisp) {
+      return "You are under the stone. Identify a Shade Wisp — Name and Rank — before you swing wild.";
+    }
+    if (hollow.wispsKilled < HOLLOW_WISPS_NEEDED) {
+      return `Shade Wisps ${hollow.wispsKilled}/${HOLLOW_WISPS_NEEDED}. Clear the flicker, then return when the hollow holds.`;
+    }
+    return "The hollow is nearly quiet. Survive. Learn. Progress.";
+  }
+
+  const ash = getAshwoodQuest(log);
+  if (ash) {
+    if (ash.status === "complete") {
+      return "Ashwood watch is settled. Something wrong under the nearest hollow — talk when you are ready to descend.";
+    }
+    const n = ash.cairnsVisited.length;
+    if (n < ASHWOOD_CAIRNS_NEEDED) {
+      return `Walk the ashwood watch. Cairns mark the edge — inspect them (${n}/${ASHWOOD_CAIRNS_NEEDED}). Wrong prey still shows between the stones.`;
+    }
+    if (!ash.wrongPreyDone) {
+      return "Cairns are marked. Identify or clear one Needle Rat or Bark Hound still haunting the watch.";
+    }
+    return "The watch is nearly done. Survive. Learn. Progress.";
+  }
+
+  const q = getTeethQuest(log);
+  if (!q) return null;
+  if (q.status === "complete") {
+    return "Teeth are settled. Walk the ashwood watch when you are ready — cairns still mark wrong prey.";
+  }
+  if (!q.identifiedRat) {
+    return "Ashwood edge has wrong prey. Identify first - Name and Rank. Then clear three Needle Rats and one Bark Hound near Thornhearth.";
+  }
+  if (q.ratsKilled < TEETH_RATS_NEEDED) {
+    return `Good eyes. Needle Rats ${q.ratsKilled}/${TEETH_RATS_NEEDED} - keep the basin grass honest.`;
+  }
+  if (!q.houndDone) {
+    return "Rats down. One Bark Hound still packs the ashwood skirts - survive it or drive it off.";
+  }
+  return "Survive. Learn. Progress.";
+}
+TCHLINE_QUEST_TITLE = "The Watchline Holds";
 export const ASHVEIL_QUEST_TITLE = "Ashveil Under the Watchline";
 export const CHOIR_COUNTS_QUEST_TITLE = "The Choir Counts";
 export const WHARF_QUEST_TITLE = "The Wharf Answers";
+export const GREEN_GATE_QUEST_TITLE = "The Green Gate Keeps";
 
 export const TEETH_START_TOAST =
   "Rook: Ashwood edge has wrong prey - Identify first.";
@@ -223,6 +325,12 @@ export const WHARF_START_TOAST =
 
 export const WHARF_COMPLETE_LINE =
   "Rook: Nightglass answered, and the ledger holds. Survive. Learn. Progress — the road carries what the water remembers.";
+
+export const GREEN_GATE_START_TOAST =
+  "Rook: Nightglass answered, and the ledger holds. Take the green gate, name what hunts beyond it, and bring its measure home. Survive. Learn. Progress.";
+
+export const GREEN_GATE_COMPLETE_LINE =
+  "Rook: The green gate kept its word. Nightglass is not alone, and the far road knows your footing now. Survive. Learn. Progress.";
 
 export const TEETH_REWARDS = {
   gold: 28,
@@ -285,6 +393,13 @@ export const WHARF_REWARDS = {
   combatXp: 140,
   skill: "distance" as SkillId,
   skillXp: 42,
+};
+
+export const GREEN_GATE_REWARDS = {
+  gold: 75,
+  combatXp: 150,
+  skill: "shielding" as SkillId,
+  skillXp: 45,
 };
 
 export function loadQuestLog(): QuestLog {
@@ -401,6 +516,16 @@ export function emptyWharfQuest(): WharfQuestProgress {
     reachedNightglass: false,
     talkedVesper: false,
     houndDone: false,
+  };
+}
+
+export function emptyGreenGateQuest(): GreenGateQuestProgress {
+  return {
+    id: GREEN_GATE_QUEST_ID,
+    status: "active",
+    gateReached: false,
+    identifiedFox: false,
+    foxKilled: false,
   };
 }
 
@@ -553,6 +678,20 @@ export function sanitizeQuestLog(raw: unknown): QuestLog {
     };
   }
 
+  const green = obj[GREEN_GATE_QUEST_ID];
+  if (green && typeof green === "object") {
+    const g = green as Record<string, unknown>;
+    const status: QuestStatus =
+      g.status === "complete" ? "complete" : "active";
+    log[GREEN_GATE_QUEST_ID] = {
+      id: GREEN_GATE_QUEST_ID,
+      status,
+      gateReached: Boolean(g.gateReached),
+      identifiedFox: Boolean(g.identifiedFox),
+      foxKilled: Boolean(g.foxKilled),
+    };
+  }
+
   return log;
 }
 
@@ -608,6 +747,12 @@ export function getWharfQuest(
   return log?.[WHARF_QUEST_ID] ?? null;
 }
 
+export function getGreenGateQuest(
+  log: QuestLog | undefined,
+): GreenGateQuestProgress | null {
+  return log?.[GREEN_GATE_QUEST_ID] ?? null;
+}
+
 export function isTeethActive(log: QuestLog | undefined): boolean {
   const q = getTeethQuest(log);
   return Boolean(q && q.status === "active");
@@ -650,6 +795,11 @@ export function isChoirCountsActive(log: QuestLog | undefined): boolean {
 
 export function isWharfActive(log: QuestLog | undefined): boolean {
   const q = getWharfQuest(log);
+  return Boolean(q && q.status === "active");
+}
+
+export function isGreenGateActive(log: QuestLog | undefined): boolean {
+  const q = getGreenGateQuest(log);
   return Boolean(q && q.status === "active");
 }
 
@@ -702,6 +852,10 @@ export function choirCountsObjectivesMet(q: ChoirCountsQuestProgress): boolean {
 
 export function wharfObjectivesMet(q: WharfQuestProgress): boolean {
   return q.talkedCress && q.talkedVesper && q.houndDone;
+}
+
+export function greenGateObjectivesMet(q: GreenGateQuestProgress): boolean {
+  return q.gateReached && q.identifiedFox && q.foxKilled;
 }
 
 /** HUD lines for Teeth sticky panel. */
@@ -875,6 +1029,27 @@ export function wharfHudLines(q: WharfQuestProgress): string[] {
   ];
 }
 
+/** HUD lines for The Green Gate Keeps. */
+export function greenGateHudLines(q: GreenGateQuestProgress): string[] {
+  if (q.status === "complete") {
+    return ["Complete - The green gate kept"];
+  }
+  return [
+    q.gateReached
+      ? "[done] Reach Verdant Spine gate"
+      : "[ ] Reach Verdant Spine gate on Thornreach",
+    q.identifiedFox
+      ? "[done] Identify Gorse Fox"
+      : "[ ] Identify a Gorse Fox (near look)",
+    q.foxKilled
+      ? "[done] Defeat Gorse Fox 1/1"
+      : "[ ] Defeat Gorse Fox 0/1 (Verdant Spine)",
+    q.gateReached && q.identifiedFox && q.foxKilled
+      ? "[ ] Return to Rook (its measure)"
+      : "[ ] Return to Rook with the green gate's measure",
+  ];
+}
+
 
 export type QuestEventResult = {
   log: QuestLog;
@@ -897,6 +1072,8 @@ export type QuestEventResult = {
   startedChoirCounts?: boolean;
   /** The Wharf Answers auto-started after The Choir Counts. */
   startedWharf?: boolean;
+  /** The Green Gate Keeps auto-started after The Wharf Answers. */
+  startedGreenGate?: boolean;
 };
 
 /** If Teeth is complete and Ashwood missing, start Ashwood Watch. */
@@ -1043,6 +1220,24 @@ export function ensureNightglassAfterChoir(log: QuestLog): {
   };
 }
 
+/** If The Wharf Answers is complete and The Green Gate Keeps missing, start it. */
+export function ensureGreenGateAfterWharf(log: QuestLog): {
+  log: QuestLog;
+  started: boolean;
+} {
+  const wharf = getWharfQuest(log);
+  if (!wharf || wharf.status !== "complete") {
+    return { log, started: false };
+  }
+  if (getGreenGateQuest(log)) {
+    return { log, started: false };
+  }
+  return {
+    log: withGreenGateQuest(log, emptyGreenGateQuest()),
+    started: true,
+  };
+}
+
 export function withTeethQuest(
   log: QuestLog | undefined,
   quest: TeethQuestProgress,
@@ -1106,6 +1301,13 @@ export function withWharfQuest(
   return { ...(log ?? {}), [WHARF_QUEST_ID]: quest };
 }
 
+export function withGreenGateQuest(
+  log: QuestLog | undefined,
+  quest: GreenGateQuestProgress,
+): QuestLog {
+  return { ...(log ?? {}), [GREEN_GATE_QUEST_ID]: quest };
+}
+
 function finishTeethIfReady(
   log: QuestLog,
   next: TeethQuestProgress,
@@ -1167,7 +1369,26 @@ function finishHollowIfReady(
 export function applyIdentify(
   log: QuestLog,
   kindId: EnemyKindId,
+  continentId?: ContinentId,
 ): QuestEventResult | null {
+  const green = getGreenGateQuest(log);
+  if (
+    green &&
+    green.status === "active" &&
+    !green.identifiedFox &&
+    kindId === "gorse-fox" &&
+    continentId === "verdant-spine"
+  ) {
+    return {
+      log: withGreenGateQuest(log, {
+        ...green,
+        gateReached: true,
+        identifiedFox: true,
+      }),
+      toast: "Identified: Gorse Fox / F",
+    };
+  }
+
   const ashveil = getAshveilQuest(log);
   if (
     ashveil &&
@@ -1253,6 +1474,25 @@ export function applyEnemyKill(
   kindId: EnemyKindId,
   continentId?: ContinentId,
 ): QuestEventResult | null {
+  const green = getGreenGateQuest(log);
+  if (
+    green &&
+    green.status === "active" &&
+    kindId === "gorse-fox" &&
+    continentId === "verdant-spine" &&
+    !green.foxKilled
+  ) {
+    return {
+      log: withGreenGateQuest(log, {
+        ...green,
+        gateReached: true,
+        identifiedFox: true,
+        foxKilled: true,
+      }),
+      toast: "Gorse Fox 1/1 — Return to Rook",
+    };
+  }
+
   const wharf = getWharfQuest(log);
   if (
     wharf &&
@@ -1638,10 +1878,40 @@ export function applyWharfRookTalk(log: QuestLog): QuestEventResult | null {
   const q = getWharfQuest(log);
   if (!q || q.status !== "active") return null;
   if (!wharfObjectivesMet(q)) return null;
+  let out = withWharfQuest(log, { ...q, status: "complete" });
+  const ensured = ensureGreenGateAfterWharf(out);
+  out = ensured.log;
   return {
-    log: withWharfQuest(log, { ...q, status: "complete" }),
-    toast: WHARF_COMPLETE_LINE,
+    log: out,
+    toast: ensured.started ? GREEN_GATE_START_TOAST : WHARF_COMPLETE_LINE,
     completedId: WHARF_QUEST_ID,
+    startedGreenGate: ensured.started,
+  };
+}
+
+/** Mark Verdant Spine gate reached (travel, stand, or arrival). */
+export function applyGreenGateReached(log: QuestLog): QuestEventResult | null {
+  const q = getGreenGateQuest(log);
+  if (!q || q.status !== "active" || q.gateReached) {
+    return null;
+  }
+  return {
+    log: withGreenGateQuest(log, { ...q, gateReached: true }),
+    toast: q.identifiedFox
+      ? "Verdant Spine gate marked — Return to Rook with its measure"
+      : "Verdant Spine gate marked — Name what hunts beyond it",
+  };
+}
+
+/** Complete The Green Gate Keeps when talking to Rook after the fox is measured. */
+export function applyGreenGateRookTalk(log: QuestLog): QuestEventResult | null {
+  const q = getGreenGateQuest(log);
+  if (!q || q.status !== "active") return null;
+  if (!greenGateObjectivesMet(q)) return null;
+  return {
+    log: withGreenGateQuest(log, { ...q, status: "complete" }),
+    toast: GREEN_GATE_COMPLETE_LINE,
+    completedId: GREEN_GATE_QUEST_ID,
   };
 }
 
@@ -1691,6 +1961,23 @@ export function applyCairnInspect(
 
 /** Rook line while sticky quests are active / complete. */
 export function rookQuestLine(log: QuestLog | undefined): string | null {
+  const green = getGreenGateQuest(log);
+  if (green) {
+    if (green.status === "complete") {
+      return GREEN_GATE_COMPLETE_LINE.replace(/^Rook:\s*/, "");
+    }
+    if (!green.gateReached) {
+      return "Nightglass answered, and the ledger holds. Take the green gate on Thornreach — Verdant Spine — name what hunts beyond it, and bring its measure home.";
+    }
+    if (!green.identifiedFox) {
+      return "The green gate is marked. Identify a Gorse Fox on Verdant Spine — Name and Rank — then bring me its measure.";
+    }
+    if (!green.foxKilled) {
+      return "The fox is named. Defeat one Gorse Fox on Verdant Spine, then bring me its measure.";
+    }
+    return "The green gate kept. Survive. Learn. Progress — the far road knows your footing when you tell me.";
+  }
+
   const wharf = getWharfQuest(log);
   if (wharf) {
     if (wharf.status === "complete") {
@@ -1751,90 +2038,4 @@ export function rookQuestLine(log: QuestLog | undefined): string | null {
   const watch = getWatchlineQuest(log);
   if (watch) {
     if (watch.status === "complete") {
-      return WATCHLINE_COMPLETE_LINE.replace(/^Rook:\s*/, "");
-    }
-    if (!watch.talkedCress) {
-      return "Old Reed's word is good. Cress at the depot will set it in the ledger — then recheck the first cairn.";
-    }
-    if (!watch.cairnInspected) {
-      return "The ledger holds. Recheck the first cairn on the ashwood edge — West Watch.";
-    }
-    if (!watch.houndDone) {
-      return "West Watch is marked. Identify or clear one Bark Hound on the ashwood edge, then tell me the line holds.";
-    }
-    return "The line is nearly set. Survive. Learn. Progress — tell me the watchline holds.";
-  }
-
-  const mist = getMistmereQuest(log);
-  if (mist) {
-    if (mist.status === "complete") {
-      return MISTMERE_COMPLETE_LINE.replace(/^Rook:\s*/, "");
-    }
-    if (!mist.reachedMistmere) {
-      return "Gate Watch is done. Cross the Mistmere gate — Old Reed walks the reed-path on the far shore.";
-    }
-    if (!mist.talkedOldReed) {
-      return "You stand on Mistmere. Find Old Reed — fog guide of the reed-path — then bring his word home.";
-    }
-    return "Old Reed spoke. Survive. Learn. Progress — the crossing ends when you tell me.";
-  }
-
-  const gate = getGateWatchQuest(log);
-  if (gate) {
-    if (gate.status === "complete") {
-      return "The gate is known. Cross to Mistmere when ready — Old Reed still walks the reed-path.";
-    }
-    if (!gate.gateReached) {
-      return "Walk Gate Watch. The Mistmere gate sits on Thornreach — stand the tile, travel, or press E. Know the road before you leave.";
-    }
-    return "The Mistmere gate is marked. Survive. Learn. Progress — the watch ends here.";
-  }
-
-  const hollow = getHollowQuest(log);
-  if (hollow) {
-    if (hollow.status === "complete") {
-      return "Hollow quieted. Walk Gate Watch — the Mistmere gate on Thornreach still waits.";
-    }
-    if (!hollow.enteredHollow) {
-      return "Something wrong under the nearest Thornreach hollow. Descend, Identify the shade flicker, then clear two wisps.";
-    }
-    if (!hollow.identifiedWisp) {
-      return "You are under the stone. Identify a Shade Wisp — Name and Rank — before you swing wild.";
-    }
-    if (hollow.wispsKilled < HOLLOW_WISPS_NEEDED) {
-      return `Shade Wisps ${hollow.wispsKilled}/${HOLLOW_WISPS_NEEDED}. Clear the flicker, then return when the hollow holds.`;
-    }
-    return "The hollow is nearly quiet. Survive. Learn. Progress.";
-  }
-
-  const ash = getAshwoodQuest(log);
-  if (ash) {
-    if (ash.status === "complete") {
-      return "Ashwood watch is settled. Something wrong under the nearest hollow — talk when you are ready to descend.";
-    }
-    const n = ash.cairnsVisited.length;
-    if (n < ASHWOOD_CAIRNS_NEEDED) {
-      return `Walk the ashwood watch. Cairns mark the edge — inspect them (${n}/${ASHWOOD_CAIRNS_NEEDED}). Wrong prey still shows between the stones.`;
-    }
-    if (!ash.wrongPreyDone) {
-      return "Cairns are marked. Identify or clear one Needle Rat or Bark Hound still haunting the watch.";
-    }
-    return "The watch is nearly done. Survive. Learn. Progress.";
-  }
-
-  const q = getTeethQuest(log);
-  if (!q) return null;
-  if (q.status === "complete") {
-    return "Teeth are settled. Walk the ashwood watch when you are ready — cairns still mark wrong prey.";
-  }
-  if (!q.identifiedRat) {
-    return "Ashwood edge has wrong prey. Identify first - Name and Rank. Then clear three Needle Rats and one Bark Hound near Thornhearth.";
-  }
-  if (q.ratsKilled < TEETH_RATS_NEEDED) {
-    return `Good eyes. Needle Rats ${q.ratsKilled}/${TEETH_RATS_NEEDED} - keep the basin grass honest.`;
-  }
-  if (!q.houndDone) {
-    return "Rats down. One Bark Hound still packs the ashwood skirts - survive it or drive it off.";
-  }
-  return "Survive. Learn. Progress.";
-}
+      return WATCHLIN

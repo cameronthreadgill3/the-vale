@@ -25,6 +25,7 @@ import {
   ASHVEIL_QUEST_TITLE,
   CHOIR_COUNTS_QUEST_TITLE,
   WHARF_QUEST_TITLE,
+  GREEN_GATE_QUEST_TITLE,
   teethHudLines,
   ashwoodHudLines,
   hollowHudLines,
@@ -34,6 +35,7 @@ import {
   ashveilHudLines,
   choirCountsHudLines,
   wharfHudLines,
+  greenGateHudLines,
   type TeethQuestProgress,
   type AshwoodQuestProgress,
   type HollowQuestProgress,
@@ -43,6 +45,7 @@ import {
   type AshveilQuestProgress,
   type ChoirCountsQuestProgress,
   type WharfQuestProgress,
+  type GreenGateQuestProgress,
 } from "@/game/quests";
 
 function equippedLine(character: ValeCharacter): string {
@@ -56,6 +59,7 @@ function equippedLine(character: ValeCharacter): string {
 }
 
 function activeQuest(
+  greenGateQuest: GreenGateQuestProgress | null,
   wharfQuest: WharfQuestProgress | null,
   choirCountsQuest: ChoirCountsQuestProgress | null,
   ashveilQuest: AshveilQuestProgress | null,
@@ -66,6 +70,9 @@ function activeQuest(
   ashwoodQuest: AshwoodQuestProgress | null,
   teethQuest: TeethQuestProgress | null,
 ): { title: string; lines: string[] } | null {
+  if (greenGateQuest?.status === "active") {
+    return { title: GREEN_GATE_QUEST_TITLE, lines: greenGateHudLines(greenGateQuest) };
+  }
   if (wharfQuest?.status === "active") {
     return { title: WHARF_QUEST_TITLE, lines: wharfHudLines(wharfQuest) };
   }
@@ -110,6 +117,7 @@ export function GameShellHud({
   ashveilQuest,
   choirCountsQuest,
   wharfQuest,
+  greenGateQuest,
   onOpenPack,
 }: {
   cls: ValeClass;
@@ -125,10 +133,12 @@ export function GameShellHud({
   ashveilQuest: AshveilQuestProgress | null;
   choirCountsQuest: ChoirCountsQuestProgress | null;
   wharfQuest: WharfQuestProgress | null;
+  greenGateQuest: GreenGateQuestProgress | null;
   onOpenPack: () => void;
 }) {
   const [muted, setMuted] = useState(isAudioMuted);
   const quest = activeQuest(
+    greenGateQuest,
     wharfQuest,
     choirCountsQuest,
     ashveilQuest,
