@@ -1,6 +1,6 @@
 /** Camera advance + world/player/HUD render for the game loop. */
 import { TILE, type WorldMap } from "@/game/world";
-import { PLAYER_RADIUS, type HudState, type PromptState } from "@/game/canvasConstants";
+import { type HudState, type PromptState } from "@/game/canvasConstants";
 import { levelFromXp, progressInLevel, xpToNext } from "@/game/xp";
 import { maxHpFor, maxManaFor } from "@/game/combat";
 import { getClass } from "@/game/classes";
@@ -22,6 +22,16 @@ import {
 import type { ValeCharacter } from "@/game/character";
 import type { FolkDef, ShopDef, ShipDock } from "@/game/folk";
 import { computePrompt } from "@/game/gameLoopFrame";
+import { drawPlayer } from "@/game/renderPlayer";
+import type { Facing } from "@/game/playerSprites";
+import { WALK_FPS } from "@/game/playerSprites";
+
+/** Position-delta walk state (avoids patching assembled gameLoop). */
+let _lastPx = 0;
+let _lastPy = 0;
+let _facing: Facing = "south";
+let _walkPhase = 0;
+let _moving = false;
 
 export function advanceCameraAndRender(args: {
   ctx: CanvasRenderingContext2D;
@@ -114,20 +124,18 @@ export function advanceCameraAndRender(args: {
     }
   }
   if (map.darkness > 0) {
-    // Soft vignette + local light around the player so exits stay readable.
     const pxLight = Math.floor(player.x - originX);
     const pyLight = Math.floor(player.y - originY);
     const g = ctx.createRadialGradient(pxLight, pyLight, 28, pxLight, pyLight, 220);
-    g.addColorStop(0, `rgba(0,0,0,${Math.max(0, map.darkness * 0.15)})`);
-    g.addColorStop(0.45, `rgba(0,0,0,${map.darkness * 0.55})`);
-    g.addColorStop(1, `rgba(0,0,0,${Math.min(0.55, map.darkness + 0.22)})`);
+    g.addColorStop(0, "rgba(0,0,0," + Math.max(0, map.darkness * 0.15) + ")");
+    g.addColorStop(0.45, "rgba(0,0,0," + (map.darkness * 0.55) + ")");
+    g.addColorStop(1, "rgba(0,0,0," + Math.min(0.55, map.darkness + 0.22) + ")");
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, viewW, viewH);
   }
   drawShipDocks(ctx, docks, originX, originY);
   drawShopMarkers(ctx, shops, folk, originX, originY);
   drawNamedFolk(ctx, folk, originX, originY, player);
-  // Near-field name tags for gates / hollows.
   if (map.kind === "overworld") {
     const ptx = player.x / TILE;
     const pty = player.y / TILE;
@@ -141,7 +149,7 @@ export function advanceCameraAndRender(args: {
       if (Math.hypot(ptx - (h.x + 0.5), pty - (h.y + 0.5)) > 5.5) continue;
       const hx = Math.floor((h.x + 0.5) * TILE - originX);
       const hy = Math.floor((h.y + 0.5) * TILE - originY);
-      drawFloatingLabel(ctx, hx, hy - 10, `Hollow ${h.index + 1}`, "#b89ad4");
+      drawFloatingLabel(ctx, hx, hy - 10, "Hollow " + (h.index + 1), "#b89ad4");
     }
   } else if (map.exit) {
     const ptx = player.x / TILE;
@@ -162,27 +170,22 @@ export function advanceCameraAndRender(args: {
   drawProjectiles(ctx, projectiles, originX, originY);
   const px = Math.floor(player.x - originX);
   const py = Math.floor(player.y - originY);
-  ctx.fillStyle = "rgba(0,0,0,0.35)";
-  ctx.beginPath();
-  ctx.ellipse(px, py + 6, PLAYER_RADIUS * 0.9, PLAYER_RADIUS * 0.45, 0, 0, Math.PI * 2);
-  ctx.fill();
-  const grad = ctx.createRadialGradient(px - 3, py - 4, 2, px, py, PLAYER_RADIUS + 2);
-  grad.addColorStop(0, accent.accentLite);
-  grad.addColorStop(0.6, accent.accent);
-  grad.addColorStop(1, accent.accentDark);
-  ctx.fillStyle = grad;
-  ctx.beginPath();
-  ctx.arc(px, py, PLAYER_RADIUS, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = "#0c0d0b";
-  ctx.lineWidth = 2;
-  ctx.stroke();
-  if (playerFlash > 0) {
-    ctx.fillStyle = `rgba(255,80,60,${Math.min(0.45, playerFlash * 2)})`;
-    ctx.beginPath();
-    ctx.arc(px, py, PLAYER_RADIUS, 0, Math.PI * 2);
-    ctx.fill();
+  const dx = player.x - _lastPx;
+  const dy = player.y - _lastPy;
+  const dist = Math.hypot(dx, dy);
+  if (dist > 0.4) {
+    _moving = true;
+    if (Math.abs(dx) >= Math.abs(dy)) _facing = dx < 0 ? "west" : "east";
+    else _facing = dy < 0 ? "north" : "south";
+    _walkPhase += dt * WALK_FPS;
+  } else {
+    _moving = false;
+    _walkPhase = 0;
   }
+  _lastPx = player.x;
+  _lastPy = player.y;
+  const walkFrame = _moving ? (Math.floor(_walkPhase) % 4) : 0;
+  drawPlayer(ctx, character, px, py, _facing, walkFrame, playerFlash, accent);
   drawFloatTexts(ctx, floatTexts, originX, originY);
 
   hudAccum += dt;

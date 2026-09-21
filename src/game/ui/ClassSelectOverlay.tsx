@@ -1,6 +1,27 @@
+import { useEffect, useState } from "react";
 import { CLASSES, type ClassId } from "@/game/classes";
+import { playerSpritePreviewUrl, preloadAllPlayerSprites } from "@/game/playerSprites";
 
 export function ClassSelectOverlay({ onPick }: { onPick: (id: ClassId) => void }) {
+  const [previews, setPreviews] = useState<Partial<Record<ClassId, string>>>(
+    Object.create(null) as Partial<Record<ClassId, string>>,
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    void preloadAllPlayerSprites().then(() => {
+      if (cancelled) return;
+      const next: Partial<Record<ClassId, string>> = Object.create(null);
+      for (const c of CLASSES) {
+        next[c.id] = playerSpritePreviewUrl(c.id);
+      }
+      setPreviews(next);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <div className="flex h-full w-full items-center justify-center overflow-auto overscroll-contain bg-[#0c0d0b] p-4 sm:p-8" style={{ WebkitOverflowScrolling: "touch" }}>
       <div className="w-full max-w-3xl">
@@ -31,18 +52,37 @@ export function ClassSelectOverlay({ onPick }: { onPick: (id: ClassId) => void }
               className="vale-tap group min-h-[4.5rem] rounded border border-[#2a2e24] bg-[#161812] p-4 text-left transition hover:border-[#c9a227]/60 hover:bg-[#1c1f16] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c9a227] active:border-[#c9a227]/70"
               style={{ borderLeftWidth: 4, borderLeftColor: c.accent }}
             >
-              <div
-                className="font-display text-lg tracking-wide"
-                style={{ color: c.accent }}
-              >
-                {c.name}
+              <div className="flex items-center gap-3">
+                {previews[c.id] ? (
+                  <img
+                    src={previews[c.id]}
+                    alt=""
+                    width={40}
+                    height={40}
+                    className="h-10 w-10 shrink-0 image-rendering-pixelated"
+                    style={{ imageRendering: "pixelated" }}
+                  />
+                ) : (
+                  <div
+                    className="h-10 w-10 shrink-0 rounded-full"
+                    style={{ background: c.accent }}
+                  />
+                )}
+                <div>
+                  <div
+                    className="font-display text-lg tracking-wide"
+                    style={{ color: c.accent }}
+                  >
+                    {c.name}
+                  </div>
+                  <p className="mt-1 text-xs leading-relaxed text-[#a8b09a] sm:text-sm">
+                    {c.blurb}
+                  </p>
+                  <p className="mt-2 text-[10px] uppercase tracking-wider text-[#6a7260]">
+                    Primary · {c.primarySkill}
+                  </p>
+                </div>
               </div>
-              <p className="mt-1 text-xs leading-relaxed text-[#a8b09a] sm:text-sm">
-                {c.blurb}
-              </p>
-              <p className="mt-2 text-[10px] uppercase tracking-wider text-[#6a7260]">
-                Primary · {c.primarySkill}
-              </p>
             </button>
           ))}
         </div>
