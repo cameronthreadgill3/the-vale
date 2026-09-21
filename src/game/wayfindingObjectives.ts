@@ -1,6 +1,7 @@
 /** Wayfinding objectives + distance helpers. */
 import { TILE, type WorldMap } from "@/game/world";
-import { getDock, type FolkDef } from "@/game/folk";
+import { docksOnContinent, getDock, type FolkDef } from "@/game/folk";
+import type { ContinentId } from "@/game/continents";
 import type { Enemy } from "@/game/enemies";
 import {
   TEETH_RATS_NEEDED,
@@ -10,8 +11,10 @@ import {
   CRESS_FOLK_ID,
   OLD_REED_FOLK_ID,
   CHOIR_KEEPER_FOLK_ID,
+  VESPER_FOLK_ID,
   MISTMERE_PIER_DOCK_ID,
   CHOIR_LANDING_DOCK_ID,
+  NIGHTGLASS_WHARF_DOCK_ID,
   getTeethQuest,
   getAshwoodQuest,
   getHollowQuest,
@@ -20,6 +23,7 @@ import {
   getWatchlineQuest,
   getAshveilQuest,
   getChoirCountsQuest,
+  getWharfQuest,
   isTeethActive,
   isAshwoodActive,
   isHollowActive,
@@ -28,6 +32,7 @@ import {
   isWatchlineActive,
   isAshveilActive,
   isChoirCountsActive,
+  isWharfActive,
   loadQuestLog,
   type TeethQuestProgress,
   type AshwoodQuestProgress,
@@ -37,6 +42,7 @@ import {
   type WatchlineQuestProgress,
   type AshveilQuestProgress,
   type ChoirCountsQuestProgress,
+  type WharfQuestProgress,
 } from "@/game/quests";
 import { ASHWOOD_CAIRNS } from "@/game/cairns";
 import { huntZoneById } from "@/game/huntZones";
@@ -67,6 +73,10 @@ export function resolveQuestObjective(
   map: WorldMap,
 ): WayfindObjective | null {
   const log = loadQuestLog();
+  if (isWharfActive(log)) {
+    const q = getWharfQuest(log);
+    if (q) return objectiveForWharf(q, player, enemies, folk, map);
+  }
   if (isChoirCountsActive(log)) {
     const q = getChoirCountsQuest(log);
     if (q) return objectiveForChoirCounts(q, player, folk, map);
@@ -100,6 +110,220 @@ export function resolveQuestObjective(
     if (q) return objectiveForTeeth(q, player, enemies, folk);
   }
   return null;
+}
+
+export function objectiveForWharf(
+  q: WharfQuestProgress,
+  player: { x: number; y: number },
+  enemies: Enemy[],
+  folk: FolkDef[],
+  map: WorldMap,
+): WayfindObjective | null {
+  if (q.status !== "active") return null;
+  const rook = folk.find((f) => f.id === "rook");
+  const cress = folk.find((f) => f.id === CRESS_FOLK_ID);
+  const vesper = folk.find((f) => f.id === VESPER_FOLK_ID);
+
+  if (!q.talkedCress) {
+    if (cress) {
+      return {
+        label: "Talk to Cress (ledger)",
+        x: (cress.x + 0.5) * TILE,
+        y: (cress.y + 0.5) * TILE,
+        kind: "folk",
+      };
+    }
+    const home = continentGateOnMap(map, "thornreach");
+    if (home) {
+      return {
+        label: "Gate to Cress (Thornreach depot)",
+        x: (home.x + 0.5) * TILE,
+        y: (home.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    const toMist = continentGateOnMap(map, "mistmere");
+    if (toMist) {
+      return {
+        label: "Gate toward Cress (Mistmere)",
+        x: (toMist.x + 0.5) * TILE,
+        y: (toMist.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    const wharfHome = dockOnMap(map, NIGHTGLASS_WHARF_DOCK_ID);
+    if (wharfHome) {
+      return {
+        label: "Sail toward Cress (Mistmere)",
+        x: (wharfHome.x + 0.5) * TILE,
+        y: (wharfHome.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    return {
+      label: "Find Cress at Thornreach depot",
+      x: player.x + TILE * 4,
+      y: player.y + TILE * 2,
+      kind: "landmark",
+    };
+  }
+
+  if (!q.talkedVesper) {
+    if (vesper) {
+      return {
+        label: "Talk to Captain Vesper",
+        x: (vesper.x + 0.5) * TILE,
+        y: (vesper.y + 0.5) * TILE,
+        kind: "folk",
+      };
+    }
+    const wharf = dockOnMap(map, NIGHTGLASS_WHARF_DOCK_ID);
+    if (wharf) {
+      return {
+        label: "Nightglass Wharf / Vesper",
+        x: (wharf.x + 0.5) * TILE,
+        y: (wharf.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    const toNight = continentGateOnMap(map, "nightglass-coast");
+    if (toNight) {
+      return {
+        label: "Gate to Nightglass Coast",
+        x: (toNight.x + 0.5) * TILE,
+        y: (toNight.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    const coastal = dockTowardContinent(map, "nightglass-coast");
+    if (coastal) {
+      return {
+        label: `Sail ${coastal.name} → Nightglass`,
+        x: (coastal.x + 0.5) * TILE,
+        y: (coastal.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    const toMist = continentGateOnMap(map, "mistmere");
+    if (toMist) {
+      return {
+        label: "Mistmere gate / coastal dock",
+        x: (toMist.x + 0.5) * TILE,
+        y: (toMist.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    return {
+      label: "Find Mistmere gate (Nightglass)",
+      x: player.x + TILE * 8,
+      y: player.y - TILE * 2,
+      kind: "landmark",
+    };
+  }
+
+  if (!q.houndDone) {
+    const hound = nearestEnemy(player, enemies, "bark-hound");
+    if (hound) {
+      return {
+        label: "Defeat Bark Hound (0/1)",
+        x: hound.x,
+        y: hound.y,
+        kind: "enemy",
+      };
+    }
+    if (map.continentId === "nightglass-coast" && map.kind === "overworld") {
+      return {
+        label: "Find Bark Hound (Nightglass Coast)",
+        x: player.x + TILE * 6,
+        y: player.y - TILE * 4,
+        kind: "landmark",
+      };
+    }
+    const toNight = continentGateOnMap(map, "nightglass-coast");
+    if (toNight) {
+      return {
+        label: "Gate to Bark Hound (Nightglass)",
+        x: (toNight.x + 0.5) * TILE,
+        y: (toNight.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    const coastal = dockTowardContinent(map, "nightglass-coast");
+    if (coastal) {
+      return {
+        label: "Sail to Bark Hound (Nightglass)",
+        x: (coastal.x + 0.5) * TILE,
+        y: (coastal.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    const toMist = continentGateOnMap(map, "mistmere");
+    if (toMist) {
+      return {
+        label: "Mistmere gate / coastal dock",
+        x: (toMist.x + 0.5) * TILE,
+        y: (toMist.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    return {
+      label: "Find Bark Hound (Nightglass Coast)",
+      x: player.x + TILE * 6,
+      y: player.y - TILE * 4,
+      kind: "landmark",
+    };
+  }
+
+  if (rook) {
+    return {
+      label: "Return to Rook",
+      x: (rook.x + 0.5) * TILE,
+      y: (rook.y + 0.5) * TILE,
+      kind: "folk",
+    };
+  }
+  const home = continentGateOnMap(map, "thornreach");
+  if (home) {
+    return {
+      label: "Gate back to Rook (Thornreach)",
+      x: (home.x + 0.5) * TILE,
+      y: (home.y + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  const toMistHome = continentGateOnMap(map, "mistmere");
+  if (toMistHome) {
+    return {
+      label: "Gate toward Rook (Mistmere)",
+      x: (toMistHome.x + 0.5) * TILE,
+      y: (toMistHome.y + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  const wharfHome = dockOnMap(map, NIGHTGLASS_WHARF_DOCK_ID);
+  if (wharfHome) {
+    return {
+      label: "Sail toward Rook (Mistmere)",
+      x: (wharfHome.x + 0.5) * TILE,
+      y: (wharfHome.y + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  const landingHome = dockOnMap(map, CHOIR_LANDING_DOCK_ID);
+  if (landingHome) {
+    return {
+      label: "Sail toward Rook (Mistmere)",
+      x: (landingHome.x + 0.5) * TILE,
+      y: (landingHome.y + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  return {
+    label: "Return to Rook (Thornreach)",
+    x: player.x + TILE * 8,
+    y: player.y - TILE * 2,
+    kind: "landmark",
+  };
 }
 
 export function objectiveForChoirCounts(
@@ -645,6 +869,19 @@ function dockOnMap(
   const dock = getDock(dockId);
   if (!dock || dock.continentId !== map.continentId) return null;
   return { x: dock.x, y: dock.y };
+}
+
+function dockTowardContinent(
+  map: WorldMap,
+  destContinentId: ContinentId,
+): { id: string; name: string; x: number; y: number } | null {
+  if (map.kind !== "overworld") return null;
+  const dock = docksOnContinent(map.continentId).find((d) =>
+    d.destinations.includes(destContinentId),
+  );
+  return dock
+    ? { id: dock.id, name: dock.name, x: dock.x, y: dock.y }
+    : null;
 }
 
 export function objectiveForHollow(

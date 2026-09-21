@@ -1,5 +1,6 @@
 /** Sticky quests - First Story Accession hunts on Thornreach. */
 
+import type { ContinentId } from "@/game/continents";
 import type { EnemyKindId } from "@/game/enemies";
 import type { SkillId } from "@/game/skills";
 import { getActiveQuestKey, GUEST_QUEST_KEY } from "@/account/storageScope";
@@ -16,6 +17,7 @@ export const MISTMERE_QUEST_ID = "mistmere-crossing" as const;
 export const WATCHLINE_QUEST_ID = "the-watchline-holds" as const;
 export const ASHVEIL_QUEST_ID = "ashveil-under-the-watchline" as const;
 export const CHOIR_COUNTS_QUEST_ID = "the-choir-counts" as const;
+export const WHARF_QUEST_ID = "the-wharf-answers" as const;
 
 /** Depot clerk — Cress Ledger in folk.ts. */
 export const CRESS_FOLK_ID = "cress-ledger" as const;
@@ -23,10 +25,14 @@ export const CRESS_FOLK_ID = "cress-ledger" as const;
 export const OLD_REED_FOLK_ID = "old-reed" as const;
 /** Sunken Choir shopkeep — Choir Keeper in folk.ts. */
 export const CHOIR_KEEPER_FOLK_ID = "choir-keeper" as const;
+/** Nightglass Wharf captain — Captain Vesper in folk.ts. */
+export const VESPER_FOLK_ID = "nightglass-pilot" as const;
 /** Mistmere Pier dock — sail to Sunken Choir. */
 export const MISTMERE_PIER_DOCK_ID = "mistmere-pier" as const;
 /** Choir Landing dock on Sunken Choir. */
 export const CHOIR_LANDING_DOCK_ID = "choir-landing" as const;
+/** Nightglass Wharf dock on Nightglass Coast. */
+export const NIGHTGLASS_WHARF_DOCK_ID = "nightglass-wharf" as const;
 /** First Ashwood Watch cairn (West Watch) — recheck on the ashwood edge. */
 export const WATCHLINE_CAIRN_ID = "cairn-west" as const;
 
@@ -38,7 +44,8 @@ export type QuestId =
   | typeof MISTMERE_QUEST_ID
   | typeof WATCHLINE_QUEST_ID
   | typeof ASHVEIL_QUEST_ID
-  | typeof CHOIR_COUNTS_QUEST_ID;
+  | typeof CHOIR_COUNTS_QUEST_ID
+  | typeof WHARF_QUEST_ID;
 
 export type QuestStatus = "active" | "complete";
 
@@ -124,6 +131,19 @@ export interface ChoirCountsQuestProgress {
   talkedChoirKeeper: boolean;
 }
 
+export interface WharfQuestProgress {
+  id: typeof WHARF_QUEST_ID;
+  status: QuestStatus;
+  /** Talked to Cress Ledger — Choir rumor entered in the depot ledger (flag only). */
+  talkedCress: boolean;
+  /** Arrived on Nightglass Coast (gate, ship, or stand). */
+  reachedNightglass: boolean;
+  /** Talked to Captain Vesper (nightglass-pilot) at Nightglass Wharf. */
+  talkedVesper: boolean;
+  /** Defeated 1 Bark Hound on Nightglass Coast. */
+  houndDone: boolean;
+}
+
 export type QuestLog = {
   [TEETH_QUEST_ID]?: TeethQuestProgress;
   [ASHWOOD_QUEST_ID]?: AshwoodQuestProgress;
@@ -133,6 +153,7 @@ export type QuestLog = {
   [WATCHLINE_QUEST_ID]?: WatchlineQuestProgress;
   [ASHVEIL_QUEST_ID]?: AshveilQuestProgress;
   [CHOIR_COUNTS_QUEST_ID]?: ChoirCountsQuestProgress;
+  [WHARF_QUEST_ID]?: WharfQuestProgress;
 };
 
 export const TEETH_RATS_NEEDED = 3;
@@ -147,6 +168,7 @@ export const MISTMERE_QUEST_TITLE = "Mistmere Crossing";
 export const WATCHLINE_QUEST_TITLE = "The Watchline Holds";
 export const ASHVEIL_QUEST_TITLE = "Ashveil Under the Watchline";
 export const CHOIR_COUNTS_QUEST_TITLE = "The Choir Counts";
+export const WHARF_QUEST_TITLE = "The Wharf Answers";
 
 export const TEETH_START_TOAST =
   "Rook: Ashwood edge has wrong prey - Identify first.";
@@ -195,6 +217,12 @@ export const CHOIR_COUNTS_START_TOAST =
 
 export const CHOIR_COUNTS_COMPLETE_LINE =
   "Rook: The stone went quiet; the water kept count. Survive. Learn. Progress — the road remembers beyond Thornreach.";
+
+export const WHARF_START_TOAST =
+  "Rook: The water kept count. Cress will put the rumor in the ledger; take its mark to Nightglass and ask Vesper what the shore has learned. Survive. Learn. Progress.";
+
+export const WHARF_COMPLETE_LINE =
+  "Rook: Nightglass answered, and the ledger holds. Survive. Learn. Progress — the road carries what the water remembers.";
 
 export const TEETH_REWARDS = {
   gold: 28,
@@ -250,6 +278,13 @@ export const CHOIR_COUNTS_REWARDS = {
   combatXp: 130,
   skill: "distance" as SkillId,
   skillXp: 38,
+};
+
+export const WHARF_REWARDS = {
+  gold: 70,
+  combatXp: 140,
+  skill: "distance" as SkillId,
+  skillXp: 42,
 };
 
 export function loadQuestLog(): QuestLog {
@@ -355,6 +390,17 @@ export function emptyChoirCountsQuest(): ChoirCountsQuestProgress {
     talkedOldReed: false,
     reachedChoir: false,
     talkedChoirKeeper: false,
+  };
+}
+
+export function emptyWharfQuest(): WharfQuestProgress {
+  return {
+    id: WHARF_QUEST_ID,
+    status: "active",
+    talkedCress: false,
+    reachedNightglass: false,
+    talkedVesper: false,
+    houndDone: false,
   };
 }
 
@@ -492,6 +538,21 @@ export function sanitizeQuestLog(raw: unknown): QuestLog {
     };
   }
 
+  const wharf = obj[WHARF_QUEST_ID];
+  if (wharf && typeof wharf === "object") {
+    const w = wharf as Record<string, unknown>;
+    const status: QuestStatus =
+      w.status === "complete" ? "complete" : "active";
+    log[WHARF_QUEST_ID] = {
+      id: WHARF_QUEST_ID,
+      status,
+      talkedCress: Boolean(w.talkedCress),
+      reachedNightglass: Boolean(w.reachedNightglass),
+      talkedVesper: Boolean(w.talkedVesper),
+      houndDone: Boolean(w.houndDone),
+    };
+  }
+
   return log;
 }
 
@@ -541,6 +602,12 @@ export function getChoirCountsQuest(
   return log?.[CHOIR_COUNTS_QUEST_ID] ?? null;
 }
 
+export function getWharfQuest(
+  log: QuestLog | undefined,
+): WharfQuestProgress | null {
+  return log?.[WHARF_QUEST_ID] ?? null;
+}
+
 export function isTeethActive(log: QuestLog | undefined): boolean {
   const q = getTeethQuest(log);
   return Boolean(q && q.status === "active");
@@ -578,6 +645,11 @@ export function isAshveilActive(log: QuestLog | undefined): boolean {
 
 export function isChoirCountsActive(log: QuestLog | undefined): boolean {
   const q = getChoirCountsQuest(log);
+  return Boolean(q && q.status === "active");
+}
+
+export function isWharfActive(log: QuestLog | undefined): boolean {
+  const q = getWharfQuest(log);
   return Boolean(q && q.status === "active");
 }
 
@@ -626,6 +698,10 @@ export function choirCountsObjectivesMet(q: ChoirCountsQuestProgress): boolean {
     q.reachedChoir &&
     q.talkedChoirKeeper
   );
+}
+
+export function wharfObjectivesMet(q: WharfQuestProgress): boolean {
+  return q.talkedCress && q.talkedVesper && q.houndDone;
 }
 
 /** HUD lines for Teeth sticky panel. */
@@ -775,6 +851,30 @@ export function choirCountsHudLines(q: ChoirCountsQuestProgress): string[] {
   ];
 }
 
+/** HUD lines for The Wharf Answers. */
+export function wharfHudLines(q: WharfQuestProgress): string[] {
+  if (q.status === "complete") {
+    return ["Complete - Nightglass answered"];
+  }
+  return [
+    q.talkedCress
+      ? "[done] Talk to Cress (ledger)"
+      : "[ ] Talk to Cress at the depot (Choir rumor)",
+    q.reachedNightglass
+      ? "[done] Sail to Nightglass Coast"
+      : "[ ] Sail to Nightglass Coast",
+    q.talkedVesper
+      ? "[done] Talk to Captain Vesper"
+      : "[ ] Talk to Captain Vesper (Nightglass Wharf)",
+    q.houndDone
+      ? "[done] Defeat Bark Hound 1/1"
+      : "[ ] Defeat Bark Hound 0/1 (Nightglass Coast)",
+    q.talkedCress && q.talkedVesper && q.houndDone
+      ? "[ ] Return to Rook (the shore's word)"
+      : "[ ] Return to Rook with what the shore learned",
+  ];
+}
+
 
 export type QuestEventResult = {
   log: QuestLog;
@@ -795,6 +895,8 @@ export type QuestEventResult = {
   startedAshveil?: boolean;
   /** The Choir Counts auto-started after Ashveil Under the Watchline. */
   startedChoirCounts?: boolean;
+  /** The Wharf Answers auto-started after The Choir Counts. */
+  startedWharf?: boolean;
 };
 
 /** If Teeth is complete and Ashwood missing, start Ashwood Watch. */
@@ -923,6 +1025,24 @@ export function ensureChoirCountsAfterAshveil(log: QuestLog): {
   };
 }
 
+/** If The Choir Counts is complete and The Wharf Answers missing, start it. */
+export function ensureNightglassAfterChoir(log: QuestLog): {
+  log: QuestLog;
+  started: boolean;
+} {
+  const choir = getChoirCountsQuest(log);
+  if (!choir || choir.status !== "complete") {
+    return { log, started: false };
+  }
+  if (getWharfQuest(log)) {
+    return { log, started: false };
+  }
+  return {
+    log: withWharfQuest(log, emptyWharfQuest()),
+    started: true,
+  };
+}
+
 export function withTeethQuest(
   log: QuestLog | undefined,
   quest: TeethQuestProgress,
@@ -977,6 +1097,13 @@ export function withChoirCountsQuest(
   quest: ChoirCountsQuestProgress,
 ): QuestLog {
   return { ...(log ?? {}), [CHOIR_COUNTS_QUEST_ID]: quest };
+}
+
+export function withWharfQuest(
+  log: QuestLog | undefined,
+  quest: WharfQuestProgress,
+): QuestLog {
+  return { ...(log ?? {}), [WHARF_QUEST_ID]: quest };
 }
 
 function finishTeethIfReady(
@@ -1124,7 +1251,22 @@ export function applyIdentify(
 export function applyEnemyKill(
   log: QuestLog,
   kindId: EnemyKindId,
+  continentId?: ContinentId,
 ): QuestEventResult | null {
+  const wharf = getWharfQuest(log);
+  if (
+    wharf &&
+    wharf.status === "active" &&
+    kindId === "bark-hound" &&
+    continentId === "nightglass-coast" &&
+    !wharf.houndDone
+  ) {
+    return {
+      log: withWharfQuest(log, { ...wharf, houndDone: true }),
+      toast: "Bark Hound 1/1 — Return to Rook",
+    };
+  }
+
   const ashveil = getAshveilQuest(log);
   if (
     ashveil &&
@@ -1432,10 +1574,74 @@ export function applyChoirCountsRookTalk(log: QuestLog): QuestEventResult | null
   const q = getChoirCountsQuest(log);
   if (!q || q.status !== "active") return null;
   if (!choirCountsObjectivesMet(q)) return null;
+  let out = withChoirCountsQuest(log, { ...q, status: "complete" });
+  const ensured = ensureNightglassAfterChoir(out);
+  out = ensured.log;
   return {
-    log: withChoirCountsQuest(log, { ...q, status: "complete" }),
-    toast: CHOIR_COUNTS_COMPLETE_LINE,
+    log: out,
+    toast: ensured.started ? WHARF_START_TOAST : CHOIR_COUNTS_COMPLETE_LINE,
     completedId: CHOIR_COUNTS_QUEST_ID,
+    startedWharf: ensured.started,
+  };
+}
+
+/** Talk to Cress Ledger — enter the Choir rumor in the depot ledger (flag only). */
+export function applyWharfCressTalk(log: QuestLog): QuestEventResult | null {
+  const q = getWharfQuest(log);
+  if (!q || q.status !== "active" || q.talkedCress) {
+    return null;
+  }
+  const next: WharfQuestProgress = { ...q, talkedCress: true };
+  return {
+    log: withWharfQuest(log, next),
+    toast:
+      "Cress: The Choir's rumor is in the ledger. Take its mark to Nightglass — ask Vesper what the shore has learned.",
+  };
+}
+
+/** Mark Nightglass Coast reached (gate, ship, or stand). */
+export function applyWharfNightglassReached(
+  log: QuestLog,
+): QuestEventResult | null {
+  const q = getWharfQuest(log);
+  if (!q || q.status !== "active" || q.reachedNightglass) {
+    return null;
+  }
+  return {
+    log: withWharfQuest(log, { ...q, reachedNightglass: true }),
+    toast: q.talkedVesper
+      ? "Nightglass underfoot — Return to Rook when the shore answers"
+      : "Nightglass underfoot — Talk to Captain Vesper at the Wharf",
+  };
+}
+
+/** Talk to Captain Vesper (nightglass-pilot) at Nightglass Wharf. */
+export function applyWharfVesperTalk(log: QuestLog): QuestEventResult | null {
+  const q = getWharfQuest(log);
+  if (!q || q.status !== "active" || q.talkedVesper) {
+    return null;
+  }
+  const next: WharfQuestProgress = {
+    ...q,
+    reachedNightglass: true,
+    talkedVesper: true,
+  };
+  return {
+    log: withWharfQuest(log, next),
+    toast:
+      "Captain Vesper: The shore kept the count. A bark-hound hunts the strand — quiet it, then carry word home to Rook.",
+  };
+}
+
+/** Complete The Wharf Answers when talking to Rook after the shore answers. */
+export function applyWharfRookTalk(log: QuestLog): QuestEventResult | null {
+  const q = getWharfQuest(log);
+  if (!q || q.status !== "active") return null;
+  if (!wharfObjectivesMet(q)) return null;
+  return {
+    log: withWharfQuest(log, { ...q, status: "complete" }),
+    toast: WHARF_COMPLETE_LINE,
+    completedId: WHARF_QUEST_ID,
   };
 }
 
@@ -1485,6 +1691,26 @@ export function applyCairnInspect(
 
 /** Rook line while sticky quests are active / complete. */
 export function rookQuestLine(log: QuestLog | undefined): string | null {
+  const wharf = getWharfQuest(log);
+  if (wharf) {
+    if (wharf.status === "complete") {
+      return WHARF_COMPLETE_LINE.replace(/^Rook:\s*/, "");
+    }
+    if (!wharf.talkedCress) {
+      return "The water kept count. Cress will put the rumor in the ledger; take its mark to Nightglass and ask Vesper what the shore has learned.";
+    }
+    if (!wharf.talkedVesper) {
+      if (!wharf.reachedNightglass) {
+        return "The ledger holds the Choir's rumor. Cross the Mistmere gate or a coastal dock to Nightglass — Captain Vesper waits at Nightglass Wharf.";
+      }
+      return "You stand on Nightglass. Ask Captain Vesper at the Wharf what the shore has learned.";
+    }
+    if (!wharf.houndDone) {
+      return "Vesper spoke. Defeat one Bark Hound on the Nightglass Coast, then bring me what the shore learned.";
+    }
+    return "Nightglass answered. Survive. Learn. Progress — the ledger holds when you tell me.";
+  }
+
   const choir = getChoirCountsQuest(log);
   if (choir) {
     if (choir.status === "complete") {

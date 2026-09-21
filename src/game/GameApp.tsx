@@ -53,6 +53,9 @@ import {
   CHOIR_COUNTS_START_TOAST,
   CHOIR_COUNTS_REWARDS,
   CHOIR_COUNTS_COMPLETE_LINE,
+  WHARF_START_TOAST,
+  WHARF_REWARDS,
+  WHARF_COMPLETE_LINE,
   TEETH_QUEST_ID,
   ASHWOOD_QUEST_ID,
   HOLLOW_QUEST_ID,
@@ -61,9 +64,11 @@ import {
   WATCHLINE_QUEST_ID,
   ASHVEIL_QUEST_ID,
   CHOIR_COUNTS_QUEST_ID,
+  WHARF_QUEST_ID,
   CRESS_FOLK_ID,
   OLD_REED_FOLK_ID,
   CHOIR_KEEPER_FOLK_ID,
+  VESPER_FOLK_ID,
   emptyTeethQuest,
   getTeethQuest,
   getAshwoodQuest,
@@ -73,6 +78,7 @@ import {
   getWatchlineQuest,
   getAshveilQuest,
   getChoirCountsQuest,
+  getWharfQuest,
   applyIdentify,
   applyEnemyKill,
   applyCairnInspect,
@@ -90,6 +96,10 @@ import {
   applyChoirCountsChoirReached,
   applyChoirCountsChoirKeeperTalk,
   applyChoirCountsRookTalk,
+  applyWharfCressTalk,
+  applyWharfNightglassReached,
+  applyWharfVesperTalk,
+  applyWharfRookTalk,
   withTeethQuest,
   ensureAshwoodAfterTeeth,
   ensureHollowAfterAshwood,
@@ -98,6 +108,7 @@ import {
   ensureWatchlineAfterMistmere,
   ensureAshveilAfterWatchline,
   ensureChoirCountsAfterAshveil,
+  ensureNightglassAfterChoir,
   rookQuestLine,
   loadQuestLog,
   saveQuestLog,
@@ -392,6 +403,20 @@ export function GameApp() {
           }
         }
       }
+      if (target === "nightglass-coast") {
+        const night = applyWharfNightglassReached(loadQuestLog());
+        if (night) {
+          saveQuestLog(night.log);
+          if (night.toast) {
+            showToast(night.toast);
+            window.setTimeout(
+              () => setToast((t) => (t === night.toast ? null : t)),
+              2800,
+            );
+            return true;
+          }
+        }
+      }
       const dest = getContinent(target);
       if (paid > 0 || firstCrossing) {
         showToast(farePaidToast("gate", dest.name, paid));
@@ -464,8 +489,20 @@ export function GameApp() {
         }
       }
     }
+    if (folkId === VESPER_FOLK_ID) {
+      const vesper = applyWharfVesperTalk(loadQuestLog());
+      if (vesper) {
+        saveQuestLog(vesper.log);
+        if (vesper.toast) {
+          line = vesper.toast.replace(/^Captain Vesper:\s*/, "");
+          queueMicrotask(() => showToast(vesper.toast!));
+        }
+      }
+    }
     if (folkId === CRESS_FOLK_ID) {
-      const cress = applyWatchlineCressTalk(loadQuestLog());
+      const cress =
+        applyWatchlineCressTalk(loadQuestLog()) ??
+        applyWharfCressTalk(loadQuestLog());
       if (cress) {
         saveQuestLog(cress.log);
         if (cress.toast) {
@@ -476,6 +513,7 @@ export function GameApp() {
     }
     if (folkId === "rook" && character) {
       const turnIn =
+        applyWharfRookTalk(loadQuestLog()) ??
         applyChoirCountsRookTalk(loadQuestLog()) ??
         applyAshveilRookTalk(loadQuestLog()) ??
         applyWatchlineRookTalk(loadQuestLog()) ??
@@ -489,7 +527,17 @@ export function GameApp() {
             ...prev,
             skillXp: { ...prev.skillXp },
           };
-          if (turnIn.completedId === CHOIR_COUNTS_QUEST_ID) {
+          if (turnIn.completedId === WHARF_QUEST_ID) {
+            next = awardCombatXp(next, WHARF_REWARDS.combatXp);
+            next = { ...next, skillXp: { ...next.skillXp } };
+            awardSkillXp(next, WHARF_REWARDS.skill, WHARF_REWARDS.skillXp);
+            next = setGold(next, next.gold + WHARF_REWARDS.gold);
+            next = { ...next, skillXp: { ...next.skillXp } };
+            queueMicrotask(() => {
+              showToast(WHARF_COMPLETE_LINE);
+              setSkillTick((t) => t + 1);
+            });
+          } else if (turnIn.completedId === CHOIR_COUNTS_QUEST_ID) {
             next = awardCombatXp(next, CHOIR_COUNTS_REWARDS.combatXp);
             next = { ...next, skillXp: { ...next.skillXp } };
             awardSkillXp(
@@ -500,7 +548,11 @@ export function GameApp() {
             next = setGold(next, next.gold + CHOIR_COUNTS_REWARDS.gold);
             next = { ...next, skillXp: { ...next.skillXp } };
             queueMicrotask(() => {
-              showToast(CHOIR_COUNTS_COMPLETE_LINE);
+              showToast(
+                turnIn.startedWharf
+                  ? WHARF_START_TOAST
+                  : CHOIR_COUNTS_COMPLETE_LINE,
+              );
               setSkillTick((t) => t + 1);
             });
           } else if (turnIn.completedId === ASHVEIL_QUEST_ID) {
@@ -806,6 +858,16 @@ export function GameApp() {
           }
         }
       }
+      if (dest === "nightglass-coast") {
+        const night = applyWharfNightglassReached(loadQuestLog());
+        if (night) {
+          saveQuestLog(night.log);
+          if (night.toast) {
+            showToast(night.toast);
+            return;
+          }
+        }
+      }
       const c = getContinent(dest);
       if (paid > 0 || firstCrossing) {
         showToast(farePaidToast("ship", c.name, paid));
@@ -908,6 +970,19 @@ export function GameApp() {
     );
   }, [character]);
 
+  // Quest 9: auto-start The Wharf Answers once The Choir Counts is complete.
+  useEffect(() => {
+    if (!character) return;
+    const ensured = ensureNightglassAfterChoir(loadQuestLog());
+    if (!ensured.started) return;
+    saveQuestLog(ensured.log);
+    setToast(WHARF_START_TOAST);
+    window.setTimeout(
+      () => setToast((t) => (t === WHARF_START_TOAST ? null : t)),
+      3600,
+    );
+  }, [character]);
+
   // Mistmere Crossing: mark arrival whenever the walker stands on Mistmere.
   useEffect(() => {
     if (!character) return;
@@ -939,6 +1014,19 @@ export function GameApp() {
     if (!character) return;
     if (character.continentId !== "sunken-choir") return;
     const result = applyChoirCountsChoirReached(loadQuestLog());
+    if (!result) return;
+    saveQuestLog(result.log);
+    if (result.toast) {
+      setToast(result.toast);
+      window.setTimeout(() => setToast((t) => (t === result.toast ? null : t)), 2800);
+    }
+  }, [character]);
+
+  // The Wharf Answers: mark Nightglass Coast arrival.
+  useEffect(() => {
+    if (!character) return;
+    if (character.continentId !== "nightglass-coast") return;
+    const result = applyWharfNightglassReached(loadQuestLog());
     if (!result) return;
     saveQuestLog(result.log);
     if (result.toast) {
@@ -1062,7 +1150,19 @@ export function GameApp() {
         next = setGold(next, next.gold + CHOIR_COUNTS_REWARDS.gold);
         next = { ...next, skillXp: { ...next.skillXp } };
         queueMicrotask(() => {
-          showToast(CHOIR_COUNTS_COMPLETE_LINE);
+          showToast(
+            result.startedWharf ? WHARF_START_TOAST : CHOIR_COUNTS_COMPLETE_LINE,
+          );
+          setSkillTick((t) => t + 1);
+        });
+      } else if (result.completedId === WHARF_QUEST_ID) {
+        next = awardCombatXp(next, WHARF_REWARDS.combatXp);
+        next = { ...next, skillXp: { ...next.skillXp } };
+        awardSkillXp(next, WHARF_REWARDS.skill, WHARF_REWARDS.skillXp);
+        next = setGold(next, next.gold + WHARF_REWARDS.gold);
+        next = { ...next, skillXp: { ...next.skillXp } };
+        queueMicrotask(() => {
+          showToast(WHARF_COMPLETE_LINE);
           setSkillTick((t) => t + 1);
         });
       } else if (result.toast) {
@@ -1092,7 +1192,7 @@ export function GameApp() {
       }
       setCharacter((prev) => {
         if (!prev) return prev;
-        const result = applyEnemyKill(loadQuestLog(), kindId);
+        const result = applyEnemyKill(loadQuestLog(), kindId, prev.continentId);
         if (!result) return prev;
         return persistQuestResult(prev, result);
       });
@@ -1390,6 +1490,7 @@ export function GameApp() {
       watchlineQuest={getWatchlineQuest(loadQuestLog())}
       ashveilQuest={getAshveilQuest(loadQuestLog())}
       choirCountsQuest={getChoirCountsQuest(loadQuestLog())}
+      wharfQuest={getWharfQuest(loadQuestLog())}
       onVitals={handleVitals}
       onPlayerDeath={handlePlayerDeath}
       onPassivePrimary={(amount) => {
