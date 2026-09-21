@@ -45,6 +45,7 @@ export function GameShell({
   dialogue,
   shop,
   bankOpen,
+  bankFolkId,
   packOpen,
   craftOpen,
   premiumUnlocking,
@@ -126,6 +127,8 @@ export function GameShell({
   dialogue: { name: string; line: string; hasShop: boolean; hasBank?: boolean; hasCraft?: boolean; shopId?: string; bankId?: string; craftId?: string } | null;
   shop: ShopDef | null;
   bankOpen: boolean;
+  /** Clerk the vault was opened from. Walking out of talk range closes it. */
+  bankFolkId: string | null;
   packOpen: boolean;
   craftOpen: boolean;
   premiumUnlocking: boolean;
@@ -197,7 +200,10 @@ export function GameShell({
   onCraft: (recipeId: string) => void;
 }) {
   // Pack is HUD chrome like Skills — do not pause E / movement while it is open.
-  const overlayOpen = Boolean(dialogue || shop || voyageDock || bankOpen || craftOpen);
+  // The vault is the same on touch: joystick and Attack stay up, and walking
+  // off the clerk closes the sheet. Dialogue, shop, craft, and voyage still pause.
+  const movementBlocked = Boolean(dialogue || shop || voyageDock || craftOpen);
+  const worldUiOpen = movementBlocked || bankOpen;
   const showMobile = useShowMobileChrome();
   const [starterTip, setStarterTip] = useState(true);
   useEffect(() => {
@@ -220,7 +226,10 @@ export function GameShell({
     cls,
     arrivedFrom,
     shipSpawn,
-    overlayOpen,
+    overlayOpen: movementBlocked,
+    bankOpen,
+    bankFolkId,
+    onLeaveBank: onCloseBank,
     onTrain,
     onToggleSkills,
     onToggleMap,
@@ -309,7 +318,7 @@ export function GameShell({
         </div>
       </div>
 
-      {prompt && !overlayOpen && (
+      {prompt && !worldUiOpen && (
         <div className="vale-text-screen vale-prompt pointer-events-none absolute left-1/2 z-10 -translate-x-1/2 px-4 py-2.5 text-center text-sm text-[#f3f0e4] bottom-40">
           {prompt.kind === "gate" && (
             <>
@@ -415,7 +424,7 @@ export function GameShell({
         </div>
       )}
 
-      {starterTip && !overlayOpen && (
+      {starterTip && !worldUiOpen && (
         <button
           type="button"
           onClick={() => setStarterTip(false)}
@@ -539,7 +548,7 @@ export function GameShell({
         />
       )}
 
-      {!overlayOpen && (
+      {!movementBlocked && (
         <QuickSkillCluster
           keysRef={keysRef}
           interactRequestRef={interactRequestRef}
@@ -550,7 +559,7 @@ export function GameShell({
         />
       )}
 
-      {showMobile && !overlayOpen && (
+      {showMobile && !movementBlocked && (
         <MobileControls keysRef={keysRef} />
       )}
     </div>

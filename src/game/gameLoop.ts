@@ -47,7 +47,7 @@ import {
   type Projectile,
 } from "@/game/enemies";
 import { spawnEnemiesForQuest } from "@/game/questFauna";
-import { tryMovePlayer } from "@/game/gameLoopFrame";
+import { tryMovePlayer, isAtBankCounter } from "@/game/gameLoopFrame";
 import { advanceCameraAndRender } from "@/game/gameLoopRender";
 import { attachCanvasPointers } from "@/game/gameLoopPointers";
 import { createPlayerAttack } from "@/game/gameLoopCombat";
@@ -92,6 +92,10 @@ export function useGameLoopEffect(d: {
   onVitals: MutableRefObject<(hp: number, mana: number) => void>;
   onPlayerDeath: MutableRefObject<() => void>;
   overlayOpenRef: MutableRefObject<boolean>;
+  /** Vault is open. Movement stays live so touch can walk off the counter. */
+  bankOpenRef: MutableRefObject<boolean>;
+  bankFolkIdRef: MutableRefObject<string | null>;
+  onLeaveBankRef: MutableRefObject<() => void>;
 }): void {
   const {
     canvasRef, keysRef, interactRequestRef, accentRef, passiveRef, trainRef, toggleSkillsRef, toggleMapRef,
@@ -99,6 +103,7 @@ export function useGameLoopEffect(d: {
     passiveAccum, promptRef, interactLock,
     character, arrivedFrom, shipSpawn, setHud, setPrompt,
     characterRef, onCombatReward, onEnemyKill, onIdentify, onVitals, onPlayerDeath, overlayOpenRef,
+    bankOpenRef, bankFolkIdRef, onLeaveBankRef,
   } = d;
 
   useEffect(() => {
@@ -216,7 +221,14 @@ export function useGameLoopEffect(d: {
     window.addEventListener("resize", resize);
 
     const doInteract = () => {
-      if (interactLock.current || deadLock || overlayOpenRef.current) return;
+      if (
+        interactLock.current ||
+        deadLock ||
+        overlayOpenRef.current ||
+        bankOpenRef.current
+      ) {
+        return;
+      }
       const p = promptRef.current;
       if (!p) return;
       interactLock.current = true;
@@ -322,6 +334,9 @@ export function useGameLoopEffect(d: {
       last = now;
       const keys = keysRef.current;
       const paused = deadLock || overlayOpenRef.current;
+      // Dialogue and shops pause the world. The vault does not: the joystick
+      // has to walk off the clerk. Fights stay frozen until the sheet closes.
+      const simPaused = paused || bankOpenRef.current;
 
       if (interactRequestRef.current) {
         interactRequestRef.current = false;
@@ -360,7 +375,17 @@ export function useGameLoopEffect(d: {
         }
       }
 
-      if (!paused) {
+      const bankFolkId = bankFolkIdRef.current;
+      if (!deadLock && bankOpenRef.current && bankFolkId) {
+        if (
+          !isAtBankCounter(player.x / TILE, player.y / TILE, bankFolkId, folk)
+        ) {
+          bankOpenRef.current = false;
+          onLeaveBankRef.current();
+        }
+      }
+
+      if (!simPaused) {
         attackCd = Math.max(0, attackCd - dt);
         noTargetCd = Math.max(0, noTargetCd - dt);
         if (playerFlash > 0) playerFlash = Math.max(0, playerFlash - dt);
@@ -467,7 +492,7 @@ export function useGameLoopEffect(d: {
         fareDeniedTile = null;
       }
       if (
-        !paused &&
+        !simPaused &&
         standingTx >= 0 &&
         standingTy >= 0 &&
         standingTx < map.width &&
@@ -520,7 +545,7 @@ export function useGameLoopEffect(d: {
         playerFlash,
         accent: accentRef.current,
         character: characterRef.current,
-        paused,
+        paused: simPaused,
         setHud,
         setPrompt,
         promptRef,

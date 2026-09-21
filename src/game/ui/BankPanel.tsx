@@ -68,9 +68,9 @@ export function BankPanel({
   const ratio = maxW > 0 ? weight / maxW : 0;
 
   return (
-    <div className="vale-panel vale-inv-panel vale-text-screen pointer-events-auto absolute bottom-4 left-1/2 z-30 w-[min(100%-2rem,28rem)] -translate-x-1/2 p-3.5 max-md:bottom-8 sm:bottom-6">
-      <div className="mb-2.5 flex items-center justify-between gap-2">
-        <div>
+    <div className="vale-panel vale-inv-panel vale-bank-sheet vale-overlay-above-chrome vale-text-screen pointer-events-auto absolute bottom-4 left-1/2 z-30 w-[min(100%-2rem,28rem)] -translate-x-1/2 p-3.5 sm:bottom-6">
+      <div className="vale-bank-sheet-head mb-2.5 flex items-center justify-between gap-2">
+        <div className="min-w-0">
           <div className="vale-screen-title">Bank · Thornreach Vault</div>
           <div className="vale-screen-kicker">
             Gold and items here never drop on death
@@ -79,12 +79,14 @@ export function BankPanel({
         <button
           type="button"
           onClick={onClose}
-          className="vale-tap-sm vale-ghost-btn px-3 py-2 text-xs text-[#a8b09a]"
+          aria-label="Close bank"
+          className="vale-bank-close vale-tap vale-ghost-btn shrink-0 px-3 py-2 text-xs text-[#a8b09a]"
         >
           Close
         </button>
       </div>
 
+      <div className="vale-bank-sheet-body">
       <div className="vale-inv-stats mb-2">
         <span className="vale-inv-chip">{formatWeightChrome(weight, maxW)}</span>
         <span className="vale-inv-chip">{formatSlotsChrome(slots, maxS)}</span>
@@ -183,6 +185,7 @@ export function BankPanel({
         >
           Withdraw all gold
         </button>
+      </div>
       </div>
     </div>
   );

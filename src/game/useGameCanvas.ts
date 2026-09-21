@@ -17,6 +17,9 @@ export function useGameCanvas(opts: {
   arrivedFrom: ContinentId | null;
   shipSpawn: { x: number; y: number } | null;
   overlayOpen: boolean;
+  bankOpen: boolean;
+  bankFolkId: string | null;
+  onLeaveBank: () => void;
   onTrain: (skill: SkillId) => void;
   onToggleSkills: () => void;
   onToggleMap: () => void;
@@ -47,6 +50,9 @@ export function useGameCanvas(opts: {
     arrivedFrom,
     shipSpawn,
     overlayOpen,
+    bankOpen,
+    bankFolkId,
+    onLeaveBank,
     onTrain,
     onToggleSkills,
     onToggleMap,
@@ -94,6 +100,9 @@ export function useGameCanvas(opts: {
   const onVitalsRef = useRef(onVitals);
   const onPlayerDeathRef = useRef(onPlayerDeath);
   const overlayOpenRef = useRef(overlayOpen);
+  const bankOpenRef = useRef(bankOpen);
+  const bankFolkIdRef = useRef(bankFolkId);
+  const onLeaveBankRef = useRef(onLeaveBank);
 
   accentRef.current = cls;
   passiveRef.current = onPassivePrimary;
@@ -115,6 +124,9 @@ export function useGameCanvas(opts: {
   onVitalsRef.current = onVitals;
   onPlayerDeathRef.current = onPlayerDeath;
   overlayOpenRef.current = overlayOpen;
+  bankOpenRef.current = bankOpen;
+  bankFolkIdRef.current = bankFolkId;
+  onLeaveBankRef.current = onLeaveBank;
   characterRef.current = character;
 
   const combatXp = character.combatXp;
@@ -192,6 +204,9 @@ export function useGameCanvas(opts: {
     onVitals: onVitalsRef,
     onPlayerDeath: onPlayerDeathRef,
     overlayOpenRef,
+    bankOpenRef,
+    bankFolkIdRef,
+    onLeaveBankRef,
   });
   return { canvasRef, keysRef, interactRequestRef, hud, prompt };
 }
