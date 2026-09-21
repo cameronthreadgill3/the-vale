@@ -187,7 +187,7 @@ export function GameShellHud({
         <h1 className="font-display text-lg tracking-wide text-[#c9a227] sm:text-2xl">
           The Vale
         </h1>
-        <p className="mt-0.5 text-xs leading-snug text-[#c8c4b0] sm:text-sm">
+        <p className="mt-0.5 text-xs leading-snug text-[#d4d0bc] sm:text-sm">
           {locationLabel}
         </p>
         {hud.huntZoneLabel && (
@@ -202,8 +202,8 @@ export function GameShellHud({
           {cls.name}
         </p>
         {hud.objectiveLabel && (
-          <div className="vale-hud-panel vale-chrome mt-2 max-w-xs rounded-sm border-[#c9a227]/70 px-2.5 py-1.5 text-[12px] leading-snug text-[#f0d060] sm:text-sm">
-            <div className="text-[9px] uppercase tracking-wider text-[#c9a227]/90">
+          <div className="vale-hud-panel vale-chrome mt-2 max-w-xs px-3 py-2 text-[12px] leading-snug text-[#f0d060] sm:text-sm">
+            <div className="text-[10px] uppercase tracking-wider text-[#c9a227]/90">
               Objective
             </div>
             <div className="font-display tracking-wide">
@@ -218,7 +218,7 @@ export function GameShellHud({
         )}
         {quest && <QuestHudCard title={quest.title} lines={quest.lines} />}
       </div>
-      <div className="vale-hud-vitals vale-hud-panel vale-chrome mt-9 w-[8.75rem] shrink-0 rounded-sm px-2.5 py-2 text-xs text-[#e0dcc8] sm:mt-10 sm:w-36 sm:px-3 sm:text-sm">
+      <div className="vale-hud-vitals vale-hud-panel vale-chrome mt-9 w-[8.75rem] shrink-0 px-3 py-2.5 text-xs text-[#e0dcc8] sm:mt-10 sm:w-36 sm:px-3.5 sm:text-sm">
         <div className="font-display" style={{ color: cls.accent }}>
           Level {hud.level}
         </div>
@@ -313,11 +313,11 @@ export function GameShellHud({
 function QuestHudCard({ title, lines }: { title: string; lines: string[] }) {
   const current = lines.findIndex((line) => line.startsWith("[ ]"));
   return (
-    <div className="vale-hud-quest vale-hud-panel vale-chrome pointer-events-auto mt-2 max-w-xs rounded-sm px-2.5 py-1.5 text-[11px] leading-relaxed text-[#c8c4b0] sm:text-xs">
+    <div className="vale-hud-quest vale-hud-panel vale-chrome pointer-events-auto mt-2 max-w-xs px-3 py-2 text-[11px] leading-[1.55] text-[#d4d0bc] sm:text-xs">
       <div className="font-display text-[12px] tracking-wide text-[#c9a227] sm:text-sm">
         {title}
       </div>
-      <ul className="mt-1 space-y-0.5">
+      <ul className="mt-1.5 space-y-1">
         {lines.map((line, i) => {
           const done = line.startsWith("[done]");
           const isNow = i === current;
@@ -329,7 +329,7 @@ function QuestHudCard({ title, lines }: { title: string; lines: string[] }) {
                   ? "text-[#6a7260]"
                   : isNow
                     ? "text-[#f0d060]"
-                    : "text-[#c8c4b0]"
+                    : "text-[#d4d0bc]"
               }
             >
               {isNow ? <span className="text-[#c9a227]">▸ </span> : null}
