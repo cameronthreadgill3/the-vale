@@ -57,7 +57,7 @@ import {
   drawWorldWayfindLabels,
   huntZoneLabelForPlayer,
 } from "@/game/wayfinding";
-import { playFootstep, playHit } from "@/game/audio";
+import { playFootstep, playHit, syncAmbient } from "@/game/audio";
 import {
   applyAshveilChamberReach,
   applyIdentify,
@@ -252,6 +252,7 @@ export function advanceCameraAndRender(args: {
   _lastPx = player.x;
   _lastPy = player.y;
   const walkFrame = _moving ? (Math.floor(_walkPhase) % 4) : 0;
+  syncAmbient(map.kind);
   if (_moving && !paused && walkFrame % 2 === 0) playFootstep();
   if (playerFlash > _lastPlayerFlash + 0.2) playHit("player");
   _lastPlayerFlash = playerFlash;

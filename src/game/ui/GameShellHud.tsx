@@ -5,8 +5,10 @@ import { getItem } from "@/game/items";
 import type { HudState } from "@/game/canvasConstants";
 import {
   armAudio,
+  holdAmbient,
   isAudioMuted,
   playToast,
+  releaseAmbient,
   setAudioMuted,
   subscribeAudioMuted,
   watchOverlayToasts,
@@ -125,7 +127,12 @@ export function GameShellHud({
 
   useEffect(() => {
     armAudio();
-    return subscribeAudioMuted(setMuted);
+    holdAmbient();
+    const unsub = subscribeAudioMuted(setMuted);
+    return () => {
+      unsub();
+      releaseAmbient();
+    };
   }, []);
 
   useEffect(() => {
