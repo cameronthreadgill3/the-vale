@@ -46,6 +46,17 @@ export {
 export { drawDoorGateSpill } from "@/game/gfx/doorSpill";
 export { drawLanternWallGlow, drawAshwoodLampBounce } from "@/game/gfx/wallGlow";
 export {
+  drawGroundContactAo,
+  drawArchCrevice,
+  drawEaveVolume,
+  drawFacadeRim,
+  drawAwningVolume,
+  drawPropContactAo,
+  drawPropCanopyShade,
+  drawPropRimBounce,
+  propRimGain,
+} from "@/game/gfx/contactAo";
+export {
   drawCreatureSprite,
   getCreatureSheet,
   creatureWalkFrame,

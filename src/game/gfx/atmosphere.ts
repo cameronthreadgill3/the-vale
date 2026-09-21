@@ -4,6 +4,7 @@
  * Plaza lanterns and ashwood path lamps share one warm pulse, kept under labels.
  * Open plaza doors and gate arches spill a quieter warm pool onto the step.
  * Nearby plaster catches a soft bounce from those same lamps.
+ * Prop and building feet take a thin contact crease; arches keep a dark soffit.
  * Thornreach cobble and the path stones at the square carry a slow wet sheen.
  * Ashwood crowns lay a slow dapple on the open floor beside the grove umbra.
  */
@@ -12,6 +13,7 @@ import { propsOnContinent } from "@/game/world/town";
 import { fountainFrameAt, tileVariantAt, wetPuddleGlint, wetStoneCatches } from "@/game/gfx/tiles";
 import { drawSoftShadow } from "@/game/gfx/canvasUtil";
 import { drawCanopyDapple } from "@/game/gfx/canopyDapple";
+import { drawArchCrevice, drawGroundContactAo } from "@/game/gfx/contactAo";
 import { drawDoorGateSpill } from "@/game/gfx/doorSpill";
 import { drawPathLampGlow, warmFlamePulse } from "@/game/gfx/lampFlicker";
 import { drawLanternWallGlow } from "@/game/gfx/wallGlow";
@@ -508,8 +510,10 @@ export function drawSurfaceLight(
       ctx.fillRect(lx - 40, ly - 40, 80, 80);
     }
     drawPathLampGlow(ctx, map, originX, originY, viewW, viewH, timeSec);
+    drawGroundContactAo(ctx, map, originX, originY, viewW, viewH);
     drawDoorGateSpill(ctx, map, originX, originY, viewW, viewH, timeSec);
     drawLanternWallGlow(ctx, map, originX, originY, viewW, viewH, timeSec);
+    drawArchCrevice(ctx, map, originX, originY, viewW, viewH);
   }
   ctx.restore();
 }
