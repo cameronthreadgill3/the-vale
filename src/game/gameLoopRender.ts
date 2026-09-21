@@ -107,6 +107,7 @@ import {
   tickBodyMarker,
 } from "@/game/bodyMarker";
 import { tickLootSparkles, drawLootSparkles } from "@/game/lootSparkle";
+import { idleBreathLift } from "@/game/idleBreath";
 
 /** Position-delta walk state (avoids patching assembled gameLoop). */
 let _lastPx = 0;
@@ -119,6 +120,8 @@ let _lastPlayerFlash = 0;
 let _hitFlashVis = 0;
 let _walkSampled = false;
 let _atmosT = 0;
+/** Holds the body down through a swing or a flinch. */
+let _breathPlant = 0;
 let _gfxWarmed = false;
 /** Smoothed look-ahead so the view leans into the walk, then settles. */
 let _lookX = 0;
@@ -674,7 +677,10 @@ export function advanceCameraAndRender(args: {
   _lastPx = player.x;
   _lastPy = player.y;
   const walkFrame = _moving ? (Math.floor(_walkPhase) % 4) : 0;
-  const idleLift = !_moving && Math.sin(_atmosT * 1.65) > 0.05 ? -1 : 0;
+  if (playerFlash > _lastPlayerFlash + 0.02) _breathPlant = 0.7;
+  _breathPlant = Math.max(0, _breathPlant - dt);
+  const idleLift =
+    !_moving && _breathPlant <= 0 ? idleBreathLift(_atmosT, 0.4) : 0;
   syncAmbient(map.kind);
   if (_moving && !paused && walkFrame % 2 === 0) playFootstep();
   if (playerFlash > _lastPlayerFlash + 0.02) _hitFlashVis = HIT_FLASH_SEC;
@@ -703,7 +709,7 @@ export function advanceCameraAndRender(args: {
   };
   const depth: DepthItem[] = [
     ...collectFolkDepthItems(folk, originX, originY, _atmosT),
-    ...collectEnemyDepthItems(enemies, originX, originY, groundShift, player),
+    ...collectEnemyDepthItems(enemies, originX, originY, groundShift, player, _atmosT),
     ...collectMoteDepthItems(originX, originY, _atmosT),
     ...collectAshDriftDepthItems(originX, originY, _atmosT),
     ...collectPathLampDepthItems(map, originX, originY, viewW, viewH, _atmosT),

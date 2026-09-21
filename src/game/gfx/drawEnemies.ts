@@ -14,6 +14,7 @@ import { rimStrengthForDistance } from "@/game/gfx/directionalRim";
 import type { DepthItem } from "@/game/gfx/depth";
 import { flushDepth } from "@/game/gfx/depth";
 import { TILE } from "@/game/world";
+import { IDLE_BREATH_TILES, IDLE_WALK_SPEED, idleBreathLift } from "@/game/idleBreath";
 
 function creatureSpriteId(id: string): CreatureKindId {
   return id as CreatureKindId;
@@ -65,6 +66,13 @@ function hashId(id: string): number {
   return (n >>> 0) / 4294967296;
 }
 
+/** Pixels moved since the previous draw. Read before `shadowTrail` stores the new point. */
+function stepSinceLast(id: string, x: number, y: number): number {
+  const prev = _trails.get(id);
+  if (!prev) return 0;
+  return Math.hypot(x - prev.px, y - prev.py);
+}
+
 function paintCreatureHit(
   ctx: CanvasRenderingContext2D,
   e: Enemy,
@@ -102,8 +110,9 @@ export function collectEnemyDepthItems(
   originX: number,
   originY: number,
   groundShift: { x: number; y: number } = { x: 0, y: 0 },
-  /** World position. Creatures past a few tiles skip the rim. */
+  /** World position. Creatures past a few tiles skip the rim and the breath. */
   player?: { x: number; y: number },
+  timeSec = 0,
 ): DepthItem[] {
   const items: DepthItem[] = [];
   const seen = new Set<string>();
@@ -111,7 +120,21 @@ export function collectEnemyDepthItems(
     seen.add(e.id);
     const sx = Math.floor(e.x - originX);
     const sy = Math.floor(e.y - originY);
+    const step = stepSinceLast(e.id, e.x, e.y);
     const trail = shadowTrail(e.id, e.x, e.y);
+    const speed = _gfxDt > 1 / 120 ? step / _gfxDt : 0;
+    const near =
+      !!player && Math.hypot(e.x - player.x, e.y - player.y) <= TILE * IDLE_BREATH_TILES;
+    // Chase is a walk. A fast idle (leash home) is a walk. A slow mill stands and breathes.
+    const walking = e.ai === "chase" || (e.ai === "idle" && speed > IDLE_WALK_SPEED);
+    const planted = e.ai === "attack" || (e.ai === "idle" && near && !walking);
+    const breath =
+      planted && e.ai === "idle" && e.flash <= 0 && timeSec > 0
+        ? idleBreathLift(timeSec, hashId(e.id) * Math.PI * 2)
+        : 0;
+    const frame = planted
+      ? 0
+      : creatureWalkFrame(_animT + hashId(e.id) * 4, e.ai === "chase" || e.ai === "idle");
     const shiftX = groundShift.x + trail.x;
     const shiftY = groundShift.y + trail.y;
     items.push({
@@ -156,8 +179,6 @@ export function collectEnemyDepthItems(
           size * (floating ? 0.12 : 0.22),
           floating ? 0.2 : 0.36,
         );
-        const moving = e.ai === "chase" || e.ai === "idle";
-        const frame = creatureWalkFrame(_animT + hashId(e.id) * 4, moving);
         const rim = player
           ? rimStrengthForDistance(Math.hypot(e.x - player.x, e.y - player.y), TILE)
           : 1;
@@ -172,8 +193,9 @@ export function collectEnemyDepthItems(
           e.flash > 0,
           frame,
           rim,
+          breath,
         );
-        paintCreatureHit(ctx, e, sx, sy, frame);
+        paintCreatureHit(ctx, e, sx, sy + breath, frame);
       },
     });
   }

@@ -47,20 +47,21 @@ export function drawPlayer(
     return;
   }
 
-  const grad = ctx.createRadialGradient(px - 3, py - 4, 2, px, py, PLAYER_RADIUS + 2);
+  const bodyY = py + lift;
+  const grad = ctx.createRadialGradient(px - 3, bodyY - 4, 2, px, bodyY, PLAYER_RADIUS + 2);
   grad.addColorStop(0, accent.accentLite);
   grad.addColorStop(0.6, accent.accent);
   grad.addColorStop(1, accent.accentDark);
   ctx.fillStyle = grad;
   ctx.beginPath();
-  ctx.arc(px, py, PLAYER_RADIUS, 0, Math.PI * 2);
+  ctx.arc(px, bodyY, PLAYER_RADIUS, 0, Math.PI * 2);
   ctx.fill();
   ctx.strokeStyle = "#0c0d0b";
   ctx.lineWidth = 2;
   ctx.stroke();
-  drawOrbDirectionalRim(ctx, px, py, PLAYER_RADIUS);
+  drawOrbDirectionalRim(ctx, px, bodyY, PLAYER_RADIUS);
   if (playerFlash > 0) {
-    drawOrbHitFlash(ctx, px, py, PLAYER_RADIUS, playerFlash);
+    drawOrbHitFlash(ctx, px, bodyY, PLAYER_RADIUS, playerFlash);
   }
   drawFootstepDust(ctx);
 }
