@@ -119,7 +119,7 @@ Rewards: ~40g + ~80 combat XP + magic skill XP. Yellow arrow points at the hollo
 New cues so you are never lost on Thornreach:
 
 1. **Quest arrow + HUD line** — Active sticky quests show a yellow edge/on-screen arrow toward the current objective (cairns, hollow entrance, Shade Wisp, Needle Rat, Bark Hound, or Rook) plus a HUD line like `→ Identify Needle Rat · 12 tiles`.
-2. **Labeled landmarks + compass** — Larger high-contrast markers; names for folk, **Gate → Continent**, hollow entrance/exit, ship docks, the plaza **Fountain**, and **hunt-ground cairns** (`Name · Rec. 2–4`, plus spawn table when close) within ~8 tiles. Top-center compass (N/E/S/W) with a tiny radar of nearby interactables (gold), cairns, and the quest target (bright).
+2. **Labeled landmarks + compass** — Larger high-contrast markers; names for folk, **Gate → Continent**, hollow entrance/exit, ship docks, and the plaza **Fountain** within ~8 tiles; **hunt-ground cairns** (`Name · Rec. 2–4`, plus spawn table when close) from ~12 tiles. Top-center compass (N/E/S/W) with a tiny radar of nearby interactables (gold), cairns, and the quest target (bright).
 3. **Starter tip + clear prompts** — First 60s on load: soft tip *Talk to Rook (watch) · Cairns mark hunt grounds (Rec. levels) · Bank with Cress · Fountain square is safe*. Nearest interactable prompts read as actions: `Talk · Rook`, `Talk / Bank · Cress Vault`, `Enter hollow`, `Use gate → …`, `Board ship · …`.
 
 
