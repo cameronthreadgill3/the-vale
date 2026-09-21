@@ -20,3 +20,4 @@ assemble("ch\\.b64", "src/game/character.ts");
 assemble("en\\.b64", "src/game/enemies.ts");
 assemble("gs\\.b64", "src/game/GameShell.tsx");
 assemble("rd\\.b64", "README.md");
+assemble("ti\\.b64", "src/game/gfx/tiles.ts");
