@@ -1,8 +1,6 @@
 /** Equipped loadout, pack weight, and class starter kits. */
 
 import type { ClassId } from "@/game/classes";
-import { levelFromXp } from "@/game/xp";
-import { skillLevelFromXp } from "@/game/skills";
 import {
   getItem,
   isEquippable,
@@ -30,9 +28,6 @@ export const SLOT_LABEL: Record<EquipSlot, string> = {
   shield: "Shield",
 };
 
-/** Base carry cap in oz before combat / shielding. */
-export const BASE_PACK_CAPACITY = 120;
-
 export function emptyEquipment(): EquipmentLoadout {
   return { weapon: null, armor: null, shield: null };
 }
@@ -53,39 +48,6 @@ export function sanitizeEquipment(raw: unknown): EquipmentLoadout {
     if (w.twoHand) out.shield = null;
   }
   return out;
-}
-
-export function itemWeight(id: ItemId, qty = 1): number {
-  return getItem(id).weight * qty;
-}
-
-export function inventoryWeight(inventory: InventoryStack[]): number {
-  let total = 0;
-  for (const stack of inventory) total += itemWeight(stack.id, stack.qty);
-  return total;
-}
-
-export function equipmentWeight(equipment: EquipmentLoadout): number {
-  let total = 0;
-  for (const slot of EQUIP_SLOTS) {
-    const id = equipment[slot];
-    if (id) total += itemWeight(id, 1);
-  }
-  return total;
-}
-
-/** Worn gear + pack contents (Tibia-style: equipped still weighs). */
-export function carriedWeight(
-  inventory: InventoryStack[],
-  equipment: EquipmentLoadout,
-): number {
-  return inventoryWeight(inventory) + equipmentWeight(equipment);
-}
-
-export function packCapacity(combatXp: number, shieldingXp: number): number {
-  const combatLevel = levelFromXp(combatXp);
-  const shieldLevel = skillLevelFromXp(shieldingXp);
-  return BASE_PACK_CAPACITY + combatLevel * 6 + shieldLevel * 4;
 }
 
 export function equipmentAttack(equipment: EquipmentLoadout): {
