@@ -98,42 +98,33 @@ export function SkillsPanel({
                 <button
                   type="button"
                   onClick={() => onTrain(s.id)}
-                  className="vale-tap-sm flex min-w-0 flex-1 flex-col gap-1 rounded px-2 py-2 text-left hover:bg-[#1c1f16] active:bg-[#1c1f16]"
+                  className="vale-tap-sm flex min-w-0 flex-1 flex-col gap-1 rounded px-2 py-2 text-left hover:bg-[rgba(255,248,220,0.04)]"
                 >
-                  <div className="flex items-baseline justify-between gap-2 text-xs">
-                    <span className="text-[#e8e6d9]">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="vale-skill-name">
                       {s.name}
                       {isPrimary ? (
-                        <span
-                          className="ml-2 text-[10px] uppercase tracking-wider"
-                          style={{ color: cls.accent }}
-                        >
-                          {" "}
+                        <span className="vale-skill-tag" style={{ color: cls.accent }}>
                           · primary
                         </span>
                       ) : null}
                       {favored && !isPrimary ? (
-                        <span className="ml-2 text-[10px] uppercase tracking-wider text-[#6a7260]">
-                          {" "}
-                          · favored
-                        </span>
+                        <span className="vale-skill-tag text-[#6e7664]">· favored</span>
                       ) : null}
                     </span>
-                    <span className="font-display tabular-nums" style={{ color: cls.accent }}>
+                    <span className="vale-skill-level tabular-nums" style={{ color: cls.accent }}>
                       Lv {s.level}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between text-[10px] text-[#6a7260]">
+                  <div className="vale-skill-meta flex items-center justify-between">
                     <span>
                       {into} / {s.next} XP
                     </span>
                     <span className="tabular-nums">{s.xp} total</span>
                   </div>
-                  <div className="h-1.5 overflow-hidden rounded bg-[#0c0d0b]">
+                  <div className="vale-skill-meter">
                     <div
-                      className={`h-full rounded transition-[width] duration-300 ${
-                        flashing ? "brightness-125" : ""
-                      }`}
+                      className={`vale-skill-meter-fill ${flashing ? "brightness-125" : ""}`}
                       style={{
                         width: `${Math.round(s.progress * 100)}%`,
                         background: isPrimary ? cls.accent : "#c9a227",
@@ -159,10 +150,8 @@ export function SkillsPanel({
                           e.stopPropagation();
                           onAssignQuickSlot(i, s.id);
                         }}
-                        className={`vale-tap-sm flex h-8 w-8 items-center justify-center rounded-md border text-xs tabular-nums max-md:h-10 max-md:w-10 ${
-                          assigned
-                            ? "border-[#c9a227]/55 bg-[#c9a227]/18 text-[#f0d060]"
-                            : "border-[#3a3e32] text-[#8a9080] hover:border-[#c9a227]/40 hover:text-[#e8e6d9]"
+                        className={`vale-skill-slot vale-tap-sm flex h-8 w-8 items-center justify-center text-xs tabular-nums max-md:h-10 max-md:w-10 ${
+                          assigned ? "vale-skill-slot-on" : ""
                         }`}
                       >
                         {i + 1}
@@ -176,7 +165,7 @@ export function SkillsPanel({
         })}
       </ul>
       {professions && professions.length > 0 ? (
-        <div className="mt-3.5 border-t border-[#3a3e32]/80 pt-2.5">
+        <div className="vale-skill-section">
           <div className="vale-screen-title">Professions</div>
           <div className="vale-screen-kicker mb-2">
             Thornreach lite · gather · fish · kettle
@@ -186,22 +175,22 @@ export function SkillsPanel({
               const into = Math.max(0, Math.round(p.progress * p.next));
               return (
                 <li key={p.id} className="vale-skill-row px-2.5 py-2">
-                  <div className="flex items-baseline justify-between gap-2 text-xs">
-                    <span className="text-[#e8e6d9]">{p.name}</span>
-                    <span className="font-display tabular-nums text-[#c9a227]">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="vale-skill-name">{p.name}</span>
+                    <span className="vale-skill-level tabular-nums text-[#c9a227]">
                       Lv {p.level}
                     </span>
                   </div>
-                  <div className="text-[10px] text-[#6a7260]">{p.blurb}</div>
-                  <div className="mt-1 flex items-center justify-between text-[10px] text-[#6a7260]">
+                  <div className="vale-skill-blurb">{p.blurb}</div>
+                  <div className="vale-skill-meta mt-1 flex items-center justify-between">
                     <span>
                       {into} / {p.next} XP
                     </span>
                     <span className="tabular-nums">{p.xp} total</span>
                   </div>
-                  <div className="mt-1 h-1.5 overflow-hidden rounded bg-[#0c0d0b]">
+                  <div className="vale-skill-meter mt-1">
                     <div
-                      className="h-full rounded bg-[#8a9a60]"
+                      className="vale-skill-meter-fill bg-[#8a9a60]"
                       style={{ width: `${Math.round(p.progress * 100)}%` }}
                     />
                   </div>

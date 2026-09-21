@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { CONTINENTS } from "@/game/continents";
 import type { ValeCharacter } from "@/game/character";
 
@@ -36,31 +37,29 @@ export function ContinentMapPanel({
           return (
             <li
               key={c.id}
-              className="vale-skill-row px-2.5 py-2.5"
-              style={{
-                borderColor: here || inHollowHere ? c.palette.gate : "transparent",
-                background:
-                  here || inHollowHere ? "rgba(255,255,255,0.03)" : undefined,
-              }}
+              className={`vale-skill-row px-2.5 py-2.5 ${
+                here || inHollowHere ? "vale-map-row-here" : ""
+              }`}
+              style={
+                here || inHollowHere
+                  ? ({ "--vale-row-mark": c.palette.gate } as CSSProperties)
+                  : undefined
+              }
             >
-              <div className="flex items-baseline justify-between gap-2 text-xs">
+              <div className="flex items-baseline justify-between gap-2">
                 <span
-                  className="font-display tracking-wide"
-                  style={{ color: known ? c.palette.gate : "#6a7260" }}
+                  className={`vale-skill-name ${known ? "" : "vale-skill-name-dim"}`}
+                  style={known ? { color: c.palette.gate } : undefined}
                 >
                   {known ? c.name : "???"}
                 </span>
                 {(here || inHollowHere) && (
-                  <span className="text-[10px] uppercase tracking-wider text-[#a8b09a]">
+                  <span className="vale-skill-tag text-[#b4bba6]">
                     {inHollowHere ? "hollow" : "here"}
                   </span>
                 )}
               </div>
-              {known && (
-                <p className="mt-0.5 text-[11px] leading-snug text-[#a8b09a]">
-                  {c.blurb}
-                </p>
-              )}
+              {known && <p className="vale-skill-blurb">{c.blurb}</p>}
             </li>
           );
         })}
