@@ -2,6 +2,7 @@
  * Procedural 4×4 class walk sheets — chunky outlined pixel figures
  * (original Vale art, Tibia-adjacent proportions — NOT CipSoft sprites).
  * Pass 5: eased contact–pass walk, hair sway, cloak lag, form volume.
+ * Pathfinder: hooded reed-cloak, recurve bow, and fletched quiver.
  */
 import type { ClassId } from "@/game/classes";
 import { makeCanvas, ctx2d, px, shadeHex, paintVolume as paintVolumeBlock, addPixelVolume } from "@/game/gfx/canvasUtil";
@@ -268,6 +269,214 @@ function drawNearArms(
   }
 }
 
+const REED = "#6b4423";
+const REED_L = "#8d5a30";
+const REED_D = "#3e2816";
+const STRING = "#e4d2a8";
+const FLETCH = "#e8e6d9";
+const FLETCH_TIP = "#f4efe4";
+const VANE_GREEN = "#9ad4a8";
+const GOLD = "#c9a227";
+const GOLD_L = "#e8d48a";
+const LINING = "#5a9e6a";
+
+/**
+ * Undrawn recurve. Column 0 is the string; limbs kick toward higher columns.
+ * `kick` +1 places that flare on +x (bow held on the body's right).
+ */
+const REED_BOW = [
+  "~.....#",
+  "~....#W",
+  "~...#W#",
+  "~..#L#.",
+  "~.#W#..",
+  "~#W#...",
+  ".#L#...",
+  "#$##...",
+  "#D#....",
+  "#W#....",
+  ".#W#...",
+  "~#L#...",
+  "~.#W#..",
+  "~..#W#.",
+  "~...#W#",
+  "~....#W",
+  "~.....#",
+];
+
+function drawReedBow(
+  ctx: CanvasRenderingContext2D,
+  stringX: number,
+  topY: number,
+  kick: number,
+): void {
+  const color: Record<string, string> = {
+    "#": OUT,
+    W: REED,
+    L: REED_L,
+    D: REED_D,
+    $: GOLD,
+    "~": STRING,
+  };
+  for (let row = 0; row < REED_BOW.length; row++) {
+    const line = REED_BOW[row]!;
+    for (let col = 0; col < line.length; col++) {
+      const cell = line[col]!;
+      if (cell === ".") continue;
+      const x = stringX + col * kick;
+      const y = topY + row;
+      if (cell === "~") px(ctx, x - kick, y, OUT);
+      px(ctx, x, y, color[cell] ?? REED);
+    }
+  }
+}
+
+function drawQuiver(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+  const vanes = [VANE_GREEN, FLETCH, GOLD_L];
+  const reach = [7, 9, 6];
+  for (let i = 0; i < 3; i++) {
+    const ax = x + 1 + i * 2;
+    const top = y - reach[i]!;
+    px(ctx, ax, top, vanes[i]!, 1, 3);
+    px(ctx, ax, top, FLETCH_TIP, 1, 1);
+    px(ctx, ax, top + 3, "#d2c09a", 1, reach[i]! - 3);
+  }
+  outlinedVolume(ctx, x, y, 7, 8, REED, 1.2, 0.62);
+  px(ctx, x, y, REED_D, 7, 2);
+  px(ctx, x + 1, y + 1, REED_L, 1, 1);
+  px(ctx, x + 1, y + 5, GOLD, 5, 1);
+  px(ctx, x + 2, y + 5, GOLD_L, 1, 1);
+}
+
+function drawHangingArm(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  sleeve: string,
+  skin: string,
+  shade = 1,
+): void {
+  outlinedVolume(ctx, x, y, 3, 7, shadeHex(sleeve, shade), 1.12, 0.72);
+  outlined(ctx, x, y + 6, 3, 3, skin);
+  paintVolume(ctx, x, y + 6, 3, 3, skin, 1.1, 0.8);
+}
+
+function drawPathfinder(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  facing: Facing,
+  frame: number,
+): void {
+  const p = P.pathfinder;
+  const b = bob(frame);
+  const sway = hairSway(frame);
+  const cloth = clothY(frame);
+  const sw = armSwing(frame);
+  const skin = skinOf("pathfinder");
+  const cloak = p.b;
+  const side = facing === "west" || facing === "east";
+
+  drawFarArm(ctx, cx, cy, facing, frame, p.b);
+  drawLegs(ctx, cx, cy, facing, frame, shadeHex(p.a, 0.55));
+  if (facing === "south" || facing === "north") {
+    const s = spread(frame);
+    const liftL = footLift(frame, true);
+    const liftR = footLift(frame, false);
+    px(ctx, cx - 5 - s, cy + 10 + b + liftL, REED_D, 4, 1);
+    px(ctx, cx + 1 + s, cy + 10 + b + liftR, REED, 4, 1);
+  } else {
+    const dir = facing === "west" ? -1 : 1;
+    const lead = [1, 3, 0, -2][frame] ?? 1;
+    const lift = frame === 1 || frame === 3 ? -1 : 0;
+    px(ctx, cx - 2 - dir, cy + 10 + b, REED_D, 5, 1);
+    px(ctx, cx - 2 + dir * lead, cy + 10 + b + lift, REED, 5, 1);
+  }
+  drawTorso(ctx, cx, cy, facing, frame, p.a, false);
+  if (facing !== "north") {
+    const bw = side ? 6 : 8;
+    const bx = cx - Math.floor(bw / 2);
+    px(ctx, bx, cy + 4 + b, REED_D, bw, 2);
+    px(ctx, cx - 1, cy + 4 + b, GOLD, 2, 2);
+    px(ctx, cx - 1, cy + 4 + b, GOLD_L, 1, 1);
+    if (facing === "south") {
+      px(ctx, cx - 1, cy - 2 + b, shadeHex(p.a, 0.7), 2, 5);
+      px(ctx, cx - 2, cy, GOLD, 1, 1);
+      px(ctx, cx + 1, cy + 2 + b, GOLD, 1, 1);
+    }
+  }
+
+  if (facing === "south") {
+    drawHangingArm(ctx, cx - 8, cy - 2 + b + sw, p.b, skin.lite);
+    outlinedVolume(ctx, cx + 4, cy - 3 + b, 3, 3, p.b);
+    outlinedVolume(ctx, cx + 6, cy - 2 + b, 3, 3, shadeHex(p.b, 0.9), 1.1, 0.7);
+  } else if (facing === "north") {
+    drawNearArms(ctx, cx, cy, facing, frame, p.b, skin.lite);
+  } else if (facing === "west") {
+    outlinedVolume(ctx, cx - 4, cy - 2 + b, 3, 4, p.b);
+  } else {
+    outlinedVolume(ctx, cx + 2, cy - 2 + b, 3, 4, p.b);
+  }
+
+  drawHead(ctx, cx, cy - 8 + b, facing, p.hair, skin, sway);
+
+  const gripY = cy - 1 + b;
+  const topY = gripY - 8;
+
+  if (facing === "south") {
+    outlinedVolume(ctx, cx - 2, cy - 15 + b, 4, 2, cloak, 1.2, 0.68);
+    outlinedVolume(ctx, cx - 4, cy - 14 + b, 8, 2, cloak, 1.16, 0.7);
+    outlinedVolume(ctx, cx - 6, cy - 12 + b, 12, 2, cloak, 1.14, 0.7);
+    outlinedVolume(ctx, cx - 7, cy - 10 + b, 4, 4, cloak, 1.12, 0.68);
+    outlinedVolume(ctx, cx + 3, cy - 10 + b, 4, 4, shadeHex(cloak, 0.9), 1.1, 0.66);
+    outlinedVolume(ctx, cx - 5, cy - 5 + b, 10, 2, cloak, 1.14, 0.7);
+    px(ctx, cx - 4, cy - 11 + b, LINING, 1, 3);
+    px(ctx, cx + 3, cy - 11 + b, shadeHex(cloak, 0.72), 1, 3);
+    px(ctx, cx - 3, cy - 12 + b, skin.lite, 6, 7);
+    paintVolume(ctx, cx - 3, cy - 12 + b, 6, 7, skin.lite, 1.14, 0.8);
+    px(ctx, cx - 1, cy - 4 + b, GOLD, 2, 2);
+    px(ctx, cx - 1, cy - 4 + b, GOLD_L, 1, 1);
+    px(ctx, cx - 8 + sway, cy + 6 + cloth, cloak, 3, 5);
+    px(ctx, cx - 8 + sway, cy + 10 + cloth, LINING, 3, 1);
+    drawFace(ctx, cx, cy - 8 + b, facing, skin);
+    drawQuiver(ctx, cx - 15, cy + 1 + b);
+    px(ctx, cx - 8, cy + 4 + b, REED_D, 4, 1);
+    drawReedBow(ctx, cx + 8, topY, 1);
+    outlinedVolume(ctx, cx + 6, gripY - 1, 3, 3, skin.lite, 1.12, 0.78);
+    px(ctx, cx + 6, gripY - 3, REED_D, 3, 2);
+    px(ctx, cx + 7, gripY - 3, GOLD, 1, 1);
+  } else if (facing === "north") {
+    outlinedVolume(ctx, cx - 2, cy - 15 + b, 4, 2, cloak, 1.18, 0.66);
+    outlinedVolume(ctx, cx - 5, cy - 14 + b, 10, 7, cloak, 1.16, 0.68);
+    outlinedVolume(ctx, cx - 7, cy - 8 + b, 14, 8, cloak, 1.14, 0.68);
+    outlinedVolume(ctx, cx - 7, cy + cloth, 14, 6, shadeHex(cloak, 0.92), 1.12, 0.66);
+    px(ctx, cx - 1, cy - 6 + b, shadeHex(cloak, 0.62), 2, 7);
+    px(ctx, cx, cy + 1 + cloth, shadeHex(cloak, 0.7), 1, 4);
+    px(ctx, cx - 6, cy + 5 + cloth, LINING, 12, 1);
+    px(ctx, cx - 4, cy - 13 + b, shadeHex(cloak, 1.3), 3, 2);
+    drawQuiver(ctx, cx + 8, cy - 4 + b);
+    drawReedBow(ctx, cx - 9, topY, -1);
+    outlinedVolume(ctx, cx - 10, gripY - 1, 3, 3, p.b, 1.1, 0.7);
+  } else {
+    const west = facing === "west";
+    outlinedVolume(ctx, cx - 3, cy - 15 + b, 7, 3, cloak, 1.16, 0.68);
+    outlinedVolume(ctx, west ? cx + 1 : cx - 6, cy - 12 + b, 5, 6, cloak, 1.14, 0.68);
+    px(ctx, cx + (west ? -2 : 2), cy - 12 + b, LINING, 1, 3);
+    const trail = west ? 1 : -1;
+    outlinedVolume(ctx, cx + trail * 3, cy - 3 + b, 4, 6, cloak, 1.12, 0.68);
+    outlinedVolume(ctx, cx + trail * 4 + sway, cy + 2 + cloth, 4, 6, shadeHex(cloak, 0.9), 1.1, 0.66);
+    px(ctx, cx + trail * 4 + sway, cy + 7 + cloth, LINING, 4, 1);
+    px(ctx, cx - 1, cy - 5 + b, GOLD, 2, 2);
+    px(ctx, cx - 1, cy - 5 + b, GOLD_L, 1, 1);
+    drawFace(ctx, cx, cy - 8 + b, facing, skin);
+    drawQuiver(ctx, west ? cx + 8 : cx - 15, cy - 2 + b);
+    drawReedBow(ctx, west ? cx - 6 : cx + 6, topY, west ? -1 : 1);
+    const handX = west ? cx - 7 : cx + 5;
+    outlinedVolume(ctx, handX, gripY - 1, 3, 3, skin.lite, 1.12, 0.78);
+    px(ctx, handX, gripY - 3, REED_D, 3, 2);
+  }
+}
+
 function drawClass(
   ctx: CanvasRenderingContext2D,
   id: ClassId,
@@ -284,6 +493,11 @@ function drawClass(
   const sw = armSwing(frame);
   const wide = id === "thornblade" || id === "warden" || id === "hollowborn";
   const skin = skinOf(id);
+
+  if (id === "pathfinder") {
+    drawPathfinder(ctx, cx, cy, facing, frame);
+    return;
+  }
 
   if (id === "hollowborn") {
     drawFarArm(ctx, cx, cy, facing, frame, p.b);
@@ -308,18 +522,7 @@ function drawClass(
 
   const weaponFirst = facing === "north";
   const drawWeapon = () => {
-    if (id === "pathfinder") {
-      const bx = facing === "west" ? cx - 10 : facing === "east" ? cx + 10 : facing === "north" ? cx - 8 : cx + 8;
-      outlined(ctx, bx, cy - 5 + b, 2, 14, WOOD);
-      paintVolume(ctx, bx, cy - 5 + b, 2, 14, WOOD, 1.18, 0.7);
-      px(ctx, bx - 3, cy - 6 + b, WOOD, 8, 2);
-      px(ctx, bx - 2, cy - 7 + b, WOOD, 6, 2);
-      px(ctx, bx - 2, cy + 8 + b, WOOD, 6, 2);
-      px(ctx, bx + 1, cy - 4 + b, "#d8c090", 1, 12);
-      if (facing === "south" || facing === "east") {
-        px(ctx, cx - 4, cy - 2 + b, p.b, 3, 5);
-      }
-    } else if (id === "thornblade") {
+    if (id === "thornblade") {
       const hx = facing === "north" || facing === "south" ? cx + 9 : cx + (side || 1) * 10;
       outlinedVolume(ctx, hx - 1, cy - 12 + b + sw, 3, 18, STEEL, 1.22, 0.68);
       px(ctx, hx + 1, cy - 10 + b + sw, STEEL_D, 2, 2);
@@ -374,17 +577,7 @@ function drawClass(
   drawNearArms(ctx, cx, cy, facing, frame, p.b, skin.lite);
   drawHead(ctx, cx, cy - 8 + b, facing, p.hair, skin, sway);
 
-  if (id === "pathfinder") {
-    outlinedVolume(ctx, cx - 6, cy - 14 + b, 12, 5, p.b, 1.18, 0.7);
-    if (facing !== "north") {
-      px(ctx, cx - 5, cy - 11 + b, p.b, 10, 3);
-      px(ctx, cx - 7 + sway, cy - 11 + cloth, p.b, 2, 2);
-      px(ctx, cx + 5 + sway, cy - 11 + cloth, p.b, 2, 2);
-    }
-    outlinedVolume(ctx, cx + (facing === "west" ? -8 : 5), cy - 2 + b, 4, 8, WOOD, 1.16, 0.7);
-    px(ctx, cx + (facing === "west" ? -7 : 6), cy - 5 + b, p.c, 2, 4);
-    px(ctx, cx + (facing === "west" ? -7 : 6), cy - 6 + b, "#e8e6d9", 1, 2);
-  } else if (id === "thornblade") {
+  if (id === "thornblade") {
     px(ctx, cx - 6, cy + 2 + cloth, p.b, 12, 4);
     paintVolume(ctx, cx - 6, cy + 2 + cloth, 12, 4, p.b, 1.16, 0.7);
     outlinedVolume(ctx, cx - 5, cy - 14 + b, 10, 4, "#2a2218", 1.2, 0.65);
