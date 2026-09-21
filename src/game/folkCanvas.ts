@@ -144,19 +144,27 @@ function drawFloatingLabel(
   ctx.fillText(label, x, y - 5);
 }
 
+function folkBreath(id: string, timeSec: number): number {
+  let n = 0;
+  for (let i = 0; i < id.length; i++) n = (n + id.charCodeAt(i) * (i + 1)) | 0;
+  return Math.sin(timeSec * 1.6 + n * 0.17) > 0.25 ? -1 : 0;
+}
+
 export function collectFolkDepthItems(
   folk: FolkDef[],
   originX: number,
   originY: number,
+  timeSec = 0,
 ): DepthItem[] {
   return folk.map((f) => {
     const fsx = Math.floor((f.x + 0.5) * TILE - originX);
     const fsy = Math.floor((f.y + 0.5) * TILE - originY);
+    const lift = timeSec > 0 ? folkBreath(f.id, timeSec) : 0;
     return {
       y: (f.y + 0.5) * TILE,
       x: (f.x + 0.5) * TILE,
       draw: (ctx: CanvasRenderingContext2D) => {
-        drawFolkSprite(ctx, f.color, fsx, fsy, f.id);
+        drawFolkSprite(ctx, f.color, fsx, fsy, f.id, lift);
       },
     };
   });

@@ -3,7 +3,7 @@
  * Needle Rat, Bark Hound, Ash-vole, Gorse Fox, Briar Mite, Shade Wisp,
  * Pass 4: sharper silhouettes at play scale; painted volume kept.
  */
-import { makeCanvas, ctx2d, px, shadeHex, paintVolume, drawSoftShadow, addPixelVolume, GROUND_SHADOW_ALPHA } from "@/game/gfx/canvasUtil";
+import { makeCanvas, ctx2d, px, shadeHex, paintVolume, drawSoftShadow, drawWithWarmRim, addPixelVolume, GROUND_SHADOW_ALPHA } from "@/game/gfx/canvasUtil";
 
 export type CreatureKindId =
   | "briar-mite"
@@ -626,13 +626,15 @@ export function drawCreatureSprite(
     ctx.restore();
   }
   ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(
-    sheet as CanvasImageSource,
-    Math.floor(sx - size / 2),
-    Math.floor(sy - size / 2 - 2),
-    size,
-    size,
-  );
+  drawWithWarmRim(ctx, () => {
+    ctx.drawImage(
+      sheet as CanvasImageSource,
+      Math.floor(sx - size / 2),
+      Math.floor(sy - size / 2 - 2),
+      size,
+      size,
+    );
+  });
 }
 
 const CREATURE_IDS: CreatureKindId[] = [

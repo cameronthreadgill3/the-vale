@@ -3,7 +3,7 @@
  * Cached per folk-id + color. Labels stay in folkCanvas.
  * Pass 4: outfit silhouettes that don't blur; painted volume kept.
  */
-import { makeCanvas, ctx2d, px, shadeHex, mixHex, paintVolume, drawSoftShadow, addPixelVolume, GROUND_SHADOW_ALPHA } from "@/game/gfx/canvasUtil";
+import { makeCanvas, ctx2d, px, shadeHex, mixHex, paintVolume, drawSoftShadow, drawWithWarmRim, addPixelVolume, GROUND_SHADOW_ALPHA } from "@/game/gfx/canvasUtil";
 
 export const FOLK_FRAME = 32;
 
@@ -384,18 +384,22 @@ export function drawFolkSprite(
   sx: number,
   sy: number,
   folkId?: string,
+  lift = 0,
 ): void {
   const sheet = getFolkSheet(color, folkId);
   const size = 44;
+  // Contact stays planted while the body takes a 1px idle breath.
   drawSoftShadow(ctx, sx, sy + size * 0.34, size * 0.36, size * 0.13, GROUND_SHADOW_ALPHA);
   ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(
-    sheet as CanvasImageSource,
-    Math.floor(sx - size / 2),
-    Math.floor(sy - size / 2 - 5),
-    size,
-    size,
-  );
+  drawWithWarmRim(ctx, () => {
+    ctx.drawImage(
+      sheet as CanvasImageSource,
+      Math.floor(sx - size / 2),
+      Math.floor(sy - size / 2 - 5 + lift),
+      size,
+      size,
+    );
+  });
 }
 
 export function warmFolkSheets(

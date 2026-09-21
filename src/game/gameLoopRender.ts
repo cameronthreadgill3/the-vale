@@ -25,6 +25,11 @@ import { collectEnemyDepthItems, drawEnemyChrome, tickEnemyGfx } from "@/game/gf
 import {
   drawVignette,
   drawAshwoodTint,
+  drawParallaxHaze,
+  drawSurfaceLight,
+  drawKeyLight,
+  tickMotes,
+  collectMoteDepthItems,
   drawHollowTorchSpots,
 } from "@/game/gfx/atmosphere";
 import type { ValeCharacter } from "@/game/character";
@@ -528,6 +533,8 @@ export function advanceCameraAndRender(args: {
     }
   }
   drawAshwoodTint(ctx, map, originX, originY, viewW, viewH);
+  drawSurfaceLight(ctx, map, originX, originY, viewW, viewH, _atmosT);
+  drawParallaxHaze(ctx, map, originX, originY, viewW, viewH, _atmosT);
   drawTownOverlays(ctx, map, player, originX, originY);
   if (map.kind === "overworld" && isSafeContinent(map.continentId)) {
     const fx = Math.floor((map.spawn.x + 0.5) * TILE - originX);
@@ -587,19 +594,22 @@ export function advanceCameraAndRender(args: {
   _lastPx = player.x;
   _lastPy = player.y;
   const walkFrame = _moving ? (Math.floor(_walkPhase) % 4) : 0;
+  const idleLift = !_moving && Math.sin(_atmosT * 1.65) > 0.05 ? -1 : 0;
   syncAmbient(map.kind);
   if (_moving && !paused && walkFrame % 2 === 0) playFootstep();
   if (playerFlash > _lastPlayerFlash + 0.2) playHit("player");
   _lastPlayerFlash = playerFlash;
 
+  tickMotes(dt, map, originX, originY, viewW, viewH);
   const depth: DepthItem[] = [
-    ...collectFolkDepthItems(folk, originX, originY),
+    ...collectFolkDepthItems(folk, originX, originY, _atmosT),
     ...collectEnemyDepthItems(enemies, originX, originY),
+    ...collectMoteDepthItems(originX, originY, _atmosT),
     {
       y: player.y,
       x: player.x,
       draw: (c) => {
-        drawPlayer(c, character, px, py, _facing, walkFrame, playerFlash, accent);
+        drawPlayer(c, character, px, py, _facing, walkFrame, playerFlash, accent, idleLift);
       },
     },
   ];
@@ -616,8 +626,10 @@ export function advanceCameraAndRender(args: {
         if (map.tiles[ty]![tx] !== "stone") continue;
         const variant = tileVariantAt(tx, ty);
         const sheet = getAshwoodCanopySheet(stoneColor, variant);
-        const dx0 = Math.floor(tx * TILE - originX + TILE / 2 - drawSize / 2);
-        const dy0 = Math.floor(ty * TILE - originY + 8 - drawSize * 0.72);
+        const sway = Math.round(Math.sin(_atmosT * 1.25 + tx * 1.7 + ty * 0.55) * 2);
+        const crown = Math.round(Math.sin(_atmosT * 0.85 + ty * 1.4 + tx * 0.3) * 1);
+        const dx0 = Math.floor(tx * TILE - originX + TILE / 2 - drawSize / 2) + sway;
+        const dy0 = Math.floor(ty * TILE - originY + 8 - drawSize * 0.72) + crown;
         depth.push({
           y: (ty + 0.92) * TILE,
           x: (tx + 0.5) * TILE,
@@ -633,6 +645,7 @@ export function advanceCameraAndRender(args: {
   const bodyMarkerItem = collectBodyMarkerDepthItem(map, originX, originY);
   if (bodyMarkerItem) depth.push(bodyMarkerItem);
   flushDepth(ctx, depth);
+  drawKeyLight(ctx, viewW, viewH);
   drawProjectiles(ctx, projectiles, originX, originY);
   drawFloatTexts(ctx, floatTexts, originX, originY);
   tickLootSparkles(dt);

@@ -87,6 +87,23 @@ export function drawSoftShadow(
   ctx.restore();
 }
 
+/**
+ * 1px north-west warm rim on a sprite draw. Blur stays off so the pixel edge stays crisp.
+ * Ground contact is drawn separately and does not pick up this shadow.
+ */
+export function drawWithWarmRim(
+  ctx: CanvasRenderingContext2D,
+  draw: () => void,
+): void {
+  ctx.save();
+  ctx.shadowColor = "rgba(255, 216, 164, 0.72)";
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetX = -1;
+  ctx.shadowOffsetY = -1;
+  draw();
+  ctx.restore();
+}
+
 function luma(r: number, g: number, b: number): number {
   return 0.3 * r + 0.59 * g + 0.11 * b;
 }

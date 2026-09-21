@@ -17,12 +17,14 @@ export function drawPlayer(
   walkFrame: number,
   playerFlash: number,
   accent: { accent: string; accentLite: string; accentDark: string },
+  lift = 0,
 ): void {
-  drawSoftShadow(ctx, px, py + 10, PLAYER_RADIUS * 1.05, PLAYER_RADIUS * 0.42, GROUND_SHADOW_ALPHA);
+  // Shadow stays on the ground when the body takes an idle breath.
+  drawSoftShadow(ctx, px, py + 12, PLAYER_RADIUS * 1.12, PLAYER_RADIUS * 0.4, GROUND_SHADOW_ALPHA);
 
   const sheet = getPlayerSprite(character.classId);
   if (sheet) {
-    drawPlayerSprite(ctx, sheet, px, py, facing, walkFrame, {
+    drawPlayerSprite(ctx, sheet, px, py + lift, facing, walkFrame, {
       flash: playerFlash,
       glowColor: accent.accent,
     });
