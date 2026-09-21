@@ -130,4 +130,54 @@ export function drawHollowTorchSpots(
     ctx.fill();
   }
   ctx.restore();
+  drawHollowDungeonMarkers(ctx, map, originX, originY);
+}
+
+/** Clearer surface exit + deepest-chamber mark (no new tile kinds). */
+export function drawHollowDungeonMarkers(
+  ctx: CanvasRenderingContext2D,
+  map: WorldMap,
+  originX: number,
+  originY: number,
+): void {
+  if (map.kind !== "hollow") return;
+  ctx.save();
+  if (map.exit) {
+    const ex = Math.floor((map.exit.x + 0.5) * TILE - originX);
+    const ey = Math.floor((map.exit.y + 0.5) * TILE - originY);
+    ctx.strokeStyle = "rgba(240, 208, 96, 0.82)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(ex, ey, 15, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.strokeStyle = "rgba(240, 208, 96, 0.35)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(ex, ey, 20, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.font = 'bold 10px "IBM Plex Mono", ui-monospace, monospace';
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#f0d060";
+    ctx.fillText("↑ Surface", ex, ey - 22);
+  }
+  if (map.bossChamber) {
+    const bx = Math.floor((map.bossChamber.x + 0.5) * TILE - originX);
+    const by = Math.floor((map.bossChamber.y + 0.5) * TILE - originY);
+    ctx.strokeStyle = "rgba(170, 120, 220, 0.7)";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([4, 3]);
+    ctx.beginPath();
+    ctx.arc(bx, by, 22, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.strokeStyle = "rgba(170, 120, 220, 0.28)";
+    ctx.beginPath();
+    ctx.arc(bx, by, 28, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.font = '9px "IBM Plex Mono", ui-monospace, monospace';
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#d4b8f0";
+    ctx.fillText("Ashveil chamber", bx, by - 30);
+  }
+  ctx.restore();
 }

@@ -23,6 +23,11 @@ export {
 } from "@/game/gfx/creatures";
 export { drawEnemies, tickEnemyGfx, collectEnemyDepthItems, drawEnemyChrome } from "@/game/gfx/drawEnemies";
 export { drawFolkSprite, getFolkSheet, FOLK_FRAME, warmFolkSheets } from "@/game/gfx/folkSprites";
-export { drawVignette, drawAshwoodTint, drawHollowTorchSpots } from "@/game/gfx/atmosphere";
+export {
+  drawVignette,
+  drawAshwoodTint,
+  drawHollowTorchSpots,
+  drawHollowDungeonMarkers,
+} from "@/game/gfx/atmosphere";
 export { makeCanvas, ctx2d, px, shadeHex, mixHex, drawSoftShadow } from "@/game/gfx/canvasUtil";
 export { flushDepth, type DepthItem } from "@/game/gfx/depth";

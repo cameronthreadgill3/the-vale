@@ -53,6 +53,8 @@ export interface WorldMap {
   spawn: { x: number; y: number };
   /** Overworld tile to return to after exiting this hollow. */
   returnTile: { x: number; y: number } | null;
+  /** Deepest chamber in a hollow (Ashveil Ember stub). Optional so overworld maps stay untouched. */
+  bossChamber?: { x: number; y: number } | null;
 }
 
 export function isSolid(tile: GroundTile, kind: "overworld" | "hollow"): boolean {
