@@ -2,12 +2,14 @@
  * Lightweight atmosphere overlays — vignette, ashwood umbra/silver, hollow torch spots,
  * plus a premium depth/motion/light layer (parallax haze, motes, warm/cool zones).
  * Plaza lanterns and ashwood path lamps share one warm pulse, kept under labels.
+ * Open plaza doors and gate arches spill a quieter warm pool onto the step.
  * Thornreach cobble and the path stones at the square carry a slow wet sheen.
  */
 import { TILE, type WorldMap } from "@/game/world";
 import { propsOnContinent } from "@/game/world/town";
 import { fountainFrameAt, tileVariantAt, wetPuddleGlint, wetStoneCatches } from "@/game/gfx/tiles";
 import { drawSoftShadow } from "@/game/gfx/canvasUtil";
+import { drawDoorGateSpill } from "@/game/gfx/doorSpill";
 import { drawPathLampGlow, warmFlamePulse } from "@/game/gfx/lampFlicker";
 import type { DepthItem } from "@/game/gfx/depth";
 
@@ -498,6 +500,7 @@ export function drawSurfaceLight(
       ctx.fillRect(lx - 40, ly - 40, 80, 80);
     }
     drawPathLampGlow(ctx, map, originX, originY, viewW, viewH, timeSec);
+    drawDoorGateSpill(ctx, map, originX, originY, viewW, viewH, timeSec);
   }
   ctx.restore();
 }

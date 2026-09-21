@@ -43,6 +43,7 @@ export {
   collectPathLampDepthItems,
   isPathLamp,
 } from "@/game/gfx/lampFlicker";
+export { drawDoorGateSpill } from "@/game/gfx/doorSpill";
 export {
   drawCreatureSprite,
   getCreatureSheet,
