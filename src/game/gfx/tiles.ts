@@ -6,6 +6,7 @@
  * Path-edge depth: inward turf contact and corner recess on walkways.
  * Ashwood canopy: leaf layers, south umbra, trunk–crown contact.
  * Structure-depth: wall under-eave / sill, recessed doorframes, gate arches.
+ * Ajar doors and gate voids keep a warm hearth in the opening (the spill is a separate pass).
  * Plaza cobble keeps a cool wet lip on the north-west edge of each paver.
  * Cached OffscreenCanvas / canvas sheets — not redrawn every frame.
  * NOT CipSoft / Tibia assets — handcrafted pixel patterns only.
@@ -339,22 +340,31 @@ function paintDoor(ctx: CanvasRenderingContext2D, base: string, variant: number)
   px(ctx, 0, 24, floor, TILE_PX, 8);
   px(ctx, 0, 26, shadeHex(floor, 0.55), TILE_PX, 1);
   px(ctx, 5, 27, shadeHex(floor, 1.12), 22, 1);
-  // recessed jamb, then timber frame, then boards
+  // recessed jamb, then a warm hearth, then the leaf swung open to the west
   px(ctx, 4, 1, timberDark, 24, 26);
   px(ctx, 5, 2, timber, 22, 24);
   px(ctx, 6, 3, timberLite, 20, 1);
   px(ctx, 6, 3, timberLite, 1, 22);
   px(ctx, 25, 4, timberDark, 1, 21);
-  px(ctx, 7, 4, boardDark, 18, 21);
-  px(ctx, 8, 5, board, 16, 19);
-  paintVolume(ctx, 8, 5, 16, 19, board, 1.14, 0.72);
+  const hearthDeep = "#24140c";
+  const hearth = "#4a2810";
+  const hearthLite = "#8a5428";
+  px(ctx, 7, 4, hearthDeep, 18, 21);
+  px(ctx, 9, 7, hearth, 14, 14);
+  px(ctx, 19, 8, hearthLite, 4, 10);
+  px(ctx, 8, 4, shadeHex(hearthDeep, 0.72), 16, 3);
+  px(ctx, 7, 4, shadeHex(hearthDeep, 0.6), 3, 18);
+  px(ctx, 7, 4, boardDark, 12, 21);
+  px(ctx, 8, 5, board, 10, 19);
+  paintVolume(ctx, 8, 5, 10, 19, board, 1.14, 0.72);
   px(ctx, 8, 5, boardLite, 2, 17);
-  px(ctx, 8, 13, timber, 16, 2);
-  px(ctx, 8, 15, timberDark, 16, 1);
-  px(ctx, 21, 14, "#c9a227", 2, 2);
+  px(ctx, 8, 13, timber, 10, 2);
+  px(ctx, 8, 15, timberDark, 10, 1);
+  px(ctx, 16, 14, "#c9a227", 2, 2);
+  px(ctx, 18, 5, shadeHex(board, 0.42), 1, 19);
+  px(ctx, 19, 27, hearthLite, 5, 1);
   if (variant % 2 === 0) {
-    px(ctx, 21, 5, shadeHex(board, 0.32), 3, 19);
-    px(ctx, 21, 5, shadeHex(board, 0.2), 1, 19);
+    px(ctx, 21, 10, hearthLite, 2, 5);
   }
 }
 
@@ -521,6 +531,8 @@ function paintGate(ctx: CanvasRenderingContext2D, base: string, variant: number)
   const stone = mixHex(base, "#5a4a30", 0.35);
   const stoneDark = shadeHex(stone, 0.55);
   const voidC = shadeHex(base, 0.18);
+  const hearth = mixHex(voidC, "#6a3818", 0.62);
+  const hearthLite = mixHex(voidC, "#a86830", 0.42);
   ctx.fillStyle = stoneDark;
   ctx.fillRect(0, 0, TILE_PX, TILE_PX);
   // pillars
@@ -532,11 +544,16 @@ function paintGate(ctx: CanvasRenderingContext2D, base: string, variant: number)
   bevelStone(ctx, 3, 1, 26, 8, mid, dark, lite);
   px(ctx, 8, 2, lite, 16, 2);
   px(ctx, 8, 7, shadeHex(dark, 0.7), 16, 2);
-  // recessed opening
+  // recessed opening — dark jamb, warm hearth in the arch the shade leaves
   px(ctx, 8, 8, dark, 16, 20);
   px(ctx, 9, 9, voidC, 14, 18);
-  px(ctx, 9, 9, shadeHex(voidC, 0.55), 5, 18);
+  px(ctx, 9, 9, shadeHex(voidC, 0.55), 3, 18);
   px(ctx, 9, 9, shadeHex(voidC, 0.4), 14, 3);
+  px(ctx, 12, 12, hearth, 10, 12);
+  px(ctx, 12, 13, hearthLite, 2, 2);
+  px(ctx, 18, 13, hearthLite, 3, 2);
+  px(ctx, 12, 20, hearthLite, 2, 3);
+  px(ctx, 18, 20, hearthLite, 3, 3);
   // iron cross kept as the gold-gate landmark, set back in the opening
   px(ctx, 14, 10, dark, 4, 16);
   px(ctx, 10, 15, dark, 12, 4);
