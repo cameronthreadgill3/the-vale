@@ -65,10 +65,12 @@ import {
   getGreenGateQuest,
   getSpineQuest,
   getPaleQuest,
+  getAshenQuest,
   isAshveilActive,
   isGreenGateActive,
   isSpineActive,
   isPaleActive,
+  isAshenActive,
   loadQuestLog,
   notifyQuestUi,
   saveQuestLog,
@@ -95,6 +97,7 @@ const ASHVEIL_IDENTIFY_TILES = 3.6;
 const GREEN_GATE_IDENTIFY_TILES = 3.6;
 const SPINE_IDENTIFY_TILES = 3.6;
 const PALE_IDENTIFY_TILES = 3.6;
+const ASHEN_IDENTIFY_TILES = 3.6;
 
 /** Chamber reach + Ember Identify without patching assembled gameLoop. */
 function tickAshveilField(
@@ -216,6 +219,33 @@ function tickPaleField(
     const dist = Math.hypot(e.x - player.x, e.y - player.y) / TILE;
     if (dist <= PALE_IDENTIFY_TILES) {
       const result = applyIdentify(loadQuestLog(), "briar-mite", "pale-wastes");
+      if (result) {
+        saveQuestLog(result.log);
+        notifyQuestUi(result.toast);
+      }
+      break;
+    }
+  }
+}
+
+/** Bark Hound Identify on Ashen Marches without patching assembled gameLoop. */
+function tickAshenField(
+  player: { x: number; y: number },
+  map: WorldMap,
+  enemies: Enemy[],
+): void {
+  if (!isAshenActive(loadQuestLog())) return;
+  const log = loadQuestLog();
+  const q = getAshenQuest(log);
+  if (!q || q.status !== "active" || q.identifiedHound) return;
+  if (map.kind !== "overworld" || map.continentId !== "ashen-marches") return;
+
+  for (const e of enemies) {
+    if (e.ai === "dead" || e.hp <= 0) continue;
+    if (e.kind.id !== "bark-hound") continue;
+    const dist = Math.hypot(e.x - player.x, e.y - player.y) / TILE;
+    if (dist <= ASHEN_IDENTIFY_TILES) {
+      const result = applyIdentify(loadQuestLog(), "bark-hound", "ashen-marches");
       if (result) {
         saveQuestLog(result.log);
         notifyQuestUi(result.toast);
@@ -408,6 +438,7 @@ export function advanceCameraAndRender(args: {
   tickGreenGateField(player, map, enemies);
   tickSpineField(player, map, enemies);
   tickPaleField(player, map, enemies);
+  tickAshenField(player, map, enemies);
   const objective = resolveQuestObjective(player, enemies, folk, map);
   const radarDots = collectRadarDots(player, enemies, folk, docks, map, objective);
   drawCompass(ctx, viewW);

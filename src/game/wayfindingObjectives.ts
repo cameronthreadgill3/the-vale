@@ -15,6 +15,7 @@ import {
   MISTMERE_PIER_DOCK_ID,
   CHOIR_LANDING_DOCK_ID,
   NIGHTGLASS_WHARF_DOCK_ID,
+  ASH_PILGRIM_FOLK_ID,
   getTeethQuest,
   getAshwoodQuest,
   getHollowQuest,
@@ -27,6 +28,7 @@ import {
   getGreenGateQuest,
   getSpineQuest,
   getPaleQuest,
+  getAshenQuest,
   isTeethActive,
   isAshwoodActive,
   isHollowActive,
@@ -39,6 +41,7 @@ import {
   isGreenGateActive,
   isSpineActive,
   isPaleActive,
+  isAshenActive,
   loadQuestLog,
   type TeethQuestProgress,
   type AshwoodQuestProgress,
@@ -52,6 +55,7 @@ import {
   type GreenGateQuestProgress,
   type SpineQuestProgress,
   type PaleQuestProgress,
+  type AshenQuestProgress,
 } from "@/game/quests";
 import { ASHWOOD_CAIRNS } from "@/game/cairns";
 import { huntZoneById } from "@/game/huntZones";
@@ -82,6 +86,10 @@ export function resolveQuestObjective(
   map: WorldMap,
 ): WayfindObjective | null {
   const log = loadQuestLog();
+  if (isAshenActive(log)) {
+    const q = getAshenQuest(log);
+    if (q) return objectiveForAshen(q, player, enemies, folk, map);
+  }
   if (isPaleActive(log)) {
     const q = getPaleQuest(log);
     if (q) return objectiveForPale(q, player, enemies, folk, map);
@@ -448,6 +456,245 @@ export function objectiveForPale(
       label: "Gate toward Rook (Verdant Spine)",
       x: (toSpineHome.x + 0.5) * TILE,
       y: (toSpineHome.y + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  return {
+    label: "Return to Rook (Thornreach)",
+    x: player.x + TILE * 8,
+    y: player.y - TILE * 2,
+    kind: "landmark",
+  };
+}
+
+export function objectiveForAshen(
+  q: AshenQuestProgress,
+  player: { x: number; y: number },
+  enemies: Enemy[],
+  folk: FolkDef[],
+  map: WorldMap,
+): WayfindObjective | null {
+  if (q.status !== "active") return null;
+  const rook = folk.find((f) => f.id === "rook");
+  const pilgrim = folk.find((f) => f.id === ASH_PILGRIM_FOLK_ID);
+
+  if (!q.reachedAshen) {
+    const gate = continentGateOnMap(map, "ashen-marches");
+    if (gate) {
+      return {
+        label: "Reach Ashen Marches gate",
+        x: (gate.x + 0.5) * TILE,
+        y: (gate.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    if (map.continentId !== "pale-wastes") {
+      const home = continentGateOnMap(map, "thornreach");
+      if (home) {
+        return {
+          label: "Gate to Ashen Marches (Thornreach)",
+          x: (home.x + 0.5) * TILE,
+          y: (home.y + 0.5) * TILE,
+          kind: "landmark",
+        };
+      }
+    }
+    const toPale = continentGateOnMap(map, "pale-wastes");
+    if (toPale) {
+      return {
+        label: "Gate to Ashen Marches (Pale Wastes)",
+        x: (toPale.x + 0.5) * TILE,
+        y: (toPale.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    return {
+      label: "Find Ashen Marches gate (Pale Wastes)",
+      x: player.x + TILE * 8,
+      y: player.y - TILE * 2,
+      kind: "landmark",
+    };
+  }
+
+  if (!q.talkedAshPilgrim) {
+    if (pilgrim) {
+      return {
+        label: "Talk to Ash Pilgrim",
+        x: (pilgrim.x + 0.5) * TILE,
+        y: (pilgrim.y + 0.5) * TILE,
+        kind: "folk",
+      };
+    }
+    const toAshen = continentGateOnMap(map, "ashen-marches");
+    if (toAshen) {
+      return {
+        label: "Gate to Ash Pilgrim (Ashen Marches)",
+        x: (toAshen.x + 0.5) * TILE,
+        y: (toAshen.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    if (map.continentId !== "pale-wastes") {
+      const home = continentGateOnMap(map, "thornreach");
+      if (home) {
+        return {
+          label: "Gate toward Ashen Marches",
+          x: (home.x + 0.5) * TILE,
+          y: (home.y + 0.5) * TILE,
+          kind: "landmark",
+        };
+      }
+    }
+    const toPale = continentGateOnMap(map, "pale-wastes");
+    if (toPale) {
+      return {
+        label: "Gate toward Ashen Marches",
+        x: (toPale.x + 0.5) * TILE,
+        y: (toPale.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    return {
+      label: "Find Ash Pilgrim (Ashen Marches)",
+      x: player.x + TILE * 6,
+      y: player.y - TILE * 4,
+      kind: "landmark",
+    };
+  }
+
+  if (!q.identifiedHound) {
+    const hound = nearestEnemy(player, enemies, "bark-hound");
+    if (hound) {
+      return {
+        label: "Identify Bark Hound",
+        x: hound.x,
+        y: hound.y,
+        kind: "enemy",
+      };
+    }
+    if (map.continentId === "ashen-marches" && map.kind === "overworld") {
+      return {
+        label: "Find Bark Hound (Ashen Marches)",
+        x: player.x + TILE * 6,
+        y: player.y - TILE * 4,
+        kind: "landmark",
+      };
+    }
+    const toAshen = continentGateOnMap(map, "ashen-marches");
+    if (toAshen) {
+      return {
+        label: "Gate to Bark Hound (Ashen Marches)",
+        x: (toAshen.x + 0.5) * TILE,
+        y: (toAshen.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    if (map.continentId !== "pale-wastes") {
+      const home = continentGateOnMap(map, "thornreach");
+      if (home) {
+        return {
+          label: "Gate toward Ashen Marches",
+          x: (home.x + 0.5) * TILE,
+          y: (home.y + 0.5) * TILE,
+          kind: "landmark",
+        };
+      }
+    }
+    const toPale = continentGateOnMap(map, "pale-wastes");
+    if (toPale) {
+      return {
+        label: "Gate toward Ashen Marches",
+        x: (toPale.x + 0.5) * TILE,
+        y: (toPale.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    return {
+      label: "Find Bark Hound (Ashen Marches)",
+      x: player.x + TILE * 6,
+      y: player.y - TILE * 4,
+      kind: "landmark",
+    };
+  }
+
+  if (!q.ratDone) {
+    const rat = nearestEnemy(player, enemies, "needle-rat");
+    if (rat) {
+      return {
+        label: "Defeat Needle Rat (0/1)",
+        x: rat.x,
+        y: rat.y,
+        kind: "enemy",
+      };
+    }
+    if (map.continentId === "ashen-marches" && map.kind === "overworld") {
+      return {
+        label: "Find Needle Rat (Ashen Marches)",
+        x: player.x + TILE * 6,
+        y: player.y - TILE * 4,
+        kind: "landmark",
+      };
+    }
+    const toAshen = continentGateOnMap(map, "ashen-marches");
+    if (toAshen) {
+      return {
+        label: "Gate to Needle Rat (Ashen Marches)",
+        x: (toAshen.x + 0.5) * TILE,
+        y: (toAshen.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    if (map.continentId !== "pale-wastes") {
+      const home = continentGateOnMap(map, "thornreach");
+      if (home) {
+        return {
+          label: "Gate toward Ashen Marches",
+          x: (home.x + 0.5) * TILE,
+          y: (home.y + 0.5) * TILE,
+          kind: "landmark",
+        };
+      }
+    }
+    const toPale = continentGateOnMap(map, "pale-wastes");
+    if (toPale) {
+      return {
+        label: "Gate toward Ashen Marches",
+        x: (toPale.x + 0.5) * TILE,
+        y: (toPale.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    return {
+      label: "Find Needle Rat (Ashen Marches)",
+      x: player.x + TILE * 6,
+      y: player.y - TILE * 4,
+      kind: "landmark",
+    };
+  }
+
+  if (rook) {
+    return {
+      label: "Return to Rook",
+      x: (rook.x + 0.5) * TILE,
+      y: (rook.y + 0.5) * TILE,
+      kind: "folk",
+    };
+  }
+  const home = continentGateOnMap(map, "thornreach");
+  if (home) {
+    return {
+      label: "Gate back to Rook (Thornreach)",
+      x: (home.x + 0.5) * TILE,
+      y: (home.y + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  const toPaleHome = continentGateOnMap(map, "pale-wastes");
+  if (toPaleHome) {
+    return {
+      label: "Gate toward Rook (Pale Wastes)",
+      x: (toPaleHome.x + 0.5) * TILE,
+      y: (toPaleHome.y + 0.5) * TILE,
       kind: "landmark",
     };
   }

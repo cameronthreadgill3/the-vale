@@ -65,6 +65,9 @@ import {
   PALE_START_TOAST,
   PALE_REWARDS,
   PALE_COMPLETE_LINE,
+  ASHEN_START_TOAST,
+  ASHEN_REWARDS,
+  ASHEN_COMPLETE_LINE,
   TEETH_QUEST_ID,
   ASHWOOD_QUEST_ID,
   HOLLOW_QUEST_ID,
@@ -77,10 +80,12 @@ import {
   GREEN_GATE_QUEST_ID,
   SPINE_QUEST_ID,
   PALE_QUEST_ID,
+  ASHEN_QUEST_ID,
   CRESS_FOLK_ID,
   OLD_REED_FOLK_ID,
   CHOIR_KEEPER_FOLK_ID,
   VESPER_FOLK_ID,
+  ASH_PILGRIM_FOLK_ID,
   emptyTeethQuest,
   getTeethQuest,
   getAshwoodQuest,
@@ -94,6 +99,7 @@ import {
   getGreenGateQuest,
   getSpineQuest,
   getPaleQuest,
+  getAshenQuest,
   applyIdentify,
   applyEnemyKill,
   applyCairnInspect,
@@ -121,6 +127,9 @@ import {
   applySpineRookTalk,
   applyPaleReached,
   applyPaleRookTalk,
+  applyAshenReached,
+  applyAshPilgrimTalk,
+  applyAshenRookTalk,
   withTeethQuest,
   ensureAshwoodAfterTeeth,
   ensureHollowAfterAshwood,
@@ -133,6 +142,7 @@ import {
   ensureGreenGateAfterWharf,
   ensureSpineAfterGreenGate,
   ensurePaleAfterSpine,
+  ensureAshenAfterPale,
   rookQuestLine,
   loadQuestLog,
   saveQuestLog,
@@ -487,6 +497,20 @@ export function GameApp() {
           }
         }
       }
+      if (target === "ashen-marches") {
+        const ashen = applyAshenReached(loadQuestLog());
+        if (ashen) {
+          saveQuestLog(ashen.log);
+          if (ashen.toast) {
+            showToast(ashen.toast);
+            window.setTimeout(
+              () => setToast((t) => (t === ashen.toast ? null : t)),
+              2800,
+            );
+            return true;
+          }
+        }
+      }
       const dest = getContinent(target);
       if (paid > 0 || firstCrossing) {
         showToast(farePaidToast("gate", dest.name, paid));
@@ -569,6 +593,16 @@ export function GameApp() {
         }
       }
     }
+    if (folkId === ASH_PILGRIM_FOLK_ID) {
+      const pilgrim = applyAshPilgrimTalk(loadQuestLog());
+      if (pilgrim) {
+        saveQuestLog(pilgrim.log);
+        if (pilgrim.toast) {
+          line = pilgrim.toast.replace(/^Ash Pilgrim:\s*/, "");
+          queueMicrotask(() => showToast(pilgrim.toast!));
+        }
+      }
+    }
     if (folkId === CRESS_FOLK_ID) {
       const cress =
         applyWatchlineCressTalk(loadQuestLog()) ??
@@ -583,6 +617,7 @@ export function GameApp() {
     }
     if (folkId === "rook" && character) {
       const turnIn =
+        applyAshenRookTalk(loadQuestLog()) ??
         applyPaleRookTalk(loadQuestLog()) ??
         applySpineRookTalk(loadQuestLog()) ??
         applyGreenGateRookTalk(loadQuestLog()) ??
@@ -600,14 +635,26 @@ export function GameApp() {
             ...prev,
             skillXp: { ...prev.skillXp },
           };
-          if (turnIn.completedId === PALE_QUEST_ID) {
+          if (turnIn.completedId === ASHEN_QUEST_ID) {
+            next = awardCombatXp(next, ASHEN_REWARDS.combatXp);
+            next = { ...next, skillXp: { ...next.skillXp } };
+            awardSkillXp(next, ASHEN_REWARDS.skill, ASHEN_REWARDS.skillXp);
+            next = setGold(next, next.gold + ASHEN_REWARDS.gold);
+            next = { ...next, skillXp: { ...next.skillXp } };
+            queueMicrotask(() => {
+              showToast(ASHEN_COMPLETE_LINE);
+              setSkillTick((t) => t + 1);
+            });
+          } else if (turnIn.completedId === PALE_QUEST_ID) {
             next = awardCombatXp(next, PALE_REWARDS.combatXp);
             next = { ...next, skillXp: { ...next.skillXp } };
             awardSkillXp(next, PALE_REWARDS.skill, PALE_REWARDS.skillXp);
             next = setGold(next, next.gold + PALE_REWARDS.gold);
             next = { ...next, skillXp: { ...next.skillXp } };
             queueMicrotask(() => {
-              showToast(PALE_COMPLETE_LINE);
+              showToast(
+                turnIn.startedAshen ? ASHEN_START_TOAST : PALE_COMPLETE_LINE,
+              );
               setSkillTick((t) => t + 1);
             });
           } else if (turnIn.completedId === SPINE_QUEST_ID) {
@@ -1035,6 +1082,16 @@ export function GameApp() {
           }
         }
       }
+      if (dest === "ashen-marches") {
+        const ashen = applyAshenReached(loadQuestLog());
+        if (ashen) {
+          saveQuestLog(ashen.log);
+          if (ashen.toast) {
+            showToast(ashen.toast);
+            return;
+          }
+        }
+      }
       const c = getContinent(dest);
       if (paid > 0 || firstCrossing) {
         showToast(farePaidToast("ship", c.name, paid));
@@ -1189,6 +1246,19 @@ export function GameApp() {
     );
   }, [character]);
 
+  // Quest 13: auto-start The Ashen Gate Opens once The Pale Gate Opens is complete.
+  useEffect(() => {
+    if (!character) return;
+    const ensured = ensureAshenAfterPale(loadQuestLog());
+    if (!ensured.started) return;
+    saveQuestLog(ensured.log);
+    setToast(ASHEN_START_TOAST);
+    window.setTimeout(
+      () => setToast((t) => (t === ASHEN_START_TOAST ? null : t)),
+      3600,
+    );
+  }, [character]);
+
   // Mistmere Crossing: mark arrival whenever the walker stands on Mistmere.
   useEffect(() => {
     if (!character) return;
@@ -1273,6 +1343,19 @@ export function GameApp() {
     if (pale.toast) {
       setToast(pale.toast);
       window.setTimeout(() => setToast((t) => (t === pale.toast ? null : t)), 2800);
+    }
+  }, [character]);
+
+  // The Ashen Gate Opens: mark Ashen Marches arrival.
+  useEffect(() => {
+    if (!character) return;
+    if (character.continentId !== "ashen-marches") return;
+    const ashen = applyAshenReached(loadQuestLog());
+    if (!ashen) return;
+    saveQuestLog(ashen.log);
+    if (ashen.toast) {
+      setToast(ashen.toast);
+      window.setTimeout(() => setToast((t) => (t === ashen.toast ? null : t)), 2800);
     }
   }, [character]);
 
@@ -1441,7 +1524,19 @@ export function GameApp() {
         next = setGold(next, next.gold + PALE_REWARDS.gold);
         next = { ...next, skillXp: { ...next.skillXp } };
         queueMicrotask(() => {
-          showToast(PALE_COMPLETE_LINE);
+          showToast(
+            result.startedAshen ? ASHEN_START_TOAST : PALE_COMPLETE_LINE,
+          );
+          setSkillTick((t) => t + 1);
+        });
+      } else if (result.completedId === ASHEN_QUEST_ID) {
+        next = awardCombatXp(next, ASHEN_REWARDS.combatXp);
+        next = { ...next, skillXp: { ...next.skillXp } };
+        awardSkillXp(next, ASHEN_REWARDS.skill, ASHEN_REWARDS.skillXp);
+        next = setGold(next, next.gold + ASHEN_REWARDS.gold);
+        next = { ...next, skillXp: { ...next.skillXp } };
+        queueMicrotask(() => {
+          showToast(ASHEN_COMPLETE_LINE);
           setSkillTick((t) => t + 1);
         });
       } else if (result.toast) {
@@ -1773,6 +1868,7 @@ export function GameApp() {
       greenGateQuest={getGreenGateQuest(loadQuestLog())}
       spineQuest={getSpineQuest(loadQuestLog())}
       paleQuest={getPaleQuest(loadQuestLog())}
+      ashenQuest={getAshenQuest(loadQuestLog())}
       onVitals={handleVitals}
       onPlayerDeath={handlePlayerDeath}
       onPassivePrimary={(amount) => {
