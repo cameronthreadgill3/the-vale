@@ -25,6 +25,7 @@ import {
   getChoirCountsQuest,
   getWharfQuest,
   getGreenGateQuest,
+  getSpineQuest,
   isTeethActive,
   isAshwoodActive,
   isHollowActive,
@@ -35,6 +36,7 @@ import {
   isChoirCountsActive,
   isWharfActive,
   isGreenGateActive,
+  isSpineActive,
   loadQuestLog,
   type TeethQuestProgress,
   type AshwoodQuestProgress,
@@ -46,6 +48,7 @@ import {
   type ChoirCountsQuestProgress,
   type WharfQuestProgress,
   type GreenGateQuestProgress,
+  type SpineQuestProgress,
 } from "@/game/quests";
 import { ASHWOOD_CAIRNS } from "@/game/cairns";
 import { huntZoneById } from "@/game/huntZones";
@@ -76,6 +79,10 @@ export function resolveQuestObjective(
   map: WorldMap,
 ): WayfindObjective | null {
   const log = loadQuestLog();
+  if (isSpineActive(log)) {
+    const q = getSpineQuest(log);
+    if (q) return objectiveForSpine(q, player, enemies, folk, map);
+  }
   if (isGreenGateActive(log)) {
     const q = getGreenGateQuest(log);
     if (q) return objectiveForGreenGate(q, player, enemies, folk, map);
@@ -117,6 +124,151 @@ export function resolveQuestObjective(
     if (q) return objectiveForTeeth(q, player, enemies, folk);
   }
   return null;
+}
+
+export function objectiveForSpine(
+  q: SpineQuestProgress,
+  player: { x: number; y: number },
+  enemies: Enemy[],
+  folk: FolkDef[],
+  map: WorldMap,
+): WayfindObjective | null {
+  if (q.status !== "active") return null;
+  const rook = folk.find((f) => f.id === "rook");
+
+  if (!q.reachedSpine) {
+    const gate = continentGateOnMap(map, "verdant-spine");
+    if (gate) {
+      return {
+        label: "Reach Verdant Spine gate",
+        x: (gate.x + 0.5) * TILE,
+        y: (gate.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    const home = continentGateOnMap(map, "thornreach");
+    if (home) {
+      return {
+        label: "Gate to Verdant Spine (Thornreach)",
+        x: (home.x + 0.5) * TILE,
+        y: (home.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    return {
+      label: "Find Verdant Spine gate (Thornreach)",
+      x: player.x + TILE * 8,
+      y: player.y - TILE * 2,
+      kind: "landmark",
+    };
+  }
+
+  if (!q.identifiedVole) {
+    const vole = nearestEnemy(player, enemies, "ash-vole");
+    if (vole) {
+      return { label: "Identify Ash-vole", x: vole.x, y: vole.y, kind: "enemy" };
+    }
+    if (map.continentId === "verdant-spine" && map.kind === "overworld") {
+      return {
+        label: "Find Ash-vole (Verdant Spine)",
+        x: player.x + TILE * 6,
+        y: player.y - TILE * 4,
+        kind: "landmark",
+      };
+    }
+    const toSpine = continentGateOnMap(map, "verdant-spine");
+    if (toSpine) {
+      return {
+        label: "Gate to Ash-vole (Verdant Spine)",
+        x: (toSpine.x + 0.5) * TILE,
+        y: (toSpine.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    const home = continentGateOnMap(map, "thornreach");
+    if (home) {
+      return {
+        label: "Gate toward Verdant Spine",
+        x: (home.x + 0.5) * TILE,
+        y: (home.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    return {
+      label: "Find Ash-vole (Verdant Spine)",
+      x: player.x + TILE * 6,
+      y: player.y - TILE * 4,
+      kind: "landmark",
+    };
+  }
+
+  if (!q.houndDone) {
+    const hound = nearestEnemy(player, enemies, "bark-hound");
+    if (hound) {
+      return {
+        label: "Defeat Bark Hound (0/1)",
+        x: hound.x,
+        y: hound.y,
+        kind: "enemy",
+      };
+    }
+    if (map.continentId === "verdant-spine" && map.kind === "overworld") {
+      return {
+        label: "Find Bark Hound (Verdant Spine)",
+        x: player.x + TILE * 6,
+        y: player.y - TILE * 4,
+        kind: "landmark",
+      };
+    }
+    const toSpine = continentGateOnMap(map, "verdant-spine");
+    if (toSpine) {
+      return {
+        label: "Gate to Bark Hound (Verdant Spine)",
+        x: (toSpine.x + 0.5) * TILE,
+        y: (toSpine.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    const home = continentGateOnMap(map, "thornreach");
+    if (home) {
+      return {
+        label: "Gate toward Verdant Spine",
+        x: (home.x + 0.5) * TILE,
+        y: (home.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    return {
+      label: "Find Bark Hound (Verdant Spine)",
+      x: player.x + TILE * 6,
+      y: player.y - TILE * 4,
+      kind: "landmark",
+    };
+  }
+
+  if (rook) {
+    return {
+      label: "Return to Rook",
+      x: (rook.x + 0.5) * TILE,
+      y: (rook.y + 0.5) * TILE,
+      kind: "folk",
+    };
+  }
+  const home = continentGateOnMap(map, "thornreach");
+  if (home) {
+    return {
+      label: "Gate back to Rook (Thornreach)",
+      x: (home.x + 0.5) * TILE,
+      y: (home.y + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  return {
+    label: "Return to Rook (Thornreach)",
+    x: player.x + TILE * 8,
+    y: player.y - TILE * 2,
+    kind: "landmark",
+  };
 }
 
 export function objectiveForGreenGate(

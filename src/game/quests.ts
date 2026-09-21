@@ -19,6 +19,7 @@ export const ASHVEIL_QUEST_ID = "ashveil-under-the-watchline" as const;
 export const CHOIR_COUNTS_QUEST_ID = "the-choir-counts" as const;
 export const WHARF_QUEST_ID = "the-wharf-answers" as const;
 export const GREEN_GATE_QUEST_ID = "the-green-gate-keeps" as const;
+export const SPINE_QUEST_ID = "the-spine-remembers" as const;
 
 /** Depot clerk — Cress Ledger in folk.ts. */
 export const CRESS_FOLK_ID = "cress-ledger" as const;
@@ -47,7 +48,8 @@ export type QuestId =
   | typeof ASHVEIL_QUEST_ID
   | typeof CHOIR_COUNTS_QUEST_ID
   | typeof WHARF_QUEST_ID
-  | typeof GREEN_GATE_QUEST_ID;
+  | typeof GREEN_GATE_QUEST_ID
+  | typeof SPINE_QUEST_ID;
 
 export type QuestStatus = "active" | "complete";
 
@@ -157,6 +159,17 @@ export interface GreenGateQuestProgress {
   foxKilled: boolean;
 }
 
+export interface SpineQuestProgress {
+  id: typeof SPINE_QUEST_ID;
+  status: QuestStatus;
+  /** Reached Verdant Spine overworld (travel, stand, or arrive via Thornreach gate). */
+  reachedSpine: boolean;
+  /** First successful Identify of an Ash-vole on Verdant Spine. */
+  identifiedVole: boolean;
+  /** Bark Hound defeated on Verdant Spine (target 1). */
+  houndDone: boolean;
+}
+
 export type QuestLog = {
   [TEETH_QUEST_ID]?: TeethQuestProgress;
   [ASHWOOD_QUEST_ID]?: AshwoodQuestProgress;
@@ -168,6 +181,7 @@ export type QuestLog = {
   [CHOIR_COUNTS_QUEST_ID]?: ChoirCountsQuestProgress;
   [WHARF_QUEST_ID]?: WharfQuestProgress;
   [GREEN_GATE_QUEST_ID]?: GreenGateQuestProgress;
+  [SPINE_QUEST_ID]?: SpineQuestProgress;
 };
 
 export const TEETH_RATS_NEEDED = 3;
@@ -184,6 +198,7 @@ export const ASHVEIL_QUEST_TITLE = "Ashveil Under the Watchline";
 export const CHOIR_COUNTS_QUEST_TITLE = "The Choir Counts";
 export const WHARF_QUEST_TITLE = "The Wharf Answers";
 export const GREEN_GATE_QUEST_TITLE = "The Green Gate Keeps";
+export const SPINE_QUEST_TITLE = "The Spine Remembers";
 
 export const TEETH_START_TOAST =
   "Rook: Ashwood edge has wrong prey - Identify first.";
@@ -244,6 +259,12 @@ export const GREEN_GATE_START_TOAST =
 
 export const GREEN_GATE_COMPLETE_LINE =
   "Rook: The green gate kept its word. Nightglass is not alone, and the far road knows your footing now. Survive. Learn. Progress.";
+
+export const SPINE_START_TOAST =
+  "Rook: The green gate kept its word. Walk the spine ridge — name the soft ash-vole that shares the fox's ground, quiet one bark-hound packing the ridge, and bring the spine's measure home. Survive. Learn. Progress.";
+
+export const SPINE_COMPLETE_LINE =
+  "Rook: The spine remembers your footing. Soft prey named, the ridge pack quieted. Survive. Learn. Progress — the far road holds.";
 
 export const TEETH_REWARDS = {
   gold: 28,
@@ -313,6 +334,13 @@ export const GREEN_GATE_REWARDS = {
   combatXp: 150,
   skill: "shielding" as SkillId,
   skillXp: 45,
+};
+
+export const SPINE_REWARDS = {
+  gold: 80,
+  combatXp: 160,
+  skill: "magic" as SkillId,
+  skillXp: 48,
 };
 
 export function loadQuestLog(): QuestLog {
@@ -439,6 +467,16 @@ export function emptyGreenGateQuest(): GreenGateQuestProgress {
     gateReached: false,
     identifiedFox: false,
     foxKilled: false,
+  };
+}
+
+export function emptySpineQuest(): SpineQuestProgress {
+  return {
+    id: SPINE_QUEST_ID,
+    status: "active",
+    reachedSpine: false,
+    identifiedVole: false,
+    houndDone: false,
   };
 }
 
@@ -605,6 +643,20 @@ export function sanitizeQuestLog(raw: unknown): QuestLog {
     };
   }
 
+  const spine = obj[SPINE_QUEST_ID];
+  if (spine && typeof spine === "object") {
+    const s = spine as Record<string, unknown>;
+    const status: QuestStatus =
+      s.status === "complete" ? "complete" : "active";
+    log[SPINE_QUEST_ID] = {
+      id: SPINE_QUEST_ID,
+      status,
+      reachedSpine: Boolean(s.reachedSpine),
+      identifiedVole: Boolean(s.identifiedVole),
+      houndDone: Boolean(s.houndDone),
+    };
+  }
+
   return log;
 }
 
@@ -666,6 +718,12 @@ export function getGreenGateQuest(
   return log?.[GREEN_GATE_QUEST_ID] ?? null;
 }
 
+export function getSpineQuest(
+  log: QuestLog | undefined,
+): SpineQuestProgress | null {
+  return log?.[SPINE_QUEST_ID] ?? null;
+}
+
 export function isTeethActive(log: QuestLog | undefined): boolean {
   const q = getTeethQuest(log);
   return Boolean(q && q.status === "active");
@@ -713,6 +771,11 @@ export function isWharfActive(log: QuestLog | undefined): boolean {
 
 export function isGreenGateActive(log: QuestLog | undefined): boolean {
   const q = getGreenGateQuest(log);
+  return Boolean(q && q.status === "active");
+}
+
+export function isSpineActive(log: QuestLog | undefined): boolean {
+  const q = getSpineQuest(log);
   return Boolean(q && q.status === "active");
 }
 
@@ -769,6 +832,10 @@ export function wharfObjectivesMet(q: WharfQuestProgress): boolean {
 
 export function greenGateObjectivesMet(q: GreenGateQuestProgress): boolean {
   return q.gateReached && q.identifiedFox && q.foxKilled;
+}
+
+export function spineObjectivesMet(q: SpineQuestProgress): boolean {
+  return q.reachedSpine && q.identifiedVole && q.houndDone;
 }
 
 /** HUD lines for Teeth sticky panel. */
@@ -963,6 +1030,27 @@ export function greenGateHudLines(q: GreenGateQuestProgress): string[] {
   ];
 }
 
+/** HUD lines for The Spine Remembers. */
+export function spineHudLines(q: SpineQuestProgress): string[] {
+  if (q.status === "complete") {
+    return ["Complete - The spine remembers"];
+  }
+  return [
+    q.reachedSpine
+      ? "[done] Reach Verdant Spine"
+      : "[ ] Reach Verdant Spine (Thornreach gate)",
+    q.identifiedVole
+      ? "[done] Identify Ash-vole"
+      : "[ ] Identify an Ash-vole (near look)",
+    q.houndDone
+      ? "[done] Defeat Bark Hound 1/1"
+      : "[ ] Defeat Bark Hound 0/1 (Verdant Spine)",
+    q.reachedSpine && q.identifiedVole && q.houndDone
+      ? "[ ] Return to Rook (the spine's measure)"
+      : "[ ] Return to Rook with the spine's measure",
+  ];
+}
+
 
 export type QuestEventResult = {
   log: QuestLog;
@@ -987,6 +1075,8 @@ export type QuestEventResult = {
   startedWharf?: boolean;
   /** The Green Gate Keeps auto-started after The Wharf Answers. */
   startedGreenGate?: boolean;
+  /** The Spine Remembers auto-started after The Green Gate Keeps. */
+  startedSpine?: boolean;
 };
 
 /** If Teeth is complete and Ashwood missing, start Ashwood Watch. */
@@ -1151,6 +1241,24 @@ export function ensureGreenGateAfterWharf(log: QuestLog): {
   };
 }
 
+/** If The Green Gate Keeps is complete and The Spine Remembers missing, start it. */
+export function ensureSpineAfterGreenGate(log: QuestLog): {
+  log: QuestLog;
+  started: boolean;
+} {
+  const green = getGreenGateQuest(log);
+  if (!green || green.status !== "complete") {
+    return { log, started: false };
+  }
+  if (getSpineQuest(log)) {
+    return { log, started: false };
+  }
+  return {
+    log: withSpineQuest(log, emptySpineQuest()),
+    started: true,
+  };
+}
+
 export function withTeethQuest(
   log: QuestLog | undefined,
   quest: TeethQuestProgress,
@@ -1221,6 +1329,13 @@ export function withGreenGateQuest(
   return { ...(log ?? {}), [GREEN_GATE_QUEST_ID]: quest };
 }
 
+export function withSpineQuest(
+  log: QuestLog | undefined,
+  quest: SpineQuestProgress,
+): QuestLog {
+  return { ...(log ?? {}), [SPINE_QUEST_ID]: quest };
+}
+
 function finishTeethIfReady(
   log: QuestLog,
   next: TeethQuestProgress,
@@ -1284,6 +1399,24 @@ export function applyIdentify(
   kindId: EnemyKindId,
   continentId?: ContinentId,
 ): QuestEventResult | null {
+  const spine = getSpineQuest(log);
+  if (
+    spine &&
+    spine.status === "active" &&
+    !spine.identifiedVole &&
+    kindId === "ash-vole" &&
+    continentId === "verdant-spine"
+  ) {
+    return {
+      log: withSpineQuest(log, {
+        ...spine,
+        reachedSpine: true,
+        identifiedVole: true,
+      }),
+      toast: "Identified: Ash-vole / F",
+    };
+  }
+
   const green = getGreenGateQuest(log);
   if (
     green &&
@@ -1387,6 +1520,26 @@ export function applyEnemyKill(
   kindId: EnemyKindId,
   continentId?: ContinentId,
 ): QuestEventResult | null {
+  const spine = getSpineQuest(log);
+  if (
+    spine &&
+    spine.status === "active" &&
+    kindId === "bark-hound" &&
+    continentId === "verdant-spine" &&
+    !spine.houndDone
+  ) {
+    return {
+      log: withSpineQuest(log, {
+        ...spine,
+        reachedSpine: true,
+        houndDone: true,
+      }),
+      toast: spine.identifiedVole
+        ? "Bark Hound 1/1 — Return to Rook"
+        : "Bark Hound 1/1 — Name the Ash-vole",
+    };
+  }
+
   const green = getGreenGateQuest(log);
   if (
     green &&
@@ -1821,10 +1974,43 @@ export function applyGreenGateRookTalk(log: QuestLog): QuestEventResult | null {
   const q = getGreenGateQuest(log);
   if (!q || q.status !== "active") return null;
   if (!greenGateObjectivesMet(q)) return null;
+  let out = withGreenGateQuest(log, { ...q, status: "complete" });
+  const ensured = ensureSpineAfterGreenGate(out);
+  out = ensured.log;
   return {
-    log: withGreenGateQuest(log, { ...q, status: "complete" }),
-    toast: GREEN_GATE_COMPLETE_LINE,
+    log: out,
+    toast: ensured.started ? SPINE_START_TOAST : GREEN_GATE_COMPLETE_LINE,
     completedId: GREEN_GATE_QUEST_ID,
+    startedSpine: ensured.started,
+  };
+}
+
+/** Mark Verdant Spine reached for The Spine Remembers (travel, stand, or arrival). */
+export function applySpineReached(log: QuestLog): QuestEventResult | null {
+  const q = getSpineQuest(log);
+  if (!q || q.status !== "active" || q.reachedSpine) {
+    return null;
+  }
+  return {
+    log: withSpineQuest(log, { ...q, reachedSpine: true }),
+    toast:
+      q.identifiedVole && q.houndDone
+        ? "Verdant Spine marked — Return to Rook with the spine's measure"
+        : q.identifiedVole
+          ? "Verdant Spine marked — Quiet one bark-hound packing the ridge"
+          : "Verdant Spine marked — Name the soft ash-vole that shares the fox's ground",
+  };
+}
+
+/** Complete The Spine Remembers when talking to Rook after the ridge is measured. */
+export function applySpineRookTalk(log: QuestLog): QuestEventResult | null {
+  const q = getSpineQuest(log);
+  if (!q || q.status !== "active") return null;
+  if (!spineObjectivesMet(q)) return null;
+  return {
+    log: withSpineQuest(log, { ...q, status: "complete" }),
+    toast: SPINE_COMPLETE_LINE,
+    completedId: SPINE_QUEST_ID,
   };
 }
 
@@ -1874,6 +2060,23 @@ export function applyCairnInspect(
 
 /** Rook line while sticky quests are active / complete. */
 export function rookQuestLine(log: QuestLog | undefined): string | null {
+  const spine = getSpineQuest(log);
+  if (spine) {
+    if (spine.status === "complete") {
+      return SPINE_COMPLETE_LINE.replace(/^Rook:\s*/, "");
+    }
+    if (!spine.reachedSpine) {
+      return "The green gate kept its word. Walk the spine ridge — name the soft ash-vole that shares the fox's ground, quiet one bark-hound packing the ridge, and bring the spine's measure home.";
+    }
+    if (!spine.identifiedVole) {
+      return "The spine is underfoot. Identify an Ash-vole on Verdant Spine — Name and Rank — then quiet one bark-hound packing the ridge.";
+    }
+    if (!spine.houndDone) {
+      return "The vole is named. Quiet one Bark Hound packing the Verdant Spine, then bring the spine's measure home.";
+    }
+    return "The spine remembers. Survive. Learn. Progress — the far road holds when you tell me.";
+  }
+
   const green = getGreenGateQuest(log);
   if (green) {
     if (green.status === "complete") {

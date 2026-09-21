@@ -59,6 +59,9 @@ import {
   GREEN_GATE_START_TOAST,
   GREEN_GATE_REWARDS,
   GREEN_GATE_COMPLETE_LINE,
+  SPINE_START_TOAST,
+  SPINE_REWARDS,
+  SPINE_COMPLETE_LINE,
   TEETH_QUEST_ID,
   ASHWOOD_QUEST_ID,
   HOLLOW_QUEST_ID,
@@ -69,6 +72,7 @@ import {
   CHOIR_COUNTS_QUEST_ID,
   WHARF_QUEST_ID,
   GREEN_GATE_QUEST_ID,
+  SPINE_QUEST_ID,
   CRESS_FOLK_ID,
   OLD_REED_FOLK_ID,
   CHOIR_KEEPER_FOLK_ID,
@@ -84,6 +88,7 @@ import {
   getChoirCountsQuest,
   getWharfQuest,
   getGreenGateQuest,
+  getSpineQuest,
   applyIdentify,
   applyEnemyKill,
   applyCairnInspect,
@@ -107,6 +112,8 @@ import {
   applyWharfRookTalk,
   applyGreenGateReached,
   applyGreenGateRookTalk,
+  applySpineReached,
+  applySpineRookTalk,
   withTeethQuest,
   ensureAshwoodAfterTeeth,
   ensureHollowAfterAshwood,
@@ -117,6 +124,7 @@ import {
   ensureChoirCountsAfterAshveil,
   ensureNightglassAfterChoir,
   ensureGreenGateAfterWharf,
+  ensureSpineAfterGreenGate,
   rookQuestLine,
   loadQuestLog,
   saveQuestLog,
@@ -444,6 +452,18 @@ export function GameApp() {
             return true;
           }
         }
+        const spine = applySpineReached(loadQuestLog());
+        if (spine) {
+          saveQuestLog(spine.log);
+          if (spine.toast) {
+            showToast(spine.toast);
+            window.setTimeout(
+              () => setToast((t) => (t === spine.toast ? null : t)),
+              2800,
+            );
+            return true;
+          }
+        }
       }
       const dest = getContinent(target);
       if (paid > 0 || firstCrossing) {
@@ -541,6 +561,7 @@ export function GameApp() {
     }
     if (folkId === "rook" && character) {
       const turnIn =
+        applySpineRookTalk(loadQuestLog()) ??
         applyGreenGateRookTalk(loadQuestLog()) ??
         applyWharfRookTalk(loadQuestLog()) ??
         applyChoirCountsRookTalk(loadQuestLog()) ??
@@ -556,14 +577,28 @@ export function GameApp() {
             ...prev,
             skillXp: { ...prev.skillXp },
           };
-          if (turnIn.completedId === GREEN_GATE_QUEST_ID) {
+          if (turnIn.completedId === SPINE_QUEST_ID) {
+            next = awardCombatXp(next, SPINE_REWARDS.combatXp);
+            next = { ...next, skillXp: { ...next.skillXp } };
+            awardSkillXp(next, SPINE_REWARDS.skill, SPINE_REWARDS.skillXp);
+            next = setGold(next, next.gold + SPINE_REWARDS.gold);
+            next = { ...next, skillXp: { ...next.skillXp } };
+            queueMicrotask(() => {
+              showToast(SPINE_COMPLETE_LINE);
+              setSkillTick((t) => t + 1);
+            });
+          } else if (turnIn.completedId === GREEN_GATE_QUEST_ID) {
             next = awardCombatXp(next, GREEN_GATE_REWARDS.combatXp);
             next = { ...next, skillXp: { ...next.skillXp } };
             awardSkillXp(next, GREEN_GATE_REWARDS.skill, GREEN_GATE_REWARDS.skillXp);
             next = setGold(next, next.gold + GREEN_GATE_REWARDS.gold);
             next = { ...next, skillXp: { ...next.skillXp } };
             queueMicrotask(() => {
-              showToast(GREEN_GATE_COMPLETE_LINE);
+              showToast(
+                turnIn.startedSpine
+                  ? SPINE_START_TOAST
+                  : GREEN_GATE_COMPLETE_LINE,
+              );
               setSkillTick((t) => t + 1);
             });
           } else if (turnIn.completedId === WHARF_QUEST_ID) {
@@ -946,6 +981,14 @@ export function GameApp() {
             return;
           }
         }
+        const spine = applySpineReached(loadQuestLog());
+        if (spine) {
+          saveQuestLog(spine.log);
+          if (spine.toast) {
+            showToast(spine.toast);
+            return;
+          }
+        }
       }
       const c = getContinent(dest);
       if (paid > 0 || firstCrossing) {
@@ -1075,6 +1118,19 @@ export function GameApp() {
     );
   }, [character]);
 
+  // Quest 11: auto-start The Spine Remembers once The Green Gate Keeps is complete.
+  useEffect(() => {
+    if (!character) return;
+    const ensured = ensureSpineAfterGreenGate(loadQuestLog());
+    if (!ensured.started) return;
+    saveQuestLog(ensured.log);
+    setToast(SPINE_START_TOAST);
+    window.setTimeout(
+      () => setToast((t) => (t === SPINE_START_TOAST ? null : t)),
+      3600,
+    );
+  }, [character]);
+
   // Mistmere Crossing: mark arrival whenever the walker stands on Mistmere.
   useEffect(() => {
     if (!character) return;
@@ -1127,16 +1183,25 @@ export function GameApp() {
     }
   }, [character]);
 
-  // The Green Gate Keeps: mark Verdant Spine arrival / gate.
+  // The Green Gate Keeps / The Spine Remembers: mark Verdant Spine arrival / gate.
   useEffect(() => {
     if (!character) return;
     if (character.continentId !== "verdant-spine") return;
-    const result = applyGreenGateReached(loadQuestLog());
-    if (!result) return;
-    saveQuestLog(result.log);
-    if (result.toast) {
-      setToast(result.toast);
-      window.setTimeout(() => setToast((t) => (t === result.toast ? null : t)), 2800);
+    const green = applyGreenGateReached(loadQuestLog());
+    if (green) {
+      saveQuestLog(green.log);
+      if (green.toast) {
+        setToast(green.toast);
+        window.setTimeout(() => setToast((t) => (t === green.toast ? null : t)), 2800);
+      }
+      return;
+    }
+    const spine = applySpineReached(loadQuestLog());
+    if (!spine) return;
+    saveQuestLog(spine.log);
+    if (spine.toast) {
+      setToast(spine.toast);
+      window.setTimeout(() => setToast((t) => (t === spine.toast ? null : t)), 2800);
     }
   }, [character]);
 
@@ -1281,7 +1346,19 @@ export function GameApp() {
         next = setGold(next, next.gold + GREEN_GATE_REWARDS.gold);
         next = { ...next, skillXp: { ...next.skillXp } };
         queueMicrotask(() => {
-          showToast(GREEN_GATE_COMPLETE_LINE);
+          showToast(
+            result.startedSpine ? SPINE_START_TOAST : GREEN_GATE_COMPLETE_LINE,
+          );
+          setSkillTick((t) => t + 1);
+        });
+      } else if (result.completedId === SPINE_QUEST_ID) {
+        next = awardCombatXp(next, SPINE_REWARDS.combatXp);
+        next = { ...next, skillXp: { ...next.skillXp } };
+        awardSkillXp(next, SPINE_REWARDS.skill, SPINE_REWARDS.skillXp);
+        next = setGold(next, next.gold + SPINE_REWARDS.gold);
+        next = { ...next, skillXp: { ...next.skillXp } };
+        queueMicrotask(() => {
+          showToast(SPINE_COMPLETE_LINE);
           setSkillTick((t) => t + 1);
         });
       } else if (result.toast) {
@@ -1611,6 +1688,7 @@ export function GameApp() {
       choirCountsQuest={getChoirCountsQuest(loadQuestLog())}
       wharfQuest={getWharfQuest(loadQuestLog())}
       greenGateQuest={getGreenGateQuest(loadQuestLog())}
+      spineQuest={getSpineQuest(loadQuestLog())}
       onVitals={handleVitals}
       onPlayerDeath={handlePlayerDeath}
       onPassivePrimary={(amount) => {

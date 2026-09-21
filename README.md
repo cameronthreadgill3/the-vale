@@ -188,6 +188,17 @@ After *The Wharf Answers* completes, Rook starts **The Green Gate Keeps** (`ensu
 
 Rewards: ~75g + ~150 combat XP + shielding skill XP. Yellow arrow: Verdant Spine gate → nearest Gorse Fox on Verdant Spine → return gate → Rook. Reuses existing gates and fauna — no new geometry. First Story Accession texture only — Survive · Learn · Progress. No Lucas transplant.
 
+### Eleventh sticky quest — The Spine Remembers
+
+After *The Green Gate Keeps* completes, Rook starts **The Spine Remembers** (`ensureSpineAfterGreenGate`): the green gate kept its fox measure — walk the Verdant Spine ridge itself, name the soft ash-vole that shares the fox's ground, quiet one bark-hound packing the spine, and bring the ridge's word home.
+
+1. **Reach** Verdant Spine overworld via the Thornreach → **Verdant Spine** gate (travel / stand / arrive)
+2. **Identify** 1 **Ash-vole** (`ash-vole`) on Verdant Spine (near-field look / Name · Rank)
+3. **Defeat** 1 **Bark Hound** (`bark-hound`) on Verdant Spine
+4. Return through the gate and report to **Rook**
+
+Rewards: ~80g + ~160 combat XP + magic skill XP. Yellow arrow: Verdant Spine gate → nearest Ash-vole on Verdant Spine → nearest Bark Hound on Verdant Spine → return gate → Rook. Reuses existing gates and fauna (ash-vole pad while sticky) — no new geometry. First Story Accession texture only — Survive · Learn · Progress. No Lucas transplant.
+
 ### Thornreach hollows (mini-dungeon + boss stub)
 
 Thornreach hollows read as a short dungeon: rooms and corridors, a single lit **↑ Surface** exit at the entrance (the deep room is no longer a second door), denser Shade Wisps the farther you walk, and a marked **Ashveil chamber** in the deepest room.
@@ -200,7 +211,7 @@ How to find it: enter any Thornreach hollow (dark circle on the overworld), foll
 
 New cues so you are never lost on Thornreach:
 
-1. **Quest arrow + HUD line** — Active sticky quests show a yellow edge/on-screen arrow toward the current objective (cairns, hollow entrance, Ashveil chamber, Ashveil Ember, Shade Wisp, Needle Rat, Bark Hound, Gorse Fox, Mistmere gate, Verdant Spine gate, Old Reed, Mistmere Pier, Choir Landing, Choir Keeper, Nightglass Wharf, Captain Vesper, Cress, or Rook) plus a HUD line like `→ Identify Needle Rat · 12 tiles`.
+1. **Quest arrow + HUD line** — Active sticky quests show a yellow edge/on-screen arrow toward the current objective (cairns, hollow entrance, Ashveil chamber, Ashveil Ember, Shade Wisp, Needle Rat, Bark Hound, Ash-vole, Gorse Fox, Mistmere gate, Verdant Spine gate, Old Reed, Mistmere Pier, Choir Landing, Choir Keeper, Nightglass Wharf, Captain Vesper, Cress, or Rook) plus a HUD line like `→ Identify Needle Rat · 12 tiles`.
 2. **Labeled landmarks + compass** — Larger high-contrast markers; names for folk, **Gate → Continent**, hollow entrance/exit, ship docks, and the plaza **Fountain** within ~8 tiles; **hunt-ground cairns** (`Name · Rec. 2–4`, plus spawn table when close) from ~12 tiles. Top-center compass (N/E/S/W) with a tiny radar of nearby interactables (gold), cairns, and the quest target (bright).
 3. **Starter tip + clear prompts** — First 60s on load: soft tip *Talk to Rook (watch) · Cairns mark hunt grounds (Rec. levels) · Bank with Cress · Fountain square is safe*. Nearest interactable prompts read as actions: `Talk · Rook`, `Talk / Bank · Cress Vault`, `Enter hollow`, `Use gate → Mistmere — 4g`, `Board ship · Mistmere Pier — 5–7g`.
 

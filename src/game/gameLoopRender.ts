@@ -63,8 +63,10 @@ import {
   applyIdentify,
   getAshveilQuest,
   getGreenGateQuest,
+  getSpineQuest,
   isAshveilActive,
   isGreenGateActive,
+  isSpineActive,
   loadQuestLog,
   notifyQuestUi,
   saveQuestLog,
@@ -89,6 +91,7 @@ let _gfxWarmed = false;
 const ASHVEIL_CHAMBER_REACH_TILES = 2.4;
 const ASHVEIL_IDENTIFY_TILES = 3.6;
 const GREEN_GATE_IDENTIFY_TILES = 3.6;
+const SPINE_IDENTIFY_TILES = 3.6;
 
 /** Chamber reach + Ember Identify without patching assembled gameLoop. */
 function tickAshveilField(
@@ -156,6 +159,33 @@ function tickGreenGateField(
     const dist = Math.hypot(e.x - player.x, e.y - player.y) / TILE;
     if (dist <= GREEN_GATE_IDENTIFY_TILES) {
       const result = applyIdentify(loadQuestLog(), "gorse-fox", "verdant-spine");
+      if (result) {
+        saveQuestLog(result.log);
+        notifyQuestUi(result.toast);
+      }
+      break;
+    }
+  }
+}
+
+/** Ash-vole Identify on Verdant Spine without patching assembled gameLoop. */
+function tickSpineField(
+  player: { x: number; y: number },
+  map: WorldMap,
+  enemies: Enemy[],
+): void {
+  if (!isSpineActive(loadQuestLog())) return;
+  const log = loadQuestLog();
+  const q = getSpineQuest(log);
+  if (!q || q.status !== "active" || q.identifiedVole) return;
+  if (map.kind !== "overworld" || map.continentId !== "verdant-spine") return;
+
+  for (const e of enemies) {
+    if (e.ai === "dead" || e.hp <= 0) continue;
+    if (e.kind.id !== "ash-vole") continue;
+    const dist = Math.hypot(e.x - player.x, e.y - player.y) / TILE;
+    if (dist <= SPINE_IDENTIFY_TILES) {
+      const result = applyIdentify(loadQuestLog(), "ash-vole", "verdant-spine");
       if (result) {
         saveQuestLog(result.log);
         notifyQuestUi(result.toast);
@@ -346,6 +376,7 @@ export function advanceCameraAndRender(args: {
 
   tickAshveilField(player, map, enemies);
   tickGreenGateField(player, map, enemies);
+  tickSpineField(player, map, enemies);
   const objective = resolveQuestObjective(player, enemies, folk, map);
   const radarDots = collectRadarDots(player, enemies, folk, docks, map, objective);
   drawCompass(ctx, viewW);
