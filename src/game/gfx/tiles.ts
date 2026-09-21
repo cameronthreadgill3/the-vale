@@ -9,6 +9,14 @@ import { makeCanvas, ctx2d, px, shadeHex, mixHex } from "@/game/gfx/canvasUtil";
 
 export const TILE_PX = 32;
 export const TILE_VARIANTS = 4;
+export const FOUNTAIN_FRAMES = 4;
+
+export type GrassEdgeDir = "n" | "s" | "e" | "w";
+
+/** Looping water / fountain sheet index from elapsed seconds. */
+export function fountainFrameAt(timeSec: number): number {
+  return Math.floor(Math.max(0, timeSec) * 6) % FOUNTAIN_FRAMES;
+}
 
 type Sheet = HTMLCanvasElement | OffscreenCanvas;
 
@@ -76,18 +84,19 @@ function paintPath(ctx: CanvasRenderingContext2D, base: string, variant: number)
   }
 }
 
-function paintWater(ctx: CanvasRenderingContext2D, base: string, variant: number): void {
+function paintWater(ctx: CanvasRenderingContext2D, base: string, variant: number, anim = 0): void {
   const deep = shadeHex(base, 0.7);
   const foam = mixHex(base, "#a8c8d8", 0.45);
   const mid = shadeHex(base, 1.1);
+  const phase = anim * 0.85;
   for (let y = 0; y < TILE_PX; y++) {
     for (let x = 0; x < TILE_PX; x++) {
-      const wave = Math.sin((x + variant * 4) * 0.4 + y * 0.25) > 0.3;
+      const wave = Math.sin((x + variant * 4) * 0.4 + y * 0.25 + phase) > 0.3;
       px(ctx, x, y, wave ? mid : deep);
     }
   }
   for (let i = 0; i < 4; i++) {
-    const y = 6 + i * 7 + (variant % 2);
+    const y = 6 + i * 7 + ((variant + anim) % 2);
     px(ctx, 2 + i * 2, y, foam, 10, 1);
     px(ctx, 14 + i, y + 3, foam, 8, 1);
   }
@@ -123,7 +132,7 @@ function paintStoneAshwood(ctx: CanvasRenderingContext2D, base: string, variant:
   px(ctx, 14 + ox, 2, "#c8d8c0", 2, 1);
 }
 
-function paintFlowerFountain(ctx: CanvasRenderingContext2D, base: string, variant: number): void {
+function paintFlowerFountain(ctx: CanvasRenderingContext2D, base: string, variant: number, anim = 0): void {
   // small plaza fountain / well (flower tiles near clearings)
   const stone = mixHex(base, "#5a5850", 0.5);
   const stoneDark = shadeHex(stone, 0.65);
@@ -139,13 +148,15 @@ function paintFlowerFountain(ctx: CanvasRenderingContext2D, base: string, varian
   px(ctx, 6, 10, stoneDark, 20, 16);
   px(ctx, 7, 11, stone, 18, 14);
   px(ctx, 9, 13, water, 14, 10);
-  px(ctx, 11, 15, waterLite, 10, 2);
+  const ripple = 11 + (anim % 2);
+  px(ctx, ripple, 15, waterLite, 10, 2);
   // center spout
+  const spoutH = 3 + (anim % FOUNTAIN_FRAMES);
   px(ctx, 14, 8, stone, 4, 8);
-  px(ctx, 15, 6, waterLite, 2, 4);
-  if (variant % 2 === 0) {
-    px(ctx, 12, 7, waterLite, 1, 1);
-    px(ctx, 19, 8, waterLite, 1, 1);
+  px(ctx, 15, 6, waterLite, 2, spoutH);
+  if ((variant + anim) % 2 === 0) {
+    px(ctx, 12, 7 - (anim % 2), waterLite, 1, 1);
+    px(ctx, 19, 8 + (anim % 2), waterLite, 1, 1);
   }
 }
 
@@ -201,7 +212,7 @@ function paintExit(ctx: CanvasRenderingContext2D, base: string, _variant: number
   px(ctx, 14, 12, lite, 4, 10);
 }
 
-function paintTile(kind: GroundTile, color: string, variant: number): Sheet {
+function paintTile(kind: GroundTile, color: string, variant: number, anim = 0): Sheet {
   const c = makeCanvas(TILE_PX, TILE_PX);
   const ctx = ctx2d(c);
   switch (kind) {
@@ -216,13 +227,13 @@ function paintTile(kind: GroundTile, color: string, variant: number): Sheet {
       paintPath(ctx, color, variant);
       break;
     case "water":
-      paintWater(ctx, color, variant);
+      paintWater(ctx, color, variant, anim);
       break;
     case "stone":
       paintStoneAshwood(ctx, color, variant);
       break;
     case "flower":
-      paintFlowerFountain(ctx, color, variant);
+      paintFlowerFountain(ctx, color, variant, anim);
       break;
     case "gate":
       paintGate(ctx, color, variant);
@@ -240,12 +251,46 @@ function paintTile(kind: GroundTile, color: string, variant: number): Sheet {
   return c;
 }
 
-export function getTileSheet(kind: GroundTile, color: string, variant: number): Sheet {
+export function getTileSheet(kind: GroundTile, color: string, variant: number, anim = 0): Sheet {
   const v = ((variant % TILE_VARIANTS) + TILE_VARIANTS) % TILE_VARIANTS;
-  const key = `${kind}|${color}|${v}`;
+  const a =
+    kind === "flower" || kind === "water"
+      ? ((anim % FOUNTAIN_FRAMES) + FOUNTAIN_FRAMES) % FOUNTAIN_FRAMES
+      : 0;
+  const key = `${kind}|${color}|${v}|a${a}`;
   let sheet = sheetCache.get(key);
   if (!sheet) {
-    sheet = paintTile(kind, color, v);
+    sheet = paintTile(kind, color, v, a);
+    sheetCache.set(key, sheet);
+  }
+  return sheet;
+}
+
+function paintGrassEdge(ctx: CanvasRenderingContext2D, base: string, dir: GrassEdgeDir, variant: number): void {
+  const dark = shadeHex(base, 0.58);
+  const dirt = mixHex(base, "#6a5840", 0.4);
+  const width = 4;
+  for (let i = 0; i < TILE_PX; i++) {
+    for (let d = 0; d < width; d++) {
+      if (((i * 3 + d * 5 + variant * 7) & 3) === 0) continue;
+      const c = d < 2 ? dirt : dark;
+      if (dir === "n") px(ctx, i, d, c);
+      else if (dir === "s") px(ctx, i, TILE_PX - 1 - d, c);
+      else if (dir === "w") px(ctx, d, i, c);
+      else px(ctx, TILE_PX - 1 - d, i, c);
+    }
+  }
+}
+
+/** Overlay sheet: dithered grass fringe toward a harder neighbor tile. */
+export function getGrassEdgeSheet(color: string, dir: GrassEdgeDir, variant: number): Sheet {
+  const v = ((variant % TILE_VARIANTS) + TILE_VARIANTS) % TILE_VARIANTS;
+  const key = `edge|${color}|${dir}|${v}`;
+  let sheet = sheetCache.get(key);
+  if (!sheet) {
+    const c = makeCanvas(TILE_PX, TILE_PX);
+    paintGrassEdge(ctx2d(c), color, dir, v);
+    sheet = c;
     sheetCache.set(key, sheet);
   }
   return sheet;

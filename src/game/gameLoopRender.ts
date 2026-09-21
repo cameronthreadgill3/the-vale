@@ -99,7 +99,7 @@ export function advanceCameraAndRender(args: {
       const kind = map.tiles[ty]![tx]!;
       const sx = Math.floor(tx * TILE - originX);
       const sy = Math.floor(ty * TILE - originY);
-      drawTile(ctx, kind, pal, sx, sy, tx, ty);
+      drawTile(ctx, kind, pal, sx, sy, tx, ty, map, _atmosT);
     }
   }
   drawAshwoodTint(ctx, map, originX, originY, viewW, viewH);
