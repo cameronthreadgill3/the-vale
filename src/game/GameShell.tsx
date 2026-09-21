@@ -310,7 +310,7 @@ export function GameShell({
       </div>
 
       {prompt && !overlayOpen && (
-        <div className="vale-text-screen pointer-events-none absolute left-1/2 z-10 -translate-x-1/2 px-4 py-2.5 text-center text-sm text-[#e8e6d9] bottom-40">
+        <div className="vale-text-screen vale-prompt pointer-events-none absolute left-1/2 z-10 -translate-x-1/2 px-4 py-2.5 text-center text-sm text-[#f3f0e4] bottom-40">
           {prompt.kind === "gate" && (
             <>
               <span className="text-[#e8e6d9]">Use gate</span>
@@ -325,7 +325,7 @@ export function GameShell({
                   ),
                 )}
               </span>
-              <div className="mt-0.5 text-xs text-[#a8b09a]">
+              <div className="vale-screen-hint">
                 Walk in or press <span className="text-[#e8e6d9]">E</span>
               </div>
             </>
@@ -334,7 +334,7 @@ export function GameShell({
             <>
               <span className="text-[#e8e6d9]">Enter hollow</span>
               <span className="text-[#c9a227]"> · {(prompt.index + 1).toString()}</span>
-              <div className="mt-0.5 text-xs text-[#a8b09a]">
+              <div className="vale-screen-hint">
                 Press <span className="text-[#e8e6d9]">E</span> or walk in
               </div>
             </>
@@ -342,7 +342,7 @@ export function GameShell({
           {prompt.kind === "exit" && (
             <>
               <span className="text-[#e8e6d9]">Exit hollow</span>
-              <div className="mt-0.5 text-xs text-[#a8b09a]">
+              <div className="vale-screen-hint">
                 Press <span className="text-[#e8e6d9]">E</span> or walk onto the exit
               </div>
             </>
@@ -360,7 +360,7 @@ export function GameShell({
               </span>
               {" · "}
               <span className="text-[#c9a227]">{prompt.name}</span>
-              <div className="mt-0.5 text-xs text-[#a8b09a]">
+              <div className="vale-screen-hint">
                 Press <span className="text-[#e8e6d9]">E</span>
               </div>
             </>
@@ -370,7 +370,7 @@ export function GameShell({
               <span className="text-[#e8e6d9]">Enter shop</span>
               {" · "}
               <span className="text-[#c9a227]">{prompt.name}</span>
-              <div className="mt-0.5 text-xs text-[#a8b09a]">
+              <div className="vale-screen-hint">
                 Press <span className="text-[#e8e6d9]">E</span>
               </div>
             </>
@@ -387,7 +387,7 @@ export function GameShell({
                   character.discoveredContinents,
                 )}
               </span>
-              <div className="mt-0.5 text-xs text-[#a8b09a]">
+              <div className="vale-screen-hint">
                 Press <span className="text-[#e8e6d9]">E</span>
               </div>
             </>
@@ -397,7 +397,7 @@ export function GameShell({
               <span className="text-[#e8e6d9]">Inspect cairn</span>
               {" · "}
               <span className="text-[#c9a227]">{prompt.name}</span>
-              <div className="mt-0.5 text-xs text-[#a8b09a]">
+              <div className="vale-screen-hint">
                 Press <span className="text-[#e8e6d9]">E</span>
               </div>
             </>
@@ -407,7 +407,7 @@ export function GameShell({
               <span className="text-[#e8e6d9]">{prompt.verb}</span>
               {" · "}
               <span className="text-[#c9a227]">{prompt.name}</span>
-              <div className="mt-0.5 text-xs text-[#a8b09a]">
+              <div className="vale-screen-hint">
                 Press <span className="text-[#e8e6d9]">E</span>
               </div>
             </>
@@ -419,13 +419,11 @@ export function GameShell({
         <button
           type="button"
           onClick={() => setStarterTip(false)}
-          className="vale-text-screen absolute left-1/2 top-20 z-20 w-[min(92vw,28rem)] -translate-x-1/2 px-3.5 py-2.5 text-left text-xs text-[#e8e6d9] sm:text-sm"
+          className="vale-text-screen absolute left-1/2 top-20 z-20 w-[min(92vw,28rem)] -translate-x-1/2 px-4 py-3.5 text-left"
         >
-          <div className="font-display text-[11px] tracking-wide text-[#c9a227] sm:text-xs">
-            Thornreach — first steps
-          </div>
-          <div className="mt-1.5 text-[13px] leading-[1.6] text-[#d4d0bc] sm:text-sm">{STARTER_TIP}</div>
-          <div className="mt-1.5 text-[10px] text-[#8a9080]">
+          <div className="vale-screen-title">Thornreach — first steps</div>
+          <div className="vale-screen-body">{STARTER_TIP}</div>
+          <div className="vale-screen-kicker">
             Tap to dismiss · follow the yellow arrow to Rook</div>
         </button>
       )}

@@ -20,8 +20,8 @@ export function CreateInSlot({
         className="flex h-full w-full items-center justify-center overflow-auto bg-[#0c0d0b] p-4 sm:p-8"
         style={{ WebkitOverflowScrolling: "touch" }}
       >
-        <div className="w-full max-w-md rounded border border-[#2a2e24] bg-[#161812] p-5">
-          <h2 className="font-display text-xl tracking-wide text-[#c9a227]">
+        <div className="vale-text-screen w-full max-w-md p-5">
+          <h2 className="vale-screen-title vale-screen-title-lg">
             New character · Slot {slotIndex + 1}
           </h2>
           <label className="mt-4 block text-xs text-[#a8b09a]">
@@ -35,11 +35,11 @@ export function CreateInSlot({
               autoFocus
             />
           </label>
-          <div className="mt-4 flex gap-2">
+          <div className="vale-screen-actions">
             <button
               type="button"
               onClick={onCancel}
-              className="rounded border border-[#2a2e24] px-3 py-2 text-xs text-[#a8b09a]"
+              className="vale-ghost-btn px-3 py-2 text-xs text-[#a8b09a]"
             >
               Cancel
             </button>
@@ -47,7 +47,7 @@ export function CreateInSlot({
               type="button"
               disabled={!name.trim()}
               onClick={() => setReadyForClass(true)}
-              className="vale-tap flex-1 rounded border border-[#c9a227]/50 bg-[#1c1f16] px-3 py-2 text-sm text-[#c9a227] disabled:opacity-40"
+              className="vale-tap vale-ghost-btn vale-ghost-btn-accent flex-1 px-3 py-2 text-sm disabled:opacity-40"
             >
               Choose path
             </button>
