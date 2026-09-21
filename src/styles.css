@@ -611,6 +611,103 @@ body {
     0 3px 0 rgba(0, 0, 0, 0.4);
 }
 
+/* Bank / pack — measured chips and recessed wells. Row lip stays on skill tokens.
+   vale-text-screen is position:relative, which beats the utility `absolute`. */
+.vale-inv-panel {
+  position: absolute;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.vale-inv-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.vale-inv-chip {
+  padding: 0.3rem 0.5rem 0.34rem;
+  border: 1px solid color-mix(in srgb, var(--vale-gold) 32%, #2a2e22);
+  border-radius: 0.35rem;
+  background:
+    linear-gradient(180deg, rgba(255, 248, 220, 0.09) 0%, transparent 48%),
+    linear-gradient(180deg, #1c2216 0%, #0c0e0a 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(244, 236, 210, 0.16),
+    inset 0 -6px 8px rgba(0, 0, 0, 0.34),
+    0 1px 0 rgba(0, 0, 0, 0.5);
+  font-family: "IBM Plex Mono", ui-monospace, "Courier New", monospace;
+  font-size: 0.5625rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  line-height: 1.3;
+  text-transform: uppercase;
+  color: #d8d4c4;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.55);
+}
+
+.vale-inv-chip-gold {
+  color: #f0d060;
+  border-color: color-mix(in srgb, var(--vale-gold) 58%, #3a3420);
+}
+
+.vale-inv-well {
+  min-width: 0;
+  padding: 0.5rem 0.4rem 0.55rem;
+  border: 1px solid color-mix(in srgb, var(--vale-gold) 26%, #1c2016);
+  border-radius: 0.45rem;
+  background: linear-gradient(180deg, #070806 0%, #12160e 100%);
+  box-shadow:
+    inset 0 3px 8px rgba(0, 0, 0, 0.66),
+    inset 0 1px 0 rgba(0, 0, 0, 0.78);
+}
+
+.vale-inv-well-vault {
+  border-left: 3px solid color-mix(in srgb, var(--vale-gold) 62%, #3a3420);
+}
+
+.vale-inv-empty {
+  margin: 0;
+  padding: 0.45rem 0.35rem 0.2rem;
+  font-size: 0.6875rem;
+  line-height: 1.45;
+  letter-spacing: 0.02em;
+  color: #6e7664;
+}
+
+.vale-inv-kept {
+  border-left-color: var(--vale-gold);
+  box-shadow:
+    inset 0 1px 0 rgba(244, 236, 210, 0.24),
+    inset 0 -12px 14px rgba(0, 0, 0, 0.4),
+    inset 3px 0 0 var(--vale-gold),
+    0 3px 0 rgba(0, 0, 0, 0.4);
+}
+
+.vale-inv-meter[data-load="ok"] .vale-skill-meter-fill {
+  background: #7ab85a;
+}
+
+.vale-inv-meter[data-load="high"] .vale-skill-meter-fill {
+  background: #c9a227;
+}
+
+.vale-inv-meter[data-load="full"] .vale-skill-meter-fill {
+  background: #c45c3e;
+}
+
+.vale-inv-foot {
+  margin-top: 0.15rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid color-mix(in srgb, var(--vale-gold) 20%, #2a2e24);
+  box-shadow: inset 0 1px 0 rgba(244, 236, 210, 0.05);
+}
+
+.vale-inv-foot .vale-screen-hint {
+  margin-top: 0;
+}
+
 .vale-meter {
   height: 0.55rem;
   overflow: hidden;

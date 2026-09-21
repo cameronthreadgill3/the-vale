@@ -8,6 +8,44 @@ import {
   formatSlotsChrome,
 } from "@/game/backpack";
 
+function loadBand(ratio: number): "ok" | "high" | "full" {
+  if (ratio >= 1) return "full";
+  if (ratio >= 0.8) return "high";
+  return "ok";
+}
+
+function VaultStack({
+  name,
+  qty,
+  action,
+  accent,
+  onAction,
+}: {
+  name: string;
+  qty: number;
+  action: string;
+  accent?: boolean;
+  onAction: () => void;
+}) {
+  return (
+    <li className="vale-skill-row px-1.5 py-1.5">
+      <div className="truncate">
+        <span className="vale-skill-name">{name}</span>
+        <span className="vale-skill-tag text-[#c9a227]">×{qty}</span>
+      </div>
+      <button
+        type="button"
+        onClick={onAction}
+        className={`vale-tap-sm vale-ghost-btn mt-1.5 w-full px-2 py-1.5 text-[10px] ${
+          accent ? "vale-ghost-btn-accent" : ""
+        }`}
+      >
+        {action}
+      </button>
+    </li>
+  );
+}
+
 export function BankPanel({
   character,
   onDepositItem,
@@ -27,10 +65,11 @@ export function BankPanel({
   const maxW = maxWeightFor(character.premiumBackpack);
   const slots = character.inventory.length;
   const maxS = maxSlotsFor(character.premiumBackpack);
+  const ratio = maxW > 0 ? weight / maxW : 0;
 
   return (
-    <div className="vale-panel vale-text-screen pointer-events-auto absolute bottom-4 left-1/2 z-30 w-[min(100%-2rem,28rem)] -translate-x-1/2 p-3.5 max-md:bottom-8 sm:bottom-6">
-      <div className="mb-2 flex items-center justify-between gap-2">
+    <div className="vale-panel vale-inv-panel vale-text-screen pointer-events-auto absolute bottom-4 left-1/2 z-30 w-[min(100%-2rem,28rem)] -translate-x-1/2 p-3.5 max-md:bottom-8 sm:bottom-6">
+      <div className="mb-2.5 flex items-center justify-between gap-2">
         <div>
           <div className="vale-screen-title">Bank · Thornreach Vault</div>
           <div className="vale-screen-kicker">
@@ -46,69 +85,64 @@ export function BankPanel({
         </button>
       </div>
 
-      <div className="vale-screen-kicker mb-2 flex flex-wrap gap-x-3 gap-y-1">
-        <span>{formatWeightChrome(weight, maxW)}</span>
-        <span>{formatSlotsChrome(slots, maxS)}</span>
-        <span>Carried gold {character.gold}g</span>
-        <span>Bank gold {character.bankGold}g</span>
+      <div className="vale-inv-stats mb-2">
+        <span className="vale-inv-chip">{formatWeightChrome(weight, maxW)}</span>
+        <span className="vale-inv-chip">{formatSlotsChrome(slots, maxS)}</span>
+        <span className="vale-inv-chip">Carried gold {character.gold}g</span>
+        <span className="vale-inv-chip vale-inv-chip-gold">
+          Bank gold {character.bankGold}g
+        </span>
+      </div>
+
+      <div
+        className="vale-skill-meter vale-inv-meter mb-3"
+        data-load={loadBand(ratio)}
+      >
+        <div
+          className="vale-skill-meter-fill"
+          style={{ width: `${Math.min(100, Math.round(ratio * 100))}%` }}
+        />
       </div>
 
       <div className="mb-3 grid grid-cols-2 gap-2">
-        <section>
-          <div className="vale-screen-kicker mb-1">Pack items</div>
+        <section className="vale-inv-well">
+          <div className="vale-screen-kicker mb-1.5">Pack items</div>
           {character.inventory.length === 0 ? (
-            <p className="px-1 text-xs text-[#6a7260]">No items in pack.</p>
+            <p className="vale-inv-empty">No items in pack.</p>
           ) : (
-            <ul className="flex max-h-36 flex-col gap-1 overflow-y-auto">
+            <ul className="flex max-h-40 flex-col gap-1.5 overflow-y-auto">
               {character.inventory.map((stack) => {
                 const item = getItem(stack.id);
                 return (
-                  <li
+                  <VaultStack
                     key={stack.id}
-                    className="vale-ledger-line flex items-center justify-between gap-1 px-1.5 py-2"
-                  >
-                    <span className="min-w-0 truncate text-xs text-[#e8e6d9]">
-                      {item.name}{" "}
-                      <span className="text-[#6a7260]">×{stack.qty}</span>
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => onDepositItem(stack.id)}
-                      className="vale-tap-sm shrink-0 rounded border border-[#2a2e24] px-2 py-1.5 text-[10px] text-[#c9a227] hover:border-[#c9a227]/50"
-                    >
-                      Deposit
-                    </button>
-                  </li>
+                    name={item.name}
+                    qty={stack.qty}
+                    action="Deposit"
+                    accent
+                    onAction={() => onDepositItem(stack.id)}
+                  />
                 );
               })}
             </ul>
           )}
         </section>
-        <section>
-          <div className="vale-screen-kicker mb-1">Bank items</div>
+        <section className="vale-inv-well vale-inv-well-vault">
+          <div className="vale-screen-kicker mb-1.5">Bank items</div>
           {character.bank.length === 0 ? (
-            <p className="px-1 text-xs text-[#6a7260]">No items in bank.</p>
+            <p className="vale-inv-empty">No items in bank.</p>
           ) : (
-            <ul className="flex max-h-36 flex-col gap-1 overflow-y-auto">
+            <ul className="flex max-h-40 flex-col gap-1.5 overflow-y-auto">
               {character.bank.map((stack) => {
                 const item = getItem(stack.id);
                 return (
-                  <li
+                  <VaultStack
                     key={stack.id}
-                    className="vale-ledger-line flex items-center justify-between gap-1 px-1.5 py-2"
-                  >
-                    <span className="min-w-0 truncate text-xs text-[#e8e6d9]">
-                      {item.name}{" "}
-                      <span className="text-[#6a7260]">×{stack.qty}</span>
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => onWithdrawItem(stack.id)}
-                      className="vale-tap-sm shrink-0 rounded border border-[#2a2e24] px-2 py-1.5 text-[10px] text-[#a8b09a] hover:border-[#c9a227]/40 hover:text-[#e8e6d9]"
-                    >
-                      Withdraw
-                    </button>
-                  </li>
+                    name={item.name}
+                    qty={stack.qty}
+                    action="Withdraw"
+                    onAction={() => onWithdrawItem(stack.id)}
+                  />
                 );
               })}
             </ul>
