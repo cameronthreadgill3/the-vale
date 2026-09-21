@@ -2,6 +2,7 @@
 
 import type { ClassId } from "@/game/classes";
 import { drawWithWarmRim } from "@/game/gfx/canvasUtil";
+import { drawSilhouetteFlash } from "@/game/gfx/hitFlash";
 import {
   COLS,
   FRAME,
@@ -166,12 +167,18 @@ export function drawPlayerSprite(
   });
 
   if (opts?.flash && opts.flash > 0) {
-    ctx.save();
-    ctx.globalAlpha = Math.min(0.4, opts.flash * 2);
-    ctx.fillStyle = "#ff503c";
-    ctx.beginPath();
-    ctx.arc(px, py, size * 0.4, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
+    drawSilhouetteFlash(
+      ctx,
+      img,
+      col * fw,
+      row * fh,
+      fw,
+      fh,
+      dx,
+      dy,
+      size,
+      size,
+      opts.flash,
+    );
   }
 }
