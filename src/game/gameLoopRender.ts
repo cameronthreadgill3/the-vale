@@ -13,6 +13,7 @@ import {
   drawFolkNameLabels,
 } from "@/game/folkCanvas";
 import { cairnsOnContinent, drawCairns } from "@/game/cairns";
+import { drawProfessionNodes, professionNodesOnContinent } from "@/game/professions";
 import {
   drawFloatTexts,
   drawProjectiles,
@@ -155,6 +156,12 @@ export function advanceCameraAndRender(args: {
   drawShipDocks(ctx, docks, originX, originY);
   if (map.kind === "overworld") {
     drawCairns(ctx, cairnsOnContinent(map.continentId), originX, originY, TILE);
+    drawProfessionNodes(
+      ctx,
+      professionNodesOnContinent(map.continentId),
+      originX,
+      originY,
+    );
   }
   drawShopMarkers(ctx, shops, folk, originX, originY);
   if (map.kind === "overworld") {

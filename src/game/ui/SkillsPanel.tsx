@@ -1,11 +1,22 @@
 import { useEffect, useRef, useState } from "react";
 import type { ValeClass } from "@/game/classes";
 import type { QuickSlots, SkillId } from "@/game/skills";
+import type { ProfessionId } from "@/game/professions";
 
 export type SkillRow = {
   id: SkillId;
   name: string;
   hotkey: string;
+  xp: number;
+  level: number;
+  progress: number;
+  next: number;
+};
+
+export type ProfessionRow = {
+  id: ProfessionId;
+  name: string;
+  blurb: string;
   xp: number;
   level: number;
   progress: number;
@@ -20,6 +31,7 @@ export function SkillsPanel({
   onTrain,
   onAssignQuickSlot,
   onClose,
+  professions,
 }: {
   cls: ValeClass;
   skills: SkillRow[];
@@ -28,6 +40,7 @@ export function SkillsPanel({
   onTrain: (skill: SkillId) => void;
   onAssignQuickSlot: (index: number, skill: SkillId) => void;
   onClose: () => void;
+  professions?: ProfessionRow[];
 }) {
   const [flashId, setFlashId] = useState<SkillId | null>(null);
   const prevTick = useRef(skillTick);
@@ -164,6 +177,44 @@ export function SkillsPanel({
           );
         })}
       </ul>
+      {professions && professions.length > 0 ? (
+        <div className="mt-3 border-t border-[#2a2e24] pt-2">
+          <div className="font-display text-sm tracking-wide text-[#c9a227]">
+            Professions
+          </div>
+          <div className="mb-1.5 text-[10px] uppercase tracking-wider text-[#6a7260]">
+            Thornreach lite · gather · fish · kettle
+          </div>
+          <ul className="flex flex-col gap-1.5">
+            {professions.map((p) => {
+              const into = Math.max(0, Math.round(p.progress * p.next));
+              return (
+                <li key={p.id} className="rounded px-2 py-2">
+                  <div className="flex items-baseline justify-between gap-2 text-xs">
+                    <span className="text-[#e8e6d9]">{p.name}</span>
+                    <span className="font-display tabular-nums text-[#c9a227]">
+                      Lv {p.level}
+                    </span>
+                  </div>
+                  <div className="text-[10px] text-[#6a7260]">{p.blurb}</div>
+                  <div className="mt-1 flex items-center justify-between text-[10px] text-[#6a7260]">
+                    <span>
+                      {into} / {p.next} XP
+                    </span>
+                    <span className="tabular-nums">{p.xp} total</span>
+                  </div>
+                  <div className="mt-1 h-1.5 overflow-hidden rounded bg-[#0c0d0b]">
+                    <div
+                      className="h-full rounded bg-[#8a9a60]"
+                      style={{ width: `${Math.round(p.progress * 100)}%` }}
+                    />
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ) : null}
     </div>
   );
 }

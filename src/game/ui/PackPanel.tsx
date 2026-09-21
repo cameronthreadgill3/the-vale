@@ -13,6 +13,11 @@ import {
   isStripeClientConfigured,
 } from "@/game/premium";
 import { EQUIP_SLOTS, SLOT_LABEL, emptyEquipment } from "@/game/equipment";
+import {
+  PROFESSIONS,
+  emptyProfessionXp,
+  professionSnapshot,
+} from "@/game/professions";
 
 export function PackPanel({
   character,
@@ -197,6 +202,24 @@ export function PackPanel({
             </div>
           </>
         )}
+      </div>
+
+      <div className="vale-chrome mb-2 rounded-sm px-2.5 py-2">
+        <div className="font-display text-[11px] tracking-wide text-[#c9a227]">
+          Professions
+        </div>
+        <div className="mt-1 flex flex-col gap-0.5 text-[10px] text-[#a8b09a]">
+          {PROFESSIONS.map((p) => {
+            const xp = (character.professionXp ?? emptyProfessionXp())[p.id];
+            const snap = professionSnapshot(xp);
+            return (
+              <div key={p.id} className="flex justify-between gap-2">
+                <span>{p.name}</span>
+                <span className="tabular-nums text-[#c9a227]">Lv {snap.level}</span>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <p className="text-[10px] leading-relaxed text-[#6a7260]">

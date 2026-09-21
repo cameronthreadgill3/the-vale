@@ -23,7 +23,7 @@ Open the URL Vite prints (usually http://localhost:5173).
 
 - **WASD** or **Arrow keys** — move
 - **Space** or **left click** — attack nearest foe in range (hold to auto-swing on cooldown)
-- **E** — interact (gates, hollows, folk, shops, bank, ships) — still works when not in a fight prompt
+- **E** — interact (gates, hollows, folk, shops, bank, ships, gather / fish nodes) — still works when not in a fight prompt
 - **B** or **I** — backpack (worn gear, pack weight / slots, Premium Backpack, equip / unequip)
 - **M** — continent map (discovered lands)
 - **K** — toggle skills panel
@@ -165,6 +165,16 @@ Thornreach (starter), Mistmere, Ashen Marches, Sunken Choir, Embercoil, Pale Was
 - Thornreach vault: deposit/withdraw items and gold with Cress
 - **Backpack (B / I)** — worn slots plus pack stacks. Default **20 slots / 80 wt** (Premium 32 / +50%). Corpse loot that will not fit is left behind.
 - Ships link Mistmere ↔ Sunken Choir ↔ Nightglass Coast with short voyage flavor
+
+### Professions lite (Thornreach)
+
+A one-session Tibia-adjacent loop on the starter continent — not a full crafting economy. Three skills share the same cubic XP curve as combat skills and persist on the ValeCharacter / slot snapshot.
+
+1. **Gathering** — press **E** on briar-herb tufts (north of the watch / store) or ashwood scrap piles (west skirt, south of the cobbles).
+2. **Fishing** — press **E** on the reed pond banks east of the square (basin minnows). Nodes regrow after ~40s.
+3. **Crafting** — talk to **Sera Kettle** on the plaza (south-east of the fountain) and bind 1 briar-herb + 1 ashwood scrap into **Ash-Salve**. Sell the salve, scraps, or minnows at Mara.
+
+Levels show in **Skills (K)** and a short strip in **Pack (B)**. First Story / Accession texture only.
 
 ### Builds
 

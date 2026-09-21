@@ -39,6 +39,7 @@ export function useGameCanvas(opts: {
   onVitals: (hp: number, mana: number) => void;
   onPlayerDeath: () => void;
   onInspectCairn: (cairnId: string) => void;
+  onWorkNode: (nodeId: string) => void;
 }) {
   const {
     character,
@@ -62,6 +63,7 @@ export function useGameCanvas(opts: {
     onVitals,
     onPlayerDeath,
     onInspectCairn,
+    onWorkNode,
   } = opts;
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -79,6 +81,7 @@ export function useGameCanvas(opts: {
   const openShopRef = useRef(onOpenShop);
   const openShipRef = useRef(onOpenShip);
   const openCairnRef = useRef(onInspectCairn);
+  const workNodeRef = useRef(onWorkNode);
   const primaryRef = useRef(cls.primarySkill);
   const passiveAccum = useRef(0);
   const promptRef = useRef<PromptState>(null);
@@ -104,6 +107,7 @@ export function useGameCanvas(opts: {
   openShopRef.current = onOpenShop;
   openShipRef.current = onOpenShip;
   openCairnRef.current = onInspectCairn;
+  workNodeRef.current = onWorkNode;
   primaryRef.current = cls.primarySkill;
   onCombatRewardRef.current = onCombatReward;
   onEnemyKillRef.current = onEnemyKill;
@@ -171,6 +175,7 @@ export function useGameCanvas(opts: {
     openShopRef,
     openShipRef,
     openCairnRef,
+    workNodeRef,
     passiveAccum,
     promptRef,
     interactLock,

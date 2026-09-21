@@ -19,7 +19,9 @@ export interface FolkDef {
   /** If set, dialogue offers the plaza vault. */
   bankId?: string;
   /** Town role — depot clerk opens the Systems bank. */
-  role?: "watch" | "shop" | "healer" | "depot" | "townsfolk";
+  role?: "watch" | "shop" | "healer" | "depot" | "townsfolk" | "crafter";
+  /** If set, dialogue offers the kettle / craft station. */
+  craftId?: string;
 }
 
 export interface ShopStock {
@@ -143,6 +145,17 @@ export const FOLK: FolkDef[] = [
     color: "#c97a4a",
     shopId: "perrin-oven",
     role: "shop",
+  },
+  {
+    id: "sera-kettle",
+    name: "Sera Kettle",
+    line: "Kettle's hot. Pull briar-herb and ashwood scrap from the skirts — I bind them into ash-salve. Reed-pond minnows east of the square sell at Mara's if you'd rather eat than brew.",
+    continentId: "thornreach",
+    x: 27,
+    y: 18,
+    color: "#c9a070",
+    role: "crafter",
+    craftId: "sera-kettle",
   },
   {
     id: "wren-quill",

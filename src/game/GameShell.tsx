@@ -5,7 +5,8 @@ import type { ValeCharacter } from "@/game/character";
 import { defaultQuickSlots, type SkillId } from "@/game/skills";
 import type { ShopDef, ShipDock } from "@/game/folk";
 import { ContinentMapPanel } from "@/game/ui/ContinentMapPanel";
-import { SkillsPanel, type SkillRow } from "@/game/ui/SkillsPanel";
+import { SkillsPanel, type ProfessionRow, type SkillRow } from "@/game/ui/SkillsPanel";
+import { CraftPanel } from "@/game/ui/CraftPanel";
 import { DialogueOverlay } from "@/game/ui/DialogueOverlay";
 import { ShopPanel } from "@/game/ui/ShopPanel";
 import { BankPanel } from "@/game/ui/BankPanel";
@@ -25,6 +26,7 @@ export function GameShell({
   character,
   cls,
   skills,
+  professions,
   skillsOpen,
   mapOpen,
   skillTick,
@@ -38,6 +40,7 @@ export function GameShell({
   shop,
   bankOpen,
   packOpen,
+  craftOpen,
   premiumUnlocking,
   voyageDock,
   onToggleSkills,
@@ -80,10 +83,15 @@ export function GameShell({
   gateWatchQuest,
   mistmereQuest,
   onInspectCairn,
+  onWorkNode,
+  onOpenCraft,
+  onCloseCraft,
+  onCraft,
 }: {
   character: ValeCharacter;
   cls: ValeClass;
   skills: SkillRow[];
+  professions: ProfessionRow[];
   skillsOpen: boolean;
   mapOpen: boolean;
   skillTick: number;
@@ -93,10 +101,11 @@ export function GameShell({
   continentName: string;
   inHollow: boolean;
   hollowIndex: number | null;
-  dialogue: { name: string; line: string; hasShop: boolean; hasBank?: boolean; shopId?: string; bankId?: string } | null;
+  dialogue: { name: string; line: string; hasShop: boolean; hasBank?: boolean; hasCraft?: boolean; shopId?: string; bankId?: string; craftId?: string } | null;
   shop: ShopDef | null;
   bankOpen: boolean;
   packOpen: boolean;
+  craftOpen: boolean;
   premiumUnlocking: boolean;
   voyageDock: ShipDock | null;
   onToggleSkills: () => void;
@@ -145,9 +154,13 @@ export function GameShell({
   gateWatchQuest: GateWatchQuestProgress | null;
   mistmereQuest: MistmereQuestProgress | null;
   onInspectCairn: (cairnId: string) => void;
+  onWorkNode: (nodeId: string) => void;
+  onOpenCraft: () => void;
+  onCloseCraft: () => void;
+  onCraft: (recipeId: string) => void;
 }) {
   // Pack is HUD chrome like Skills — do not pause E / movement while it is open.
-  const overlayOpen = Boolean(dialogue || shop || voyageDock || bankOpen);
+  const overlayOpen = Boolean(dialogue || shop || voyageDock || bankOpen || craftOpen);
   const showMobile = useShowMobileChrome();
   const [starterTip, setStarterTip] = useState(true);
   useEffect(() => {
@@ -187,6 +200,7 @@ export function GameShell({
     onVitals,
     onPlayerDeath,
     onInspectCairn,
+    onWorkNode,
   });
 
   const locationLabel = inHollow
@@ -277,9 +291,11 @@ export function GameShell({
               <span className="text-[#e8e6d9]">
                 {prompt.hasBank
                   ? "Talk / Bank"
-                  : prompt.hasShop
-                    ? "Talk / Shop"
-                    : "Talk"}
+                  : prompt.hasCraft
+                    ? "Talk / Craft"
+                    : prompt.hasShop
+                      ? "Talk / Shop"
+                      : "Talk"}
               </span>
               {" · "}
               <span className="text-[#c9a227]">{prompt.name}</span>
@@ -311,6 +327,16 @@ export function GameShell({
           {prompt.kind === "cairn" && (
             <>
               <span className="text-[#e8e6d9]">Inspect cairn</span>
+              {" · "}
+              <span className="text-[#c9a227]">{prompt.name}</span>
+              <div className="mt-0.5 text-xs text-[#a8b09a]">
+                Press <span className="text-[#e8e6d9]">E</span>
+              </div>
+            </>
+          )}
+          {prompt.kind === "profession" && (
+            <>
+              <span className="text-[#e8e6d9]">{prompt.verb}</span>
               {" · "}
               <span className="text-[#c9a227]">{prompt.name}</span>
               <div className="mt-0.5 text-xs text-[#a8b09a]">
@@ -356,6 +382,7 @@ export function GameShell({
             onTrain={onTrain}
             onAssignQuickSlot={onAssignQuickSlot}
             onClose={onToggleSkills}
+            professions={professions}
           />
         }
         mapPanel={
@@ -369,6 +396,7 @@ export function GameShell({
           line={dialogue.line}
           hasShop={dialogue.hasShop}
           hasBank={dialogue.hasBank}
+          hasCraft={dialogue.hasCraft}
           onTalkClose={onCloseDialogue}
           onOpenShop={
             dialogue.shopId
@@ -376,6 +404,7 @@ export function GameShell({
               : undefined
           }
           onOpenBank={dialogue.hasBank ? onOpenBank : undefined}
+          onOpenCraft={dialogue.hasCraft ? onOpenCraft : undefined}
         />
       )}
 
@@ -397,6 +426,14 @@ export function GameShell({
           onDepositGold={onDepositGold}
           onWithdrawGold={onWithdrawGold}
           onClose={onCloseBank}
+        />
+      )}
+
+      {craftOpen && (
+        <CraftPanel
+          character={character}
+          onCraft={onCraft}
+          onClose={onCloseCraft}
         />
       )}
 

@@ -41,6 +41,10 @@ export type ItemId =
   | "hollow-spark"
   | "ashveil-cinder"
   | "choir-shard"
+  | "briar-herb"
+  | "ashwood-scrap"
+  | "basin-minnow"
+  | "ash-salve"
   | "fledgling-knife"
   | "fledgling-sword"
   | "ashwood-hatchet"
@@ -230,6 +234,38 @@ export const ITEMS: ItemDef[] = [
     blurb: "Drowned hymn-glass, cold as the cloister floor.",
     value: 24,
     weight: 2,
+    kind: "goods",
+  },
+  {
+    id: "briar-herb",
+    name: "Briar Herb",
+    blurb: "Thornreach skirt-leaf, bitter and green.",
+    value: 4,
+    weight: 1,
+    kind: "goods",
+  },
+  {
+    id: "ashwood-scrap",
+    name: "Ashwood Scrap",
+    blurb: "A silver-edged splinter pulled from fallen ashwood.",
+    value: 5,
+    weight: 2,
+    kind: "goods",
+  },
+  {
+    id: "basin-minnow",
+    name: "Basin Minnow",
+    blurb: "Reed-pond catch from east of the square.",
+    value: 5,
+    weight: 2,
+    kind: "goods",
+  },
+  {
+    id: "ash-salve",
+    name: "Ash-Salve",
+    blurb: "Briar and ashwood, bound at Sera's kettle.",
+    value: 14,
+    weight: 1,
     kind: "goods",
   },
   {
