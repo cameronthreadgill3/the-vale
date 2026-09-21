@@ -846,6 +846,19 @@ body {
 }
 
 /*
+ * Merchant counter — buy listed stock, sell the pack at half.
+ * Wells, chips, meter, and row lip stay the vault tokens.
+ * Depot sheet and shared chrome are untouched.
+ */
+.vale-shop-sheet .vale-shop-coin {
+  font-family: "IBM Plex Mono", ui-monospace, "Courier New", monospace;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: #f0d060;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.55);
+}
+
+/*
  * Character select and account gate — same lip, well, and type rhythm
  * as dialogue, skills, and the vault. Page-only; in-world panels stay put.
  */
