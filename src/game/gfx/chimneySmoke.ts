@@ -1,14 +1,16 @@
 /**
  * Soft chimney wisps on Thornreach roofs, plus thin smoke over distant ashwood.
  * A frame loop — a few pixels rising and fading. No particle pool, no sheets.
- * Stacks sit on the roof after the town pass. Grove columns are born in the
- * crowns and drawn before the canopy, so only the high end shows.
+ * Stacks sort with the building front so a crown to the north does not eat them.
+ * Grove columns are drawn after the canopy, above the leaves, and birds still
+ * pass in front. The plaza footprint stays clear of grove smoke.
  * Alphas stay low. Lantern flicker, fauna, and screen overlays keep their passes.
  * Original Vale pixels only — not CipSoft. Not combat smoke.
  */
 import { TILE, type WorldMap } from "@/game/world";
 import { buildingsOnContinent, type TownBuilding } from "@/game/world/town";
 import { warmFlamePulse } from "@/game/gfx/lampFlicker";
+import type { DepthItem } from "@/game/gfx/depth";
 
 type Stack = {
   id: string;
@@ -25,9 +27,9 @@ const STACKS: readonly Stack[] = [
   { id: "thornreach-general", peakDx: -18, hearth: false },
 ];
 
-const SOOT = "158, 150, 138";
-const HEARTH = "176, 156, 136";
-const GROVE = "150, 154, 142";
+const SOOT = "186, 178, 166";
+const HEARTH = "196, 176, 154";
+const GROVE = "176, 180, 166";
 
 type WispOpts = {
   rise: number;
@@ -44,15 +46,9 @@ function tileAt(map: WorldMap, tx: number, ty: number): string | null {
 }
 
 /** Playable ashwood. The map frame is a stone ring, not a grove. */
-function isGrove(map: WorldMap, tx: number, ty: number): boolean {
-  if (tx <= 1 || ty <= 1 || tx >= map.width - 2 || ty >= map.height - 2) return false;
-  if (tileAt(map, tx, ty) !== "stone") return false;
-  let n = 0;
-  if (tileAt(map, tx - 1, ty) === "stone") n++;
-  if (tileAt(map, tx + 1, ty) === "stone") n++;
-  if (tileAt(map, tx, ty - 1) === "stone") n++;
-  if (tileAt(map, tx, ty + 1) === "stone") n++;
-  return n >= 2;
+function isCanopy(map: WorldMap, tx: number, ty: number): boolean {
+  if (tx <= 0 || ty <= 0 || tx >= map.width - 1 || ty >= map.height - 1) return false;
+  return tileAt(map, tx, ty) === "stone";
 }
 
 function idSeed(id: string): number {
@@ -138,19 +134,31 @@ function drawRisingWisps(
     const sway = Math.round(Math.sin(timeSec * 0.72 + seed * 2 + i * 2.1) * (t * (opts.thin ? 2 : 3)));
     const px = x + opts.wind + sway;
     const py = y - Math.round(t * opts.rise);
-    const wide = !opts.thin && t > 0.45;
+    if (opts.thin) {
+      ctx.fillStyle = `rgba(${opts.rgb}, ${a})`;
+      ctx.fillRect(px, py, 2, 2);
+      ctx.fillStyle = `rgba(${opts.rgb}, ${a * 0.4})`;
+      ctx.fillRect(px + (sway >= 0 ? 2 : -1), py + 1, 1, 1);
+      continue;
+    }
+    const wide = t > 0.45;
     ctx.fillStyle = `rgba(${opts.rgb}, ${a})`;
-    ctx.fillRect(px, py, wide ? 3 : opts.thin ? 1 : 2, 1);
-    if (!opts.thin && t < 0.72) {
+    ctx.fillRect(px, py, wide ? 3 : 2, 1);
+    if (t < 0.72) {
       ctx.fillStyle = `rgba(${opts.rgb}, ${a * 0.5})`;
       ctx.fillRect(px + 1, py - 1, 1, 1);
     }
   }
 }
 
+/** Plaza houses and the square. Grove smoke stays outside this footprint. */
+function inTown(tx: number, ty: number): boolean {
+  return tx >= 16 && tx <= 35 && ty >= 9 && ty <= 24;
+}
+
 /**
- * Far ashwood columns. Call after haze and before roofs, fauna, and canopy
- * so the crowns cover the base and only a thin wisp clears the leaves.
+ * Thin columns above distant ashwood. Call after the depth flush so crowns
+ * stay behind the wisp, and before the high fauna so birds stay in front.
  */
 export function drawDistantGroveSmoke(
   ctx: CanvasRenderingContext2D,
@@ -171,25 +179,27 @@ export function drawDistantGroveSmoke(
   const wind = windAt(timeSec);
   ctx.save();
   ctx.imageSmoothingEnabled = false;
+  ctx.globalAlpha = 1;
+  ctx.globalCompositeOperation = "source-over";
   for (let ty = startTY; ty <= endTY; ty++) {
     for (let tx = startTX; tx <= endTX; tx++) {
-      if ((tx * 5 + ty * 11) % 23 !== 0) continue;
-      if (!isGrove(map, tx, ty)) continue;
+      if ((tx * 3 + ty * 5) % 7 !== 0) continue;
+      if (!isCanopy(map, tx, ty) || inTown(tx, ty)) continue;
       const wx = (tx + 0.5) * TILE;
       const wy = (ty + 0.35) * TILE;
       const dx = wx - camX;
       const dy = wy - camY;
       const dist = Math.hypot(dx, dy);
-      if (dist < 150 || dist > 640) continue;
+      if (dist < 180 || dist > 820) continue;
       let depth = 1;
-      if (dist < 260) depth = (dist - 150) / 110;
-      else if (dist > 480) depth = Math.max(0, 1 - (dist - 480) / 160);
+      if (dist < 280) depth = (dist - 180) / 100;
+      else if (dist > 640) depth = Math.max(0, 1 - (dist - 640) / 180);
       const sx = Math.floor(wx - originX) + ((tx * 3) % 5) - 2;
-      const sy = Math.floor(ty * TILE - originY) - 34;
+      const sy = Math.floor(ty * TILE - originY) - 50;
       drawRisingWisps(ctx, sx, sy, timeSec, (tx * 0.17 + ty * 0.13) % 1, {
-        rise: 30,
+        rise: 24,
         count: 2,
-        maxA: 0.2 * depth,
+        maxA: 0.62 * depth,
         rgb: GROVE,
         wind,
         thin: true,
@@ -200,22 +210,21 @@ export function drawDistantGroveSmoke(
 }
 
 /**
- * Roof stacks and the wisps leaving them. Call after town overlays so the
- * stone sits on the slope, and before actors so folk stay readable.
+ * Roof stacks and the wisps leaving them.
+ * Sort key is the building's south edge, so northern crowns draw first and
+ * anyone standing south of the house still covers the smoke.
  */
-export function drawChimneyWisps(
-  ctx: CanvasRenderingContext2D,
+export function collectChimneyDepthItems(
   map: WorldMap,
   originX: number,
   originY: number,
   viewW: number,
   viewH: number,
   timeSec: number,
-): void {
-  if (map.kind !== "overworld" || map.continentId !== "thornreach") return;
+): DepthItem[] {
+  if (map.kind !== "overworld" || map.continentId !== "thornreach") return [];
   const wind = windAt(timeSec);
-  ctx.save();
-  ctx.imageSmoothingEnabled = false;
+  const items: DepthItem[] = [];
   for (let i = 0; i < STACKS.length; i++) {
     const stack = STACKS[i]!;
     const b = buildingById(map, stack.id);
@@ -225,15 +234,28 @@ export function drawChimneyWisps(
       continue;
     }
     const seed = idSeed(stack.id);
-    drawStack(ctx, geom.mouthX, geom.top, stack.hearth, timeSec, seed);
-    drawRisingWisps(ctx, geom.mouthX, geom.top - 2, timeSec, seed, {
-      rise: stack.hearth ? 26 : 22,
-      count: stack.hearth ? 3 : 2,
-      maxA: stack.hearth ? 0.4 : 0.32,
-      rgb: stack.hearth ? HEARTH : SOOT,
-      wind,
-      thin: false,
+    const mouthX = geom.mouthX;
+    const top = geom.top;
+    items.push({
+      y: (b.y + b.h) * TILE,
+      x: (b.x + b.w * 0.5) * TILE,
+      draw: (ctx) => {
+        ctx.save();
+        ctx.imageSmoothingEnabled = false;
+        ctx.globalAlpha = 1;
+        ctx.globalCompositeOperation = "source-over";
+        drawStack(ctx, mouthX, top, stack.hearth, timeSec, seed);
+        drawRisingWisps(ctx, mouthX, top - 2, timeSec, seed, {
+          rise: stack.hearth ? 28 : 24,
+          count: stack.hearth ? 3 : 2,
+          maxA: stack.hearth ? 0.52 : 0.44,
+          rgb: stack.hearth ? HEARTH : SOOT,
+          wind,
+          thin: false,
+        });
+        ctx.restore();
+      },
     });
   }
-  ctx.restore();
+  return items;
 }
