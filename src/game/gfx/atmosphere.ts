@@ -3,6 +3,7 @@
  * plus a premium depth/motion/light layer (parallax haze, motes, warm/cool zones).
  * Plaza lanterns and ashwood path lamps share one warm pulse, kept under labels.
  * Open plaza doors and gate arches spill a quieter warm pool onto the step.
+ * Nearby plaster catches a soft bounce from those same lamps.
  * Thornreach cobble and the path stones at the square carry a slow wet sheen.
  * Ashwood crowns lay a slow dapple on the open floor beside the grove umbra.
  */
@@ -13,6 +14,7 @@ import { drawSoftShadow } from "@/game/gfx/canvasUtil";
 import { drawCanopyDapple } from "@/game/gfx/canopyDapple";
 import { drawDoorGateSpill } from "@/game/gfx/doorSpill";
 import { drawPathLampGlow, warmFlamePulse } from "@/game/gfx/lampFlicker";
+import { drawLanternWallGlow } from "@/game/gfx/wallGlow";
 import type { DepthItem } from "@/game/gfx/depth";
 
 export { drawCanopyDapple };
@@ -507,6 +509,7 @@ export function drawSurfaceLight(
     }
     drawPathLampGlow(ctx, map, originX, originY, viewW, viewH, timeSec);
     drawDoorGateSpill(ctx, map, originX, originY, viewW, viewH, timeSec);
+    drawLanternWallGlow(ctx, map, originX, originY, viewW, viewH, timeSec);
   }
   ctx.restore();
 }

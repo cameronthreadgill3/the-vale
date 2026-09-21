@@ -47,6 +47,7 @@ import { WALK_FPS } from "@/game/playerSprites";
 import { drawTile } from "@/game/gfx/drawTile";
 import { drawTownOverlays } from "@/game/gfx/townDraw";
 import { collectPathLampDepthItems } from "@/game/gfx/lampFlicker";
+import { drawAshwoodLampBounce } from "@/game/gfx/wallGlow";
 import {
   getAshwoodCanopySheet,
   paletteColor,
@@ -750,6 +751,19 @@ export function advanceCameraAndRender(args: {
           draw: (c) => {
             c.imageSmoothingEnabled = false;
             c.drawImage(sheet as CanvasImageSource, dx0, dy0, drawSize, drawSize);
+            drawAshwoodLampBounce(
+              c,
+              map,
+              tx,
+              ty,
+              dx0,
+              dy0,
+              originX,
+              originY,
+              viewW,
+              viewH,
+              _atmosT,
+            );
           },
         });
       }
