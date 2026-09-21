@@ -14,6 +14,32 @@ export const FOUNTAIN_HEAL_RADIUS_TILES = 1.4;
 export const FOUNTAIN_HEAL_PER_SEC = 28;
 /** Min seconds between fountain "+HP" float texts. */
 export const FOUNTAIN_HEAL_FLOAT_INTERVAL = 0.4;
+
+/**
+ * Fountain regen is continuous, but vitals persist as whole HP.
+ * Carry the fraction here so a sub-1 tick is not floored away.
+ */
+export function applyFountainHeal(
+  hp: number,
+  maxHp: number,
+  carry: number,
+  dt: number,
+): { hp: number; carry: number; gained: number } {
+  const current = Math.max(0, Math.floor(hp));
+  const cap = Math.max(0, Math.floor(maxHp));
+  if (current >= cap) return { hp: current, carry: 0, gained: 0 };
+  let nextCarry = carry + FOUNTAIN_HEAL_PER_SEC * Math.max(0, dt);
+  const whole = Math.floor(nextCarry);
+  if (whole <= 0) return { hp: current, carry: nextCarry, gained: 0 };
+  nextCarry -= whole;
+  const healed = Math.min(cap, current + whole);
+  const gained = healed - current;
+  return {
+    hp: healed,
+    carry: healed >= cap ? 0 : nextCarry,
+    gained,
+  };
+}
 /** Brief invulnerability after taking a hit (seconds). */
 export const HIT_IFRAMES_SEC = 0.55;
 /** Knockback distance on hit (pixels) so retreat stays readable. */
