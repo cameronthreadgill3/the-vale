@@ -4,17 +4,22 @@ import type { FolkDef } from "@/game/folk";
 import type { Enemy } from "@/game/enemies";
 import {
   TEETH_RATS_NEEDED,
+  ASHWOOD_CAIRNS_NEEDED,
   getTeethQuest,
+  getAshwoodQuest,
   isTeethActive,
+  isAshwoodActive,
   loadQuestLog,
   type TeethQuestProgress,
+  type AshwoodQuestProgress,
 } from "@/game/quests";
+import { ASHWOOD_CAIRNS } from "@/game/cairns";
 
 export type WayfindObjective = {
   label: string;
   x: number;
   y: number;
-  kind: "folk" | "enemy" | "landmark";
+  kind: "folk" | "enemy" | "landmark" | "cairn";
 };
 
 export type RadarDot = {
@@ -34,10 +39,55 @@ export function resolveQuestObjective(
   _map: WorldMap,
 ): WayfindObjective | null {
   const log = loadQuestLog();
-  if (!isTeethActive(log)) return null;
-  const q = getTeethQuest(log);
-  if (!q) return null;
-  return objectiveForTeeth(q, player, enemies, folk);
+  if (isAshwoodActive(log)) {
+    const q = getAshwoodQuest(log);
+    if (q) return objectiveForAshwood(q, player, enemies, folk);
+  }
+  if (isTeethActive(log)) {
+    const q = getTeethQuest(log);
+    if (q) return objectiveForTeeth(q, player, enemies, folk);
+  }
+  return null;
+}
+
+export function objectiveForAshwood(
+  q: AshwoodQuestProgress,
+  player: { x: number; y: number },
+  enemies: Enemy[],
+  folk: FolkDef[],
+): WayfindObjective | null {
+  if (q.status !== "active") return null;
+  const rook = folk.find((f) => f.id === "rook");
+  const nextCairn = ASHWOOD_CAIRNS.find((c) => !q.cairnsVisited.includes(c.id));
+  if (nextCairn) {
+    return {
+      label: `Inspect ${nextCairn.name} (${q.cairnsVisited.length}/${ASHWOOD_CAIRNS_NEEDED})`,
+      x: (nextCairn.x + 0.5) * TILE,
+      y: (nextCairn.y + 0.5) * TILE,
+      kind: "cairn",
+    };
+  }
+  if (!q.wrongPreyDone) {
+    const rat = nearestEnemy(player, enemies, "needle-rat");
+    if (rat) return { label: "Wrong prey · Needle Rat", x: rat.x, y: rat.y, kind: "enemy" };
+    const hound = nearestEnemy(player, enemies, "bark-hound");
+    if (hound) return { label: "Wrong prey · Bark Hound", x: hound.x, y: hound.y, kind: "enemy" };
+    return {
+      label: "Find wrong prey (ashwood)",
+      x: player.x + TILE * 6,
+      y: player.y - TILE * 2,
+      kind: "landmark",
+    };
+  }
+  if (rook) {
+    return {
+      label: "Return to Rook",
+      x: (rook.x + 0.5) * TILE,
+      y: (rook.y + 0.5) * TILE,
+      kind: "folk",
+    };
+  }
+  return null;
 }
 
 export function objectiveForTeeth(
