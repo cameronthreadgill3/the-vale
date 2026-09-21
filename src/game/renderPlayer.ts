@@ -8,6 +8,7 @@ import {
   type Facing,
 } from "@/game/playerSprites";
 import { drawContactShadow } from "@/game/gfx/contactShadow";
+import { drawOrbDirectionalRim } from "@/game/gfx/directionalRim";
 import { drawOrbHitFlash } from "@/game/gfx/hitFlash";
 
 export function drawPlayer(
@@ -55,6 +56,7 @@ export function drawPlayer(
   ctx.strokeStyle = "#0c0d0b";
   ctx.lineWidth = 2;
   ctx.stroke();
+  drawOrbDirectionalRim(ctx, px, py, PLAYER_RADIUS);
   if (playerFlash > 0) {
     drawOrbHitFlash(ctx, px, py, PLAYER_RADIUS, playerFlash);
   }

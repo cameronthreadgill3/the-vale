@@ -3,7 +3,8 @@
  * Needle Rat, Bark Hound, Ash-vole, Gorse Fox, Briar Mite, Shade Wisp,
  * Pass 5: eased breath and stride, ear and tail lag, form volume.
  */
-import { makeCanvas, ctx2d, px, shadeHex, paintVolume as paintVolumeBlock, drawSoftShadow, drawWithWarmRim, addPixelVolume, GROUND_SHADOW_ALPHA } from "@/game/gfx/canvasUtil";
+import { makeCanvas, ctx2d, px, shadeHex, paintVolume as paintVolumeBlock, drawSoftShadow, addPixelVolume, GROUND_SHADOW_ALPHA } from "@/game/gfx/canvasUtil";
+import { drawDirectionalRim } from "@/game/gfx/directionalRim";
 
 function paintVolume(
   ctx: CanvasRenderingContext2D,
@@ -626,6 +627,8 @@ export function drawCreatureSprite(
   radius: number,
   flash: boolean,
   frame = 0,
+  /** 0–1. Callers fade this with distance so only nearby bodies pay for a rim. */
+  rim = 1,
 ): void {
   const sheet = getCreatureSheet(id, color, colorDark, flash, frame);
   const ember = id === "ashveil-ember";
@@ -655,15 +658,24 @@ export function drawCreatureSprite(
     ctx.restore();
   }
   ctx.imageSmoothingEnabled = false;
-  drawWithWarmRim(ctx, () => {
-    ctx.drawImage(
+  const dx = Math.floor(sx - size / 2);
+  const dy = Math.floor(sy - size / 2 - 2);
+  ctx.drawImage(sheet as CanvasImageSource, dx, dy, size, size);
+  if (rim > 0.02) {
+    drawDirectionalRim(
+      ctx,
       sheet as CanvasImageSource,
-      Math.floor(sx - size / 2),
-      Math.floor(sy - size / 2 - 2),
+      0,
+      0,
+      CREATURE_FRAME,
+      CREATURE_FRAME,
+      dx,
+      dy,
       size,
       size,
+      rim,
     );
-  });
+  }
 }
 
 const CREATURE_IDS: CreatureKindId[] = [
