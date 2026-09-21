@@ -218,3 +218,226 @@ export function GameApp() {
       setActiveShopId(null);
       setActiveDockId(null);
       setBankOpen(false);
+      setPackOpen(false);
+      if (target === "mistmere") {
+        const gateResult = applyGateReached(loadQuestLog());
+        if (gateResult) {
+          saveQuestLog(gateResult.log);
+          if (gateResult.toast) {
+            showToast(gateResult.toast);
+            window.setTimeout(
+              () => setToast((t) => (t === gateResult.toast ? null : t)),
+              2800,
+            );
+            return;
+          }
+        }
+      }
+      const dest = getContinent(target);
+      if (folkOnContinent(target).length === 0) {
+        showToast(`${dest.name} — ${dest.blurb}`);
+      } else {
+        showToast(`Gate opens onto ${dest.name}`);
+      }
+    },
+    [showToast],
+  );
+
+  const goHollow = useCallback(
+    (index: number, returnTile: { x: number; y: number }) => {
+      setCharacter((prev) =>
+        prev ? enterHollow(prev, index, returnTile) : prev,
+      );
+      setArrivedFrom(null);
+      setShipSpawn(null);
+      setDialogue(null);
+      setActiveShopId(null);
+      setActiveDockId(null);
+      showToast(`Descending into Hollow ${index + 1}`);
+    },
+    [showToast],
+  );
+
+  const leaveHollow = useCallback(() => {
+    setCharacter((prev) => (prev ? exitHollow(prev) : prev));
+    setArrivedFrom(null);
+    setShipSpawn(null);
+    showToast("Returning to the overworld");
+  }, [showToast]);
+
+  const openFolk = useCallback((folkId: string) => {
+    const folk = getFolk(folkId);
+    if (!folk) return;
+    setActiveShopId(null);
+    setActiveDockId(null);
+    setBankOpen(false);
+    setPackOpen(false);
+    let line = folk.line;
+    if (folkId === "rook" && character) {
+      const turnIn = applyGateWatchRookTalk(loadQuestLog());
+      if (turnIn) {
+        saveQuestLog(turnIn.log);
+        setCharacter((prev) => {
+          if (!prev) return prev;
+          let next: ValeCharacter = {
+            ...prev,
+            skillXp: { ...prev.skillXp },
+          };
+          if (turnIn.completedId === GATE_QUEST_ID) {
+            next = awardCombatXp(next, GATE_REWARDS.combatXp);
+            next = { ...next, skillXp: { ...next.skillXp } };
+            awardSkillXp(next, GATE_REWARDS.skill, GATE_REWARDS.skillXp);
+            next = setGold(next, next.gold + GATE_REWARDS.gold);
+            next = { ...next, skillXp: { ...next.skillXp } };
+            queueMicrotask(() => {
+              showToast(GATE_COMPLETE_LINE);
+              setSkillTick((t) => t + 1);
+            });
+          } else if (turnIn.toast) {
+            queueMicrotask(() => showToast(turnIn.toast!));
+          }
+          return next;
+        });
+      }
+      const hook = rookQuestLine(loadQuestLog());
+      if (hook) line = hook;
+    }
+    setDialogue({
+      name: folk.name,
+      line,
+      hasShop: Boolean(folk.shopId),
+      hasBank: Boolean(folk.bankId),
+      shopId: folk.shopId,
+      bankId: folk.bankId,
+    });
+    setCharacter((prev) => (prev ? markFolkMet(prev, folkId) : prev));
+  }, [character, showToast]);
+
+  const openShop = useCallback((shopId: string) => {
+    setDialogue(null);
+    setActiveDockId(null);
+    setBankOpen(false);
+    setActiveShopId(shopId);
+  }, []);
+
+  const openShip = useCallback((dockId: string) => {
+    setDialogue(null);
+    setActiveShopId(null);
+    setBankOpen(false);
+    setActiveDockId(dockId);
+  }, []);
+
+  const openBank = useCallback(() => {
+    setDialogue(null);
+    setActiveShopId(null);
+    setActiveDockId(null);
+    setPackOpen(false);
+    setBankOpen(true);
+  }, []);
+
+  const handleDepositItem = useCallback(
+    (itemId: string) => {
+      if (!isItemId(itemId)) return;
+      setCharacter((prev) => {
+        if (!prev) return prev;
+        return depositItem(prev, itemId, 1) ?? prev;
+      });
+    },
+    [],
+  );
+
+  const handleWithdrawItem = useCallback(
+    (itemId: string) => {
+      if (!isItemId(itemId)) return;
+      setCharacter((prev) => {
+        if (!prev) return prev;
+        const result = withdrawItem(prev, itemId, 1);
+        if (!result.ok) {
+          if (result.reason !== "missing") {
+            queueMicrotask(() => showToast(toastForCarryFail(result.reason)));
+          }
+          return prev;
+        }
+        return result.character;
+      });
+    },
+    [showToast],
+  );
+
+  const handleDepositGold = useCallback((amount: number) => {
+    setCharacter((prev) => (prev ? depositGold(prev, amount) : prev));
+  }, []);
+
+  const handleWithdrawGold = useCallback((amount: number) => {
+    setCharacter((prev) => (prev ? withdrawGold(prev, amount) : prev));
+  }, []);
+
+  const grantPremium = useCallback(
+    (msg: string) => {
+      setCharacter((prev) => (prev ? unlockPremiumBackpack(prev) : prev));
+      showToast(msg, 2800);
+    },
+    [showToast],
+  );
+
+  const handleUnlockDemo = useCallback(() => {
+    if (!isPremiumDemoAllowed()) {
+      showToast("Demo unlock is disabled when Stripe is configured.");
+      return;
+    }
+    grantPremium("Premium Backpack unlocked (demo).");
+  }, [grantPremium, showToast]);
+
+  const handleUnlockStripe = useCallback(() => {
+    setPremiumUnlocking(true);
+    void (async () => {
+      const result = await startPremiumCheckout();
+      setPremiumUnlocking(false);
+      if (!result.ok) {
+        showToast(result.error, 3200);
+        return;
+      }
+      if (result.demo) {
+        grantPremium("Premium Backpack unlocked (demo checkout).");
+        return;
+      }
+      window.location.assign(result.url);
+    })();
+  }, [grantPremium, showToast]);
+
+  useEffect(() => {
+    const q = consumePremiumQuery();
+    if (q.status === "cancel") {
+      showToast("Premium checkout canceled.");
+      return;
+    }
+    if (q.status !== "success") return;
+    void (async () => {
+      if (q.sessionId && (await verifyPremiumSession(q.sessionId))) {
+        grantPremium("Premium Backpack unlocked.");
+        return;
+      }
+      if (isPremiumDemoAllowed()) {
+        grantPremium("Premium Backpack unlocked (demo).");
+        return;
+      }
+      showToast("Could not verify Premium checkout.");
+    })();
+  }, [grantPremium, showToast]);
+
+  const buyItem = useCallback(
+    (itemId: string, price: number) => {
+      if (!isItemId(itemId)) return;
+      setCharacter((prev) => {
+        if (!prev || prev.gold < price) return prev;
+        const carry = canCarry(
+          prev.inventory,
+          prev.premiumBackpack,
+          itemId,
+          1,
+        );
+        if (!carry.ok) {
+          queueMicrotask(() => showToast(toastForCarryFail(carry.reason)));
+          return prev;
+        }
+        let next = setGold(prev, prev.gold - price);
