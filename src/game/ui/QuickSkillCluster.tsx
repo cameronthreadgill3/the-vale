@@ -73,10 +73,11 @@ export function QuickSkillCluster({
 
   return (
     <div
-      className="pointer-events-none absolute z-40"
+      className="vale-touch-root pointer-events-none absolute"
       style={{
-        right: "max(0.75rem, env(safe-area-inset-right))",
-        bottom: "max(0.75rem, env(safe-area-inset-bottom))",
+        right: "max(0.75rem, env(safe-area-inset-right, 0px))",
+        bottom: "max(0.75rem, env(safe-area-inset-bottom, 0px))",
+        zIndex: 80,
       }}
     >
       <div className="flex items-end gap-2">

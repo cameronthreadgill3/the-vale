@@ -35,7 +35,10 @@ body,
 body {
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
-  touch-action: none;
+  /* manipulation (not none) so a docked sheet can pan-y. none on an ancestor
+     blocks every descendant scroll, including the vault list. Canvas and the
+     stick still opt out with touch-action: none. */
+  touch-action: manipulation;
   user-select: none;
 }
 
@@ -1179,10 +1182,20 @@ canvas.game-canvas {
   image-rendering: crisp-edges;
 }
 
-.game-root,
+.game-root {
+  touch-action: manipulation;
+  overscroll-behavior: none;
+}
+
 .game-canvas {
   touch-action: none;
   overscroll-behavior: none;
+}
+
+/* Thumb controls sit above the vault. The stick is only its own box —
+   never a full-screen pointer-events layer (iOS drops taps through those). */
+.vale-touch-root {
+  z-index: 80 !important;
 }
 
 /* Thumb-friendly panel chrome on coarse pointers / narrow viewports */
@@ -1245,17 +1258,27 @@ canvas.game-canvas {
     max-height: calc(100dvh - 16.5rem);
   }
 
-  /* Vault sheet clears the stick (7.5rem) and the taller attack cluster (9.75rem
-     plus the top skill's overflow). Inset is max(0.75rem, safe-area). */
+  /* Fallback if the dock class is not on the node yet. Same band as
+     .vale-bank-sheet-dock. Avoid nesting max()/100dvh — Safari drops the
+     declaration and the sheet falls back onto the stick. */
   .vale-bank-sheet.vale-overlay-above-chrome {
-    bottom: calc(11.2rem + max(0.75rem, env(safe-area-inset-bottom, 0px)));
-    max-height: calc(
-      100dvh - 17.2rem - max(0.75rem, env(safe-area-inset-bottom, 0px)) -
-        env(safe-area-inset-top, 0px)
-    );
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+    position: absolute !important;
+    z-index: 30 !important;
+    left: calc(0.75rem + env(safe-area-inset-left, 0px)) !important;
+    right: calc(0.75rem + env(safe-area-inset-right, 0px)) !important;
+    top: calc(0.5rem + env(safe-area-inset-top, 0px)) !important;
+    bottom: calc(13rem + env(safe-area-inset-bottom, 0px)) !important;
+    width: auto !important;
+    max-width: 28rem !important;
+    height: auto !important;
+    max-height: none !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    transform: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    pointer-events: auto !important;
   }
 
   .vale-bank-sheet-head {
@@ -1269,9 +1292,13 @@ canvas.game-canvas {
   }
 
   .vale-bank-close {
-    min-height: 2.75rem;
-    min-width: 4.75rem;
-    font-size: 0.875rem;
+    min-height: 3.5rem;
+    min-width: 7rem;
+    padding: 0.85rem 1.25rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    line-height: 1.1;
+    touch-action: manipulation;
   }
 }
 
@@ -1299,11 +1326,60 @@ canvas.game-canvas {
     max-height: calc(100dvh - 12rem);
   }
 
-  .vale-bank-sheet.vale-overlay-above-chrome {
-    bottom: calc(11.2rem + max(0.75rem, env(safe-area-inset-bottom, 0px)));
-    max-height: calc(
-      100dvh - 14.5rem - max(0.75rem, env(safe-area-inset-bottom, 0px)) -
-        env(safe-area-inset-top, 0px)
-    );
+  .vale-bank-sheet.vale-overlay-above-chrome,
+  .vale-bank-sheet-dock {
+    top: calc(0.35rem + env(safe-area-inset-top, 0px)) !important;
+    bottom: calc(13rem + env(safe-area-inset-bottom, 0px)) !important;
+    max-height: none !important;
   }
+}
+
+/* Phone vault only (class is added with the mobile chrome hook).
+   Top + bottom lock the sheet into the band above the stick / Attack.
+   There is no full-screen backdrop. */
+.vale-bank-sheet-dock {
+  position: absolute !important;
+  z-index: 30 !important;
+  left: calc(0.75rem + env(safe-area-inset-left, 0px)) !important;
+  right: calc(0.75rem + env(safe-area-inset-right, 0px)) !important;
+  top: calc(0.5rem + env(safe-area-inset-top, 0px)) !important;
+  bottom: calc(13rem + env(safe-area-inset-bottom, 0px)) !important;
+  width: auto !important;
+  max-width: 28rem !important;
+  height: auto !important;
+  max-height: none !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  transform: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  pointer-events: auto !important;
+}
+
+.vale-bank-sheet-dock .vale-bank-sheet-head {
+  flex-shrink: 0;
+}
+
+.vale-bank-sheet-dock .vale-bank-sheet-body {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+
+.vale-bank-sheet-dock .vale-bank-close {
+  min-height: 3.5rem;
+  min-width: 7rem;
+  padding: 0.85rem 1.25rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.1;
+  touch-action: manipulation;
+}
+
+.vale-bank-sheet-dock .vale-bank-list {
+  max-height: 6.5rem;
 }

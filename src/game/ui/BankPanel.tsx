@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import type { ValeCharacter } from "@/game/character";
 import { getItem } from "@/game/items";
 import {
@@ -7,6 +8,35 @@ import {
   formatWeightChrome,
   formatSlotsChrome,
 } from "@/game/backpack";
+import { useShowMobileChrome } from "@/game/ui/MobileControls";
+
+/**
+ * Stretch the vault between the notch and the thumb controls.
+ * Top + bottom (height auto) are both honored, so the sheet cannot cover
+ * the stick or Attack. No full-screen backdrop.
+ * 13rem clears the attack cluster (9.75rem), its top skill overflow
+ * (~0.6rem), the 0.75rem control inset, and a gap. Safe-area is added
+ * on its own so it is not nested inside max() (Safari drops that).
+ */
+const MOBILE_DOCK_STYLE: CSSProperties = {
+  position: "absolute",
+  zIndex: 30,
+  left: "calc(0.75rem + env(safe-area-inset-left, 0px))",
+  right: "calc(0.75rem + env(safe-area-inset-right, 0px))",
+  top: "calc(0.5rem + env(safe-area-inset-top, 0px))",
+  bottom: "calc(13rem + env(safe-area-inset-bottom, 0px))",
+  width: "auto",
+  maxWidth: "28rem",
+  height: "auto",
+  maxHeight: "none",
+  marginLeft: "auto",
+  marginRight: "auto",
+  transform: "none",
+  overflow: "hidden",
+  display: "flex",
+  flexDirection: "column",
+  pointerEvents: "auto",
+};
 
 function loadBand(ratio: number): "ok" | "high" | "full" {
   if (ratio >= 1) return "full";
@@ -66,9 +96,17 @@ export function BankPanel({
   const slots = character.inventory.length;
   const maxS = maxSlotsFor(character.premiumBackpack);
   const ratio = maxW > 0 ? weight / maxW : 0;
+  const docked = useShowMobileChrome();
 
   return (
-    <div className="vale-panel vale-inv-panel vale-bank-sheet vale-overlay-above-chrome vale-text-screen pointer-events-auto absolute bottom-4 left-1/2 z-30 w-[min(100%-2rem,28rem)] -translate-x-1/2 p-3.5 sm:bottom-6">
+    <div
+      className={
+        docked
+          ? "vale-panel vale-inv-panel vale-bank-sheet vale-bank-sheet-dock vale-text-screen pointer-events-auto absolute p-3.5"
+          : "vale-panel vale-inv-panel vale-bank-sheet vale-overlay-above-chrome vale-text-screen pointer-events-auto absolute bottom-4 left-1/2 z-30 w-[min(100%-2rem,28rem)] -translate-x-1/2 p-3.5 sm:bottom-6"
+      }
+      style={docked ? MOBILE_DOCK_STYLE : undefined}
+    >
       <div className="vale-bank-sheet-head mb-2.5 flex items-center justify-between gap-2">
         <div className="min-w-0">
           <div className="vale-screen-title">Bank · Thornreach Vault</div>
@@ -112,7 +150,7 @@ export function BankPanel({
           {character.inventory.length === 0 ? (
             <p className="vale-inv-empty">No items in pack.</p>
           ) : (
-            <ul className="flex max-h-40 flex-col gap-1.5 overflow-y-auto">
+            <ul className="vale-bank-list flex max-h-40 flex-col gap-1.5 overflow-y-auto">
               {character.inventory.map((stack) => {
                 const item = getItem(stack.id);
                 return (
@@ -134,7 +172,7 @@ export function BankPanel({
           {character.bank.length === 0 ? (
             <p className="vale-inv-empty">No items in bank.</p>
           ) : (
-            <ul className="flex max-h-40 flex-col gap-1.5 overflow-y-auto">
+            <ul className="vale-bank-list flex max-h-40 flex-col gap-1.5 overflow-y-auto">
               {character.bank.map((stack) => {
                 const item = getItem(stack.id);
                 return (
