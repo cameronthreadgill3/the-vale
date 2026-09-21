@@ -9,6 +9,7 @@ import {
   drawShopMarkers,
   drawNamedFolk,
 } from "@/game/folkCanvas";
+import { cairnsOnContinent, drawCairns } from "@/game/cairns";
 import {
   drawFloatTexts,
   drawProjectiles,
@@ -113,6 +114,9 @@ export function advanceCameraAndRender(args: {
     ctx.fillRect(0, 0, viewW, viewH);
   }
   drawShipDocks(ctx, docks, originX, originY);
+  if (map.kind === "overworld") {
+    drawCairns(ctx, cairnsOnContinent(map.continentId), originX, originY, TILE);
+  }
   drawShopMarkers(ctx, shops, folk, originX, originY);
   drawNamedFolk(ctx, folk, originX, originY, player);
   mouse.worldX = originX + mouse.x;

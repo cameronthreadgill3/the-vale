@@ -2,6 +2,8 @@
 import { getContinent } from "@/game/continents";
 import { TILE, isSolid, nearTile, type WorldMap } from "@/game/world";
 import { PLAYER_RADIUS, INTERACT_RADIUS, type PromptState } from "@/game/canvasConstants";
+import { cairnsOnContinent } from "@/game/cairns";
+import { getTeethQuest, isAshwoodActive, loadQuestLog } from "@/game/quests";
 
 export function tryMovePlayer(
   map: WorldMap,
@@ -73,6 +75,13 @@ export function computePrompt(
       // Skip shop marker if a folk with that shop already covers the tile.
       if (folk.some((f) => f.x === s.x && f.y === s.y && f.shopId === s.id)) continue;
       consider(s.x, s.y, { kind: "shop", shopId: s.id, name: s.name });
+    }
+    const qlog = loadQuestLog();
+    const teethDone = getTeethQuest(qlog)?.status === "complete";
+    if (isAshwoodActive(qlog) || teethDone) {
+      for (const c of cairnsOnContinent(map.continentId)) {
+        consider(c.x, c.y, { kind: "cairn", cairnId: c.id, name: c.name });
+      }
     }
   } else {
     // Any exit tile nearby (spawn entrance + deep exit).
