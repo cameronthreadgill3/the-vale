@@ -20,7 +20,7 @@ export function useGameCanvas(opts: {
   onTrain: (skill: SkillId) => void;
   onToggleSkills: () => void;
   onToggleMap: () => void;
-  onTravel: (target: ContinentId, from: ContinentId) => void;
+  onTravel: (target: ContinentId, from: ContinentId) => boolean;
   onEnterHollow: (index: number, returnTile: { x: number; y: number }) => void;
   onExitHollow: () => void;
   onPassivePrimary: (amount: number) => void;
