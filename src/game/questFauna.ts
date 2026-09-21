@@ -7,7 +7,7 @@ import {
 } from "@/game/enemies";
 import { WORLD_SEED, type ContinentId } from "@/game/continents";
 import { rngFrom, randInt } from "@/game/rng";
-import { TILE, isSolid, type WorldMap } from "@/game/world";
+import { TILE, isSolid, townBlockedTiles, type WorldMap } from "@/game/world";
 import { isTeethActive, loadQuestLog } from "@/game/quests";
 
 export function spawnEnemiesForQuest(
@@ -15,7 +15,8 @@ export function spawnEnemiesForQuest(
   continentId: ContinentId,
   blockedTiles: { x: number; y: number }[],
 ): Enemy[] {
-  const enemies = spawnEnemies(map, continentId, blockedTiles);
+  const blockedExtra = townBlockedTiles(map);
+  const enemies = spawnEnemies(map, continentId, [...blockedTiles, ...blockedExtra]);
   const boost =
     map.kind === "overworld" &&
     continentId === "thornreach" &&

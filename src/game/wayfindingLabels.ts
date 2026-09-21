@@ -60,6 +60,6 @@ export function drawWorldWayfindLabels(
 
 
 export const STARTER_TIP =
-  "Talk to Rook (watch) · Bank with Cress · Fountain square is safe";
+  "Talk to Rook (watch) · Shops & depot on the square · Bank with Cress · Fountain heals";
 
 export const STARTER_TIP_MS = 60_000;

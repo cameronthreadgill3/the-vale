@@ -12,12 +12,25 @@ export {
   HOLLOW_W,
   HOLLOW_H,
   isSolid,
+  isTownStructureTile,
   nearTile,
   type GroundTile,
   type GateMarker,
   type HollowMarker,
   type WorldMap,
 } from "@/game/world/types";
+export {
+  stampThornreachTown,
+  buildingsOnContinent,
+  propsOnContinent,
+  townBlockedTiles,
+  buildingAtDoor,
+  THORNREACH_DEPOT,
+  THORNREACH_BUILDINGS,
+  type TownBuilding,
+  type TownProp,
+  type TownPropKind,
+} from "@/game/world/town";
 
 export { generateOverworld, spawnNearArrivalGate } from "@/game/world/overworld";
 export { generateHollow } from "@/game/world/hollow";

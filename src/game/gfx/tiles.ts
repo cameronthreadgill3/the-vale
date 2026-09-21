@@ -118,6 +118,114 @@ function paintPath(ctx: CanvasRenderingContext2D, base: string, variant: number)
   }
 }
 
+function paintCobble(ctx: CanvasRenderingContext2D, base: string, variant: number): void {
+  paintCobbleField(ctx, base, variant, true);
+}
+
+/** Denser plaza cobbles — original Vale stones, not CipSoft tiles. */
+function paintCobbleField(
+  ctx: CanvasRenderingContext2D,
+  base: string,
+  variant: number,
+  plaza: boolean,
+): void {
+  const dark = shadeHex(base, 0.62);
+  const lite = shadeHex(base, 1.28);
+  const mid = shadeHex(base, 0.88);
+  const mortar = shadeHex(base, plaza ? 0.38 : 0.45);
+  const moss = mixHex(base, "#3a5a32", 0.45);
+  ctx.fillStyle = mortar;
+  ctx.fillRect(0, 0, TILE_PX, TILE_PX);
+  const offsets = plaza
+    ? [
+        [0, 0], [7, 0], [14, 0], [21, 0], [28, 0],
+        [3, 6], [10, 6], [17, 6], [24, 6],
+        [0, 12], [7, 12], [14, 12], [21, 12], [28, 12],
+        [4, 18], [11, 18], [18, 18], [25, 18],
+        [0, 24], [8, 24], [16, 24], [24, 24],
+      ]
+    : [
+        [0, 0], [8, 0], [16, 0], [24, 0],
+        [4, 8], [12, 8], [20, 8], [28, 8],
+        [0, 16], [8, 16], [16, 16], [24, 16],
+        [4, 24], [12, 24], [20, 24], [28, 24],
+      ];
+  const stoneW = plaza ? 6 : 7;
+  const stoneH = plaza ? 5 : 7;
+  for (let i = 0; i < offsets.length; i++) {
+    const [ox, oy] = offsets[i]!;
+    const shift = ((i + variant) % 3) - 1;
+    const roll = (i + variant) % 4;
+    const c = roll === 0 ? lite : roll === 1 ? base : roll === 2 ? mid : dark;
+    px(ctx, ox + shift, oy, c, stoneW, stoneH);
+    px(ctx, ox + shift, oy, dark, stoneW, 1);
+    px(ctx, ox + shift, oy, dark, 1, stoneH);
+    px(ctx, ox + shift + 1, oy + 1, lite, 2, 1);
+    if (plaza && (i + variant) % 5 === 0) {
+      px(ctx, ox + shift + 2, oy + stoneH - 1, moss, 2, 1);
+    }
+  }
+}
+
+function paintWall(ctx: CanvasRenderingContext2D, base: string, variant: number): void {
+  const plaster = mixHex(base, "#8a7a5a", 0.55);
+  const plasterDark = shadeHex(plaster, 0.72);
+  const timber = mixHex(base, "#3a2a18", 0.5);
+  const timberLite = shadeHex(timber, 1.25);
+  const out = shadeHex(timber, 0.55);
+  ctx.fillStyle = plasterDark;
+  ctx.fillRect(0, 0, TILE_PX, TILE_PX);
+  px(ctx, 1, 1, plaster, 30, 30);
+  px(ctx, 0, 0, timber, TILE_PX, 3);
+  px(ctx, 0, 29, timber, TILE_PX, 3);
+  px(ctx, 0, 0, timber, 3, TILE_PX);
+  px(ctx, 29, 0, timber, 3, TILE_PX);
+  px(ctx, 1, 1, timberLite, 30, 1);
+  const by = 12 + (variant % 3);
+  px(ctx, 3, by, timber, 26, 3);
+  px(ctx, 3, by, timberLite, 26, 1);
+  if (variant % 2 === 0) {
+    px(ctx, 12, 6, out, 8, 6);
+    px(ctx, 13, 7, mixHex(base, "#3a5060", 0.4), 6, 4);
+    px(ctx, 16, 7, out, 1, 4);
+  }
+}
+
+function paintFloor(ctx: CanvasRenderingContext2D, base: string, variant: number): void {
+  const plank = mixHex(base, "#6a5030", 0.45);
+  const plankDark = shadeHex(plank, 0.7);
+  const plankLite = shadeHex(plank, 1.15);
+  ctx.fillStyle = plankDark;
+  ctx.fillRect(0, 0, TILE_PX, TILE_PX);
+  for (let i = 0; i < 4; i++) {
+    const y = i * 8;
+    const shift = ((i + variant) % 2) * 4;
+    px(ctx, 0, y, plank, TILE_PX, 8);
+    px(ctx, 0, y, plankDark, TILE_PX, 1);
+    px(ctx, shift, y + 2, plankLite, 8, 1);
+    px(ctx, 12 + (variant % 5), y + 5, plankDark, 3, 1);
+  }
+}
+
+function paintDoor(ctx: CanvasRenderingContext2D, base: string, variant: number): void {
+  const plaster = mixHex(base, "#8a7a5a", 0.5);
+  const timber = mixHex(base, "#3a2a18", 0.55);
+  const board = mixHex(base, "#6a4a28", 0.4);
+  const boardLite = shadeHex(board, 1.2);
+  const floor = mixHex(base, "#5a4830", 0.4);
+  ctx.fillStyle = plaster;
+  ctx.fillRect(0, 0, TILE_PX, TILE_PX);
+  px(ctx, 0, 24, floor, TILE_PX, 8);
+  px(ctx, 4, 2, timber, 24, 28);
+  px(ctx, 6, 4, board, 20, 24);
+  px(ctx, 7, 5, boardLite, 2, 20);
+  px(ctx, 6, 12, timber, 20, 2);
+  px(ctx, 22, 14, "#c9a227", 2, 2);
+  if (variant % 2 === 0) {
+    px(ctx, 20, 4, shadeHex(floor, 1.1), 6, 24);
+  }
+}
+
 function paintWater(
   ctx: CanvasRenderingContext2D,
   base: string,
@@ -333,6 +441,9 @@ function paintTile(
     case "path":
       paintPath(ctx, color, variant);
       break;
+    case "cobble":
+      paintCobble(ctx, color, variant);
+      break;
     case "water":
       paintWater(ctx, color, variant, anim);
       break;
@@ -342,6 +453,15 @@ function paintTile(
       break;
     case "flower":
       paintFlowerFountain(ctx, color, variant, anim);
+      break;
+    case "wall":
+      paintWall(ctx, color, variant);
+      break;
+    case "floor":
+      paintFloor(ctx, color, variant);
+      break;
+    case "door":
+      paintDoor(ctx, color, variant);
       break;
     case "gate":
       paintGate(ctx, color, variant);
@@ -521,6 +641,10 @@ export function tileVariantAt(tx: number, ty: number): number {
 }
 
 export function paletteColor(pal: BiomePalette, kind: GroundTile): string {
+  if (kind === "cobble") return pal.path;
+  if (kind === "wall") return pal.dirt;
+  if (kind === "floor") return pal.dirt;
+  if (kind === "door") return pal.path;
   return pal[kind] ?? pal.grass;
 }
 
@@ -529,9 +653,13 @@ const ALL_KINDS: GroundTile[] = [
   "grassAlt",
   "dirt",
   "path",
+  "cobble",
   "stone",
   "water",
   "flower",
+  "wall",
+  "floor",
+  "door",
   "gate",
   "hollow",
   "exit",

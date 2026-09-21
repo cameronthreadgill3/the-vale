@@ -278,7 +278,7 @@ export function GameShell({
           )}
           {prompt.kind === "shop" && (
             <>
-              <span className="text-[#e8e6d9]">Shop</span>
+              <span className="text-[#e8e6d9]">Enter shop</span>
               {" · "}
               <span className="text-[#c9a227]">{prompt.name}</span>
               <div className="mt-0.5 text-xs text-[#a8b09a]">

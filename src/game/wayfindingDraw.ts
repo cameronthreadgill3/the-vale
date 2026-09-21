@@ -2,6 +2,7 @@
 import { TILE, type WorldMap } from "@/game/world";
 import type { FolkDef, ShipDock } from "@/game/folk";
 import type { Enemy } from "@/game/enemies";
+import { buildingsOnContinent } from "@/game/world/town";
 import {
   WAYFIND_RADAR_RANGE,
   type RadarDot,
@@ -216,6 +217,9 @@ export function collectRadarDots(
     }
     for (const h of map.hollows) {
       push((h.x + 0.5) * TILE, (h.y + 0.5) * TILE, "#b89ad4");
+    }
+    for (const b of buildingsOnContinent(map.continentId)) {
+      push((b.door.x + 0.5) * TILE, (b.door.y + 0.5) * TILE, b.signColor);
     }
   } else if (map.exit) {
     push((map.exit.x + 0.5) * TILE, (map.exit.y + 0.5) * TILE, "#c9a227");

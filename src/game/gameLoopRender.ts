@@ -33,6 +33,7 @@ import { drawPlayer } from "@/game/renderPlayer";
 import type { Facing } from "@/game/playerSprites";
 import { WALK_FPS } from "@/game/playerSprites";
 import { drawTile } from "@/game/gfx/drawTile";
+import { drawTownOverlays } from "@/game/gfx/townDraw";
 import {
   getAshwoodCanopySheet,
   paletteColor,
@@ -126,6 +127,7 @@ export function advanceCameraAndRender(args: {
     }
   }
   drawAshwoodTint(ctx, map, originX, originY, viewW, viewH);
+  drawTownOverlays(ctx, map, player, originX, originY);
   if (map.kind === "overworld" && isSafeContinent(map.continentId)) {
     const fx = Math.floor((map.spawn.x + 0.5) * TILE - originX);
     const fy = Math.floor((map.spawn.y + 0.5) * TILE - originY);
