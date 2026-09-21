@@ -32,8 +32,8 @@ import {
   mitigateDamage,
   maxHpFor,
   FOUNTAIN_HEAL_RADIUS_TILES,
-  FOUNTAIN_HEAL_PER_SEC,
   FOUNTAIN_HEAL_FLOAT_INTERVAL,
+  applyFountainHeal,
   HIT_IFRAMES_SEC,
   HIT_KNOCKBACK_PX,
 } from "@/game/combat";
@@ -195,6 +195,7 @@ export function useGameLoopEffect(d: {
     let playerFlash = 0;
     let playerIframes = 0;
     let fountainFloatCd = 0;
+    let fountainHpCarry = 0;
     let deadLock = false;
     let deathKick: ReturnType<typeof setTimeout> | null = null;
     let noTargetCd = 0;
@@ -416,24 +417,29 @@ export function useGameLoopEffect(d: {
           }
         }
 
-        // Plaza fountain: stand near spawn to mend — obvious + faster heal.
+        // Plaza fountain: stand near spawn to mend. Whole HP only — vitals floor.
         {
           const spawnCx = (map.spawn.x + 0.5) * TILE;
           const spawnCy = (map.spawn.y + 0.5) * TILE;
           const fountainDist = Math.hypot(player.x - spawnCx, player.y - spawnCy) / TILE;
           if (map.kind === "overworld" && fountainDist <= FOUNTAIN_HEAL_RADIUS_TILES) {
-            const maxHp = maxHpFor(snap);
-            if (snap.hp < maxHp) {
-              const before = snap.hp;
-              snap.hp = Math.min(maxHp, snap.hp + FOUNTAIN_HEAL_PER_SEC * dt);
-              if (snap.hp !== before) {
-                onVitals.current(snap.hp, snap.mana);
-                if (fountainFloatCd <= 0) {
-                  pushFloat(player.x, player.y - 16, "Fountain +HP", "#7ab8c9");
-                  fountainFloatCd = FOUNTAIN_HEAL_FLOAT_INTERVAL;
-                }
+            const healed = applyFountainHeal(
+              snap.hp,
+              maxHpFor(snap),
+              fountainHpCarry,
+              dt,
+            );
+            fountainHpCarry = healed.carry;
+            if (healed.gained > 0) {
+              snap.hp = healed.hp;
+              onVitals.current(healed.hp, snap.mana);
+              if (fountainFloatCd <= 0) {
+                pushFloat(player.x, player.y - 16, "Fountain +HP", "#7ab8c9");
+                fountainFloatCd = FOUNTAIN_HEAL_FLOAT_INTERVAL;
               }
             }
+          } else {
+            fountainHpCarry = 0;
           }
         }
         // Near-field Identify: first successful look at Needle Rat / early beast.
