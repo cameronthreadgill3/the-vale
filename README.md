@@ -58,8 +58,8 @@ Tibia-flavored, scoped tight:
 - Killing foes grants **combat XP**, **skill XP** on the skill used, a little **gold**, and a **loot roll** from that fauna's table (Needle Tooth, Bark Hide, Ashwood Blade, …)
 - Hostiles: **Needle Rat** (Beast Lv.2 F) and **Bark Hound** (Beast Lv.4 F) from Accession texture, plus **Ash-vole** (Lv.1 F) and **Gorse Fox** (Lv.3 F) on Thornreach hunting grounds; denser **Shade Wisps** deeper in hollows and **Ashveil Ember** (E-rank hollow boss stub) in the deepest Thornreach chamber; sparse briar mites — seeded; never on NPCs/gates. Thornreach overworld uses per-area spawn tables (cairn-marked hunt zones) instead of a single sparse pack.
 - Simple AI: wander → aggro → chase → melee hit on cooldown
-- Floating damage numbers; death respawns at continent spawn (hollows eject) with HP restored
-- **Death losses:** about **5% of carried gold** (at least 1g if you hold any) and **10% of carried item quantity** (rounded down). **Banked gold and items never drop.** A toast lists what was lost.
+- Floating damage numbers; death respawns at continent spawn (hollows eject) with HP restored. A short procedural bones marker sits on the death tile and fades (or clears when you walk over it and leave).
+- **Death losses:** about **5% of carried gold** (at least 1g if you hold any) and **10% of carried item quantity** (rounded down). **Banked gold and items never drop.** The death toast lists carried gold and item losses separately and reminds you the bank is safe.
 - Class flavor: Warden/Thornblade melee, Pathfinder bolts, Hearthmage/Verdant magic (Verdant soft heal-on-kill), Hollowborn short-range hybrid
 
 ### Weight, bank, safe square, Premium Backpack

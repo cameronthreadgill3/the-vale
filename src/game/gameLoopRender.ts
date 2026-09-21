@@ -67,6 +67,10 @@ import {
   notifyQuestUi,
   saveQuestLog,
 } from "@/game/quests";
+import {
+  collectBodyMarkerDepthItem,
+  tickBodyMarker,
+} from "@/game/bodyMarker";
 
 /** Position-delta walk state (avoids patching assembled gameLoop). */
 let _lastPx = 0;
@@ -294,6 +298,9 @@ export function advanceCameraAndRender(args: {
       }
     }
   }
+  tickBodyMarker(map, player);
+  const bodyMarkerItem = collectBodyMarkerDepthItem(map, originX, originY);
+  if (bodyMarkerItem) depth.push(bodyMarkerItem);
   flushDepth(ctx, depth);
   drawProjectiles(ctx, projectiles, originX, originY);
   drawFloatTexts(ctx, floatTexts, originX, originY);

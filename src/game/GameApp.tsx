@@ -127,7 +127,8 @@ import {
   quoteShipFare,
 } from "@/game/travelFares";
 import { maxHpFor, LOW_HP_RATIO, LOW_HP_TOAST } from "@/game/combat";
-import { canCarry, formatDeathToast, toastForCarryFail } from "@/game/backpack";
+import { canCarry, formatDeathToast, toastForCarryFail, DEATH_TOAST_MS } from "@/game/backpack";
+import { clearBodyMarker } from "@/game/bodyMarker";
 import {
   consumePremiumQuery,
   isPremiumDemoAllowed,
@@ -193,6 +194,7 @@ export function GameApp() {
     setArrivedFrom(null);
     setShipSpawn(null);
     setWorldEpoch(0);
+    clearBodyMarker();
     setToast("First Story · Thornvale — Survive · Learn · Progress");
     window.setTimeout(() => setToast((t) =>
       t === "First Story · Thornvale — Survive · Learn · Progress" ? null : t
@@ -218,6 +220,7 @@ export function GameApp() {
     setPackOpen(false);
     setCraftOpen(false);
     setWorldEpoch(0);
+    clearBodyMarker();
   }, []);
 
   const toggleSkills = useCallback(() => {
@@ -1115,7 +1118,7 @@ export function GameApp() {
 
   const handlePlayerDeath = useCallback(() => {
     lowHpWarnedRef.current = false;
-    let toastMsg = "You wake at the continent spawn...";
+    let toastMsg = formatDeathToast(0, []);
     setCharacter((prev) => {
       if (!prev) return prev;
       const result = applyDeath(prev);
@@ -1133,7 +1136,7 @@ export function GameApp() {
     setMapOpen(false);
     setSkillsOpen(false);
     setWorldEpoch((e) => e + 1);
-    showToast(toastMsg, 4200);
+    showToast(toastMsg, DEATH_TOAST_MS);
   }, [showToast]);
 
   if (!character) {
