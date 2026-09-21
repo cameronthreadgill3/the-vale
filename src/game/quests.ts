@@ -15,9 +15,18 @@ export const GATE_QUEST_ID = "gate-watch" as const;
 export const MISTMERE_QUEST_ID = "mistmere-crossing" as const;
 export const WATCHLINE_QUEST_ID = "the-watchline-holds" as const;
 export const ASHVEIL_QUEST_ID = "ashveil-under-the-watchline" as const;
+export const CHOIR_COUNTS_QUEST_ID = "the-choir-counts" as const;
 
 /** Depot clerk — Cress Ledger in folk.ts. */
 export const CRESS_FOLK_ID = "cress-ledger" as const;
+/** Mistmere reed-path guide — Old Reed in folk.ts. */
+export const OLD_REED_FOLK_ID = "old-reed" as const;
+/** Sunken Choir shopkeep — Choir Keeper in folk.ts. */
+export const CHOIR_KEEPER_FOLK_ID = "choir-keeper" as const;
+/** Mistmere Pier dock — sail to Sunken Choir. */
+export const MISTMERE_PIER_DOCK_ID = "mistmere-pier" as const;
+/** Choir Landing dock on Sunken Choir. */
+export const CHOIR_LANDING_DOCK_ID = "choir-landing" as const;
 /** First Ashwood Watch cairn (West Watch) — recheck on the ashwood edge. */
 export const WATCHLINE_CAIRN_ID = "cairn-west" as const;
 
@@ -28,7 +37,8 @@ export type QuestId =
   | typeof GATE_QUEST_ID
   | typeof MISTMERE_QUEST_ID
   | typeof WATCHLINE_QUEST_ID
-  | typeof ASHVEIL_QUEST_ID;
+  | typeof ASHVEIL_QUEST_ID
+  | typeof CHOIR_COUNTS_QUEST_ID;
 
 export type QuestStatus = "active" | "complete";
 
@@ -101,6 +111,19 @@ export interface AshveilQuestProgress {
   emberKilled: boolean;
 }
 
+export interface ChoirCountsQuestProgress {
+  id: typeof CHOIR_COUNTS_QUEST_ID;
+  status: QuestStatus;
+  /** Crossed Thornreach → Mistmere (gate or arrival). */
+  reachedMistmere: boolean;
+  /** Talked to Old Reed on the reed-path. */
+  talkedOldReed: boolean;
+  /** Sailed Mistmere Pier → Sunken Choir (or arrived at Choir Landing). */
+  reachedChoir: boolean;
+  /** Talked to Choir Keeper at Choir Landing. */
+  talkedChoirKeeper: boolean;
+}
+
 export type QuestLog = {
   [TEETH_QUEST_ID]?: TeethQuestProgress;
   [ASHWOOD_QUEST_ID]?: AshwoodQuestProgress;
@@ -109,6 +132,7 @@ export type QuestLog = {
   [MISTMERE_QUEST_ID]?: MistmereQuestProgress;
   [WATCHLINE_QUEST_ID]?: WatchlineQuestProgress;
   [ASHVEIL_QUEST_ID]?: AshveilQuestProgress;
+  [CHOIR_COUNTS_QUEST_ID]?: ChoirCountsQuestProgress;
 };
 
 export const TEETH_RATS_NEEDED = 3;
@@ -122,6 +146,7 @@ export const GATE_QUEST_TITLE = "Gate Watch";
 export const MISTMERE_QUEST_TITLE = "Mistmere Crossing";
 export const WATCHLINE_QUEST_TITLE = "The Watchline Holds";
 export const ASHVEIL_QUEST_TITLE = "Ashveil Under the Watchline";
+export const CHOIR_COUNTS_QUEST_TITLE = "The Choir Counts";
 
 export const TEETH_START_TOAST =
   "Rook: Ashwood edge has wrong prey - Identify first.";
@@ -164,6 +189,12 @@ export const ASHVEIL_START_TOAST =
 
 export const ASHVEIL_COMPLETE_LINE =
   "Rook: The Ember is quiet. The road's memory runs under stone now. Survive. Learn. Progress.";
+
+export const CHOIR_COUNTS_START_TOAST =
+  "Rook: The Ember is quiet, but its memory reached the water. Cross to Mistmere, ask Old Reed what the fog carried, then take the Choir's rumor home.";
+
+export const CHOIR_COUNTS_COMPLETE_LINE =
+  "Rook: The stone went quiet; the water kept count. Survive. Learn. Progress — the road remembers beyond Thornreach.";
 
 export const TEETH_REWARDS = {
   gold: 28,
@@ -212,6 +243,13 @@ export const ASHVEIL_REWARDS = {
   combatXp: 120,
   skill: "magic" as SkillId,
   skillXp: 36,
+};
+
+export const CHOIR_COUNTS_REWARDS = {
+  gold: 65,
+  combatXp: 130,
+  skill: "distance" as SkillId,
+  skillXp: 38,
 };
 
 export function loadQuestLog(): QuestLog {
@@ -306,6 +344,17 @@ export function emptyAshveilQuest(): AshveilQuestProgress {
     reachedChamber: false,
     identifiedEmber: false,
     emberKilled: false,
+  };
+}
+
+export function emptyChoirCountsQuest(): ChoirCountsQuestProgress {
+  return {
+    id: CHOIR_COUNTS_QUEST_ID,
+    status: "active",
+    reachedMistmere: false,
+    talkedOldReed: false,
+    reachedChoir: false,
+    talkedChoirKeeper: false,
   };
 }
 
@@ -428,6 +477,21 @@ export function sanitizeQuestLog(raw: unknown): QuestLog {
     };
   }
 
+  const choir = obj[CHOIR_COUNTS_QUEST_ID];
+  if (choir && typeof choir === "object") {
+    const c = choir as Record<string, unknown>;
+    const status: QuestStatus =
+      c.status === "complete" ? "complete" : "active";
+    log[CHOIR_COUNTS_QUEST_ID] = {
+      id: CHOIR_COUNTS_QUEST_ID,
+      status,
+      reachedMistmere: Boolean(c.reachedMistmere),
+      talkedOldReed: Boolean(c.talkedOldReed),
+      reachedChoir: Boolean(c.reachedChoir),
+      talkedChoirKeeper: Boolean(c.talkedChoirKeeper),
+    };
+  }
+
   return log;
 }
 
@@ -471,6 +535,12 @@ export function getAshveilQuest(
   return log?.[ASHVEIL_QUEST_ID] ?? null;
 }
 
+export function getChoirCountsQuest(
+  log: QuestLog | undefined,
+): ChoirCountsQuestProgress | null {
+  return log?.[CHOIR_COUNTS_QUEST_ID] ?? null;
+}
+
 export function isTeethActive(log: QuestLog | undefined): boolean {
   const q = getTeethQuest(log);
   return Boolean(q && q.status === "active");
@@ -503,6 +573,11 @@ export function isWatchlineActive(log: QuestLog | undefined): boolean {
 
 export function isAshveilActive(log: QuestLog | undefined): boolean {
   const q = getAshveilQuest(log);
+  return Boolean(q && q.status === "active");
+}
+
+export function isChoirCountsActive(log: QuestLog | undefined): boolean {
+  const q = getChoirCountsQuest(log);
   return Boolean(q && q.status === "active");
 }
 
@@ -542,6 +617,15 @@ export function watchlineObjectivesMet(q: WatchlineQuestProgress): boolean {
 
 export function ashveilObjectivesMet(q: AshveilQuestProgress): boolean {
   return q.reachedChamber && q.identifiedEmber && q.emberKilled;
+}
+
+export function choirCountsObjectivesMet(q: ChoirCountsQuestProgress): boolean {
+  return (
+    q.reachedMistmere &&
+    q.talkedOldReed &&
+    q.reachedChoir &&
+    q.talkedChoirKeeper
+  );
 }
 
 /** HUD lines for Teeth sticky panel. */
@@ -664,6 +748,33 @@ export function ashveilHudLines(q: AshveilQuestProgress): string[] {
   ];
 }
 
+/** HUD lines for The Choir Counts. */
+export function choirCountsHudLines(q: ChoirCountsQuestProgress): string[] {
+  if (q.status === "complete") {
+    return ["Complete - The water kept count"];
+  }
+  return [
+    q.reachedMistmere
+      ? "[done] Cross to Mistmere"
+      : "[ ] Cross Thornreach → Mistmere gate",
+    q.talkedOldReed
+      ? "[done] Talk to Old Reed"
+      : "[ ] Talk to Old Reed (reed-path)",
+    q.reachedChoir
+      ? "[done] Sail to Sunken Choir"
+      : "[ ] Sail Mistmere Pier → Sunken Choir",
+    q.talkedChoirKeeper
+      ? "[done] Talk to Choir Keeper"
+      : "[ ] Talk to Choir Keeper (Choir Landing)",
+    q.reachedMistmere &&
+    q.talkedOldReed &&
+    q.reachedChoir &&
+    q.talkedChoirKeeper
+      ? "[ ] Return to Rook (the Choir's rumor)"
+      : "[ ] Return to Rook with the Choir's rumor",
+  ];
+}
+
 
 export type QuestEventResult = {
   log: QuestLog;
@@ -682,6 +793,8 @@ export type QuestEventResult = {
   startedWatchline?: boolean;
   /** Ashveil Under the Watchline auto-started after Watchline Holds. */
   startedAshveil?: boolean;
+  /** The Choir Counts auto-started after Ashveil Under the Watchline. */
+  startedChoirCounts?: boolean;
 };
 
 /** If Teeth is complete and Ashwood missing, start Ashwood Watch. */
@@ -792,6 +905,24 @@ export function ensureAshveilAfterWatchline(log: QuestLog): {
   };
 }
 
+/** If Ashveil is complete and The Choir Counts missing, start it. */
+export function ensureChoirCountsAfterAshveil(log: QuestLog): {
+  log: QuestLog;
+  started: boolean;
+} {
+  const ashveil = getAshveilQuest(log);
+  if (!ashveil || ashveil.status !== "complete") {
+    return { log, started: false };
+  }
+  if (getChoirCountsQuest(log)) {
+    return { log, started: false };
+  }
+  return {
+    log: withChoirCountsQuest(log, emptyChoirCountsQuest()),
+    started: true,
+  };
+}
+
 export function withTeethQuest(
   log: QuestLog | undefined,
   quest: TeethQuestProgress,
@@ -839,6 +970,13 @@ export function withAshveilQuest(
   quest: AshveilQuestProgress,
 ): QuestLog {
   return { ...(log ?? {}), [ASHVEIL_QUEST_ID]: quest };
+}
+
+export function withChoirCountsQuest(
+  log: QuestLog | undefined,
+  quest: ChoirCountsQuestProgress,
+): QuestLog {
+  return { ...(log ?? {}), [CHOIR_COUNTS_QUEST_ID]: quest };
 }
 
 function finishTeethIfReady(
@@ -1207,10 +1345,97 @@ export function applyAshveilRookTalk(log: QuestLog): QuestEventResult | null {
   const q = getAshveilQuest(log);
   if (!q || q.status !== "active") return null;
   if (!ashveilObjectivesMet(q)) return null;
+  let out = withAshveilQuest(log, { ...q, status: "complete" });
+  const ensured = ensureChoirCountsAfterAshveil(out);
+  out = ensured.log;
   return {
-    log: withAshveilQuest(log, { ...q, status: "complete" }),
-    toast: ASHVEIL_COMPLETE_LINE,
+    log: out,
+    toast: ensured.started ? CHOIR_COUNTS_START_TOAST : ASHVEIL_COMPLETE_LINE,
     completedId: ASHVEIL_QUEST_ID,
+    startedChoirCounts: ensured.started,
+  };
+}
+
+/** Mark Mistmere reached for The Choir Counts (gate, ship, or stand). */
+export function applyChoirCountsMistmereReached(
+  log: QuestLog,
+): QuestEventResult | null {
+  const q = getChoirCountsQuest(log);
+  if (!q || q.status !== "active" || q.reachedMistmere) {
+    return null;
+  }
+  return {
+    log: withChoirCountsQuest(log, { ...q, reachedMistmere: true }),
+    toast: q.talkedOldReed
+      ? "Mistmere underfoot — Board Mistmere Pier for the Choir"
+      : "Mistmere underfoot — Ask Old Reed what the fog carried",
+  };
+}
+
+/** Talk to Old Reed on Mistmere during The Choir Counts. */
+export function applyChoirCountsOldReedTalk(
+  log: QuestLog,
+): QuestEventResult | null {
+  const q = getChoirCountsQuest(log);
+  if (!q || q.status !== "active" || q.talkedOldReed) {
+    return null;
+  }
+  const next: ChoirCountsQuestProgress = {
+    ...q,
+    reachedMistmere: true,
+    talkedOldReed: true,
+  };
+  return {
+    log: withChoirCountsQuest(log, next),
+    toast: "Old Reed: The fog carried a drowned count. Take the pier to the Choir.",
+  };
+}
+
+/** Mark Sunken Choir / Choir Landing reached (sail or arrival). */
+export function applyChoirCountsChoirReached(
+  log: QuestLog,
+): QuestEventResult | null {
+  const q = getChoirCountsQuest(log);
+  if (!q || q.status !== "active" || q.reachedChoir) {
+    return null;
+  }
+  return {
+    log: withChoirCountsQuest(log, { ...q, reachedChoir: true }),
+    toast: q.talkedChoirKeeper
+      ? "Choir Landing — Return to Rook with the rumor"
+      : "Choir Landing — Talk to the Choir Keeper",
+  };
+}
+
+/** Talk to Choir Keeper at Choir Landing. */
+export function applyChoirCountsChoirKeeperTalk(
+  log: QuestLog,
+): QuestEventResult | null {
+  const q = getChoirCountsQuest(log);
+  if (!q || q.status !== "active" || q.talkedChoirKeeper) {
+    return null;
+  }
+  const next: ChoirCountsQuestProgress = {
+    ...q,
+    reachedChoir: true,
+    talkedChoirKeeper: true,
+  };
+  return {
+    log: withChoirCountsQuest(log, next),
+    toast:
+      "Choir Keeper: The drowned hymn still counts. Carry the rumor home to Rook.",
+  };
+}
+
+/** Complete The Choir Counts when talking to Rook after the Choir's rumor. */
+export function applyChoirCountsRookTalk(log: QuestLog): QuestEventResult | null {
+  const q = getChoirCountsQuest(log);
+  if (!q || q.status !== "active") return null;
+  if (!choirCountsObjectivesMet(q)) return null;
+  return {
+    log: withChoirCountsQuest(log, { ...q, status: "complete" }),
+    toast: CHOIR_COUNTS_COMPLETE_LINE,
+    completedId: CHOIR_COUNTS_QUEST_ID,
   };
 }
 
@@ -1260,6 +1485,26 @@ export function applyCairnInspect(
 
 /** Rook line while sticky quests are active / complete. */
 export function rookQuestLine(log: QuestLog | undefined): string | null {
+  const choir = getChoirCountsQuest(log);
+  if (choir) {
+    if (choir.status === "complete") {
+      return CHOIR_COUNTS_COMPLETE_LINE.replace(/^Rook:\s*/, "");
+    }
+    if (!choir.reachedMistmere) {
+      return "The Ember is quiet, but its memory reached the water. Cross the Mistmere gate, ask Old Reed what the fog carried, then take the Choir's rumor home.";
+    }
+    if (!choir.talkedOldReed) {
+      return "You stand on Mistmere. Ask Old Reed — fog guide of the reed-path — what the fog carried.";
+    }
+    if (!choir.reachedChoir) {
+      return "Old Reed spoke. Board Mistmere Pier and sail to the Sunken Choir — the Choir Keeper waits at Choir Landing.";
+    }
+    if (!choir.talkedChoirKeeper) {
+      return "You reached the Choir. Talk to the Choir Keeper at Choir Landing, then bring the rumor home.";
+    }
+    return "The Choir kept count. Survive. Learn. Progress — the rumor ends when you tell me.";
+  }
+
   const ashveil = getAshveilQuest(log);
   if (ashveil) {
     if (ashveil.status === "complete") {
