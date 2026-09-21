@@ -67,6 +67,7 @@ export {
   drawHollowDungeonMarkers,
 } from "@/game/gfx/atmosphere";
 export { tickAshDrift, collectAshDriftDepthItems } from "@/game/gfx/ashDrift";
+export { tickAmbientFauna, drawAmbientFaunaFar, drawAmbientFaunaAbove } from "@/game/gfx/ambientFauna";
 export { drawViewOverlay } from "@/game/gfx/viewOverlay";
 export { drawScreenVignette, combatFocusTarget } from "@/game/gfx/screenVignette";
 export {

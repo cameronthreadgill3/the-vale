@@ -34,6 +34,7 @@ import {
 } from "@/game/gfx/atmosphere";
 import { tickAshDrift, collectAshDriftDepthItems } from "@/game/gfx/ashDrift";
 import { drawScreenVignette } from "@/game/gfx/screenVignette";
+import { tickAmbientFauna, drawAmbientFaunaFar, drawAmbientFaunaAbove } from "@/game/gfx/ambientFauna";
 import { drawViewOverlay } from "@/game/gfx/viewOverlay";
 import type { ValeCharacter } from "@/game/character";
 import { FOLK, type FolkDef, type ShopDef, type ShipDock } from "@/game/folk";
@@ -608,6 +609,8 @@ export function advanceCameraAndRender(args: {
   drawAshwoodTint(ctx, map, originX, originY, viewW, viewH);
   drawSurfaceLight(ctx, map, originX, originY, viewW, viewH, _atmosT);
   drawParallaxHaze(ctx, map, originX, originY, viewW, viewH, _atmosT);
+  tickAmbientFauna(dt, map, originX, originY, viewW, viewH, _atmosT);
+  drawAmbientFaunaFar(ctx, originX, originY, viewW, viewH, _atmosT);
   drawTownOverlays(ctx, map, player, originX, originY, _atmosT);
   if (map.kind === "overworld" && isSafeContinent(map.continentId)) {
     const fx = Math.floor((map.spawn.x + 0.5) * TILE - originX);
@@ -738,6 +741,7 @@ export function advanceCameraAndRender(args: {
   const bodyMarkerItem = collectBodyMarkerDepthItem(map, originX, originY);
   if (bodyMarkerItem) depth.push(bodyMarkerItem);
   flushDepth(ctx, depth);
+  drawAmbientFaunaAbove(ctx, originX, originY, viewW, viewH, _atmosT);
   drawKeyLight(ctx, viewW, viewH);
   drawProjectiles(ctx, projectiles, originX, originY);
   tickLootSparkles(dt);
