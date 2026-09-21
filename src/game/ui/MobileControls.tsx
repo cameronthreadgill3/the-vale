@@ -31,25 +31,31 @@ function applyJoystickToKeys(
   if (x > DEADZONE) keys.KeyD = true;
 }
 
+function mobileChromeMatch(): boolean {
+  return (
+    window.matchMedia("(hover: none)").matches ||
+    window.matchMedia("(pointer: coarse)").matches ||
+    window.matchMedia("(max-width: 768px)").matches
+  );
+}
+
 export function useShowMobileChrome(): boolean {
   const [show, setShow] = useState(() => {
     if (typeof window === "undefined") return false;
-    return (
-      window.matchMedia("(pointer: coarse)").matches ||
-      window.matchMedia("(max-width: 768px)").matches
-    );
+    return mobileChromeMatch();
   });
 
   useEffect(() => {
-    const coarse = window.matchMedia("(pointer: coarse)");
-    const narrow = window.matchMedia("(max-width: 768px)");
-    const sync = () => setShow(coarse.matches || narrow.matches);
+    const queries = [
+      window.matchMedia("(hover: none)"),
+      window.matchMedia("(pointer: coarse)"),
+      window.matchMedia("(max-width: 768px)"),
+    ];
+    const sync = () => setShow(queries.some((q) => q.matches));
     sync();
-    coarse.addEventListener("change", sync);
-    narrow.addEventListener("change", sync);
+    for (const q of queries) q.addEventListener("change", sync);
     return () => {
-      coarse.removeEventListener("change", sync);
-      narrow.removeEventListener("change", sync);
+      for (const q of queries) q.removeEventListener("change", sync);
     };
   }, []);
 
@@ -141,27 +147,27 @@ export function MobileControls({
 
   return (
     <div
-      className="mobile-chrome pointer-events-none absolute inset-0 z-40"
-      aria-hidden={false}
+      className="vale-touch-root pointer-events-auto"
+      style={{
+        position: "absolute",
+        left: "max(0.75rem, env(safe-area-inset-left, 0px))",
+        bottom: "max(0.75rem, env(safe-area-inset-bottom, 0px))",
+        zIndex: 200,
+        pointerEvents: "auto",
+        touchAction: "none",
+      }}
     >
       <div
-        className="pointer-events-auto absolute"
-        style={{
-          left: "max(0.75rem, env(safe-area-inset-left))",
-          bottom: "max(0.75rem, env(safe-area-inset-bottom))",
-        }}
+        ref={stickRef}
+        className="vale-round-control relative h-[7.5rem] w-[7.5rem] touch-none rounded-full"
+        onPointerDown={onStickDown}
+        onPointerMove={onStickMove}
+        onPointerUp={onStickUp}
+        onPointerCancel={onStickUp}
+        onLostPointerCapture={onStickUp}
+        role="presentation"
+        aria-label="Move"
       >
-        <div
-          ref={stickRef}
-          className="vale-round-control relative h-[7.5rem] w-[7.5rem] touch-none rounded-full"
-          onPointerDown={onStickDown}
-          onPointerMove={onStickMove}
-          onPointerUp={onStickUp}
-          onPointerCancel={onStickUp}
-          onLostPointerCapture={onStickUp}
-          role="presentation"
-          aria-label="Move"
-        >
           <div
             className="pointer-events-none absolute left-1/2 top-1/2 h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#c9a227]/55 bg-[#c9a227]/22 shadow-[inset_0_1px_0_rgba(232,230,217,0.12)]"
             style={{
@@ -172,7 +178,6 @@ export function MobileControls({
             Move
           </span>
         </div>
-      </div>
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import type { ValeCharacter } from "@/game/character";
 import { getItem } from "@/game/items";
 import {
@@ -7,6 +8,55 @@ import {
   formatWeightChrome,
   formatSlotsChrome,
 } from "@/game/backpack";
+import { useShowMobileChrome } from "@/game/ui/MobileControls";
+
+/**
+ * Bottom-anchor only. A top+bottom stretch grows down over the stick on
+ * Safari when the sheet is taller than the gap. 12.75rem sits above the
+ * attack cluster (~10.4rem) plus the 0.75rem control inset. Safe-area is
+ * added beside that, not inside max() (Safari drops the declaration).
+ * No backdrop, no inset-0 hit layer. Close is a separate control pinned
+ * under the notch, above the sheet, so it stays tappable if the stick fails.
+ */
+const MOBILE_DOCK_STYLE: CSSProperties = {
+  position: "absolute",
+  zIndex: 20,
+  left: "calc(0.75rem + env(safe-area-inset-left, 0px))",
+  right: "calc(0.75rem + env(safe-area-inset-right, 0px))",
+  top: "auto",
+  bottom: "calc(12.75rem + env(safe-area-inset-bottom, 0px))",
+  width: "auto",
+  maxWidth: "28rem",
+  height: "auto",
+  maxHeight:
+    "calc(100svh - 14rem - env(safe-area-inset-bottom, 0px) - env(safe-area-inset-top, 0px))",
+  marginLeft: "auto",
+  marginRight: "auto",
+  transform: "none",
+  overflow: "hidden",
+  display: "flex",
+  flexDirection: "column",
+  pointerEvents: "auto",
+  backdropFilter: "none",
+  WebkitBackdropFilter: "none",
+};
+
+const CLOSE_PIN_STYLE: CSSProperties = {
+  position: "absolute",
+  zIndex: 180,
+  top: "calc(0.35rem + env(safe-area-inset-top, 0px))",
+  right: "calc(0.75rem + env(safe-area-inset-right, 0px))",
+  left: "auto",
+  bottom: "auto",
+  minHeight: "4rem",
+  minWidth: "8.5rem",
+  padding: "0.9rem 1.4rem",
+  fontSize: "1.25rem",
+  fontWeight: 700,
+  lineHeight: 1.1,
+  pointerEvents: "auto",
+  touchAction: "manipulation",
+};
 
 function loadBand(ratio: number): "ok" | "high" | "full" {
   if (ratio >= 1) return "full";
@@ -66,9 +116,29 @@ export function BankPanel({
   const slots = character.inventory.length;
   const maxS = maxSlotsFor(character.premiumBackpack);
   const ratio = maxW > 0 ? weight / maxW : 0;
+  const docked = useShowMobileChrome();
 
   return (
-    <div className="vale-panel vale-inv-panel vale-bank-sheet vale-overlay-above-chrome vale-text-screen pointer-events-auto absolute bottom-4 left-1/2 z-30 w-[min(100%-2rem,28rem)] -translate-x-1/2 p-3.5 sm:bottom-6">
+    <>
+    {docked && (
+      <button
+        type="button"
+        onClick={onClose}
+        aria-label="Close bank"
+        className="vale-bank-close vale-bank-close-pin vale-ghost-btn"
+        style={CLOSE_PIN_STYLE}
+      >
+        Close
+      </button>
+    )}
+    <div
+      className={
+        docked
+          ? "vale-panel vale-inv-panel vale-bank-sheet vale-bank-sheet-dock vale-text-screen pointer-events-auto p-3.5"
+          : "vale-panel vale-inv-panel vale-bank-sheet vale-overlay-above-chrome vale-text-screen pointer-events-auto absolute bottom-4 left-1/2 z-30 w-[min(100%-2rem,28rem)] -translate-x-1/2 p-3.5 sm:bottom-6"
+      }
+      style={docked ? MOBILE_DOCK_STYLE : undefined}
+    >
       <div className="vale-bank-sheet-head mb-2.5 flex items-center justify-between gap-2">
         <div className="min-w-0">
           <div className="vale-screen-title">Bank · Thornreach Vault</div>
@@ -76,14 +146,16 @@ export function BankPanel({
             Gold and items here never drop on death
           </div>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label="Close bank"
-          className="vale-bank-close vale-tap vale-ghost-btn shrink-0 px-3 py-2 text-xs text-[#a8b09a]"
-        >
-          Close
-        </button>
+        {!docked && (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close bank"
+            className="vale-bank-close vale-tap vale-ghost-btn shrink-0 px-3 py-2 text-xs text-[#a8b09a]"
+          >
+            Close
+          </button>
+        )}
       </div>
 
       <div className="vale-bank-sheet-body">
@@ -112,7 +184,7 @@ export function BankPanel({
           {character.inventory.length === 0 ? (
             <p className="vale-inv-empty">No items in pack.</p>
           ) : (
-            <ul className="flex max-h-40 flex-col gap-1.5 overflow-y-auto">
+            <ul className="vale-bank-list flex max-h-40 flex-col gap-1.5 overflow-y-auto">
               {character.inventory.map((stack) => {
                 const item = getItem(stack.id);
                 return (
@@ -134,7 +206,7 @@ export function BankPanel({
           {character.bank.length === 0 ? (
             <p className="vale-inv-empty">No items in bank.</p>
           ) : (
-            <ul className="flex max-h-40 flex-col gap-1.5 overflow-y-auto">
+            <ul className="vale-bank-list flex max-h-40 flex-col gap-1.5 overflow-y-auto">
               {character.bank.map((stack) => {
                 const item = getItem(stack.id);
                 return (
@@ -188,5 +260,6 @@ export function BankPanel({
       </div>
       </div>
     </div>
+    </>
   );
 }
