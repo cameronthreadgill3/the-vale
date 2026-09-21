@@ -7,6 +7,8 @@ export {
   objectiveForTeeth,
   objectiveForAshwood,
   objectiveForHollow,
+  objectiveForGateWatch,
+  objectiveForMistmere,
   tilesAway,
   type WayfindObjective,
   type RadarDot,

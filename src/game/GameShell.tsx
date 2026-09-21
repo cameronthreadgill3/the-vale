@@ -18,7 +18,7 @@ import { CornerTabs } from "@/game/ui/CornerTabs";
 import { GameShellHud } from "@/game/ui/GameShellHud";
 import { STARTER_TIP, STARTER_TIP_MS } from "@/game/wayfinding";
 import type { EnemyKindId } from "@/game/enemies";
-import type { TeethQuestProgress, AshwoodQuestProgress, HollowQuestProgress } from "@/game/quests";
+import type { TeethQuestProgress, AshwoodQuestProgress, HollowQuestProgress, GateWatchQuestProgress, MistmereQuestProgress } from "@/game/quests";
 import type { ItemId, EquipSlot } from "@/game/items";
 
 export function GameShell({
@@ -77,6 +77,8 @@ export function GameShell({
   teethQuest,
   ashwoodQuest,
   hollowQuest,
+  gateWatchQuest,
+  mistmereQuest,
   onInspectCairn,
 }: {
   character: ValeCharacter;
@@ -140,6 +142,8 @@ export function GameShell({
   teethQuest: TeethQuestProgress | null;
   ashwoodQuest: AshwoodQuestProgress | null;
   hollowQuest: HollowQuestProgress | null;
+  gateWatchQuest: GateWatchQuestProgress | null;
+  mistmereQuest: MistmereQuestProgress | null;
   onInspectCairn: (cairnId: string) => void;
 }) {
   // Pack is HUD chrome like Skills — do not pause E / movement while it is open.
@@ -206,6 +210,8 @@ export function GameShell({
           teethQuest={teethQuest}
           ashwoodQuest={ashwoodQuest}
           hollowQuest={hollowQuest}
+          gateWatchQuest={gateWatchQuest}
+          mistmereQuest={mistmereQuest}
           onOpenPack={onTogglePack}
         />
         <div className="flex flex-wrap gap-2">

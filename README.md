@@ -114,6 +114,25 @@ After *Ashwood Watch* completes, Rook starts **Hollow Watch**: something wrong u
 
 Rewards: ~40g + ~80 combat XP + magic skill XP. Yellow arrow points at the hollow entrance, then wisps, then Rook. First Story Accession texture only — Survive · Learn · Progress.
 
+### Fourth sticky quest — Gate Watch
+
+After *Hollow Watch* completes, Rook starts **Gate Watch**: know the Mistmere road before you leave Thornreach.
+
+1. **Reach** the Mistmere gate on Thornreach (stand the tile, travel, or press E)
+2. Return to Rook to close the watch (complete toast + rewards)
+
+Rewards: ~45g + ~90 combat XP + distance skill XP. Yellow arrow points at the Mistmere gate, then Rook.
+
+### Fifth sticky quest — Mistmere Crossing
+
+After *Gate Watch* completes, Rook starts **Mistmere Crossing** (`ensureMistmereAfterGate`): the gate is known — cross it.
+
+1. **Travel** to Mistmere (gold gate from Thornreach)
+2. **Talk** to Old Reed (`old-reed`) on the reed-path
+3. Return to Rook with his word (complete toast + rewards)
+
+Rewards: ~50g + ~100 combat XP + distance skill XP. Yellow arrow points at the Mistmere gate, then Old Reed, then the Thornreach gate / Rook. First Story Accession texture only — Survive · Learn · Progress. No Lucas transplant.
+
 ### Thornreach hollows (mini-dungeon + boss stub)
 
 Thornreach hollows read as a short dungeon: rooms and corridors, a single lit **↑ Surface** exit at the entrance (the deep room is no longer a second door), denser Shade Wisps the farther you walk, and a marked **Ashveil chamber** in the deepest room.
@@ -126,7 +145,7 @@ How to find it: enter any Thornreach hollow (dark circle on the overworld), foll
 
 New cues so you are never lost on Thornreach:
 
-1. **Quest arrow + HUD line** — Active sticky quests show a yellow edge/on-screen arrow toward the current objective (cairns, hollow entrance, Shade Wisp, Needle Rat, Bark Hound, or Rook) plus a HUD line like `→ Identify Needle Rat · 12 tiles`.
+1. **Quest arrow + HUD line** — Active sticky quests show a yellow edge/on-screen arrow toward the current objective (cairns, hollow entrance, Shade Wisp, Needle Rat, Bark Hound, Mistmere gate, Old Reed, or Rook) plus a HUD line like `→ Identify Needle Rat · 12 tiles`.
 2. **Labeled landmarks + compass** — Larger high-contrast markers; names for folk, **Gate → Continent**, hollow entrance/exit, ship docks, and the plaza **Fountain** within ~8 tiles; **hunt-ground cairns** (`Name · Rec. 2–4`, plus spawn table when close) from ~12 tiles. Top-center compass (N/E/S/W) with a tiny radar of nearby interactables (gold), cairns, and the quest target (bright).
 3. **Starter tip + clear prompts** — First 60s on load: soft tip *Talk to Rook (watch) · Cairns mark hunt grounds (Rec. levels) · Bank with Cress · Fountain square is safe*. Nearest interactable prompts read as actions: `Talk · Rook`, `Talk / Bank · Cress Vault`, `Enter hollow`, `Use gate → …`, `Board ship · …`.
 
