@@ -29,12 +29,12 @@ export function setSlotStorage(userId: string, slotIndex: number): void {
 
 export function slotCharacterKey(userId: string, slotIndex: number): string {
   const safeUser = userId.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 64);
-  const i = Math.max(0, Math.min(3, Math.floor(slotIndex));
+  const i = Math.max(0, Math.min(3, Math.floor(slotIndex)));
   return `vale-char:${safeUser}:${i}`;
 }
 
 export function slotQuestKey(userId: string, slotIndex: number): string {
   const safeUser = userId.replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 64);
-  const i = Math.max(0, Math.min(3, Math.floor(slotIndex));
+  const i = Math.max(0, Math.min(3, Math.floor(slotIndex)));
   return `vale-quests:${safeUser}:${i}`;
 }
