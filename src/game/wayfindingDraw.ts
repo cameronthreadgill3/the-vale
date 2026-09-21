@@ -206,7 +206,7 @@ export function collectRadarDots(
   };
   for (const f of folk) {
     push((f.x + 0.5) * TILE, (f.y + 0.5) * TILE, "#c9a227");
-  };
+  }
   for (const dk of docks) {
     push((dk.x + 0.5) * TILE, (dk.y + 0.5) * TILE, "#7ab8c9");
   }
@@ -231,4 +231,3 @@ export function collectRadarDots(
   }
   return dots;
 }
-

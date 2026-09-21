@@ -4,12 +4,10 @@ import { type HudState, type PromptState } from "@/game/canvasConstants";
 import { levelFromXp, progressInLevel, xpToNext } from "@/game/xp";
 import { maxHpFor, maxManaFor } from "@/game/combat";
 import { getClass } from "@/game/classes";
-import { getContinent } from "@/game/continents";
 import {
   drawShipDocks,
   drawShopMarkers,
   drawNamedFolk,
-  drawFloatingLabel,
 } from "@/game/folkCanvas";
 import {
   drawEnemies,
@@ -25,6 +23,15 @@ import { computePrompt } from "@/game/gameLoopFrame";
 import { drawPlayer } from "@/game/renderPlayer";
 import type { Facing } from "@/game/playerSprites";
 import { WALK_FPS } from "@/game/playerSprites";
+import {
+  resolveQuestObjective,
+  tilesAway,
+  drawObjectivePointer,
+  drawCompass,
+  drawRadar,
+  collectRadarDots,
+  drawWorldWayfindLabels,
+} from "@/game/wayfinding";
 
 /** Position-delta walk state (avoids patching assembled gameLoop). */
 let _lastPx = 0;
@@ -136,34 +143,7 @@ export function advanceCameraAndRender(args: {
   drawShipDocks(ctx, docks, originX, originY);
   drawShopMarkers(ctx, shops, folk, originX, originY);
   drawNamedFolk(ctx, folk, originX, originY, player);
-  if (map.kind === "overworld") {
-    const ptx = player.x / TILE;
-    const pty = player.y / TILE;
-    for (const g of map.gates) {
-      if (Math.hypot(ptx - (g.x + 0.5), pty - (g.y + 0.5)) > 5.5) continue;
-      const gx = Math.floor((g.x + 0.5) * TILE - originX);
-      const gy = Math.floor((g.y + 0.5) * TILE - originY);
-      drawFloatingLabel(ctx, gx, gy - 10, getContinent(g.targetContinentId).name, "#c9a227");
-    }
-    for (const h of map.hollows) {
-      if (Math.hypot(ptx - (h.x + 0.5), pty - (h.y + 0.5)) > 5.5) continue;
-      const hx = Math.floor((h.x + 0.5) * TILE - originX);
-      const hy = Math.floor((h.y + 0.5) * TILE - originY);
-      drawFloatingLabel(ctx, hx, hy - 10, "Hollow " + (h.index + 1), "#b89ad4");
-    }
-  } else if (map.exit) {
-    const ptx = player.x / TILE;
-    const pty = player.y / TILE;
-    for (let ty = 0; ty < map.height; ty++) {
-      for (let tx = 0; tx < map.width; tx++) {
-        if (map.tiles[ty]![tx] !== "exit") continue;
-        if (Math.hypot(ptx - (tx + 0.5), pty - (ty + 0.5)) > 5.5) continue;
-        const ex = Math.floor((tx + 0.5) * TILE - originX);
-        const ey = Math.floor((ty + 0.5) * TILE - originY);
-        drawFloatingLabel(ctx, ex, ey - 10, "Exit hollow", "#c9a227");
-      }
-    }
-  }
+  drawWorldWayfindLabels(ctx, map, docks, player, originX, originY);
   mouse.worldX = originX + mouse.x;
   mouse.worldY = originY + mouse.y;
   drawEnemies(ctx, enemies, originX, originY);
@@ -188,6 +168,16 @@ export function advanceCameraAndRender(args: {
   drawPlayer(ctx, character, px, py, _facing, walkFrame, playerFlash, accent);
   drawFloatTexts(ctx, floatTexts, originX, originY);
 
+  const objective = resolveQuestObjective(player, enemies, folk, map);
+  const radarDots = collectRadarDots(player, enemies, folk, docks, map, objective);
+  drawCompass(ctx, viewW);
+  drawRadar(ctx, viewW, player, radarDots);
+  if (objective) {
+    const osx = Math.floor(objective.x - originX);
+    const osy = Math.floor(objective.y - originY);
+    drawObjectivePointer(ctx, viewW, viewH, px, py, osx, osy);
+  }
+
   hudAccum += dt;
   if (hudAccum >= 0.2) {
     hudAccum = 0;
@@ -205,6 +195,8 @@ export function advanceCameraAndRender(args: {
       maxHp: maxHpFor(character),
       mana: character.mana,
       maxMana: maxManaFor(character, cls),
+      objectiveLabel: objective ? objective.label : null,
+      objectiveDist: objective ? tilesAway(player, objective) : null,
     });
   }
   promptAccum += dt;
