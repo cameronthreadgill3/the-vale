@@ -9,6 +9,7 @@ import {
 } from "@/game/playerSprites";
 import { drawContactShadow } from "@/game/gfx/contactShadow";
 import { drawOrbDirectionalRim } from "@/game/gfx/directionalRim";
+import { drawFootstepDust } from "@/game/gfx/footstepDust";
 import { drawOrbHitFlash } from "@/game/gfx/hitFlash";
 
 export function drawPlayer(
@@ -42,6 +43,7 @@ export function drawPlayer(
       flash: playerFlash,
       glowColor: accent.accent,
     });
+    drawFootstepDust(ctx);
     return;
   }
 
@@ -60,4 +62,5 @@ export function drawPlayer(
   if (playerFlash > 0) {
     drawOrbHitFlash(ctx, px, py, PLAYER_RADIUS, playerFlash);
   }
+  drawFootstepDust(ctx);
 }

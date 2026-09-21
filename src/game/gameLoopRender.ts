@@ -33,6 +33,7 @@ import {
   drawHollowTorchSpots,
 } from "@/game/gfx/atmosphere";
 import { tickAshDrift, collectAshDriftDepthItems } from "@/game/gfx/ashDrift";
+import { tickFootstepDust } from "@/game/gfx/footstepDust";
 import { drawScreenVignette } from "@/game/gfx/screenVignette";
 import { tickAmbientFauna, drawAmbientFaunaFar, drawAmbientFaunaAbove } from "@/game/gfx/ambientFauna";
 import { drawViewOverlay } from "@/game/gfx/viewOverlay";
@@ -680,6 +681,19 @@ export function advanceCameraAndRender(args: {
 
   tickMotes(dt, map, originX, originY, viewW, viewH);
   tickAshDrift(dt, map, originX, originY, viewW, viewH, _atmosT);
+  tickFootstepDust({
+    dt,
+    map,
+    x: player.x,
+    y: player.y,
+    moving: _moving,
+    walkPhase: _walkPhase,
+    facing: _facing,
+    paused,
+    stepDist: dist,
+    originX,
+    originY,
+  });
   const groundShift = {
     x: Math.max(-2.5, Math.min(2.5, (camX - player.x) * 0.08)),
     y: Math.max(-2.5, Math.min(2.5, (camY - player.y) * 0.08)),
