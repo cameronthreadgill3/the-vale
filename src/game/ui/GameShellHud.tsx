@@ -9,16 +9,19 @@ import {
   HOLLOW_QUEST_TITLE,
   GATE_QUEST_TITLE,
   MISTMERE_QUEST_TITLE,
+  WATCHLINE_QUEST_TITLE,
   teethHudLines,
   ashwoodHudLines,
   hollowHudLines,
   gateWatchHudLines,
   mistmereHudLines,
+  watchlineHudLines,
   type TeethQuestProgress,
   type AshwoodQuestProgress,
   type HollowQuestProgress,
   type GateWatchQuestProgress,
   type MistmereQuestProgress,
+  type WatchlineQuestProgress,
 } from "@/game/quests";
 
 function equippedLine(character: ValeCharacter): string {
@@ -32,12 +35,16 @@ function equippedLine(character: ValeCharacter): string {
 }
 
 function activeQuest(
+  watchlineQuest: WatchlineQuestProgress | null,
   mistmereQuest: MistmereQuestProgress | null,
   gateWatchQuest: GateWatchQuestProgress | null,
   hollowQuest: HollowQuestProgress | null,
   ashwoodQuest: AshwoodQuestProgress | null,
   teethQuest: TeethQuestProgress | null,
 ): { title: string; lines: string[] } | null {
+  if (watchlineQuest?.status === "active") {
+    return { title: WATCHLINE_QUEST_TITLE, lines: watchlineHudLines(watchlineQuest) };
+  }
   if (mistmereQuest?.status === "active") {
     return { title: MISTMERE_QUEST_TITLE, lines: mistmereHudLines(mistmereQuest) };
   }
@@ -66,6 +73,7 @@ export function GameShellHud({
   hollowQuest,
   gateWatchQuest,
   mistmereQuest,
+  watchlineQuest,
   onOpenPack,
 }: {
   cls: ValeClass;
@@ -77,9 +85,11 @@ export function GameShellHud({
   hollowQuest: HollowQuestProgress | null;
   gateWatchQuest: GateWatchQuestProgress | null;
   mistmereQuest: MistmereQuestProgress | null;
+  watchlineQuest: WatchlineQuestProgress | null;
   onOpenPack: () => void;
 }) {
   const quest = activeQuest(
+    watchlineQuest,
     mistmereQuest,
     gateWatchQuest,
     hollowQuest,

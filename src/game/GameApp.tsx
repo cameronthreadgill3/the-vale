@@ -60,6 +60,7 @@ import {
   getHollowQuest,
   getGateWatchQuest,
   getMistmereQuest,
+  getWatchlineQuest,
   applyIdentify,
   applyEnemyKill,
   applyCairnInspect,
@@ -1098,6 +1099,7 @@ export function GameApp() {
       hollowQuest={getHollowQuest(loadQuestLog())}
       gateWatchQuest={getGateWatchQuest(loadQuestLog())}
       mistmereQuest={getMistmereQuest(loadQuestLog())}
+      watchlineQuest={getWatchlineQuest(loadQuestLog())}
       onVitals={handleVitals}
       onPlayerDeath={handlePlayerDeath}
       onPassivePrimary={(amount) => {
