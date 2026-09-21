@@ -147,7 +147,7 @@ function drawFloatingLabel(
 function folkBreath(id: string, timeSec: number): number {
   let n = 0;
   for (let i = 0; i < id.length; i++) n = (n + id.charCodeAt(i) * (i + 1)) | 0;
-  return Math.sin(timeSec * 1.6 + n * 0.17) > 0.25 ? -1 : 0;
+  return Math.sin(timeSec * 1.35 + n * 0.17) > 0 ? -1 : 0;
 }
 
 export function collectFolkDepthItems(

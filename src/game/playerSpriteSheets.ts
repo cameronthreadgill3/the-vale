@@ -1,10 +1,23 @@
 /**
  * Procedural 4×4 class walk sheets — chunky outlined pixel figures
  * (original Vale art, Tibia-adjacent proportions — NOT CipSoft sprites).
- * Pass 4: faces and gear that read at play scale on top of painted volume.
+ * Pass 5: eased contact–pass walk, hair sway, cloak lag, form volume.
  */
 import type { ClassId } from "@/game/classes";
-import { makeCanvas, ctx2d, px, shadeHex, paintVolume, addPixelVolume } from "@/game/gfx/canvasUtil";
+import { makeCanvas, ctx2d, px, shadeHex, paintVolume as paintVolumeBlock, addPixelVolume } from "@/game/gfx/canvasUtil";
+
+function paintVolume(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  fill: string,
+  highlight = 1.2,
+  shade = 0.74,
+): void {
+  paintVolumeBlock(ctx, x, y, w, h, fill, highlight, shade, true);
+}
 
 export const FRAME = 32;
 export const COLS = 4;
@@ -40,18 +53,31 @@ function skinOf(id: ClassId): { lite: string; dark: string } {
   return id === "hollowborn" ? { lite: SKIN_H, dark: SKIN_H_D } : { lite: SKIN, dark: SKIN_D };
 }
 
+/** Contact, rise, passing hold, settle. Frame 0 is the idle pose. */
 function bob(frame: number): number {
-  return frame === 1 || frame === 3 ? -1 : 0;
+  return [0, -1, -1, 0][frame] ?? 0;
 }
+/** Mild stance through the stride — no ±4px pop between poses. */
 function spread(frame: number): number {
-  return frame === 1 ? 4 : frame === 3 ? -4 : frame === 2 ? 1 : 0;
+  return [1, 2, -1, -2][frame] ?? 0;
 }
 function armSwing(frame: number): number {
-  return frame === 1 ? 3 : frame === 3 ? -3 : frame === 2 ? 1 : 0;
+  return [0, 2, -1, -2][frame] ?? 0;
 }
 function footLift(frame: number, left: boolean): number {
   if (left) return frame === 1 ? -2 : 0;
   return frame === 3 ? -2 : 0;
+}
+/** Side locks drift a beat off the stride. Skull stays with the torso. */
+function hairSway(frame: number): number {
+  return [0, -1, 0, 1][frame] ?? 0;
+}
+/**
+ * Loose cloth world Y. Hangs while the torso is up, follows through on the landing.
+ * Fitted hoods and hats stay on `bob`.
+ */
+function clothY(frame: number): number {
+  return [0, 0, 0, 1][frame] ?? 0;
 }
 
 function outlined(
@@ -114,6 +140,7 @@ function drawHead(
   facing: Facing,
   hair: string,
   skin: { lite: string; dark: string } = { lite: SKIN, dark: SKIN_D },
+  sway = 0,
 ): void {
   outlinedVolume(ctx, cx - 4, cy - 5, 8, 8, skin.lite, 1.16, 0.78);
   if (facing === "south" || facing === "north") {
@@ -125,20 +152,20 @@ function drawHead(
     px(ctx, cx - 3, cy - 1, hair, 6, 2);
     paintVolume(ctx, cx - 4, cy - 6, 8, 7, hair, 1.18, 0.7);
     px(ctx, cx - 3, cy - 5, shadeHex(hair, 1.25), 3, 2);
-    px(ctx, cx - 5, cy - 3, hair, 2, 3);
-    px(ctx, cx + 3, cy - 3, hair, 2, 3);
+    px(ctx, cx - 5 + sway, cy - 3, hair, 2, 3);
+    px(ctx, cx + 3 + sway, cy - 3, hair, 2, 3);
   } else if (facing === "south") {
     px(ctx, cx - 3, cy - 6, hair, 6, 3);
-    px(ctx, cx - 5, cy - 5, hair, 2, 3);
-    px(ctx, cx + 3, cy - 5, hair, 2, 2);
+    px(ctx, cx - 5 + sway, cy - 5, hair, 2, 3);
+    px(ctx, cx + 3 + sway, cy - 5, hair, 2, 2);
     px(ctx, cx - 3, cy - 6, shadeHex(hair, 1.22), 3, 2);
-    px(ctx, cx + 3, cy - 4, shadeHex(hair, 0.7), 2, 2);
+    px(ctx, cx + 3 + sway, cy - 4, shadeHex(hair, 0.7), 2, 2);
   } else {
     const s = facing === "west" ? -1 : 1;
     px(ctx, cx - 3, cy - 6, hair, 6, 3);
     px(ctx, cx - s * 4, cy - 5, hair, 3, 5);
     px(ctx, cx - s * 4, cy - 5, shadeHex(hair, 1.2), 2, 2);
-    px(ctx, cx - s * 5, cy - 3, hair, 2, 3);
+    px(ctx, cx - s * 5 + sway, cy - 3, hair, 2, 3);
   }
   drawFace(ctx, cx, cy, facing, skin);
 }
@@ -165,7 +192,8 @@ function drawLegs(
     px(ctx, cx + 2 + s, cy + 13 + b + liftR, "#1a1410", 3, 1);
   } else {
     const dir = facing === "west" ? -1 : 1;
-    const front = frame === 1 ? dir * 4 : frame === 3 ? dir * -3 : frame === 2 ? dir * 2 : dir;
+    const lead = [1, 3, 0, -2][frame] ?? 1;
+    const front = dir * lead;
     const lift = frame === 1 || frame === 3 ? -1 : 0;
     outlinedVolume(ctx, cx - 2 - dir, cy + 6 + b, 5, 5, pantD, 1.1, 0.68);
     outlinedVolume(ctx, cx - 2 + front, cy + 6 + b + lift, 5, 5, pant);
@@ -250,6 +278,8 @@ function drawClass(
 ): void {
   const p = P[id];
   const b = bob(frame);
+  const sway = hairSway(frame);
+  const cloth = clothY(frame);
   const side = facing === "west" ? -1 : facing === "east" ? 1 : 0;
   const sw = armSwing(frame);
   const wide = id === "thornblade" || id === "warden" || id === "hollowborn";
@@ -259,13 +289,13 @@ function drawClass(
     drawFarArm(ctx, cx, cy, facing, frame, p.b);
     drawLegs(ctx, cx, cy, facing, frame, p.c);
     drawTorso(ctx, cx, cy, facing, frame, p.a, true);
-    px(ctx, cx - 6, cy + 4 + b, p.b, 12, 3);
-    paintVolume(ctx, cx - 6, cy + 4 + b, 12, 3, p.b, 1.16, 0.7);
     drawNearArms(ctx, cx, cy, facing, frame, p.b, skin.lite);
-    drawHead(ctx, cx, cy - 8 + b, facing, p.hair, skin);
+    drawHead(ctx, cx, cy - 8 + b, facing, p.hair, skin, sway);
     outlinedVolume(ctx, cx - 5, cy - 13 + b, 10, 6, p.b, 1.18, 0.68);
-    px(ctx, cx - 6, cy - 11 + b, p.b, 2, 6);
-    px(ctx, cx + 4, cy - 11 + b, shadeHex(p.b, 0.7), 2, 6);
+    px(ctx, cx - 6 + sway, cy - 11 + cloth, p.b, 2, 6);
+    px(ctx, cx + 4 + sway, cy - 11 + cloth, shadeHex(p.b, 0.7), 2, 6);
+    px(ctx, cx - 6, cy + 4 + cloth, p.b, 12, 3);
+    paintVolume(ctx, cx - 6, cy + 4 + cloth, 12, 3, p.b, 1.16, 0.7);
     if (facing === "south") px(ctx, cx - 3, cy - 9 + b, skin.lite, 6, 3);
     drawFace(ctx, cx, cy - 8 + b, facing, skin);
     if (frame === 1 || frame === 3) {
@@ -342,29 +372,29 @@ function drawClass(
   drawLegs(ctx, cx, cy, facing, frame, shadeHex(p.a, 0.55));
   drawTorso(ctx, cx, cy, facing, frame, p.a, wide);
   drawNearArms(ctx, cx, cy, facing, frame, p.b, skin.lite);
-  drawHead(ctx, cx, cy - 8 + b, facing, p.hair, skin);
+  drawHead(ctx, cx, cy - 8 + b, facing, p.hair, skin, sway);
 
   if (id === "pathfinder") {
     outlinedVolume(ctx, cx - 6, cy - 14 + b, 12, 5, p.b, 1.18, 0.7);
     if (facing !== "north") {
       px(ctx, cx - 5, cy - 11 + b, p.b, 10, 3);
-      px(ctx, cx - 7, cy - 11 + b, p.b, 2, 2);
-      px(ctx, cx + 5, cy - 11 + b, p.b, 2, 2);
+      px(ctx, cx - 7 + sway, cy - 11 + cloth, p.b, 2, 2);
+      px(ctx, cx + 5 + sway, cy - 11 + cloth, p.b, 2, 2);
     }
     outlinedVolume(ctx, cx + (facing === "west" ? -8 : 5), cy - 2 + b, 4, 8, WOOD, 1.16, 0.7);
     px(ctx, cx + (facing === "west" ? -7 : 6), cy - 5 + b, p.c, 2, 4);
     px(ctx, cx + (facing === "west" ? -7 : 6), cy - 6 + b, "#e8e6d9", 1, 2);
   } else if (id === "thornblade") {
-    px(ctx, cx - 6, cy + 2 + b, p.b, 12, 4);
-    paintVolume(ctx, cx - 6, cy + 2 + b, 12, 4, p.b, 1.16, 0.7);
+    px(ctx, cx - 6, cy + 2 + cloth, p.b, 12, 4);
+    paintVolume(ctx, cx - 6, cy + 2 + cloth, 12, 4, p.b, 1.16, 0.7);
     outlinedVolume(ctx, cx - 5, cy - 14 + b, 10, 4, "#2a2218", 1.2, 0.65);
     if (facing === "south") {
-      px(ctx, cx - 6, cy - 12 + b, "#2a2218", 2, 4);
-      px(ctx, cx + 4, cy - 12 + b, "#2a2218", 2, 4);
+      px(ctx, cx - 6 + sway, cy - 12 + cloth, "#2a2218", 2, 4);
+      px(ctx, cx + 4 + sway, cy - 12 + cloth, "#2a2218", 2, 4);
     }
   } else if (id === "hearthmage") {
-    px(ctx, cx - 5, cy + 4 + b, p.b, 10, 5);
-    paintVolume(ctx, cx - 5, cy + 4 + b, 10, 5, p.b, 1.16, 0.7);
+    px(ctx, cx - 5, cy + 4 + cloth, p.b, 10, 5);
+    paintVolume(ctx, cx - 5, cy + 4 + cloth, 10, 5, p.b, 1.16, 0.7);
     outlinedVolume(ctx, cx - 8, cy - 12 + b, 16, 4, p.a, 1.18, 0.72);
     px(ctx, cx - 5, cy - 18 + b, p.a, 10, 8);
     paintVolume(ctx, cx - 5, cy - 18 + b, 10, 8, p.a, 1.2, 0.72);
@@ -372,11 +402,11 @@ function drawClass(
     px(ctx, cx - 1, cy - 20 + b, p.c, 2, 3);
     px(ctx, cx - 1, cy - 1 + b, p.c, 2, 3);
   } else if (id === "verdant") {
-    px(ctx, cx - 5, cy + b, p.c, 10, 3);
-    paintVolume(ctx, cx - 5, cy + b, 10, 3, p.c, 1.18, 0.78);
+    px(ctx, cx - 5 + sway, cy + cloth, p.c, 10, 3);
+    paintVolume(ctx, cx - 5 + sway, cy + cloth, 10, 3, p.c, 1.18, 0.78);
     outlinedVolume(ctx, cx - 5, cy - 14 + b, 10, 5, "#c8a060", 1.18, 0.72);
-    px(ctx, cx - 7, cy - 13 + b, p.c, 3, 4);
-    px(ctx, cx + 4, cy - 13 + b, p.c, 3, 4);
+    px(ctx, cx - 7 + sway, cy - 13 + cloth, p.c, 3, 4);
+    px(ctx, cx + 4 + sway, cy - 13 + cloth, p.c, 3, 4);
     px(ctx, cx - 2, cy - 16 + b, "#6ab84a", 4, 3);
     px(ctx, cx - 7, cy - 14 + b, shadeHex(p.c, 1.2), 2, 2);
   } else if (id === "warden") {
@@ -406,7 +436,7 @@ export function paintClassSheet(classId: ClassId): HTMLCanvasElement | Offscreen
       drawClass(ctx, classId, col * FRAME + FRAME / 2, row * FRAME + FRAME / 2 + 2, facing, col);
     }
   }
-  addPixelVolume(ctx, SHEET, SHEET, 0.16, 0.2);
+  addPixelVolume(ctx, SHEET, SHEET, 0.18, 0.24);
   return canvas;
 }
 
@@ -416,7 +446,7 @@ export function paintSouthPreview(classId: ClassId): HTMLCanvasElement | Offscre
   ctx.clearRect(0, 0, FRAME, FRAME);
   ctx.imageSmoothingEnabled = false;
   drawClass(ctx, classId, FRAME / 2, FRAME / 2 + 2, "south", 0);
-  addPixelVolume(ctx, FRAME, FRAME, 0.16, 0.2);
+  addPixelVolume(ctx, FRAME, FRAME, 0.18, 0.24);
   return canvas;
 }
 

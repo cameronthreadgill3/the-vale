@@ -1,9 +1,22 @@
 /**
  * Original creature pixel sprites for The Vale (character/creature polish).
  * Needle Rat, Bark Hound, Ash-vole, Gorse Fox, Briar Mite, Shade Wisp,
- * Pass 4: sharper silhouettes at play scale; painted volume kept.
+ * Pass 5: eased breath and stride, ear and tail lag, form volume.
  */
-import { makeCanvas, ctx2d, px, shadeHex, paintVolume, drawSoftShadow, drawWithWarmRim, addPixelVolume, GROUND_SHADOW_ALPHA } from "@/game/gfx/canvasUtil";
+import { makeCanvas, ctx2d, px, shadeHex, paintVolume as paintVolumeBlock, drawSoftShadow, drawWithWarmRim, addPixelVolume, GROUND_SHADOW_ALPHA } from "@/game/gfx/canvasUtil";
+
+function paintVolume(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  fill: string,
+  highlight = 1.18,
+  shade = 0.72,
+): void {
+  paintVolumeBlock(ctx, x, y, w, h, fill, highlight, shade, true);
+}
 
 export type CreatureKindId =
   | "briar-mite"
@@ -22,17 +35,29 @@ const cache = new Map<string, Sheet>();
 
 export function creatureWalkFrame(animT: number, moving: boolean): number {
   if (!moving) {
-    return Math.floor(animT * 2.2) % 2 === 0 ? 0 : 1;
+    // Settled pose and a high breath — not a half-stride.
+    return Math.floor(animT * 1.45) % 2 === 0 ? 0 : 2;
   }
-  return Math.floor(animT * 9) % CREATURE_WALK_FRAMES;
+  return Math.floor(animT * 8) % CREATURE_WALK_FRAMES;
 }
 
+/** Contact, rise, passing hold, settle. */
 function bobY(frame: number): number {
-  return frame === 1 || frame === 3 ? -1 : 0;
+  return [0, -1, -1, 0][frame] ?? 0;
 }
 
 function stride(frame: number): number {
-  return frame === 1 ? 2 : frame === 3 ? -2 : 0;
+  return [0, 2, 0, -2][frame] ?? 0;
+}
+
+/** Ears perk after the body rises and hold through the landing. */
+function earLag(frame: number): number {
+  return frame === 2 || frame === 3 ? -1 : 0;
+}
+
+/** Tail lashes opposite the lead foot, then holds. */
+function tailLag(frame: number): number {
+  return [0, -1, 1, 1][frame] ?? 0;
 }
 
 function paintNeedleRat(ctx: CanvasRenderingContext2D, flash: boolean, frame: number): void {
@@ -45,7 +70,7 @@ function paintNeedleRat(ctx: CanvasRenderingContext2D, flash: boolean, frame: nu
   const claw = "#2a241c";
   const by = bobY(frame);
   const s = stride(frame);
-  const tail = frame === 1 ? -1 : frame === 3 ? 1 : 0;
+  const tail = tailLag(frame);
   const jaw = frame === 2 ? 1 : 0;
   // body — dark underlay + NW ridge / SE belly weight
   px(ctx, 6, 14 + by, dark, 19, 12);
@@ -79,8 +104,8 @@ function paintNeedleRat(ctx: CanvasRenderingContext2D, flash: boolean, frame: nu
   // whiskers
   px(ctx, 26, 14 + by, "#d8d0c0", 4, 1);
   px(ctx, 26, 18 + by, "#d8d0c0", 3, 1);
-  // ear twitch
-  const ear = frame === 1 ? -1 : 0;
+  // ear twitch — perks after the body rises
+  const ear = earLag(frame);
   px(ctx, 19, 8 + by + ear, dark, 4, 5);
   px(ctx, 20, 8 + by + ear, fur, 2, 4);
   px(ctx, 22, 9 + by, dark, 3, 3);
@@ -117,7 +142,7 @@ function paintBarkHound(ctx: CanvasRenderingContext2D, flash: boolean, frame: nu
   const tooth = "#f0eee4";
   const by = bobY(frame);
   const s = stride(frame);
-  const hack = frame === 2 ? -1 : 0;
+  const hack = earLag(frame);
   // torso — heavier SE underbelly, NW hide gleam
   px(ctx, 4, 12 + by, dark, 21, 14);
   px(ctx, 6, 11 + by, hide, 17, 13);
@@ -146,7 +171,7 @@ function paintBarkHound(ctx: CanvasRenderingContext2D, flash: boolean, frame: nu
   px(ctx, 24, 11 + by, "#1a1814", 1, 1);
   px(ctx, 25, 10 + by, "#f8f4e8", 1, 1);
   // snarl
-  const jaw = frame === 1 || frame === 2 ? 1 : 0;
+  const jaw = frame === 1 || frame === 3 ? 1 : 0;
   px(ctx, 26, 15 + by + jaw, tooth, 1, 4);
   px(ctx, 28, 14 + by + jaw, tooth, 1, 5);
   px(ctx, 27, 16 + by + jaw, tooth, 1, 3);
@@ -168,7 +193,7 @@ function paintBarkHound(ctx: CanvasRenderingContext2D, flash: boolean, frame: nu
   px(ctx, 7 + s, 28 + by, "#1a1814", 3, 1);
   px(ctx, 16 + s, 28 + by, "#1a1814", 3, 1);
   // cropped hanging tail (not a fox plume)
-  const tw = frame === 3 ? 1 : 0;
+  const tw = frame === 2 || frame === 3 ? 1 : 0;
   px(ctx, 2, 16 + by, bark, 4, 5);
   paintVolume(ctx, 2, 16 + by, 4, 5, bark, 1.16, 0.72);
   px(ctx, 1, 20 + by + tw, dark, 3, 5);
@@ -184,6 +209,7 @@ function paintBriarMite(ctx: CanvasRenderingContext2D, flash: boolean, frame: nu
   const by = bobY(frame);
   const s = stride(frame);
   const open = frame % 2 === 1 ? 1 : 0;
+  const crown = earLag(frame);
   // segmented body — shell dome NW, belly SE
   px(ctx, 8, 13 + by, dark, 16, 13);
   px(ctx, 10, 12 + by, shell, 12, 12);
@@ -196,9 +222,9 @@ function paintBriarMite(ctx: CanvasRenderingContext2D, flash: boolean, frame: nu
   px(ctx, 16, 21 + by, shadeHex(shell, 0.62), 6, 2);
   // thorn crown
   px(ctx, 8, 10 + by, thorn, 2, 4);
-  px(ctx, 14, 8 + by, dark, 3, 5);
-  px(ctx, 14, 7 + by, thorn, 3, 3);
-  px(ctx, 14, 7 + by, shadeHex(thorn, 1.25), 2, 2);
+  px(ctx, 14, 8 + by + crown, dark, 3, 5);
+  px(ctx, 14, 7 + by + crown, thorn, 3, 3);
+  px(ctx, 14, 7 + by + crown, shadeHex(thorn, 1.25), 2, 2);
   px(ctx, 21, 10 + by, thorn, 2, 4);
   px(ctx, 11, 10 + by, thorn, 2, 3);
   px(ctx, 18, 9 + by, thorn, 2, 4);
@@ -206,7 +232,7 @@ function paintBriarMite(ctx: CanvasRenderingContext2D, flash: boolean, frame: nu
   px(ctx, 23, 12 + by, thorn, 3, 2);
   px(ctx, 5, 16 + by, dark, 3, 2);
   px(ctx, 24, 16 + by, dark, 3, 2);
-  px(ctx, 14, 5 + by, thorn, 2, 3);
+  px(ctx, 14, 5 + by + crown, thorn, 2, 3);
   // mandibles
   px(ctx, 21 + open, 17 + by, dark, 4, 3);
   px(ctx, 24 + open, 18 + by, "#e8e6d9", 1, 3);
@@ -231,8 +257,9 @@ function paintShadeWisp(ctx: CanvasRenderingContext2D, flash: boolean, frame: nu
   const glow = flash ? "#d8d0c0" : "#9a88c0";
   const dark = flash ? "#a89880" : "#2a2038";
   const hot = flash ? "#fff8e8" : "#e8e0f8";
-  const by = bobY(frame) - (frame === 2 ? 1 : 0);
-  const sway = stride(frame);
+  const by = bobY(frame);
+  const sway = frame === 1 ? 1 : frame === 3 ? -1 : 0;
+  const trail = [0, 0, 1, -1][frame] ?? 0;
   const pulse = frame === 1 || frame === 3 ? 1 : 0;
   // outer flame — darker envelope, hotter NW core (keep diamond, don't flatten)
   px(ctx, 13 + sway, 5 + by, dark, 6, 6);
@@ -255,8 +282,8 @@ function paintShadeWisp(ctx: CanvasRenderingContext2D, flash: boolean, frame: nu
   px(ctx, 15 + sway, 15 + by, hot, 2, 1);
   // trailing wisps
   px(ctx, 14 + sway, 24 + by, dark, 4, 5);
-  px(ctx, 12 + sway - pulse, 26 + by, core, 2, 4);
-  px(ctx, 18 + sway + pulse, 25 + by, glow, 2, 4);
+  px(ctx, 12 + sway - trail, 26 + by, core, 2, 4);
+  px(ctx, 18 + sway + trail, 25 + by, glow, 2, 4);
   if (frame % 2 === 1) {
     px(ctx, 8 + sway, 18 + by, glow, 2, 3);
     px(ctx, 22 + sway, 17 + by, core, 2, 3);
@@ -286,6 +313,7 @@ function paintAshveilEmber(ctx: CanvasRenderingContext2D, flash: boolean, frame:
   const rim = flash ? "#6a5840" : "#0c0a0c";
   const by = bobY(frame);
   const sway = frame === 1 ? 1 : frame === 3 ? -1 : 0;
+  const flame = [0, 0, 1, -1][frame] ?? 0;
   const pulse = frame === 1 || frame === 3 ? 1 : 0;
   const lick = frame === 2 ? 2 : pulse ? 1 : 0;
 
@@ -352,16 +380,16 @@ function paintAshveilEmber(ctx: CanvasRenderingContext2D, flash: boolean, frame:
   px(ctx, 13 + sway, 27 + by, ashL, 2, 2);
   px(ctx, 10 + sway, 25 + by, rim, 12, 1);
 
-  // Jagged flame crown LAST so the hood cannot bury it.
-  px(ctx, 14 + sway, 6 + by - lick, ember, 4, 4);
-  px(ctx, 15 + sway, 4 + by - lick, emberH, 2, 3);
-  px(ctx, 15 + sway, 3 + by - lick, heart, 1, 2);
-  px(ctx, 11 + sway, 7 + by, ember, 3, 3);
-  px(ctx, 11 + sway, 6 + by, emberH, 2, 2);
-  px(ctx, 19 + sway, 6 + by, ember, 3, 4);
-  px(ctx, 20 + sway, 5 + by, emberH, 2, 2);
-  px(ctx, 8 + sway, 8 + by, ember, 3, 3);
-  px(ctx, 22 + sway, 7 + by, ember, 3, 3);
+  // Jagged flame crown LAST so the hood cannot bury it. Crown lags the hull.
+  px(ctx, 14 + flame, 6 + by - lick, ember, 4, 4);
+  px(ctx, 15 + flame, 4 + by - lick, emberH, 2, 3);
+  px(ctx, 15 + flame, 3 + by - lick, heart, 1, 2);
+  px(ctx, 11 + flame, 7 + by, ember, 3, 3);
+  px(ctx, 11 + flame, 6 + by, emberH, 2, 2);
+  px(ctx, 19 + flame, 6 + by, ember, 3, 4);
+  px(ctx, 20 + flame, 5 + by, emberH, 2, 2);
+  px(ctx, 8 + flame, 8 + by, ember, 3, 3);
+  px(ctx, 22 + flame, 7 + by, ember, 3, 3);
   if (pulse || lick) {
     px(ctx, 16 + sway, 2 + by - lick, spark, 1, 2);
     px(ctx, 10 + sway, 5 + by, spark, 1, 2);
@@ -391,8 +419,9 @@ function paintAshVole(ctx: CanvasRenderingContext2D, flash: boolean, frame: numb
   const claw = "#2a241c";
   const by = bobY(frame);
   const s = stride(frame);
-  const ear = frame === 1 ? -1 : 0;
+  const ear = earLag(frame);
   const snuff = frame === 2 ? 1 : 0;
+  const wag = [0, 1, 1, -1][frame] ?? 0;
   const puff = frame === 1 || frame === 3;
   // chubby oval — lower and rounder than Needle Rat; SE belly, NW back
   px(ctx, 7, 16 + by, dark, 16, 10);
@@ -436,11 +465,11 @@ function paintAshVole(ctx: CanvasRenderingContext2D, flash: boolean, frame: numb
   px(ctx, 22 - s, 25 + by + liftF, claw, 2, 2 - liftF);
   px(ctx, 11 + s, 26 + by, dark, 2, 1);
   px(ctx, 19 + s, 26 + by, dark, 2, 1);
-  // stub tail
+  // stub tail — lifts a beat after the shuffle
   px(ctx, 6, 19 + by, dark, 3, 3);
-  px(ctx, 5, 17 + by, fur, 3, 3);
-  paintVolume(ctx, 5, 17 + by, 3, 3, fur, 1.14, 0.76);
-  px(ctx, 5, 16 + by, ash, 2, 2);
+  px(ctx, 5, 17 + by - wag, fur, 3, 3);
+  paintVolume(ctx, 5, 17 + by - wag, 3, 3, fur, 1.14, 0.76);
+  px(ctx, 5, 16 + by - wag, ash, 2, 2);
   // outline hint
   px(ctx, 8, 16 + by, "#1a1814", 1, 9);
   px(ctx, 9, 24 + by, "#1a1814", 13, 1);
@@ -463,8 +492,8 @@ function paintGorseFox(ctx: CanvasRenderingContext2D, flash: boolean, frame: num
   const gleam = "#d4a060";
   const by = bobY(frame);
   const s = stride(frame);
-  const hack = frame === 2 ? -1 : 0;
-  const tw = frame === 1 ? 1 : frame === 3 ? -1 : 0;
+  const hack = earLag(frame);
+  const tw = [0, 1, 1, -1][frame] ?? 0;
   // lean torso — brighter rust than Bark Hound hide; NW gleam, SE chest
   px(ctx, 5, 14 + by, dark, 19, 11);
   px(ctx, 7, 13 + by, hide, 16, 10);
@@ -485,7 +514,7 @@ function paintGorseFox(ctx: CanvasRenderingContext2D, flash: boolean, frame: num
   px(ctx, 23, 11 + by, eye, 2, 2);
   px(ctx, 24, 11 + by, "#f0e8d0", 1, 1);
   // small canines (not Bark Hound hooks)
-  const jaw = frame === 1 || frame === 2 ? 1 : 0;
+  const jaw = frame === 1 || frame === 3 ? 1 : 0;
   px(ctx, 26, 16 + by + jaw, "#f0eee4", 1, 2);
   px(ctx, 27, 16 + by + jaw, "#f0eee4", 1, 2);
   // pointed ears
@@ -565,7 +594,7 @@ function paintCreature(
       break;
   }
   if (id !== "shade-wisp" && id !== "ashveil-ember") {
-    addPixelVolume(ctx, CREATURE_FRAME, CREATURE_FRAME, 0.14, 0.18);
+    addPixelVolume(ctx, CREATURE_FRAME, CREATURE_FRAME, 0.16, 0.22);
   }
   return c;
 }
