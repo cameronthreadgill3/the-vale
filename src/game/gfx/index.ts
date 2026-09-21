@@ -66,6 +66,7 @@ export { drawFolkSprite, getFolkSheet, FOLK_FRAME, warmFolkSheets } from "@/game
 export {
   drawVignette,
   drawAshwoodTint,
+  drawCanopyDapple,
   drawParallaxHaze,
   drawSurfaceLight,
   drawKeyLight,

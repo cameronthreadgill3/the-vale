@@ -4,14 +4,18 @@
  * Plaza lanterns and ashwood path lamps share one warm pulse, kept under labels.
  * Open plaza doors and gate arches spill a quieter warm pool onto the step.
  * Thornreach cobble and the path stones at the square carry a slow wet sheen.
+ * Ashwood crowns lay a slow dapple on the open floor beside the grove umbra.
  */
 import { TILE, type WorldMap } from "@/game/world";
 import { propsOnContinent } from "@/game/world/town";
 import { fountainFrameAt, tileVariantAt, wetPuddleGlint, wetStoneCatches } from "@/game/gfx/tiles";
 import { drawSoftShadow } from "@/game/gfx/canvasUtil";
+import { drawCanopyDapple } from "@/game/gfx/canopyDapple";
 import { drawDoorGateSpill } from "@/game/gfx/doorSpill";
 import { drawPathLampGlow, warmFlamePulse } from "@/game/gfx/lampFlicker";
 import type { DepthItem } from "@/game/gfx/depth";
+
+export { drawCanopyDapple };
 
 /** Soft screen vignette; alpha kept modest so HUD / labels stay clear. */
 export function drawVignette(
@@ -31,7 +35,6 @@ export function drawVignette(
   ctx.fillRect(0, 0, viewW, viewH);
 }
 
-/** Ground umbra under ashwood plus a faint north silver rim — overworld only. */
 function stoneNeighbors(map: WorldMap, tx: number, ty: number): number {
   let n = 0;
   for (let dy = -1; dy <= 1; dy++) {
@@ -46,6 +49,7 @@ function stoneNeighbors(map: WorldMap, tx: number, ty: number): number {
   return n;
 }
 
+/** Ground umbra under ashwood, a faint north silver rim, then floor dapples. */
 export function drawAshwoodTint(
   ctx: CanvasRenderingContext2D,
   map: WorldMap,
@@ -53,6 +57,7 @@ export function drawAshwoodTint(
   originY: number,
   viewW: number,
   viewH: number,
+  timeSec: number,
 ): void {
   if (map.kind !== "overworld") return;
   const startTX = Math.max(0, Math.floor(originX / TILE) - 1);
@@ -96,6 +101,7 @@ export function drawAshwoodTint(
     }
   }
   ctx.restore();
+  drawCanopyDapple(ctx, map, originX, originY, viewW, viewH, timeSec);
 }
 
 function walkable(map: WorldMap, tx: number, ty: number): boolean {
