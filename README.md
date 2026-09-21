@@ -244,6 +244,17 @@ After *The Embercoil Gate Opens* completes, Rook starts **The Coil Remembers** (
 
 Rewards: ~100g + ~200 combat XP + distance skill XP. Yellow arrow: Embercoil underfoot (or Ashen/Pale → Embercoil gate if not there) → nearest Ash-vole on Embercoil → nearest Gorse Fox on Embercoil → return gate(s) → Rook. Reuses existing gates and fauna (ash-vole / gorse-fox pads while sticky) — no new geometry. First Story Accession texture only — Survive · Learn · Progress. No Lucas transplant.
 
+### Sixteenth sticky quest — The Choir Remembers
+
+After *The Coil Remembers* completes, Rook starts **The Choir Remembers** (`ensureChoirRemembersAfterCoil`): the coil's heat measure reached the drowned cloisters — sail back to the Sunken Choir, name the briar-mite that skitters the wet stone, quiet one bark-hound packing the hymn skirts, and bring the Choir's measure home.
+
+1. **Reach** Sunken Choir overworld via Mistmere Pier → **Choir Landing** (Nightglass Wharf → Choir, or Mistmere/Nightglass gates, also accepted)
+2. **Identify** 1 **Briar Mite** (`briar-mite`) on Sunken Choir (near-field look / Name · Rank)
+3. **Defeat** 1 **Bark Hound** (`bark-hound`) on Sunken Choir
+4. Return by dock/gate and report to **Rook**
+
+Rewards: ~105g + ~210 combat XP + shielding skill XP. Yellow arrow: coastal dock toward Choir (or Mistmere/Nightglass gate) → nearest Briar Mite on Sunken Choir → nearest Bark Hound on Sunken Choir → return dock/gate(s) → Rook. Reuses existing docks, gates, and fauna (briar-mite / bark-hound pads while sticky) — no new geometry. Choir Keeper is optional flavor only. First Story Accession texture only — Survive · Learn · Progress. No Lucas transplant.
+
 ### Thornreach hollows (mini-dungeon + boss stub)
 
 Thornreach hollows read as a short dungeon: rooms and corridors, a single lit **↑ Surface** exit at the entrance (the deep room is no longer a second door), denser Shade Wisps the farther you walk, and a marked **Ashveil chamber** in the deepest room.

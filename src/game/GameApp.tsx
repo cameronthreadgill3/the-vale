@@ -74,6 +74,9 @@ import {
   COIL_START_TOAST,
   COIL_REWARDS,
   COIL_COMPLETE_LINE,
+  CHOIR_REMEMBERS_START_TOAST,
+  CHOIR_REMEMBERS_REWARDS,
+  CHOIR_REMEMBERS_COMPLETE_LINE,
   TEETH_QUEST_ID,
   ASHWOOD_QUEST_ID,
   HOLLOW_QUEST_ID,
@@ -89,6 +92,7 @@ import {
   ASHEN_QUEST_ID,
   EMBERCOIL_QUEST_ID,
   COIL_QUEST_ID,
+  CHOIR_REMEMBERS_QUEST_ID,
   CRESS_FOLK_ID,
   OLD_REED_FOLK_ID,
   CHOIR_KEEPER_FOLK_ID,
@@ -110,6 +114,7 @@ import {
   getAshenQuest,
   getEmbercoilQuest,
   getCoilQuest,
+  getChoirRemembersQuest,
   applyIdentify,
   applyEnemyKill,
   applyCairnInspect,
@@ -144,6 +149,8 @@ import {
   applyEmbercoilRookTalk,
   applyCoilReached,
   applyCoilRookTalk,
+  applyChoirRemembersReached,
+  applyChoirRemembersRookTalk,
   withTeethQuest,
   ensureAshwoodAfterTeeth,
   ensureHollowAfterAshwood,
@@ -159,6 +166,7 @@ import {
   ensureAshenAfterPale,
   ensureEmbercoilAfterAshen,
   ensureCoilAfterEmbercoil,
+  ensureChoirRemembersAfterCoil,
   rookQuestLine,
   loadQuestLog,
   saveQuestLog,
@@ -458,6 +466,18 @@ export function GameApp() {
             return true;
           }
         }
+        const choirRemembers = applyChoirRemembersReached(loadQuestLog());
+        if (choirRemembers) {
+          saveQuestLog(choirRemembers.log);
+          if (choirRemembers.toast) {
+            showToast(choirRemembers.toast);
+            window.setTimeout(
+              () => setToast((t) => (t === choirRemembers.toast ? null : t)),
+              2800,
+            );
+            return true;
+          }
+        }
       }
       if (target === "nightglass-coast") {
         const night = applyWharfNightglassReached(loadQuestLog());
@@ -659,6 +679,7 @@ export function GameApp() {
     }
     if (folkId === "rook" && character) {
       const turnIn =
+        applyChoirRemembersRookTalk(loadQuestLog()) ??
         applyCoilRookTalk(loadQuestLog()) ??
         applyEmbercoilRookTalk(loadQuestLog()) ??
         applyAshenRookTalk(loadQuestLog()) ??
@@ -679,14 +700,32 @@ export function GameApp() {
             ...prev,
             skillXp: { ...prev.skillXp },
           };
-          if (turnIn.completedId === COIL_QUEST_ID) {
+          if (turnIn.completedId === CHOIR_REMEMBERS_QUEST_ID) {
+            next = awardCombatXp(next, CHOIR_REMEMBERS_REWARDS.combatXp);
+            next = { ...next, skillXp: { ...next.skillXp } };
+            awardSkillXp(
+              next,
+              CHOIR_REMEMBERS_REWARDS.skill,
+              CHOIR_REMEMBERS_REWARDS.skillXp,
+            );
+            next = setGold(next, next.gold + CHOIR_REMEMBERS_REWARDS.gold);
+            next = { ...next, skillXp: { ...next.skillXp } };
+            queueMicrotask(() => {
+              showToast(CHOIR_REMEMBERS_COMPLETE_LINE);
+              setSkillTick((t) => t + 1);
+            });
+          } else if (turnIn.completedId === COIL_QUEST_ID) {
             next = awardCombatXp(next, COIL_REWARDS.combatXp);
             next = { ...next, skillXp: { ...next.skillXp } };
             awardSkillXp(next, COIL_REWARDS.skill, COIL_REWARDS.skillXp);
             next = setGold(next, next.gold + COIL_REWARDS.gold);
             next = { ...next, skillXp: { ...next.skillXp } };
             queueMicrotask(() => {
-              showToast(COIL_COMPLETE_LINE);
+              showToast(
+                turnIn.startedChoirRemembers
+                  ? CHOIR_REMEMBERS_START_TOAST
+                  : COIL_COMPLETE_LINE,
+              );
               setSkillTick((t) => t + 1);
             });
           } else if (turnIn.completedId === EMBERCOIL_QUEST_ID) {
@@ -1113,6 +1152,14 @@ export function GameApp() {
             return;
           }
         }
+        const choirRemembers = applyChoirRemembersReached(loadQuestLog());
+        if (choirRemembers) {
+          saveQuestLog(choirRemembers.log);
+          if (choirRemembers.toast) {
+            showToast(choirRemembers.toast);
+            return;
+          }
+        }
       }
       if (dest === "nightglass-coast") {
         const night = applyWharfNightglassReached(loadQuestLog());
@@ -1373,6 +1420,19 @@ export function GameApp() {
     );
   }, [character]);
 
+  // Quest 16: auto-start The Choir Remembers once The Coil Remembers is complete.
+  useEffect(() => {
+    if (!character) return;
+    const ensured = ensureChoirRemembersAfterCoil(loadQuestLog());
+    if (!ensured.started) return;
+    saveQuestLog(ensured.log);
+    setToast(CHOIR_REMEMBERS_START_TOAST);
+    window.setTimeout(
+      () => setToast((t) => (t === CHOIR_REMEMBERS_START_TOAST ? null : t)),
+      3600,
+    );
+  }, [character]);
+
   // Mistmere Crossing: mark arrival whenever the walker stands on Mistmere.
   useEffect(() => {
     if (!character) return;
@@ -1399,16 +1459,25 @@ export function GameApp() {
     }
   }, [character]);
 
-  // The Choir Counts: mark Sunken Choir / Choir Landing arrival.
+  // The Choir Counts / The Choir Remembers: mark Sunken Choir / Choir Landing arrival.
   useEffect(() => {
     if (!character) return;
     if (character.continentId !== "sunken-choir") return;
-    const result = applyChoirCountsChoirReached(loadQuestLog());
-    if (!result) return;
-    saveQuestLog(result.log);
-    if (result.toast) {
-      setToast(result.toast);
-      window.setTimeout(() => setToast((t) => (t === result.toast ? null : t)), 2800);
+    const choirCounts = applyChoirCountsChoirReached(loadQuestLog());
+    if (choirCounts) {
+      saveQuestLog(choirCounts.log);
+      if (choirCounts.toast) {
+        setToast(choirCounts.toast);
+        window.setTimeout(() => setToast((t) => (t === choirCounts.toast ? null : t)), 2800);
+      }
+      return;
+    }
+    const choirRemembers = applyChoirRemembersReached(loadQuestLog());
+    if (!choirRemembers) return;
+    saveQuestLog(choirRemembers.log);
+    if (choirRemembers.toast) {
+      setToast(choirRemembers.toast);
+      window.setTimeout(() => setToast((t) => (t === choirRemembers.toast ? null : t)), 2800);
     }
   }, [character]);
 
@@ -1698,7 +1767,25 @@ export function GameApp() {
         next = setGold(next, next.gold + COIL_REWARDS.gold);
         next = { ...next, skillXp: { ...next.skillXp } };
         queueMicrotask(() => {
-          showToast(COIL_COMPLETE_LINE);
+          showToast(
+            result.startedChoirRemembers
+              ? CHOIR_REMEMBERS_START_TOAST
+              : COIL_COMPLETE_LINE,
+          );
+          setSkillTick((t) => t + 1);
+        });
+      } else if (result.completedId === CHOIR_REMEMBERS_QUEST_ID) {
+        next = awardCombatXp(next, CHOIR_REMEMBERS_REWARDS.combatXp);
+        next = { ...next, skillXp: { ...next.skillXp } };
+        awardSkillXp(
+          next,
+          CHOIR_REMEMBERS_REWARDS.skill,
+          CHOIR_REMEMBERS_REWARDS.skillXp,
+        );
+        next = setGold(next, next.gold + CHOIR_REMEMBERS_REWARDS.gold);
+        next = { ...next, skillXp: { ...next.skillXp } };
+        queueMicrotask(() => {
+          showToast(CHOIR_REMEMBERS_COMPLETE_LINE);
           setSkillTick((t) => t + 1);
         });
       } else if (result.toast) {
@@ -2033,6 +2120,7 @@ export function GameApp() {
       ashenQuest={getAshenQuest(loadQuestLog())}
       embercoilQuest={getEmbercoilQuest(loadQuestLog())}
       coilQuest={getCoilQuest(loadQuestLog())}
+      choirRemembersQuest={getChoirRemembersQuest(loadQuestLog())}
       onVitals={handleVitals}
       onPlayerDeath={handlePlayerDeath}
       onPassivePrimary={(amount) => {
