@@ -33,6 +33,20 @@ export function drawVignette(
 }
 
 /** Ground umbra under ashwood plus a faint north silver rim — overworld only. */
+function stoneNeighbors(map: WorldMap, tx: number, ty: number): number {
+  let n = 0;
+  for (let dy = -1; dy <= 1; dy++) {
+    for (let dx = -1; dx <= 1; dx++) {
+      if (dx === 0 && dy === 0) continue;
+      const x = tx + dx;
+      const y = ty + dy;
+      if (x < 0 || y < 0 || x >= map.width || y >= map.height) continue;
+      if (map.tiles[y]![x] === "stone") n++;
+    }
+  }
+  return n;
+}
+
 export function drawAshwoodTint(
   ctx: CanvasRenderingContext2D,
   map: WorldMap,
@@ -52,14 +66,25 @@ export function drawAshwoodTint(
       if (map.tiles[ty]![tx] !== "stone") continue;
       const sx = Math.floor(tx * TILE - originX);
       const sy = Math.floor(ty * TILE - originY);
-      const umbra = ctx.createRadialGradient(sx + 16, sy + 22, 4, sx + 16, sy + 24, 38);
-      umbra.addColorStop(0, "rgba(8, 14, 8, 0.28)");
-      umbra.addColorStop(0.55, "rgba(12, 20, 10, 0.12)");
+      const grove = stoneNeighbors(map, tx, ty);
+      // Local pooling — open grass stays brighter; groves sit lower without a muddy wash.
+      const core = 0.2 + Math.min(0.08, grove * 0.012);
+      const radius = 34 + grove * 3;
+      const umbra = ctx.createRadialGradient(sx + 16, sy + 24, 3, sx + 18, sy + 28, radius);
+      umbra.addColorStop(0, `rgba(8, 14, 8, ${core})`);
+      umbra.addColorStop(0.52, `rgba(12, 20, 10, ${core * 0.42})`);
       umbra.addColorStop(1, "transparent");
       ctx.fillStyle = umbra;
-      ctx.fillRect(sx - 16, sy - 4, TILE + 32, TILE + 28);
-      ctx.globalAlpha = 0.07;
-      const silver = ctx.createRadialGradient(sx + 16, sy + 4, 3, sx + 16, sy + 4, 36);
+      ctx.fillRect(sx - 18, sy - 2, TILE + 40, TILE + 36);
+      if (grove >= 3) {
+        const pool = ctx.createRadialGradient(sx + 18, sy + 30, 6, sx + 18, sy + 34, 48);
+        pool.addColorStop(0, "rgba(8, 14, 8, 0.1)");
+        pool.addColorStop(1, "transparent");
+        ctx.fillStyle = pool;
+        ctx.fillRect(sx - 20, sy + 8, TILE + 44, TILE + 28);
+      }
+      ctx.globalAlpha = 0.055;
+      const silver = ctx.createRadialGradient(sx + 16, sy + 4, 3, sx + 16, sy + 4, 34);
       silver.addColorStop(0, "#d4e4d4");
       silver.addColorStop(1, "transparent");
       ctx.fillStyle = silver;

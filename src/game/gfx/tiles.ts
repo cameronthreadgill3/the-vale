@@ -2,6 +2,7 @@
  * Original procedural 32×32 terrain sheets for The Vale (gfx pass 3).
  * More variants, shoreline/grass transitions, animated water + fountain,
  * ashwood trunk vs dense canopy overlay, hollow cave walls with torch flicker.
+ * Ground-depth overlays: grass lips, walkway recess, tree duff, inner corners.
  * Cached OffscreenCanvas / canvas sheets — not redrawn every frame.
  * NOT CipSoft / Tibia assets — handcrafted pixel patterns only.
  */
@@ -16,6 +17,7 @@ export const CANOPY_PX = 64;
 
 export type TileMode = "overworld" | "hollow";
 export type EdgeDir = "n" | "s" | "e" | "w";
+export type CornerDir = "nw" | "ne" | "sw" | "se";
 
 type Sheet = HTMLCanvasElement | OffscreenCanvas;
 
@@ -74,6 +76,41 @@ function paintGrass(ctx: CanvasRenderingContext2D, base: string, variant: number
     px(ctx, 10, 10, mixHex(base, "#c8d8c0", 0.35), 2, 1);
     px(ctx, 22, 20, mixHex(base, "#c8d8c0", 0.3), 2, 1);
   }
+  // recumbent blades + duff clumps so open grass isn't a flat stamp
+  const duff = shadeHex(base, 0.58);
+  for (let i = 0; i < 4; i++) {
+    const x = (i * 9 + variant * 4) % 26 + 2;
+    const y = (i * 6 + variant * 7) % 24 + 4;
+    px(ctx, x, y, blade, 3, 1);
+    px(ctx, x + 1, y, bladeTip, 1, 1);
+    px(ctx, x, y + 1, dark, 2, 1);
+  }
+  if (variant % 3 !== 1) {
+    px(ctx, 4 + (variant % 6), 14, duff, 5, 3);
+    px(ctx, 18, 6 + (variant % 5), duff, 4, 2);
+  }
+}
+
+/** NW spark + SE contact so path/cobble stones read as raised pavers. */
+function bevelStone(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  fill: string,
+  dark: string,
+  lite: string,
+): void {
+  px(ctx, x, y, fill, w, h);
+  px(ctx, x, y, dark, w, 1);
+  px(ctx, x, y, dark, 1, h);
+  px(ctx, x, y + h - 1, shadeHex(dark, 0.82), w, 1);
+  px(ctx, x + w - 1, y, shadeHex(dark, 0.9), 1, h);
+  px(ctx, x + 1, y + 1, lite, Math.max(1, Math.min(2, w - 2)), 1);
+  if (w > 3 && h > 3) {
+    px(ctx, x + w - 2, y + h - 2, shadeHex(fill, 0.72), 2, 1);
+  }
 }
 
 function paintDirt(ctx: CanvasRenderingContext2D, base: string, variant: number): void {
@@ -90,6 +127,8 @@ function paintDirt(ctx: CanvasRenderingContext2D, base: string, variant: number)
   px(ctx, 18, 12 + (variant % 5), dark, 5, 2);
   px(ctx, 8, 22, crack, 6, 1);
   px(ctx, 20, 5, crack, 1, 5);
+  px(ctx, 5 + (variant % 4), 17, crack, 7, 1);
+  px(ctx, 14, 9 + (variant % 3), shadeHex(base, 0.6), 5, 2);
   if (variant % 2 === 0) px(ctx, 12, 16, lite, 3, 2);
 }
 
@@ -113,10 +152,10 @@ function paintPath(ctx: CanvasRenderingContext2D, base: string, variant: number)
     const c = tone === 0 ? lite : tone === 1 ? dark : tone === 2 ? moss : base;
     const w = 6 + ((i + variant) % 2);
     const h = 6 + ((i + variant * 2) % 2);
-    px(ctx, ox + shift, oy, c, w, h);
-    px(ctx, ox + shift, oy, dark, w, 1);
-    px(ctx, ox + shift, oy, dark, 1, h);
-    px(ctx, ox + shift + 1, oy + 1, lite, 2, 1);
+    bevelStone(ctx, ox + shift, oy, w, h, c, dark, lite);
+    if ((i + variant) % 4 === 0) {
+      px(ctx, ox + shift + 2, oy + h - 1, moss, 2, 1);
+    }
   }
 }
 
@@ -159,10 +198,7 @@ function paintCobbleField(
     const shift = ((i + variant) % 3) - 1;
     const roll = (i + variant) % 4;
     const c = roll === 0 ? lite : roll === 1 ? base : roll === 2 ? mid : dark;
-    px(ctx, ox + shift, oy, c, stoneW, stoneH);
-    px(ctx, ox + shift, oy, dark, stoneW, 1);
-    px(ctx, ox + shift, oy, dark, 1, stoneH);
-    px(ctx, ox + shift + 1, oy + 1, lite, 2, 1);
+    bevelStone(ctx, ox + shift, oy, stoneW, stoneH, c, dark, lite);
     if (plaza && (i + variant) % 5 === 0) {
       px(ctx, ox + shift + 2, oy + stoneH - 1, moss, 2, 1);
     }
@@ -263,8 +299,9 @@ function paintAshwoodBase(ctx: CanvasRenderingContext2D, base: string, variant: 
   const moss = mixHex(bark, "#3a5a38", 0.45);
   const ox = (variant % 5) - 2;
   // duff under the trunk — local umbra, not a repeating grass gradient
-  px(ctx, 9 + ox, 23, shadeHex(grass, 0.62), 14, 8);
-  px(ctx, 11 + ox, 25, shadeHex(grass, 0.5), 10, 5);
+  px(ctx, 7 + ox, 22, shadeHex(grass, 0.58), 18, 10);
+  px(ctx, 9 + ox, 24, shadeHex(grass, 0.46), 14, 7);
+  px(ctx, 12 + ox, 26, shadeHex(grass, 0.38), 8, 4);
   // roots
   px(ctx, 10 + ox, 26, barkDark, 5, 3);
   px(ctx, 17 + ox, 27, barkDark, 5, 2);
@@ -545,6 +582,13 @@ function paintGrassEdge(base: string, dir: EdgeDir, variant: number): Sheet {
         px(ctx, TILE_PX - d - tuft, i, tip, 1, 1);
       }
     }
+    // raised inner catch so the turf lip reads above the walkway
+    if ((i + variant) % 2 === 0) {
+      if (dir === "n") px(ctx, i, Math.max(0, d - 1), tip, 1, 1);
+      else if (dir === "s") px(ctx, i, TILE_PX - d, tip, 1, 1);
+      else if (dir === "w") px(ctx, Math.max(0, d - 1), i, tip, 1, 1);
+      else px(ctx, TILE_PX - d, i, tip, 1, 1);
+    }
   }
   return c;
 }
@@ -566,13 +610,13 @@ const spillCache = new Map<string, Sheet>();
 function paintGrassSpill(base: string, dir: EdgeDir, variant: number): Sheet {
   const c = makeCanvas(TILE_PX, TILE_PX);
   const ctx = ctx2d(c);
-  const dark = shadeHex(base, 0.5);
+  const dark = shadeHex(base, 0.46);
   const blade = mixHex(base, "#6a8a48", 0.35);
   const tip = mixHex(base, "#d0e0b0", 0.42);
   for (let i = 0; i < TILE_PX; i++) {
-    if ((i + variant * 3) % 2 === 0) continue;
+    if ((i + variant * 3) % 3 === 0) continue;
     const jag = (i * 5 + variant * 2) & 3;
-    const len = 2 + (jag % 3);
+    const len = 3 + (jag % 3);
     if (dir === "n") {
       px(ctx, i, 0, dark, 1, len);
       px(ctx, i, 0, blade, 1, Math.max(1, len - 1));
@@ -601,6 +645,124 @@ export function getGrassSpillSheet(color: string, dir: EdgeDir, variant: number)
   if (!sheet) {
     sheet = paintGrassSpill(color, dir, v);
     spillCache.set(key, sheet);
+  }
+  return sheet;
+}
+
+const lipCache = new Map<string, Sheet>();
+const duffCache = new Map<string, Sheet>();
+const cornerCache = new Map<string, Sheet>();
+
+/** Recessed mortar/dirt lip on a walkway facing turf — path sits below grass. */
+function paintHardLip(base: string, dir: EdgeDir, variant: number): Sheet {
+  const c = makeCanvas(TILE_PX, TILE_PX);
+  const ctx = ctx2d(c);
+  const undercut = shadeHex(base, 0.28);
+  const shade = shadeHex(base, 0.46);
+  const moss = mixHex(base, "#3a5a30", 0.38);
+  for (let i = 0; i < TILE_PX; i++) {
+    const jag = (i * 5 + variant * 3) & 1;
+    const d = 3 - jag;
+    const tone = (k: number) => (k === 0 ? undercut : k === 1 ? shade : moss);
+    if (dir === "n") {
+      for (let k = 0; k < d; k++) px(ctx, i, k, tone(k));
+    } else if (dir === "s") {
+      for (let k = 0; k < d; k++) px(ctx, i, TILE_PX - 1 - k, tone(k));
+    } else if (dir === "w") {
+      for (let k = 0; k < d; k++) px(ctx, k, i, tone(k));
+    } else {
+      for (let k = 0; k < d; k++) px(ctx, TILE_PX - 1 - k, i, tone(k));
+    }
+  }
+  return c;
+}
+
+export function getHardLipSheet(color: string, dir: EdgeDir, variant: number): Sheet {
+  const v = ((variant % TILE_VARIANTS) + TILE_VARIANTS) % TILE_VARIANTS;
+  const key = `${color}|${dir}|${v}`;
+  let sheet = lipCache.get(key);
+  if (!sheet) {
+    sheet = paintHardLip(color, dir, v);
+    lipCache.set(key, sheet);
+  }
+  return sheet;
+}
+
+/** Needle duff on grass facing ashwood — grove contact, not a path cut. */
+function paintTreeDuff(base: string, dir: EdgeDir, variant: number): Sheet {
+  const c = makeCanvas(TILE_PX, TILE_PX);
+  const ctx = ctx2d(c);
+  const duff = shadeHex(mixHex(base, "#2a2818", 0.4), 0.62);
+  const deep = shadeHex(duff, 0.7);
+  const needle = mixHex(base, "#3a4a28", 0.45);
+  for (let i = 0; i < TILE_PX; i++) {
+    const jag = (i * 3 + variant * 7) & 3;
+    const d = 5 + (jag % 3);
+    if (dir === "n") {
+      for (let k = 0; k < d; k++) px(ctx, i, k, k < 2 ? deep : duff);
+    } else if (dir === "s") {
+      for (let k = 0; k < d; k++) px(ctx, i, TILE_PX - 1 - k, k < 2 ? deep : duff);
+    } else if (dir === "w") {
+      for (let k = 0; k < d; k++) px(ctx, k, i, k < 2 ? deep : duff);
+    } else {
+      for (let k = 0; k < d; k++) px(ctx, TILE_PX - 1 - k, i, k < 2 ? deep : duff);
+    }
+    if ((i + variant) % 4 === 0) {
+      if (dir === "n") px(ctx, i, d - 1, needle, 1, 2);
+      else if (dir === "s") px(ctx, i, TILE_PX - d - 1, needle, 1, 2);
+      else if (dir === "w") px(ctx, d - 1, i, needle, 2, 1);
+      else px(ctx, TILE_PX - d - 1, i, needle, 2, 1);
+    }
+  }
+  return c;
+}
+
+export function getTreeDuffSheet(color: string, dir: EdgeDir, variant: number): Sheet {
+  const v = ((variant % TILE_VARIANTS) + TILE_VARIANTS) % TILE_VARIANTS;
+  const key = `${color}|${dir}|${v}`;
+  let sheet = duffCache.get(key);
+  if (!sheet) {
+    sheet = paintTreeDuff(color, dir, v);
+    duffCache.set(key, sheet);
+  }
+  return sheet;
+}
+
+/** Inner-corner turf crack when only the diagonal neighbor is a hard walkway. */
+function paintGrassCorner(base: string, corner: CornerDir, variant: number): Sheet {
+  const c = makeCanvas(TILE_PX, TILE_PX);
+  const ctx = ctx2d(c);
+  const crack = shadeHex(base, 0.38);
+  const dark = shadeHex(base, 0.55);
+  const blade = mixHex(base, "#6a8a48", 0.32);
+  const tip = mixHex(base, "#d0e0b0", 0.38);
+  const east = corner === "ne" || corner === "se";
+  const south = corner === "sw" || corner === "se";
+  const size = 6 + (variant & 1);
+  for (let i = 0; i < size; i++) {
+    const d = 3 - ((i + variant) & 1);
+    for (let k = 0; k < d; k++) {
+      const col = east ? TILE_PX - 1 - k : k;
+      const row = south ? TILE_PX - 1 - i : i;
+      px(ctx, col, row, k === 0 ? crack : k === 1 ? dark : blade);
+      const col2 = east ? TILE_PX - 1 - i : i;
+      const row2 = south ? TILE_PX - 1 - k : k;
+      px(ctx, col2, row2, k === 0 ? crack : k === 1 ? dark : blade);
+    }
+  }
+  const tx = east ? TILE_PX - 3 : 2;
+  const ty = south ? TILE_PX - 3 : 2;
+  px(ctx, tx, ty, tip, 1, 1);
+  return c;
+}
+
+export function getGrassCornerSheet(color: string, corner: CornerDir, variant: number): Sheet {
+  const v = ((variant % TILE_VARIANTS) + TILE_VARIANTS) % TILE_VARIANTS;
+  const key = `${color}|${corner}|${v}`;
+  let sheet = cornerCache.get(key);
+  if (!sheet) {
+    sheet = paintGrassCorner(color, corner, v);
+    cornerCache.set(key, sheet);
   }
   return sheet;
 }
@@ -678,7 +840,8 @@ function paintAshwoodCanopy(base: string, variant: number): Sheet {
   const ox = (variant % 5) - 2;
   const oy = ((variant * 3) % 5) - 2;
   // south umbra first so the mass reads above the grass
-  blob(ctx, 8 + ox, 26 + oy, 48, 24, umbra);
+  blob(ctx, 6 + ox, 28 + oy, 52, 26, umbra);
+  blob(ctx, 10 + ox, 34 + oy, 44, 16, shadeHex(umbra, 0.7));
   blob(ctx, 6 + ox, 10 + oy, 52, 36, dark);
   blob(ctx, 2 + ox, 14 + oy, 28, 26, mid);
   blob(ctx, 24 + ox, 6 + oy, 34, 30, canopy);
@@ -762,6 +925,15 @@ export function warmTileSheets(pal: BiomePalette): void {
           for (const dir of ["n", "s", "e", "w"] as const) {
             getGrassEdgeSheet(color, dir, v);
             getGrassSpillSheet(color, dir, v);
+            getTreeDuffSheet(color, dir, v);
+          }
+          for (const corner of ["nw", "ne", "sw", "se"] as const) {
+            getGrassCornerSheet(color, corner, v);
+          }
+        }
+        if (kind === "path" || kind === "cobble" || kind === "dirt") {
+          for (const dir of ["n", "s", "e", "w"] as const) {
+            getHardLipSheet(color, dir, v);
           }
         }
         if (kind === "water") {

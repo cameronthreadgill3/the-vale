@@ -4,10 +4,23 @@ import {
   buildingsOnContinent,
   propsOnContinent,
   type TownBuilding,
+  type TownPropKind,
 } from "@/game/world/town";
 import { getPropSheet } from "@/game/gfx/props";
 import { TILE_PX } from "@/game/gfx/tiles";
+import { drawSoftShadow, GROUND_SHADOW_ALPHA } from "@/game/gfx/canvasUtil";
 import { drawFloatingLabel } from "@/game/folkCanvas";
+
+/** Ground-contact ellipses matching player/cairn `drawSoftShadow` language. */
+const PROP_SHADOW: Record<TownPropKind, { rx: number; ry: number; ox: number; oy: number } | null> = {
+  crate: { rx: 10, ry: 4, ox: 16, oy: 25 },
+  barrel: { rx: 8, ry: 4, ox: 16, oy: 25 },
+  bench: { rx: 13, ry: 3.5, ox: 16, oy: 24 },
+  lantern: { rx: 4, ry: 2.2, ox: 16, oy: 27 },
+  stall: { rx: 13, ry: 5, ox: 16, oy: 27 },
+  notice: { rx: 5, ry: 2.2, ox: 16, oy: 27 },
+  "cobble-patch": null,
+};
 
 function drawRoofCap(
   ctx: CanvasRenderingContext2D,
@@ -57,6 +70,10 @@ export function drawTownOverlays(
   for (const p of props) {
     const sx = Math.floor(p.x * TILE - originX);
     const sy = Math.floor(p.y * TILE - originY);
+    const shadow = PROP_SHADOW[p.kind];
+    if (shadow) {
+      drawSoftShadow(ctx, sx + shadow.ox, sy + shadow.oy, shadow.rx, shadow.ry, GROUND_SHADOW_ALPHA);
+    }
     const sheet = getPropSheet(p.kind);
     ctx.drawImage(sheet as CanvasImageSource, sx, sy, TILE_PX + 1, TILE_PX + 1);
   }
