@@ -32,6 +32,7 @@ import {
   EMBERCOIL_QUEST_TITLE,
   COIL_QUEST_TITLE,
   CHOIR_REMEMBERS_QUEST_TITLE,
+  EDGE_REMEMBERS_QUEST_TITLE,
   teethHudLines,
   ashwoodHudLines,
   hollowHudLines,
@@ -48,6 +49,7 @@ import {
   embercoilHudLines,
   coilHudLines,
   choirRemembersHudLines,
+  edgeRemembersHudLines,
   type TeethQuestProgress,
   type AshwoodQuestProgress,
   type HollowQuestProgress,
@@ -64,6 +66,7 @@ import {
   type EmbercoilQuestProgress,
   type CoilQuestProgress,
   type ChoirRemembersQuestProgress,
+  type EdgeRemembersQuestProgress,
 } from "@/game/quests";
 
 function equippedLine(character: ValeCharacter): string {
@@ -77,6 +80,7 @@ function equippedLine(character: ValeCharacter): string {
 }
 
 function activeQuest(
+  edgeRemembersQuest: EdgeRemembersQuestProgress | null,
   choirRemembersQuest: ChoirRemembersQuestProgress | null,
   coilQuest: CoilQuestProgress | null,
   embercoilQuest: EmbercoilQuestProgress | null,
@@ -94,6 +98,9 @@ function activeQuest(
   ashwoodQuest: AshwoodQuestProgress | null,
   teethQuest: TeethQuestProgress | null,
 ): { title: string; lines: string[] } | null {
+  if (edgeRemembersQuest?.status === "active") {
+    return { title: EDGE_REMEMBERS_QUEST_TITLE, lines: edgeRemembersHudLines(edgeRemembersQuest) };
+  }
   if (choirRemembersQuest?.status === "active") {
     return { title: CHOIR_REMEMBERS_QUEST_TITLE, lines: choirRemembersHudLines(choirRemembersQuest) };
   }
@@ -166,6 +173,7 @@ export function GameShellHud({
   embercoilQuest,
   coilQuest,
   choirRemembersQuest,
+  edgeRemembersQuest,
   onOpenPack,
 }: {
   cls: ValeClass;
@@ -188,10 +196,12 @@ export function GameShellHud({
   embercoilQuest: EmbercoilQuestProgress | null;
   coilQuest: CoilQuestProgress | null;
   choirRemembersQuest: ChoirRemembersQuestProgress | null;
+  edgeRemembersQuest: EdgeRemembersQuestProgress | null;
   onOpenPack: () => void;
 }) {
   const [muted, setMuted] = useState(isAudioMuted);
   const quest = activeQuest(
+    edgeRemembersQuest,
     choirRemembersQuest,
     coilQuest,
     embercoilQuest,

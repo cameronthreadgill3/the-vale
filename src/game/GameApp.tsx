@@ -77,6 +77,9 @@ import {
   CHOIR_REMEMBERS_START_TOAST,
   CHOIR_REMEMBERS_REWARDS,
   CHOIR_REMEMBERS_COMPLETE_LINE,
+  EDGE_REMEMBERS_START_TOAST,
+  EDGE_REMEMBERS_REWARDS,
+  EDGE_REMEMBERS_COMPLETE_LINE,
   TEETH_QUEST_ID,
   ASHWOOD_QUEST_ID,
   HOLLOW_QUEST_ID,
@@ -93,6 +96,7 @@ import {
   EMBERCOIL_QUEST_ID,
   COIL_QUEST_ID,
   CHOIR_REMEMBERS_QUEST_ID,
+  EDGE_REMEMBERS_QUEST_ID,
   CRESS_FOLK_ID,
   OLD_REED_FOLK_ID,
   CHOIR_KEEPER_FOLK_ID,
@@ -115,6 +119,7 @@ import {
   getEmbercoilQuest,
   getCoilQuest,
   getChoirRemembersQuest,
+  getEdgeRemembersQuest,
   applyIdentify,
   applyEnemyKill,
   applyCairnInspect,
@@ -151,6 +156,9 @@ import {
   applyCoilRookTalk,
   applyChoirRemembersReached,
   applyChoirRemembersRookTalk,
+  applyEdgeReached,
+  applyEdgeCressTalk,
+  applyEdgeRemembersRookTalk,
   withTeethQuest,
   ensureAshwoodAfterTeeth,
   ensureHollowAfterAshwood,
@@ -167,6 +175,7 @@ import {
   ensureEmbercoilAfterAshen,
   ensureCoilAfterEmbercoil,
   ensureChoirRemembersAfterCoil,
+  ensureEdgeRemembersAfterChoir,
   rookQuestLine,
   loadQuestLog,
   saveQuestLog,
@@ -573,6 +582,20 @@ export function GameApp() {
           }
         }
       }
+      if (target === "thornreach") {
+        const edge = applyEdgeReached(loadQuestLog());
+        if (edge) {
+          saveQuestLog(edge.log);
+          if (edge.toast) {
+            showToast(edge.toast);
+            window.setTimeout(
+              () => setToast((t) => (t === edge.toast ? null : t)),
+              2800,
+            );
+            return true;
+          }
+        }
+      }
       const dest = getContinent(target);
       if (paid > 0 || firstCrossing) {
         showToast(farePaidToast("gate", dest.name, paid));
@@ -667,6 +690,7 @@ export function GameApp() {
     }
     if (folkId === CRESS_FOLK_ID) {
       const cress =
+        applyEdgeCressTalk(loadQuestLog()) ??
         applyWatchlineCressTalk(loadQuestLog()) ??
         applyWharfCressTalk(loadQuestLog());
       if (cress) {
@@ -679,6 +703,7 @@ export function GameApp() {
     }
     if (folkId === "rook" && character) {
       const turnIn =
+        applyEdgeRemembersRookTalk(loadQuestLog()) ??
         applyChoirRemembersRookTalk(loadQuestLog()) ??
         applyCoilRookTalk(loadQuestLog()) ??
         applyEmbercoilRookTalk(loadQuestLog()) ??
@@ -700,7 +725,21 @@ export function GameApp() {
             ...prev,
             skillXp: { ...prev.skillXp },
           };
-          if (turnIn.completedId === CHOIR_REMEMBERS_QUEST_ID) {
+          if (turnIn.completedId === EDGE_REMEMBERS_QUEST_ID) {
+            next = awardCombatXp(next, EDGE_REMEMBERS_REWARDS.combatXp);
+            next = { ...next, skillXp: { ...next.skillXp } };
+            awardSkillXp(
+              next,
+              EDGE_REMEMBERS_REWARDS.skill,
+              EDGE_REMEMBERS_REWARDS.skillXp,
+            );
+            next = setGold(next, next.gold + EDGE_REMEMBERS_REWARDS.gold);
+            next = { ...next, skillXp: { ...next.skillXp } };
+            queueMicrotask(() => {
+              showToast(EDGE_REMEMBERS_COMPLETE_LINE);
+              setSkillTick((t) => t + 1);
+            });
+          } else if (turnIn.completedId === CHOIR_REMEMBERS_QUEST_ID) {
             next = awardCombatXp(next, CHOIR_REMEMBERS_REWARDS.combatXp);
             next = { ...next, skillXp: { ...next.skillXp } };
             awardSkillXp(
@@ -711,7 +750,11 @@ export function GameApp() {
             next = setGold(next, next.gold + CHOIR_REMEMBERS_REWARDS.gold);
             next = { ...next, skillXp: { ...next.skillXp } };
             queueMicrotask(() => {
-              showToast(CHOIR_REMEMBERS_COMPLETE_LINE);
+              showToast(
+                turnIn.startedEdgeRemembers
+                  ? EDGE_REMEMBERS_START_TOAST
+                  : CHOIR_REMEMBERS_COMPLETE_LINE,
+              );
               setSkillTick((t) => t + 1);
             });
           } else if (turnIn.completedId === COIL_QUEST_ID) {
@@ -1227,6 +1270,16 @@ export function GameApp() {
           }
         }
       }
+      if (dest === "thornreach") {
+        const edge = applyEdgeReached(loadQuestLog());
+        if (edge) {
+          saveQuestLog(edge.log);
+          if (edge.toast) {
+            showToast(edge.toast);
+            return;
+          }
+        }
+      }
       const c = getContinent(dest);
       if (paid > 0 || firstCrossing) {
         showToast(farePaidToast("ship", c.name, paid));
@@ -1431,6 +1484,34 @@ export function GameApp() {
       () => setToast((t) => (t === CHOIR_REMEMBERS_START_TOAST ? null : t)),
       3600,
     );
+  }, [character]);
+
+  // Quest 17: auto-start The Edge Remembers once The Choir Remembers is complete.
+  useEffect(() => {
+    if (!character) return;
+    const ensured = ensureEdgeRemembersAfterChoir(loadQuestLog());
+    if (ensured.started) {
+      saveQuestLog(ensured.log);
+      setToast(EDGE_REMEMBERS_START_TOAST);
+      window.setTimeout(
+        () => setToast((t) => (t === EDGE_REMEMBERS_START_TOAST ? null : t)),
+        3600,
+      );
+    }
+  }, [character]);
+
+  // The Edge Remembers: mark Thornreach overworld (usually already home after Rook).
+  useEffect(() => {
+    if (!character) return;
+    if (character.continentId !== "thornreach") return;
+    if (character.hollowIndex !== null) return;
+    const result = applyEdgeReached(loadQuestLog());
+    if (!result) return;
+    saveQuestLog(result.log);
+    if (result.toast) {
+      setToast(result.toast);
+      window.setTimeout(() => setToast((t) => (t === result.toast ? null : t)), 2800);
+    }
   }, [character]);
 
   // Mistmere Crossing: mark arrival whenever the walker stands on Mistmere.
@@ -1785,7 +1866,25 @@ export function GameApp() {
         next = setGold(next, next.gold + CHOIR_REMEMBERS_REWARDS.gold);
         next = { ...next, skillXp: { ...next.skillXp } };
         queueMicrotask(() => {
-          showToast(CHOIR_REMEMBERS_COMPLETE_LINE);
+          showToast(
+            result.startedEdgeRemembers
+              ? EDGE_REMEMBERS_START_TOAST
+              : CHOIR_REMEMBERS_COMPLETE_LINE,
+          );
+          setSkillTick((t) => t + 1);
+        });
+      } else if (result.completedId === EDGE_REMEMBERS_QUEST_ID) {
+        next = awardCombatXp(next, EDGE_REMEMBERS_REWARDS.combatXp);
+        next = { ...next, skillXp: { ...next.skillXp } };
+        awardSkillXp(
+          next,
+          EDGE_REMEMBERS_REWARDS.skill,
+          EDGE_REMEMBERS_REWARDS.skillXp,
+        );
+        next = setGold(next, next.gold + EDGE_REMEMBERS_REWARDS.gold);
+        next = { ...next, skillXp: { ...next.skillXp } };
+        queueMicrotask(() => {
+          showToast(EDGE_REMEMBERS_COMPLETE_LINE);
           setSkillTick((t) => t + 1);
         });
       } else if (result.toast) {
@@ -2121,6 +2220,7 @@ export function GameApp() {
       embercoilQuest={getEmbercoilQuest(loadQuestLog())}
       coilQuest={getCoilQuest(loadQuestLog())}
       choirRemembersQuest={getChoirRemembersQuest(loadQuestLog())}
+      edgeRemembersQuest={getEdgeRemembersQuest(loadQuestLog())}
       onVitals={handleVitals}
       onPlayerDeath={handlePlayerDeath}
       onPassivePrimary={(amount) => {

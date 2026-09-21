@@ -25,6 +25,7 @@ export const ASHEN_QUEST_ID = "the-ashen-gate-opens" as const;
 export const EMBERCOIL_QUEST_ID = "the-embercoil-gate-opens" as const;
 export const COIL_QUEST_ID = "the-coil-remembers" as const;
 export const CHOIR_REMEMBERS_QUEST_ID = "the-choir-remembers" as const;
+export const EDGE_REMEMBERS_QUEST_ID = "the-edge-remembers" as const;
 
 /** Depot clerk — Cress Ledger in folk.ts. */
 export const CRESS_FOLK_ID = "cress-ledger" as const;
@@ -61,7 +62,8 @@ export type QuestId =
   | typeof ASHEN_QUEST_ID
   | typeof EMBERCOIL_QUEST_ID
   | typeof COIL_QUEST_ID
-  | typeof CHOIR_REMEMBERS_QUEST_ID;
+  | typeof CHOIR_REMEMBERS_QUEST_ID
+  | typeof EDGE_REMEMBERS_QUEST_ID;
 
 export type QuestStatus = "active" | "complete";
 
@@ -239,6 +241,19 @@ export interface ChoirRemembersQuestProgress {
   houndDone: boolean;
 }
 
+export interface EdgeRemembersQuestProgress {
+  id: typeof EDGE_REMEMBERS_QUEST_ID;
+  status: QuestStatus;
+  /** Talked to Cress Ledger — Choir water-measure entered in the depot ledger (flag only). */
+  talkedCress: boolean;
+  /** On Thornreach overworld (stand, travel, or already home after Rook). */
+  reachedEdge: boolean;
+  /** First successful Identify of an Ash-vole on Thornreach. */
+  identifiedVole: boolean;
+  /** Bark Hound defeated on Thornreach (target 1; continent-scoped). */
+  houndDone: boolean;
+}
+
 export type QuestLog = {
   [TEETH_QUEST_ID]?: TeethQuestProgress;
   [ASHWOOD_QUEST_ID]?: AshwoodQuestProgress;
@@ -256,6 +271,7 @@ export type QuestLog = {
   [EMBERCOIL_QUEST_ID]?: EmbercoilQuestProgress;
   [COIL_QUEST_ID]?: CoilQuestProgress;
   [CHOIR_REMEMBERS_QUEST_ID]?: ChoirRemembersQuestProgress;
+  [EDGE_REMEMBERS_QUEST_ID]?: EdgeRemembersQuestProgress;
 };
 
 export const TEETH_RATS_NEEDED = 3;
@@ -278,6 +294,7 @@ export const ASHEN_QUEST_TITLE = "The Ashen Gate Opens";
 export const EMBERCOIL_QUEST_TITLE = "The Embercoil Gate Opens";
 export const COIL_QUEST_TITLE = "The Coil Remembers";
 export const CHOIR_REMEMBERS_QUEST_TITLE = "The Choir Remembers";
+export const EDGE_REMEMBERS_QUEST_TITLE = "The Edge Remembers";
 
 export const TEETH_START_TOAST =
   "Rook: Ashwood edge has wrong prey - Identify first.";
@@ -374,6 +391,12 @@ export const CHOIR_REMEMBERS_START_TOAST =
 
 export const CHOIR_REMEMBERS_COMPLETE_LINE =
   "Rook: The Choir remembers your footing. Soft prey named, the hymn skirts quieted. Survive. Learn. Progress — the far road holds the water again.";
+
+export const EDGE_REMEMBERS_START_TOAST =
+  "Rook: The Choir remembers your footing, and the water holds. Carry that measure to Cress's ledger, name the soft ash-vole on our own ashwood edge, quiet one bark-hound packing the home grass, and bring Thornreach's measure home. Survive. Learn. Progress.";
+
+export const EDGE_REMEMBERS_COMPLETE_LINE =
+  "Rook: The edge remembers. Soft prey named, the home pack quieted, and the ledger holds the water's count. Survive. Learn. Progress — the road begins at our own grass.";
 
 export const TEETH_REWARDS = {
   gold: 28,
@@ -485,6 +508,13 @@ export const CHOIR_REMEMBERS_REWARDS = {
   combatXp: 210,
   skill: "shielding" as SkillId,
   skillXp: 60,
+};
+
+export const EDGE_REMEMBERS_REWARDS = {
+  gold: 110,
+  combatXp: 220,
+  skill: "shielding" as SkillId,
+  skillXp: 65,
 };
 
 export function loadQuestLog(): QuestLog {
@@ -671,6 +701,17 @@ export function emptyChoirRemembersQuest(): ChoirRemembersQuestProgress {
     status: "active",
     reachedChoir: false,
     identifiedMite: false,
+    houndDone: false,
+  };
+}
+
+export function emptyEdgeRemembersQuest(): EdgeRemembersQuestProgress {
+  return {
+    id: EDGE_REMEMBERS_QUEST_ID,
+    status: "active",
+    talkedCress: false,
+    reachedEdge: false,
+    identifiedVole: false,
     houndDone: false,
   };
 }
@@ -923,6 +964,21 @@ export function sanitizeQuestLog(raw: unknown): QuestLog {
     };
   }
 
+  const edgeRemembers = obj[EDGE_REMEMBERS_QUEST_ID];
+  if (edgeRemembers && typeof edgeRemembers === "object") {
+    const e = edgeRemembers as Record<string, unknown>;
+    const status: QuestStatus =
+      e.status === "complete" ? "complete" : "active";
+    log[EDGE_REMEMBERS_QUEST_ID] = {
+      id: EDGE_REMEMBERS_QUEST_ID,
+      status,
+      talkedCress: Boolean(e.talkedCress),
+      reachedEdge: Boolean(e.reachedEdge),
+      identifiedVole: Boolean(e.identifiedVole),
+      houndDone: Boolean(e.houndDone),
+    };
+  }
+
   return log;
 }
 
@@ -1020,6 +1076,12 @@ export function getChoirRemembersQuest(
   return log?.[CHOIR_REMEMBERS_QUEST_ID] ?? null;
 }
 
+export function getEdgeRemembersQuest(
+  log: QuestLog | undefined,
+): EdgeRemembersQuestProgress | null {
+  return log?.[EDGE_REMEMBERS_QUEST_ID] ?? null;
+}
+
 export function isTeethActive(log: QuestLog | undefined): boolean {
   const q = getTeethQuest(log);
   return Boolean(q && q.status === "active");
@@ -1097,6 +1159,11 @@ export function isCoilActive(log: QuestLog | undefined): boolean {
 
 export function isChoirRemembersActive(log: QuestLog | undefined): boolean {
   const q = getChoirRemembersQuest(log);
+  return Boolean(q && q.status === "active");
+}
+
+export function isEdgeRemembersActive(log: QuestLog | undefined): boolean {
+  const q = getEdgeRemembersQuest(log);
   return Boolean(q && q.status === "active");
 }
 
@@ -1181,6 +1248,12 @@ export function choirRemembersObjectivesMet(
   q: ChoirRemembersQuestProgress,
 ): boolean {
   return q.reachedChoir && q.identifiedMite && q.houndDone;
+}
+
+export function edgeRemembersObjectivesMet(
+  q: EdgeRemembersQuestProgress,
+): boolean {
+  return q.talkedCress && q.reachedEdge && q.identifiedVole && q.houndDone;
 }
 
 /** HUD lines for Teeth sticky panel. */
@@ -1504,6 +1577,30 @@ export function choirRemembersHudLines(q: ChoirRemembersQuestProgress): string[]
   ];
 }
 
+/** HUD lines for The Edge Remembers. */
+export function edgeRemembersHudLines(q: EdgeRemembersQuestProgress): string[] {
+  if (q.status === "complete") {
+    return ["Complete - The edge remembers"];
+  }
+  return [
+    q.talkedCress
+      ? "[done] Talk to Cress (ledger)"
+      : "[ ] Talk to Cress at the depot (Choir measure)",
+    q.reachedEdge
+      ? "[done] Reach Thornreach ashwood edge"
+      : "[ ] Stand the home ashwood edge (Thornreach)",
+    q.identifiedVole
+      ? "[done] Identify Ash-vole"
+      : "[ ] Identify an Ash-vole (near look)",
+    q.houndDone
+      ? "[done] Defeat Bark Hound 1/1"
+      : "[ ] Defeat Bark Hound 0/1 (Thornreach)",
+    q.talkedCress && q.reachedEdge && q.identifiedVole && q.houndDone
+      ? "[ ] Return to Rook (the edge's measure)"
+      : "[ ] Return to Rook with Thornreach's measure",
+  ];
+}
+
 
 export type QuestEventResult = {
   log: QuestLog;
@@ -1540,6 +1637,8 @@ export type QuestEventResult = {
   startedCoil?: boolean;
   /** The Choir Remembers auto-started after The Coil Remembers. */
   startedChoirRemembers?: boolean;
+  /** The Edge Remembers auto-started after The Choir Remembers. */
+  startedEdgeRemembers?: boolean;
 };
 
 /** If Teeth is complete and Ashwood missing, start Ashwood Watch. */
@@ -1812,6 +1911,24 @@ export function ensureChoirRemembersAfterCoil(log: QuestLog): {
   };
 }
 
+/** If The Choir Remembers is complete and The Edge Remembers missing, start it. */
+export function ensureEdgeRemembersAfterChoir(log: QuestLog): {
+  log: QuestLog;
+  started: boolean;
+} {
+  const choir = getChoirRemembersQuest(log);
+  if (!choir || choir.status !== "complete") {
+    return { log, started: false };
+  }
+  if (getEdgeRemembersQuest(log)) {
+    return { log, started: false };
+  }
+  return {
+    log: withEdgeRemembersQuest(log, emptyEdgeRemembersQuest()),
+    started: true,
+  };
+}
+
 export function withTeethQuest(
   log: QuestLog | undefined,
   quest: TeethQuestProgress,
@@ -1924,6 +2041,13 @@ export function withChoirRemembersQuest(
   return { ...(log ?? {}), [CHOIR_REMEMBERS_QUEST_ID]: quest };
 }
 
+export function withEdgeRemembersQuest(
+  log: QuestLog | undefined,
+  quest: EdgeRemembersQuestProgress,
+): QuestLog {
+  return { ...(log ?? {}), [EDGE_REMEMBERS_QUEST_ID]: quest };
+}
+
 function finishTeethIfReady(
   log: QuestLog,
   next: TeethQuestProgress,
@@ -1987,6 +2111,24 @@ export function applyIdentify(
   kindId: EnemyKindId,
   continentId?: ContinentId,
 ): QuestEventResult | null {
+  const edgeRemembers = getEdgeRemembersQuest(log);
+  if (
+    edgeRemembers &&
+    edgeRemembers.status === "active" &&
+    !edgeRemembers.identifiedVole &&
+    kindId === "ash-vole" &&
+    continentId === "thornreach"
+  ) {
+    return {
+      log: withEdgeRemembersQuest(log, {
+        ...edgeRemembers,
+        reachedEdge: true,
+        identifiedVole: true,
+      }),
+      toast: "Identified: Ash-vole / F",
+    };
+  }
+
   const choirRemembers = getChoirRemembersQuest(log);
   if (
     choirRemembers &&
@@ -2198,6 +2340,26 @@ export function applyEnemyKill(
   kindId: EnemyKindId,
   continentId?: ContinentId,
 ): QuestEventResult | null {
+  const edgeRemembers = getEdgeRemembersQuest(log);
+  if (
+    edgeRemembers &&
+    edgeRemembers.status === "active" &&
+    kindId === "bark-hound" &&
+    continentId === "thornreach" &&
+    !edgeRemembers.houndDone
+  ) {
+    return {
+      log: withEdgeRemembersQuest(log, {
+        ...edgeRemembers,
+        reachedEdge: true,
+        houndDone: true,
+      }),
+      toast: edgeRemembers.identifiedVole
+        ? "Bark Hound 1/1 — Return to Rook"
+        : "Bark Hound 1/1 — Name the Ash-vole",
+    };
+  }
+
   const choirRemembers = getChoirRemembersQuest(log);
   if (
     choirRemembers &&
@@ -2976,10 +3138,67 @@ export function applyChoirRemembersRookTalk(
   const q = getChoirRemembersQuest(log);
   if (!q || q.status !== "active") return null;
   if (!choirRemembersObjectivesMet(q)) return null;
+  let out = withChoirRemembersQuest(log, { ...q, status: "complete" });
+  const ensured = ensureEdgeRemembersAfterChoir(out);
+  out = ensured.log;
   return {
-    log: withChoirRemembersQuest(log, { ...q, status: "complete" }),
-    toast: CHOIR_REMEMBERS_COMPLETE_LINE,
+    log: out,
+    toast: ensured.started
+      ? EDGE_REMEMBERS_START_TOAST
+      : CHOIR_REMEMBERS_COMPLETE_LINE,
     completedId: CHOIR_REMEMBERS_QUEST_ID,
+    startedEdgeRemembers: ensured.started,
+  };
+}
+
+/** Mark Thornreach overworld reached for The Edge Remembers (stand or travel). */
+export function applyEdgeReached(log: QuestLog): QuestEventResult | null {
+  const q = getEdgeRemembersQuest(log);
+  if (!q || q.status !== "active" || q.reachedEdge) {
+    return null;
+  }
+  return {
+    log: withEdgeRemembersQuest(log, { ...q, reachedEdge: true }),
+    toast:
+      q.talkedCress && q.identifiedVole && q.houndDone
+        ? "Thornreach marked — Return to Rook with the edge's measure"
+        : q.talkedCress && q.identifiedVole
+          ? "Thornreach marked — Quiet one bark-hound packing the home grass"
+          : q.talkedCress
+            ? "Thornreach marked — Name the soft ash-vole on our own ashwood edge"
+            : undefined,
+  };
+}
+
+/** Talk to Cress Ledger — enter the Choir water-measure in the depot ledger (flag only). */
+export function applyEdgeCressTalk(log: QuestLog): QuestEventResult | null {
+  const q = getEdgeRemembersQuest(log);
+  if (!q || q.status !== "active" || q.talkedCress) {
+    return null;
+  }
+  const next: EdgeRemembersQuestProgress = {
+    ...q,
+    talkedCress: true,
+    reachedEdge: true,
+  };
+  return {
+    log: withEdgeRemembersQuest(log, next),
+    toast:
+      "Cress: The Choir's water-measure is in the ledger. Name the ash-vole on our own edge, then quiet one bark-hound packing the home grass.",
+  };
+}
+
+/** Complete The Edge Remembers when talking to Rook after the home edge is measured. */
+export function applyEdgeRemembersRookTalk(
+  log: QuestLog,
+): QuestEventResult | null {
+  const q = getEdgeRemembersQuest(log);
+  if (!q || q.status !== "active") return null;
+  if (!edgeRemembersObjectivesMet(q)) return null;
+  return {
+    log: withEdgeRemembersQuest(log, { ...q, status: "complete" }),
+    toast: EDGE_REMEMBERS_COMPLETE_LINE,
+    completedId: EDGE_REMEMBERS_QUEST_ID,
   };
 }
 
@@ -3029,6 +3248,26 @@ export function applyCairnInspect(
 
 /** Rook line while sticky quests are active / complete. */
 export function rookQuestLine(log: QuestLog | undefined): string | null {
+  const edgeRemembers = getEdgeRemembersQuest(log);
+  if (edgeRemembers) {
+    if (edgeRemembers.status === "complete") {
+      return EDGE_REMEMBERS_COMPLETE_LINE.replace(/^Rook:\s*/, "");
+    }
+    if (!edgeRemembers.talkedCress) {
+      return "The Choir remembers your footing, and the water holds. Carry that measure to Cress's ledger, name the soft ash-vole on our own ashwood edge, quiet one bark-hound packing the home grass, and bring Thornreach's measure home.";
+    }
+    if (!edgeRemembers.reachedEdge) {
+      return "The ledger holds the water's count. Stand our own ashwood edge — Thornreach overworld — then name the soft ash-vole and quiet one bark-hound packing the home grass.";
+    }
+    if (!edgeRemembers.identifiedVole) {
+      return "The edge is underfoot. Identify an Ash-vole on Thornreach — Name and Rank — then quiet one bark-hound packing the home grass.";
+    }
+    if (!edgeRemembers.houndDone) {
+      return "The vole is named. Quiet one Bark Hound packing the home grass, then bring Thornreach's measure home.";
+    }
+    return "The edge remembers. Survive. Learn. Progress — the road begins at our own grass when you tell me.";
+  }
+
   const choirRemembers = getChoirRemembersQuest(log);
   if (choirRemembers) {
     if (choirRemembers.status === "complete") {
