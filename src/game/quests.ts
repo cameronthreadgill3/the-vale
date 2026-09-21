@@ -10,8 +10,16 @@ export const QUEST_STORAGE_KEY = GUEST_QUEST_KEY;
 
 export const TEETH_QUEST_ID = "teeth-in-the-grass" as const;
 export const ASHWOOD_QUEST_ID = "ashwood-watch" as const;
+export const HOLLOW_QUEST_ID = "hollow-watch" as const;
+export const GATE_QUEST_ID = "gate-watch" as const;
+export const MISTMERE_QUEST_ID = "mistmere-crossing" as const;
 
-export type QuestId = typeof TEETH_QUEST_ID | typeof ASHWOOD_QUEST_ID;
+export type QuestId =
+  | typeof TEETH_QUEST_ID
+  | typeof ASHWOOD_QUEST_ID
+  | typeof HOLLOW_QUEST_ID
+  | typeof GATE_QUEST_ID
+  | typeof MISTMERE_QUEST_ID;
 
 export type QuestStatus = "active" | "complete";
 
@@ -35,16 +43,50 @@ export interface AshwoodQuestProgress {
   wrongPreyDone: boolean;
 }
 
+export interface HollowQuestProgress {
+  id: typeof HOLLOW_QUEST_ID;
+  status: QuestStatus;
+  /** Entered any Thornreach hollow (hollowIndex set). */
+  enteredHollow: boolean;
+  /** First successful Identify of a Shade Wisp. */
+  identifiedWisp: boolean;
+  /** Shade Wisps defeated (target 2). */
+  wispsKilled: number;
+}
+
+export interface GateWatchQuestProgress {
+  id: typeof GATE_QUEST_ID;
+  status: QuestStatus;
+  /** Reached Mistmere gate (travel or stand/interact on mistmere-bound gate). */
+  gateReached: boolean;
+}
+
+export interface MistmereQuestProgress {
+  id: typeof MISTMERE_QUEST_ID;
+  status: QuestStatus;
+  /** Arrived on Mistmere via the known gate. */
+  reachedMistmere: boolean;
+  /** Talked to Old Reed on Mistmere. */
+  talkedOldReed: boolean;
+}
+
 export type QuestLog = {
   [TEETH_QUEST_ID]?: TeethQuestProgress;
   [ASHWOOD_QUEST_ID]?: AshwoodQuestProgress;
+  [HOLLOW_QUEST_ID]?: HollowQuestProgress;
+  [GATE_QUEST_ID]?: GateWatchQuestProgress;
+  [MISTMERE_QUEST_ID]?: MistmereQuestProgress;
 };
 
 export const TEETH_RATS_NEEDED = 3;
 export const ASHWOOD_CAIRNS_NEEDED = 3;
+export const HOLLOW_WISPS_NEEDED = 2;
 
 export const TEETH_QUEST_TITLE = "Teeth in the Grass";
 export const ASHWOOD_QUEST_TITLE = "Ashwood Watch";
+export const HOLLOW_QUEST_TITLE = "Hollow Watch";
+export const GATE_QUEST_TITLE = "Gate Watch";
+export const MISTMERE_QUEST_TITLE = "Mistmere Crossing";
 
 export const TEETH_START_TOAST =
   "Rook: Ashwood edge has wrong prey - Identify first.";
@@ -58,6 +100,24 @@ export const ASHWOOD_START_TOAST =
 export const ASHWOOD_COMPLETE_LINE =
   "Rook: The watch remembers. Survive. Learn. Progress.";
 
+export const HOLLOW_START_TOAST =
+  "Rook: Something wrong under the nearest Thornreach hollow — Identify the flicker.";
+
+export const HOLLOW_COMPLETE_LINE =
+  "Rook: The hollow quieted. Survive. Learn. Progress.";
+
+export const GATE_START_TOAST =
+  "Rook: Walk the Mistmere gate on Thornreach — know the road before you leave.";
+
+export const GATE_COMPLETE_LINE =
+  "Rook: The gate remembers your step. Survive. Learn. Progress.";
+
+export const MISTMERE_START_TOAST =
+  "Rook: The gate is known. Cross to Mistmere — Old Reed walks the reed-path.";
+
+export const MISTMERE_COMPLETE_LINE =
+  "Rook: Mistmere remembers your crossing. Survive. Learn. Progress.";
+
 export const TEETH_REWARDS = {
   gold: 28,
   combatXp: 55,
@@ -70,6 +130,27 @@ export const ASHWOOD_REWARDS = {
   combatXp: 70,
   skill: "shielding" as SkillId,
   skillXp: 25,
+};
+
+export const HOLLOW_REWARDS = {
+  gold: 40,
+  combatXp: 80,
+  skill: "magic" as SkillId,
+  skillXp: 28,
+};
+
+export const GATE_REWARDS = {
+  gold: 45,
+  combatXp: 90,
+  skill: "distance" as SkillId,
+  skillXp: 28,
+};
+
+export const MISTMERE_REWARDS = {
+  gold: 50,
+  combatXp: 100,
+  skill: "distance" as SkillId,
+  skillXp: 30,
 };
 
 export function loadQuestLog(): QuestLog {
@@ -106,6 +187,33 @@ export function emptyAshwoodQuest(): AshwoodQuestProgress {
     status: "active",
     cairnsVisited: [],
     wrongPreyDone: false,
+  };
+}
+
+export function emptyHollowQuest(): HollowQuestProgress {
+  return {
+    id: HOLLOW_QUEST_ID,
+    status: "active",
+    enteredHollow: false,
+    identifiedWisp: false,
+    wispsKilled: 0,
+  };
+}
+
+export function emptyGateWatchQuest(): GateWatchQuestProgress {
+  return {
+    id: GATE_QUEST_ID,
+    status: "active",
+    gateReached: false,
+  };
+}
+
+export function emptyMistmereQuest(): MistmereQuestProgress {
+  return {
+    id: MISTMERE_QUEST_ID,
+    status: "active",
+    reachedMistmere: false,
+    talkedOldReed: false,
   };
 }
 
@@ -157,6 +265,49 @@ export function sanitizeQuestLog(raw: unknown): QuestLog {
     };
   }
 
+  const hollow = obj[HOLLOW_QUEST_ID];
+  if (hollow && typeof hollow === "object") {
+    const h = hollow as Record<string, unknown>;
+    const status: QuestStatus =
+      h.status === "complete" ? "complete" : "active";
+    const wispsKilled =
+      typeof h.wispsKilled === "number" && Number.isFinite(h.wispsKilled)
+        ? Math.max(0, Math.min(99, Math.floor(h.wispsKilled)))
+        : 0;
+    log[HOLLOW_QUEST_ID] = {
+      id: HOLLOW_QUEST_ID,
+      status,
+      enteredHollow: Boolean(h.enteredHollow),
+      identifiedWisp: Boolean(h.identifiedWisp),
+      wispsKilled,
+    };
+  }
+
+  const gate = obj[GATE_QUEST_ID];
+  if (gate && typeof gate === "object") {
+    const g = gate as Record<string, unknown>;
+    const status: QuestStatus =
+      g.status === "complete" ? "complete" : "active";
+    log[GATE_QUEST_ID] = {
+      id: GATE_QUEST_ID,
+      status,
+      gateReached: Boolean(g.gateReached),
+    };
+  }
+
+  const mist = obj[MISTMERE_QUEST_ID];
+  if (mist && typeof mist === "object") {
+    const m = mist as Record<string, unknown>;
+    const status: QuestStatus =
+      m.status === "complete" ? "complete" : "active";
+    log[MISTMERE_QUEST_ID] = {
+      id: MISTMERE_QUEST_ID,
+      status,
+      reachedMistmere: Boolean(m.reachedMistmere),
+      talkedOldReed: Boolean(m.talkedOldReed),
+    };
+  }
+
   return log;
 }
 
@@ -170,6 +321,25 @@ export function getAshwoodQuest(
   return log?.[ASHWOOD_QUEST_ID] ?? null;
 }
 
+export function getHollowQuest(
+  log: QuestLog | undefined,
+): HollowQuestProgress | null {
+  return log?.[HOLLOW_QUEST_ID] ?? null;
+}
+
+export function getGateWatchQuest(
+  log: QuestLog | undefined,
+): GateWatchQuestProgress | null {
+  return log?.[GATE_QUEST_ID] ?? null;
+}
+
+export function getMistmereQuest(
+  log: QuestLog | undefined,
+): MistmereQuestProgress | null {
+  return log?.[MISTMERE_QUEST_ID] ?? null;
+}
+
+
 export function isTeethActive(log: QuestLog | undefined): boolean {
   const q = getTeethQuest(log);
   return Boolean(q && q.status === "active");
@@ -177,6 +347,21 @@ export function isTeethActive(log: QuestLog | undefined): boolean {
 
 export function isAshwoodActive(log: QuestLog | undefined): boolean {
   const q = getAshwoodQuest(log);
+  return Boolean(q && q.status === "active");
+}
+
+export function isHollowActive(log: QuestLog | undefined): boolean {
+  const q = getHollowQuest(log);
+  return Boolean(q && q.status === "active");
+}
+
+export function isGateWatchActive(log: QuestLog | undefined): boolean {
+  const q = getGateWatchQuest(log);
+  return Boolean(q && q.status === "active");
+}
+
+export function isMistmereActive(log: QuestLog | undefined): boolean {
+  const q = getMistmereQuest(log);
   return Boolean(q && q.status === "active");
 }
 
@@ -192,6 +377,22 @@ export function ashwoodObjectivesMet(q: AshwoodQuestProgress): boolean {
   return (
     q.cairnsVisited.length >= ASHWOOD_CAIRNS_NEEDED && q.wrongPreyDone
   );
+}
+
+export function hollowObjectivesMet(q: HollowQuestProgress): boolean {
+  return (
+    q.enteredHollow &&
+    q.identifiedWisp &&
+    q.wispsKilled >= HOLLOW_WISPS_NEEDED
+  );
+}
+
+export function gateWatchObjectivesMet(q: GateWatchQuestProgress): boolean {
+  return q.gateReached;
+}
+
+export function mistmereObjectivesMet(q: MistmereQuestProgress): boolean {
+  return q.reachedMistmere && q.talkedOldReed;
 }
 
 /** HUD lines for Teeth sticky panel. */
@@ -224,6 +425,55 @@ export function ashwoodHudLines(q: AshwoodQuestProgress): string[] {
   ];
 }
 
+/** HUD lines for Hollow Watch. */
+export function hollowHudLines(q: HollowQuestProgress): string[] {
+  if (q.status === "complete") {
+    return ["Complete - The hollow quieted"];
+  }
+  return [
+    q.enteredHollow
+      ? "[done] Enter a Thornreach hollow"
+      : "[ ] Enter the nearest Thornreach hollow",
+    q.identifiedWisp
+      ? "[done] Identify Shade Wisp"
+      : "[ ] Identify a Shade Wisp (near look)",
+    `${q.wispsKilled >= HOLLOW_WISPS_NEEDED ? "[done]" : "[ ]"} Defeat Shade Wisps ${Math.min(q.wispsKilled, HOLLOW_WISPS_NEEDED)}/${HOLLOW_WISPS_NEEDED}`,
+  ];
+}
+
+/** HUD lines for Gate Watch. */
+export function gateWatchHudLines(q: GateWatchQuestProgress): string[] {
+  if (q.status === "complete") {
+    return ["Complete - The gate remembers"];
+  }
+  return [
+    q.gateReached
+      ? "[done] Reach Mistmere gate"
+      : "[ ] Reach Mistmere gate on Thornreach",
+    q.gateReached
+      ? "[ ] Return to Rook (talk)"
+      : "[ ] Return to Rook after the gate",
+  ];
+}
+
+export function mistmereHudLines(q: MistmereQuestProgress): string[] {
+  if (q.status === "complete") {
+    return ["Complete - Mistmere remembers the crossing"];
+  }
+  return [
+    q.reachedMistmere
+      ? "[done] Travel to Mistmere"
+      : "[ ] Travel to Mistmere (gate)",
+    q.talkedOldReed
+      ? "[done] Talk to Old Reed"
+      : "[ ] Talk to Old Reed (reed-path)",
+    q.reachedMistmere && q.talkedOldReed
+      ? "[ ] Return to Rook (word of the reeds)"
+      : "[ ] Return to Rook after Old Reed",
+  ];
+}
+
+
 export type QuestEventResult = {
   log: QuestLog;
   toast?: string;
@@ -231,6 +481,12 @@ export type QuestEventResult = {
   completedId?: QuestId;
   /** Ashwood auto-started after Teeth. */
   startedAshwood?: boolean;
+  /** Hollow Watch auto-started after Ashwood. */
+  startedHollow?: boolean;
+  /** Gate Watch auto-started after Hollow. */
+  startedGateWatch?: boolean;
+  /** Mistmere Crossing auto-started after Gate Watch. */
+  startedMistmere?: boolean;
 };
 
 /** If Teeth is complete and Ashwood missing, start Ashwood Watch. */
@@ -251,6 +507,60 @@ export function ensureAshwoodAfterTeeth(log: QuestLog): {
   };
 }
 
+/** If Ashwood is complete and Hollow Watch missing, start Hollow Watch. */
+export function ensureHollowAfterAshwood(log: QuestLog): {
+  log: QuestLog;
+  started: boolean;
+} {
+  const ash = getAshwoodQuest(log);
+  if (!ash || ash.status !== "complete") {
+    return { log, started: false };
+  }
+  if (getHollowQuest(log)) {
+    return { log, started: false };
+  }
+  return {
+    log: withHollowQuest(log, emptyHollowQuest()),
+    started: true,
+  };
+}
+
+/** If Hollow Watch is complete and Gate Watch missing, start Gate Watch. */
+export function ensureGateWatchAfterHollow(log: QuestLog): {
+  log: QuestLog;
+  started: boolean;
+} {
+  const hollow = getHollowQuest(log);
+  if (!hollow || hollow.status !== "complete") {
+    return { log, started: false };
+  }
+  if (getGateWatchQuest(log)) {
+    return { log, started: false };
+  }
+  return {
+    log: withGateWatchQuest(log, emptyGateWatchQuest()),
+    started: true,
+  };
+}
+
+/** If Gate Watch is complete and Mistmere Crossing missing, start it. */
+export function ensureMistmereAfterGate(log: QuestLog): {
+  log: QuestLog;
+  started: boolean;
+} {
+  const gate = getGateWatchQuest(log);
+  if (!gate || gate.status !== "complete") {
+    return { log, started: false };
+  }
+  if (getMistmereQuest(log)) {
+    return { log, started: false };
+  }
+  return {
+    log: withMistmereQuest(log, emptyMistmereQuest()),
+    started: true,
+  };
+}
+
 export function withTeethQuest(
   log: QuestLog | undefined,
   quest: TeethQuestProgress,
@@ -263,6 +573,27 @@ export function withAshwoodQuest(
   quest: AshwoodQuestProgress,
 ): QuestLog {
   return { ...(log ?? {}), [ASHWOOD_QUEST_ID]: quest };
+}
+
+export function withHollowQuest(
+  log: QuestLog | undefined,
+  quest: HollowQuestProgress,
+): QuestLog {
+  return { ...(log ?? {}), [HOLLOW_QUEST_ID]: quest };
+}
+
+export function withGateWatchQuest(
+  log: QuestLog | undefined,
+  quest: GateWatchQuestProgress,
+): QuestLog {
+  return { ...(log ?? {}), [GATE_QUEST_ID]: quest };
+}
+
+export function withMistmereQuest(
+  log: QuestLog | undefined,
+  quest: MistmereQuestProgress,
+): QuestLog {
+  return { ...(log ?? {}), [MISTMERE_QUEST_ID]: quest };
 }
 
 function finishTeethIfReady(
@@ -290,13 +621,36 @@ function finishAshwoodIfReady(
   toast?: string,
 ): QuestEventResult {
   if (ashwoodObjectivesMet(next) && next.status === "active") {
+    let out = withAshwoodQuest(log, { ...next, status: "complete" });
+    const ensured = ensureHollowAfterAshwood(out);
+    out = ensured.log;
     return {
-      log: withAshwoodQuest(log, { ...next, status: "complete" }),
-      toast: ASHWOOD_COMPLETE_LINE,
+      log: out,
+      toast: ensured.started ? HOLLOW_START_TOAST : ASHWOOD_COMPLETE_LINE,
       completedId: ASHWOOD_QUEST_ID,
+      startedHollow: ensured.started,
     };
   }
   return { log: withAshwoodQuest(log, next), toast };
+}
+
+function finishHollowIfReady(
+  log: QuestLog,
+  next: HollowQuestProgress,
+  toast?: string,
+): QuestEventResult {
+  if (hollowObjectivesMet(next) && next.status === "active") {
+    let out = withHollowQuest(log, { ...next, status: "complete" });
+    const ensured = ensureGateWatchAfterHollow(out);
+    out = ensured.log;
+    return {
+      log: out,
+      toast: ensured.started ? GATE_START_TOAST : HOLLOW_COMPLETE_LINE,
+      completedId: HOLLOW_QUEST_ID,
+      startedGateWatch: ensured.started,
+    };
+  }
+  return { log: withHollowQuest(log, next), toast };
 }
 
 /** Apply Identify near-field on a Needle Rat (or any beast if already looking). */
@@ -304,6 +658,21 @@ export function applyIdentify(
   log: QuestLog,
   kindId: EnemyKindId,
 ): QuestEventResult | null {
+  const hollow = getHollowQuest(log);
+  if (
+    hollow &&
+    hollow.status === "active" &&
+    hollow.enteredHollow &&
+    !hollow.identifiedWisp &&
+    kindId === "shade-wisp"
+  ) {
+    return finishHollowIfReady(
+      log,
+      { ...hollow, identifiedWisp: true },
+      "Identified: Shade Wisp / F",
+    );
+  }
+
   const teeth = getTeethQuest(log);
   if (teeth && teeth.status === "active" && !teeth.identifiedRat) {
     if (
@@ -343,6 +712,26 @@ export function applyEnemyKill(
   log: QuestLog,
   kindId: EnemyKindId,
 ): QuestEventResult | null {
+  const hollow = getHollowQuest(log);
+  if (hollow && hollow.status === "active" && kindId === "shade-wisp") {
+    let next = { ...hollow };
+    let toast: string | undefined;
+    if (!next.enteredHollow) {
+      next = { ...next, enteredHollow: true };
+    }
+    if (next.wispsKilled < HOLLOW_WISPS_NEEDED) {
+      next = { ...next, wispsKilled: next.wispsKilled + 1 };
+      toast = `Shade Wisps ${Math.min(next.wispsKilled, HOLLOW_WISPS_NEEDED)}/${HOLLOW_WISPS_NEEDED}`;
+    }
+    if (
+      next.enteredHollow === hollow.enteredHollow &&
+      next.wispsKilled === hollow.wispsKilled
+    ) {
+      return null;
+    }
+    return finishHollowIfReady(log, next, toast);
+  }
+
   const teeth = getTeethQuest(log);
   if (teeth && teeth.status === "active") {
     if (kindId === "needle-rat" && teeth.ratsKilled < TEETH_RATS_NEEDED) {
@@ -377,6 +766,91 @@ export function applyEnemyKill(
   return null;
 }
 
+/** Mark hollow entered for Hollow Watch (when hollowIndex becomes set). */
+export function applyHollowEnter(log: QuestLog): QuestEventResult | null {
+  const hollow = getHollowQuest(log);
+  if (!hollow || hollow.status !== "active" || hollow.enteredHollow) {
+    return null;
+  }
+  return finishHollowIfReady(
+    log,
+    { ...hollow, enteredHollow: true },
+    "Hollow entered — Seek the shade flicker",
+  );
+}
+
+/** Mark Mistmere gate reached for Gate Watch (travel or interact). */
+export function applyGateReached(log: QuestLog): QuestEventResult | null {
+  const gate = getGateWatchQuest(log);
+  if (!gate || gate.status !== "active" || gate.gateReached) {
+    return null;
+  }
+  return {
+    log: withGateWatchQuest(log, { ...gate, gateReached: true }),
+    toast: "Mistmere gate marked — Return to Rook",
+  };
+}
+
+/** Complete Gate Watch when talking to Rook after the gate is marked. */
+export function applyGateWatchRookTalk(log: QuestLog): QuestEventResult | null {
+  const gate = getGateWatchQuest(log);
+  if (!gate || gate.status !== "active" || !gate.gateReached) {
+    return null;
+  }
+  let out = withGateWatchQuest(log, { ...gate, status: "complete" });
+  const ensured = ensureMistmereAfterGate(out);
+  out = ensured.log;
+  return {
+    log: out,
+    toast: ensured.started ? MISTMERE_START_TOAST : GATE_COMPLETE_LINE,
+    completedId: GATE_QUEST_ID,
+    startedMistmere: ensured.started,
+  };
+}
+
+/** Mark Mistmere continent reached for Mistmere Crossing. */
+export function applyMistmereReached(log: QuestLog): QuestEventResult | null {
+  const mist = getMistmereQuest(log);
+  if (!mist || mist.status !== "active" || mist.reachedMistmere) {
+    return null;
+  }
+  return {
+    log: withMistmereQuest(log, { ...mist, reachedMistmere: true }),
+    toast: mist.talkedOldReed
+      ? "Mistmere underfoot — Return to Rook with Old Reed's word"
+      : "Mistmere underfoot — Find Old Reed on the reed-path",
+  };
+}
+
+/** Talk to Old Reed on Mistmere (reed-path guide). */
+export function applyMistmereOldReedTalk(log: QuestLog): QuestEventResult | null {
+  const mist = getMistmereQuest(log);
+  if (!mist || mist.status !== "active" || mist.talkedOldReed) {
+    return null;
+  }
+  const next: MistmereQuestProgress = {
+    ...mist,
+    reachedMistmere: true,
+    talkedOldReed: true,
+  };
+  return {
+    log: withMistmereQuest(log, next),
+    toast: "Old Reed: Fog eats footsteps — follow the reed-path. Carry word back to Rook.",
+  };
+}
+
+/** Complete Mistmere Crossing when talking to Rook after Old Reed. */
+export function applyMistmereRookTalk(log: QuestLog): QuestEventResult | null {
+  const mist = getMistmereQuest(log);
+  if (!mist || mist.status !== "active") return null;
+  if (!mistmereObjectivesMet(mist)) return null;
+  return {
+    log: withMistmereQuest(log, { ...mist, status: "complete" }),
+    toast: MISTMERE_COMPLETE_LINE,
+    completedId: MISTMERE_QUEST_ID,
+  };
+}
+
 /** Inspect an Ashwood Watch cairn (E interact). */
 export function applyCairnInspect(
   log: QuestLog,
@@ -399,10 +873,52 @@ export function applyCairnInspect(
 
 /** Rook line while sticky quests are active / complete. */
 export function rookQuestLine(log: QuestLog | undefined): string | null {
+  const mist = getMistmereQuest(log);
+  if (mist) {
+    if (mist.status === "complete") {
+      return MISTMERE_COMPLETE_LINE.replace(/^Rook:\s*/, "");
+    }
+    if (!mist.reachedMistmere) {
+      return "Gate Watch is done. Cross the Mistmere gate — Old Reed walks the reed-path on the far shore.";
+    }
+    if (!mist.talkedOldReed) {
+      return "You stand on Mistmere. Find Old Reed — fog guide of the reed-path — then bring his word home.";
+    }
+    return "Old Reed spoke. Survive. Learn. Progress — the crossing ends when you tell me.";
+  }
+
+  const gate = getGateWatchQuest(log);
+  if (gate) {
+    if (gate.status === "complete") {
+      return "The gate is known. Cross to Mistmere when ready — Old Reed still walks the reed-path.";
+    }
+    if (!gate.gateReached) {
+      return "Walk Gate Watch. The Mistmere gate sits on Thornreach — stand the tile, travel, or press E. Know the road before you leave.";
+    }
+    return "The Mistmere gate is marked. Survive. Learn. Progress — the watch ends here.";
+  }
+
+  const hollow = getHollowQuest(log);
+  if (hollow) {
+    if (hollow.status === "complete") {
+      return "Hollow quieted. Walk Gate Watch — the Mistmere gate on Thornreach still waits.";
+    }
+    if (!hollow.enteredHollow) {
+      return "Something wrong under the nearest Thornreach hollow. Descend, Identify the shade flicker, then clear two wisps.";
+    }
+    if (!hollow.identifiedWisp) {
+      return "You are under the stone. Identify a Shade Wisp — Name and Rank — before you swing wild.";
+    }
+    if (hollow.wispsKilled < HOLLOW_WISPS_NEEDED) {
+      return `Shade Wisps ${hollow.wispsKilled}/${HOLLOW_WISPS_NEEDED}. Clear the flicker, then return when the hollow holds.`;
+    }
+    return "The hollow is nearly quiet. Survive. Learn. Progress.";
+  }
+
   const ash = getAshwoodQuest(log);
   if (ash) {
     if (ash.status === "complete") {
-      return ASHWOOD_COMPLETE_LINE.replace(/^Rook:\s*/, "");
+      return "Ashwood watch is settled. Something wrong under the nearest hollow — talk when you are ready to descend.";
     }
     const n = ash.cairnsVisited.length;
     if (n < ASHWOOD_CAIRNS_NEEDED) {

@@ -40,31 +40,44 @@ import {
   GATE_START_TOAST,
   GATE_REWARDS,
   GATE_COMPLETE_LINE,
+  MISTMERE_START_TOAST,
+  MISTMERE_REWARDS,
+  MISTMERE_COMPLETE_LINE,
   TEETH_QUEST_ID,
   ASHWOOD_QUEST_ID,
   HOLLOW_QUEST_ID,
   GATE_QUEST_ID,
+  MISTMERE_QUEST_ID,
   emptyTeethQuest,
   getTeethQuest,
   getAshwoodQuest,
   getHollowQuest,
   getGateWatchQuest,
+  getMistmereQuest,
   applyIdentify,
   applyEnemyKill,
   applyCairnInspect,
   applyHollowEnter,
   applyGateReached,
   applyGateWatchRookTalk,
+  applyMistmereReached,
+  applyMistmereOldReedTalk,
+  applyMistmereRookTalk,
   withTeethQuest,
   ensureAshwoodAfterTeeth,
   ensureHollowAfterAshwood,
   ensureGateWatchAfterHollow,
+  ensureMistmereAfterGate,
   rookQuestLine,
   loadQuestLog,
   saveQuestLog,
   clearQuestLog,
 } from "@/game/quests";
-import type { EnemyKindId } from "@/game/enemies";
+import {
+  ASHVEIL_EMBER_DEFEAT_TOAST,
+  isHollowBoss,
+  type EnemyKindId,
+} from "@/game/enemies";
 import {
   SKILLS,
   SKILL_IDS,
@@ -232,6 +245,18 @@ export function GameApp() {
             return;
           }
         }
+        const mistResult = applyMistmereReached(loadQuestLog());
+        if (mistResult) {
+          saveQuestLog(mistResult.log);
+          if (mistResult.toast) {
+            showToast(mistResult.toast);
+            window.setTimeout(
+              () => setToast((t) => (t === mistResult.toast ? null : t)),
+              2800,
+            );
+            return;
+          }
+        }
       }
       const dest = getContinent(target);
       if (folkOnContinent(target).length === 0) {
@@ -273,8 +298,20 @@ export function GameApp() {
     setBankOpen(false);
     setPackOpen(false);
     let line = folk.line;
+    if (folkId === "old-reed") {
+      const reed = applyMistmereOldReedTalk(loadQuestLog());
+      if (reed) {
+        saveQuestLog(reed.log);
+        if (reed.toast) {
+          line = reed.toast.replace(/^Old Reed:\s*/, "");
+          queueMicrotask(() => showToast(reed.toast!));
+        }
+      }
+    }
     if (folkId === "rook" && character) {
-      const turnIn = applyGateWatchRookTalk(loadQuestLog());
+      const turnIn =
+        applyMistmereRookTalk(loadQuestLog()) ??
+        applyGateWatchRookTalk(loadQuestLog());
       if (turnIn) {
         saveQuestLog(turnIn.log);
         setCharacter((prev) => {
@@ -283,14 +320,28 @@ export function GameApp() {
             ...prev,
             skillXp: { ...prev.skillXp },
           };
-          if (turnIn.completedId === GATE_QUEST_ID) {
+          if (turnIn.completedId === MISTMERE_QUEST_ID) {
+            next = awardCombatXp(next, MISTMERE_REWARDS.combatXp);
+            next = { ...next, skillXp: { ...next.skillXp } };
+            awardSkillXp(next, MISTMERE_REWARDS.skill, MISTMERE_REWARDS.skillXp);
+            next = setGold(next, next.gold + MISTMERE_REWARDS.gold);
+            next = { ...next, skillXp: { ...next.skillXp } };
+            queueMicrotask(() => {
+              showToast(MISTMERE_COMPLETE_LINE);
+              setSkillTick((t) => t + 1);
+            });
+          } else if (turnIn.completedId === GATE_QUEST_ID) {
             next = awardCombatXp(next, GATE_REWARDS.combatXp);
             next = { ...next, skillXp: { ...next.skillXp } };
             awardSkillXp(next, GATE_REWARDS.skill, GATE_REWARDS.skillXp);
             next = setGold(next, next.gold + GATE_REWARDS.gold);
             next = { ...next, skillXp: { ...next.skillXp } };
             queueMicrotask(() => {
-              showToast(GATE_COMPLETE_LINE);
+              showToast(
+                turnIn.startedMistmere
+                  ? MISTMERE_START_TOAST
+                  : GATE_COMPLETE_LINE,
+              );
               setSkillTick((t) => t + 1);
             });
           } else if (turnIn.toast) {
@@ -458,3 +509,435 @@ export function GameApp() {
       if (!isItemId(itemId)) return;
       setCharacter((prev) => {
         if (!prev) return prev;
+        const removed = removeInventoryItem(prev, itemId, 1);
+        if (!removed) return prev;
+        return setGold(removed, removed.gold + price);
+      });
+      showToast(`Sold for ${price}g`);
+    },
+    [showToast],
+  );
+
+  const sailTo = useCallback(
+    (dest: ContinentId) => {
+      setCharacter((prev) => (prev ? travelToContinent(prev, dest) : prev));
+      setArrivedFrom(null);
+      setShipSpawn(dockSpawnForContinent(dest));
+      setActiveDockId(null);
+      setMapOpen(false);
+      if (dest === "mistmere") {
+        const mistResult = applyMistmereReached(loadQuestLog());
+        if (mistResult) {
+          saveQuestLog(mistResult.log);
+          if (mistResult.toast) {
+            showToast(mistResult.toast);
+            return;
+          }
+        }
+      }
+      const c = getContinent(dest);
+      if (folkOnContinent(dest).length === 0) {
+        showToast(`Sailing to ${c.name} — ${c.blurb}`);
+      } else {
+        showToast(`Sailing to ${c.name}`);
+      }
+    },
+    [showToast],
+  );
+
+  useEffect(() => {
+    if (!character) return;
+    if (character.hollowIndex === null && character.hollowReturn) {
+      setCharacter(clearHollowReturn(character));
+    }
+  }, [character]);
+
+  // Sticky starter hunt: attach if missing on an existing Thornreach save.
+  useEffect(() => {
+    if (!character) return;
+    if (getTeethQuest(loadQuestLog())) return;
+    if (character.continentId !== "thornreach") return;
+    saveQuestLog(withTeethQuest(loadQuestLog(), emptyTeethQuest()));
+    setToast(TEETH_START_TOAST);
+    window.setTimeout(() => setToast((t) => (t === TEETH_START_TOAST ? null : t)), 3600);
+  }, [character]);
+
+  // Quest 2: auto-start Ashwood Watch once Teeth is complete.
+  useEffect(() => {
+    if (!character) return;
+    const ensured = ensureAshwoodAfterTeeth(loadQuestLog());
+    if (!ensured.started) return;
+    saveQuestLog(ensured.log);
+    setToast(ASHWOOD_START_TOAST);
+    window.setTimeout(() => setToast((t) => (t === ASHWOOD_START_TOAST ? null : t)), 3600);
+  }, [character]);
+
+  // Quest 3: auto-start Hollow Watch once Ashwood Watch is complete.
+  useEffect(() => {
+    if (!character) return;
+    const ensured = ensureHollowAfterAshwood(loadQuestLog());
+    if (!ensured.started) return;
+    saveQuestLog(ensured.log);
+    setToast(HOLLOW_START_TOAST);
+    window.setTimeout(() => setToast((t) => (t === HOLLOW_START_TOAST ? null : t)), 3600);
+  }, [character]);
+
+  // Quest 4: auto-start Gate Watch once Hollow Watch is complete.
+  useEffect(() => {
+    if (!character) return;
+    const ensured = ensureGateWatchAfterHollow(loadQuestLog());
+    if (!ensured.started) return;
+    saveQuestLog(ensured.log);
+    setToast(GATE_START_TOAST);
+    window.setTimeout(() => setToast((t) => (t === GATE_START_TOAST ? null : t)), 3600);
+  }, [character]);
+
+  // Quest 5: auto-start Mistmere Crossing once Gate Watch is complete.
+  useEffect(() => {
+    if (!character) return;
+    const ensured = ensureMistmereAfterGate(loadQuestLog());
+    if (!ensured.started) return;
+    saveQuestLog(ensured.log);
+    setToast(MISTMERE_START_TOAST);
+    window.setTimeout(() => setToast((t) => (t === MISTMERE_START_TOAST ? null : t)), 3600);
+  }, [character]);
+
+  // Mistmere Crossing: mark arrival whenever the walker stands on Mistmere.
+  useEffect(() => {
+    if (!character) return;
+    if (character.continentId !== "mistmere") return;
+    const result = applyMistmereReached(loadQuestLog());
+    if (!result) return;
+    saveQuestLog(result.log);
+    if (result.toast) {
+      setToast(result.toast);
+      window.setTimeout(() => setToast((t) => (t === result.toast ? null : t)), 2800);
+    }
+  }, [character]);
+
+  // Hollow Watch: mark enter when hollowIndex is set on Thornreach.
+  useEffect(() => {
+    if (!character) return;
+    if (character.continentId !== "thornreach") return;
+    if (character.hollowIndex === null) return;
+    const result = applyHollowEnter(loadQuestLog());
+    if (!result) return;
+    saveQuestLog(result.log);
+    if (result.toast) {
+      setToast(result.toast);
+      window.setTimeout(() => setToast((t) => (t === result.toast ? null : t)), 2800);
+    }
+  }, [character]);
+
+  const persistQuestResult = useCallback(
+    (
+      prev: ValeCharacter,
+      result: NonNullable<ReturnType<typeof applyIdentify>>,
+    ): ValeCharacter => {
+      saveQuestLog(result.log);
+      let next: ValeCharacter = {
+        ...prev,
+        skillXp: { ...prev.skillXp },
+      };
+      if (result.completedId === TEETH_QUEST_ID) {
+        next = awardCombatXp(next, TEETH_REWARDS.combatXp);
+        next = { ...next, skillXp: { ...next.skillXp } };
+        awardSkillXp(next, TEETH_REWARDS.skill, TEETH_REWARDS.skillXp);
+        next = setGold(next, next.gold + TEETH_REWARDS.gold);
+        next = { ...next, skillXp: { ...next.skillXp } };
+        queueMicrotask(() => {
+          showToast(result.startedAshwood ? ASHWOOD_START_TOAST : TEETH_COMPLETE_LINE);
+          setSkillTick((t) => t + 1);
+        });
+      } else if (result.completedId === ASHWOOD_QUEST_ID) {
+        next = awardCombatXp(next, ASHWOOD_REWARDS.combatXp);
+        next = { ...next, skillXp: { ...next.skillXp } };
+        awardSkillXp(next, ASHWOOD_REWARDS.skill, ASHWOOD_REWARDS.skillXp);
+        next = setGold(next, next.gold + ASHWOOD_REWARDS.gold);
+        next = { ...next, skillXp: { ...next.skillXp } };
+        queueMicrotask(() => {
+          showToast(result.startedHollow ? HOLLOW_START_TOAST : ASHWOOD_COMPLETE_LINE);
+          setSkillTick((t) => t + 1);
+        });
+      } else if (result.completedId === HOLLOW_QUEST_ID) {
+        next = awardCombatXp(next, HOLLOW_REWARDS.combatXp);
+        next = { ...next, skillXp: { ...next.skillXp } };
+        awardSkillXp(next, HOLLOW_REWARDS.skill, HOLLOW_REWARDS.skillXp);
+        next = setGold(next, next.gold + HOLLOW_REWARDS.gold);
+        next = { ...next, skillXp: { ...next.skillXp } };
+        queueMicrotask(() => {
+          showToast(result.startedGateWatch ? GATE_START_TOAST : HOLLOW_COMPLETE_LINE);
+          setSkillTick((t) => t + 1);
+        });
+      } else if (result.completedId === GATE_QUEST_ID) {
+        next = awardCombatXp(next, GATE_REWARDS.combatXp);
+        next = { ...next, skillXp: { ...next.skillXp } };
+        awardSkillXp(next, GATE_REWARDS.skill, GATE_REWARDS.skillXp);
+        next = setGold(next, next.gold + GATE_REWARDS.gold);
+        next = { ...next, skillXp: { ...next.skillXp } };
+        queueMicrotask(() => {
+          showToast(
+            result.startedMistmere ? MISTMERE_START_TOAST : GATE_COMPLETE_LINE,
+          );
+          setSkillTick((t) => t + 1);
+        });
+      } else if (result.completedId === MISTMERE_QUEST_ID) {
+        next = awardCombatXp(next, MISTMERE_REWARDS.combatXp);
+        next = { ...next, skillXp: { ...next.skillXp } };
+        awardSkillXp(next, MISTMERE_REWARDS.skill, MISTMERE_REWARDS.skillXp);
+        next = setGold(next, next.gold + MISTMERE_REWARDS.gold);
+        next = { ...next, skillXp: { ...next.skillXp } };
+        queueMicrotask(() => {
+          showToast(MISTMERE_COMPLETE_LINE);
+          setSkillTick((t) => t + 1);
+        });
+      } else if (result.toast) {
+        queueMicrotask(() => showToast(result.toast!));
+      }
+      return next;
+    },
+    [showToast],
+  );
+
+  const handleIdentify = useCallback(
+    (kindId: EnemyKindId) => {
+      setCharacter((prev) => {
+        if (!prev) return prev;
+        const result = applyIdentify(loadQuestLog(), kindId);
+        if (!result) return prev;
+        return persistQuestResult(prev, result);
+      });
+    },
+    [persistQuestResult],
+  );
+
+  const handleEnemyKill = useCallback(
+    (kindId: EnemyKindId) => {
+      if (isHollowBoss(kindId)) {
+        queueMicrotask(() => showToast(ASHVEIL_EMBER_DEFEAT_TOAST));
+      }
+      setCharacter((prev) => {
+        if (!prev) return prev;
+        const result = applyEnemyKill(loadQuestLog(), kindId);
+        if (!result) return prev;
+        return persistQuestResult(prev, result);
+      });
+    },
+    [persistQuestResult, showToast],
+  );
+
+  const handleInspectCairn = useCallback(
+    (cairnId: string) => {
+      setCharacter((prev) => {
+        if (!prev) return prev;
+        const result = applyCairnInspect(loadQuestLog(), cairnId);
+        if (!result) return prev;
+        return persistQuestResult(prev, result);
+      });
+    },
+    [persistQuestResult],
+  );
+
+  const handleCombatReward = useCallback(
+    (
+      combatXpGain: number,
+      skill: SkillId,
+      skillXpGain: number,
+      goldGain: number,
+      loot?: ItemId[],
+    ) => {
+      setCharacter((prev) => {
+        if (!prev) return prev;
+        let next = awardCombatXp(prev, combatXpGain);
+        next = { ...next, skillXp: { ...next.skillXp } };
+        awardSkillXp(next, skill, skillXpGain);
+        next = setGold(next, next.gold + goldGain);
+        let leftover = false;
+        let leftoverReason: "weight" | "slots" | null = null;
+        if (loot && loot.length > 0) {
+          for (const id of loot) {
+            const added = tryAddInventoryItem(next, id, 1);
+            if (added.ok) {
+              next = added.character;
+            } else {
+              leftover = true;
+              leftoverReason = added.reason;
+            }
+          }
+        }
+        if (leftover) {
+          queueMicrotask(() =>
+            showToast(
+              leftoverReason
+                ? toastForCarryFail(leftoverReason)
+                : "Pack too heavy — loot left behind",
+            ),
+          );
+        }
+        return { ...next, skillXp: { ...next.skillXp } };
+      });
+      setSkillTick((t) => t + 1);
+    },
+    [showToast],
+  );
+
+  const handleEquip = useCallback(
+    (itemId: string) => {
+      if (!isItemId(itemId)) return;
+      setCharacter((prev) => {
+        if (!prev) return prev;
+        const next = equipItem(prev, itemId);
+        if (!next) {
+          queueMicrotask(() => showToast("Cannot equip that"));
+          return prev;
+        }
+        return next;
+      });
+    },
+    [showToast],
+  );
+
+  const handleUnequip = useCallback(
+    (slot: EquipSlot) => {
+      setCharacter((prev) => {
+        if (!prev) return prev;
+        const next = unequipSlot(prev, slot);
+        if (!next) {
+          queueMicrotask(() => showToast(toastForCarryFail("slots")));
+          return prev;
+        }
+        return next;
+      });
+    },
+    [showToast],
+  );
+
+  const handleVitals = useCallback((hp: number, mana: number) => {
+    setCharacter((prev) => {
+      if (!prev) return prev;
+      const next = setVitals(prev, hp, mana);
+      const maxHp = maxHpFor(next);
+      if (maxHp > 0 && hp / maxHp <= LOW_HP_RATIO) {
+        if (!lowHpWarnedRef.current) {
+          lowHpWarnedRef.current = true;
+          queueMicrotask(() => showToast(LOW_HP_TOAST));
+        }
+      } else if (maxHp > 0 && hp / maxHp >= 0.5) {
+        lowHpWarnedRef.current = false;
+      }
+      return next;
+    });
+  }, [showToast]);
+
+  const handlePlayerDeath = useCallback(() => {
+    lowHpWarnedRef.current = false;
+    let toastMsg = "You wake at the continent spawn...";
+    setCharacter((prev) => {
+      if (!prev) return prev;
+      const result = applyDeath(prev);
+      toastMsg = formatDeathToast(result.goldLost, result.itemsLost);
+      return result.character;
+    });
+    setArrivedFrom(null);
+    setShipSpawn(null);
+    setDialogue(null);
+    setActiveShopId(null);
+    setActiveDockId(null);
+    setBankOpen(false);
+    setPackOpen(false);
+    setMapOpen(false);
+    setSkillsOpen(false);
+    setWorldEpoch((e) => e + 1);
+    showToast(toastMsg, 4200);
+  }, [showToast]);
+
+  if (!character) {
+    return <ClassSelectOverlay onPick={pickClass} />;
+  }
+
+  const cls = getClass(character.classId);
+  const skills = skillRowsFrom(character);
+  const continent = getContinent(character.continentId);
+  const inHollow = character.hollowIndex !== null;
+  const locationKey = `${character.continentId}:${character.hollowIndex ?? "over"}:${shipSpawn ? "ship" : "gate"}:${worldEpoch}`;
+  const shop = activeShopId ? (getShop(activeShopId) ?? null) : null;
+  const voyageDock = activeDockId ? (getDock(activeDockId) ?? null) : null;
+
+  return (
+    <GameShell
+      key={locationKey}
+      character={character}
+      cls={cls}
+      skills={skills}
+      skillsOpen={skillsOpen}
+      mapOpen={mapOpen}
+      skillTick={skillTick}
+      arrivedFrom={arrivedFrom}
+      shipSpawn={shipSpawn}
+      toast={toast}
+      continentName={continent.name}
+      inHollow={inHollow}
+      hollowIndex={character.hollowIndex}
+      dialogue={dialogue}
+      shop={shop}
+      bankOpen={bankOpen}
+      packOpen={packOpen}
+      premiumUnlocking={premiumUnlocking}
+      voyageDock={voyageDock}
+      onToggleSkills={toggleSkills}
+      onToggleMap={toggleMap}
+      onTrain={trainSkill}
+      onAssignQuickSlot={assignQuickSlot}
+      onResetPath={resetPath}
+      onTravel={goContinent}
+      onEnterHollow={goHollow}
+      onExitHollow={leaveHollow}
+      onOpenFolk={openFolk}
+      onOpenShop={openShop}
+      onOpenShip={openShip}
+      onCloseDialogue={() => setDialogue(null)}
+      onCloseShop={() => setActiveShopId(null)}
+      onOpenBank={openBank}
+      onCloseBank={() => setBankOpen(false)}
+      onDepositItem={handleDepositItem}
+      onWithdrawItem={handleWithdrawItem}
+      onDepositGold={handleDepositGold}
+      onWithdrawGold={handleWithdrawGold}
+      onTogglePack={() => {
+        setBankOpen(false);
+        setPackOpen((o) => !o);
+      }}
+      onUnlockPremiumDemo={handleUnlockDemo}
+      onUnlockPremiumStripe={handleUnlockStripe}
+      onCloseVoyage={() => setActiveDockId(null)}
+      onBuy={buyItem}
+      onSell={sellItem}
+      onSail={sailTo}
+      onEquip={handleEquip}
+      onUnequip={handleUnequip}
+      onCombatReward={handleCombatReward}
+      onEnemyKill={handleEnemyKill}
+      onIdentify={handleIdentify}
+      onInspectCairn={handleInspectCairn}
+      teethQuest={getTeethQuest(loadQuestLog())}
+      ashwoodQuest={getAshwoodQuest(loadQuestLog())}
+      hollowQuest={getHollowQuest(loadQuestLog())}
+      gateWatchQuest={getGateWatchQuest(loadQuestLog())}
+      mistmereQuest={getMistmereQuest(loadQuestLog())}
+      onVitals={handleVitals}
+      onPlayerDeath={handlePlayerDeath}
+      onPassivePrimary={(amount) => {
+        setCharacter((prev) => {
+          if (!prev) return prev;
+          const next: ValeCharacter = {
+            ...prev,
+            skillXp: { ...prev.skillXp },
+          };
+          awardSkillXp(next, cls.primarySkill, amount);
+          return { ...next, skillXp: { ...next.skillXp } };
+        });
+        setSkillTick((t) => t + 1);
+      }}
+    />
+  );
+}

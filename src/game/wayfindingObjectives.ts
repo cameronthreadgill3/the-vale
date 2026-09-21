@@ -10,15 +10,18 @@ import {
   getAshwoodQuest,
   getHollowQuest,
   getGateWatchQuest,
+  getMistmereQuest,
   isTeethActive,
   isAshwoodActive,
   isHollowActive,
   isGateWatchActive,
+  isMistmereActive,
   loadQuestLog,
   type TeethQuestProgress,
   type AshwoodQuestProgress,
   type HollowQuestProgress,
   type GateWatchQuestProgress,
+  type MistmereQuestProgress,
 } from "@/game/quests";
 import { ASHWOOD_CAIRNS } from "@/game/cairns";
 import { huntZoneById } from "@/game/huntZones";
@@ -49,6 +52,10 @@ export function resolveQuestObjective(
   map: WorldMap,
 ): WayfindObjective | null {
   const log = loadQuestLog();
+  if (isMistmereActive(log)) {
+    const q = getMistmereQuest(log);
+    if (q) return objectiveForMistmere(q, player, folk, map);
+  }
   if (isGateWatchActive(log)) {
     const q = getGateWatchQuest(log);
     if (q) return objectiveForGateWatch(q, player, folk, map);
@@ -106,11 +113,79 @@ export function objectiveForGateWatch(
   return null;
 }
 
+export function objectiveForMistmere(
+  q: MistmereQuestProgress,
+  player: { x: number; y: number },
+  folk: FolkDef[],
+  map: WorldMap,
+): WayfindObjective | null {
+  if (q.status !== "active") return null;
+  const rook = folk.find((f) => f.id === "rook");
+  const reed = folk.find((f) => f.id === "old-reed");
+
+  if (!q.talkedOldReed) {
+    if (reed) {
+      return {
+        label: "Talk to Old Reed",
+        x: (reed.x + 0.5) * TILE,
+        y: (reed.y + 0.5) * TILE,
+        kind: "folk",
+      };
+    }
+    const gate = mistmereGateOnMap(map);
+    if (gate) {
+      return {
+        label: "Travel to Mistmere",
+        x: (gate.x + 0.5) * TILE,
+        y: (gate.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    return {
+      label: "Find Mistmere gate (Thornreach)",
+      x: player.x + TILE * 8,
+      y: player.y - TILE * 2,
+      kind: "landmark",
+    };
+  }
+
+  if (rook) {
+    return {
+      label: "Return to Rook",
+      x: (rook.x + 0.5) * TILE,
+      y: (rook.y + 0.5) * TILE,
+      kind: "folk",
+    };
+  }
+  const home = continentGateOnMap(map, "thornreach");
+  if (home) {
+    return {
+      label: "Gate back to Rook (Thornreach)",
+      x: (home.x + 0.5) * TILE,
+      y: (home.y + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  return {
+    label: "Return to Rook (Thornreach)",
+    x: player.x + TILE * 8,
+    y: player.y - TILE * 2,
+    kind: "landmark",
+  };
+}
+
 function mistmereGateOnMap(
   map: WorldMap,
 ): { x: number; y: number } | null {
+  return continentGateOnMap(map, "mistmere");
+}
+
+function continentGateOnMap(
+  map: WorldMap,
+  targetContinentId: string,
+): { x: number; y: number } | null {
   if (!map.gates || map.gates.length === 0) return null;
-  const g = map.gates.find((x) => x.targetContinentId === "mistmere");
+  const g = map.gates.find((x) => x.targetContinentId === targetContinentId);
   return g ? { x: g.x, y: g.y } : null;
 }
 

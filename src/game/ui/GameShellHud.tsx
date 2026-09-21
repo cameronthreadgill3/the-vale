@@ -7,14 +7,17 @@ import {
   ASHWOOD_QUEST_TITLE,
   HOLLOW_QUEST_TITLE,
   GATE_QUEST_TITLE,
+  MISTMERE_QUEST_TITLE,
   teethHudLines,
   ashwoodHudLines,
   hollowHudLines,
   gateWatchHudLines,
+  mistmereHudLines,
   type TeethQuestProgress,
   type AshwoodQuestProgress,
   type HollowQuestProgress,
   type GateWatchQuestProgress,
+  type MistmereQuestProgress,
 } from "@/game/quests";
 
 function equippedLine(character: ValeCharacter): string {
@@ -36,6 +39,7 @@ export function GameShellHud({
   ashwoodQuest,
   hollowQuest,
   gateWatchQuest,
+  mistmereQuest,
   onOpenPack,
 }: {
   cls: ValeClass;
@@ -46,6 +50,7 @@ export function GameShellHud({
   ashwoodQuest: AshwoodQuestProgress | null;
   hollowQuest: HollowQuestProgress | null;
   gateWatchQuest: GateWatchQuestProgress | null;
+  mistmereQuest: MistmereQuestProgress | null;
   onOpenPack: () => void;
 }) {
   return (
@@ -77,7 +82,18 @@ export function GameShellHud({
             )}
           </div>
         )}
-        {gateWatchQuest && gateWatchQuest.status === "active" ? (
+        {mistmereQuest && mistmereQuest.status === "active" ? (
+          <div className="vale-chrome mt-2 max-w-xs rounded-sm px-2.5 py-1.5 text-[10px] leading-relaxed text-[#9aa288] sm:text-xs">
+            <div className="font-display text-[11px] tracking-wide text-[#c9a227] sm:text-xs">
+              {MISTMERE_QUEST_TITLE}
+            </div>
+            <ul className="mt-1 space-y-0.5">
+              {mistmereHudLines(mistmereQuest).map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+          </div>
+        ) : gateWatchQuest && gateWatchQuest.status === "active" ? (
           <div className="vale-chrome mt-2 max-w-xs rounded-sm px-2.5 py-1.5 text-[10px] leading-relaxed text-[#9aa288] sm:text-xs">
             <div className="font-display text-[11px] tracking-wide text-[#c9a227] sm:text-xs">
               {GATE_QUEST_TITLE}
