@@ -19,16 +19,20 @@ export interface TravelQuote {
 
 type PairFare = { a: ContinentId; b: ContinentId; gold: number };
 
-/** Watch fare on the Accession road. */
+/**
+ * Watch / pier fares vs STARTING_GOLD (45g) and early hunt drops (~3–8g).
+ * One Needle Rat or one Ash-Salve sale covers the Thornreach watch; ships sit
+ * a step above. First visit to an undiscovered land is still free.
+ */
 const GATE_PAIR_FARES: PairFare[] = [
-  { a: "thornreach", b: "mistmere", gold: 5 },
+  { a: "thornreach", b: "mistmere", gold: 4 },
 ];
 
 /** Coastal triangle already wired in folk.ts — scales lightly with the hop. */
 const SHIP_PAIR_FARES: PairFare[] = [
-  { a: "mistmere", b: "sunken-choir", gold: 6 },
-  { a: "sunken-choir", b: "nightglass-coast", gold: 7 },
-  { a: "mistmere", b: "nightglass-coast", gold: 8 },
+  { a: "mistmere", b: "sunken-choir", gold: 5 },
+  { a: "sunken-choir", b: "nightglass-coast", gold: 6 },
+  { a: "mistmere", b: "nightglass-coast", gold: 7 },
 ];
 
 function pairGold(table: PairFare[], from: ContinentId, to: ContinentId): number {

@@ -264,7 +264,8 @@ export const ITEMS: ItemDef[] = [
     id: "ash-salve",
     name: "Ash-Salve",
     blurb: "Briar and ashwood, bound at Sera's kettle.",
-    value: 14,
+    /** Vendor 18g / Mara sell 9g — ahead of raw mats (2+2g) so the kettle walk pays. */
+    value: 18,
     weight: 1,
     kind: "goods",
   },
