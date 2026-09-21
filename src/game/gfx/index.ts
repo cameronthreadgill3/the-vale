@@ -48,6 +48,7 @@ export {
   drawHollowTorchSpots,
   drawHollowDungeonMarkers,
 } from "@/game/gfx/atmosphere";
+export { drawViewOverlay } from "@/game/gfx/viewOverlay";
 export {
   makeCanvas,
   ctx2d,
