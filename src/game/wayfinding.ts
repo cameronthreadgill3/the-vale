@@ -5,6 +5,7 @@ export {
   resolveQuestObjective,
   objectiveForTeeth,
   objectiveForAshwood,
+  objectiveForHollow,
   tilesAway,
   type WayfindObjective,
   type RadarDot,
