@@ -301,19 +301,39 @@ export function GameShellHud({
           className="pointer-events-auto mt-1 w-full rounded-sm py-1.5 text-left text-[11px] uppercase tracking-wider text-[#8a9080] hover:text-[#c9a227]"
           onClick={onOpenPack}
         >
-          <span
-            className={
-              packHeavy ? "text-[#e07030]" : packHigh ? "text-[#c9a227]" : ""
-            }
-          >
-            Pack {hud.weight}/{hud.maxWeight} wt
-          </span>
-          <span className="text-[#8a9080]">
-            {" "}
-            · {hud.slots}/{hud.maxSlots}
-          </span>
+          <div className="text-[#8a9080]">Pack</div>
+          <div className="mt-0.5 flex items-center justify-between gap-1">
+            <span
+              className={
+                packHeavy
+                  ? "text-[#e07030]"
+                  : packHigh
+                    ? "text-[#c9a227]"
+                    : ""
+              }
+            >
+              Weight
+            </span>
+            <span
+              className={`normal-case tracking-normal tabular-nums ${
+                packHeavy
+                  ? "text-[#e07030]"
+                  : packHigh
+                    ? "text-[#c9a227]"
+                    : "text-[#e8e6d9]"
+              }`}
+            >
+              {hud.weight} / {hud.maxWeight}
+            </span>
+          </div>
+          <div className="flex items-center justify-between gap-1 text-[#8a9080]">
+            <span>Slots</span>
+            <span className="normal-case tracking-normal tabular-nums text-[#e8e6d9]">
+              {hud.slots} / {hud.maxSlots}
+            </span>
+          </div>
           {character.premiumBackpack && (
-            <span className="text-[#c9a227]"> · Prem</span>
+            <div className="text-[#c9a227]">Premium</div>
           )}
         </button>
         <div className="vale-hud-extra mt-0.5 truncate text-[10px] text-[#c8c4b0]">

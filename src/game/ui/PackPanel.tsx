@@ -4,6 +4,8 @@ import {
   carriedWeight,
   maxWeightFor,
   maxSlotsFor,
+  formatWeightChrome,
+  formatSlotsChrome,
   DEATH_RULES_BLURB,
   PREMIUM_BACKPACK_SLOTS,
   PREMIUM_WEIGHT_BONUS,
@@ -54,9 +56,10 @@ export function PackPanel({
           <div className="font-display text-sm tracking-wide text-[#c9a227]">
             Pack
           </div>
-          <div className="text-[10px] uppercase tracking-wider text-[#6a7260]">
-            {weight}/{maxW} wt · {slots}/{maxS} slots
-            {character.premiumBackpack ? " · Premium" : ""}
+          <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] uppercase tracking-wider text-[#6a7260]">
+            <span>{formatWeightChrome(weight, maxW)}</span>
+            <span>{formatSlotsChrome(slots, maxS)}</span>
+            {character.premiumBackpack ? <span>Premium</span> : null}
           </div>
         </div>
         <button
@@ -120,7 +123,7 @@ export function PackPanel({
       </ul>
 
       <div className="mb-1 text-[10px] uppercase tracking-wider text-[#6a7260]">
-        Pack
+        Pack items
       </div>
       {character.inventory.length === 0 ? (
         <p className="mb-3 px-1 text-xs text-[#6a7260]">Empty pack.</p>
