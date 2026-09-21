@@ -24,7 +24,6 @@ import { drawCombatFloats, easeCombatFloats } from "@/game/gfx/damageFloats";
 import { HIT_FLASH_SEC } from "@/game/gfx/hitFlash";
 import { collectEnemyDepthItems, drawEnemyChrome, tickEnemyGfx } from "@/game/gfx/drawEnemies";
 import {
-  drawVignette,
   drawAshwoodTint,
   drawParallaxHaze,
   drawSurfaceLight,
@@ -34,6 +33,7 @@ import {
   drawHollowTorchSpots,
 } from "@/game/gfx/atmosphere";
 import { tickAshDrift, collectAshDriftDepthItems } from "@/game/gfx/ashDrift";
+import { drawScreenVignette } from "@/game/gfx/screenVignette";
 import { drawViewOverlay } from "@/game/gfx/viewOverlay";
 import type { ValeCharacter } from "@/game/character";
 import { FOLK, type FolkDef, type ShopDef, type ShipDock } from "@/game/folk";
@@ -758,7 +758,17 @@ export function advanceCameraAndRender(args: {
     outdoor,
     plaza,
   });
-  drawVignette(ctx, viewW, viewH);
+  drawScreenVignette(ctx, {
+    dt,
+    viewW,
+    viewH,
+    focusX: px,
+    focusY: py,
+    playerX: player.x,
+    playerY: player.y,
+    tile: TILE,
+    foes: enemies,
+  });
   drawLootSparkles(ctx, originX, originY, player);
   drawEnemyChrome(ctx, enemies, originX, originY);
   drawFolkNameLabels(ctx, folk, originX, originY, player);

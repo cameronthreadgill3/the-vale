@@ -68,6 +68,7 @@ export {
 } from "@/game/gfx/atmosphere";
 export { tickAshDrift, collectAshDriftDepthItems } from "@/game/gfx/ashDrift";
 export { drawViewOverlay } from "@/game/gfx/viewOverlay";
+export { drawScreenVignette, combatFocusTarget } from "@/game/gfx/screenVignette";
 export {
   makeCanvas,
   ctx2d,
