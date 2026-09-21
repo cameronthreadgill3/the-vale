@@ -24,6 +24,7 @@ export const PALE_QUEST_ID = "the-pale-gate-opens" as const;
 export const ASHEN_QUEST_ID = "the-ashen-gate-opens" as const;
 export const EMBERCOIL_QUEST_ID = "the-embercoil-gate-opens" as const;
 export const COIL_QUEST_ID = "the-coil-remembers" as const;
+export const CHOIR_REMEMBERS_QUEST_ID = "the-choir-remembers" as const;
 
 /** Depot clerk — Cress Ledger in folk.ts. */
 export const CRESS_FOLK_ID = "cress-ledger" as const;
@@ -59,7 +60,8 @@ export type QuestId =
   | typeof PALE_QUEST_ID
   | typeof ASHEN_QUEST_ID
   | typeof EMBERCOIL_QUEST_ID
-  | typeof COIL_QUEST_ID;
+  | typeof COIL_QUEST_ID
+  | typeof CHOIR_REMEMBERS_QUEST_ID;
 
 export type QuestStatus = "active" | "complete";
 
@@ -226,6 +228,17 @@ export interface CoilQuestProgress {
   foxDone: boolean;
 }
 
+export interface ChoirRemembersQuestProgress {
+  id: typeof CHOIR_REMEMBERS_QUEST_ID;
+  status: QuestStatus;
+  /** Reached Sunken Choir overworld (sail, gate, or stand). */
+  reachedChoir: boolean;
+  /** First successful Identify of a Briar Mite on Sunken Choir. */
+  identifiedMite: boolean;
+  /** Bark Hound defeated on Sunken Choir (target 1; continent-scoped). */
+  houndDone: boolean;
+}
+
 export type QuestLog = {
   [TEETH_QUEST_ID]?: TeethQuestProgress;
   [ASHWOOD_QUEST_ID]?: AshwoodQuestProgress;
@@ -242,6 +255,7 @@ export type QuestLog = {
   [ASHEN_QUEST_ID]?: AshenQuestProgress;
   [EMBERCOIL_QUEST_ID]?: EmbercoilQuestProgress;
   [COIL_QUEST_ID]?: CoilQuestProgress;
+  [CHOIR_REMEMBERS_QUEST_ID]?: ChoirRemembersQuestProgress;
 };
 
 export const TEETH_RATS_NEEDED = 3;
@@ -263,6 +277,7 @@ export const PALE_QUEST_TITLE = "The Pale Gate Opens";
 export const ASHEN_QUEST_TITLE = "The Ashen Gate Opens";
 export const EMBERCOIL_QUEST_TITLE = "The Embercoil Gate Opens";
 export const COIL_QUEST_TITLE = "The Coil Remembers";
+export const CHOIR_REMEMBERS_QUEST_TITLE = "The Choir Remembers";
 
 export const TEETH_START_TOAST =
   "Rook: Ashwood edge has wrong prey - Identify first.";
@@ -353,6 +368,12 @@ export const COIL_START_TOAST =
 
 export const COIL_COMPLETE_LINE =
   "Rook: The coil remembers your footing. Soft prey named, the glow skirts quieted. Survive. Learn. Progress — the far road holds the heat.";
+
+export const CHOIR_REMEMBERS_START_TOAST =
+  "Rook: The coil remembers your footing, and the glow skirts quieted. The heat's measure reached the drowned cloisters — sail to the Sunken Choir, name the briar-mite that skitters the wet stone, quiet one bark-hound packing the hymn skirts, and bring the Choir's measure home. Survive. Learn. Progress.";
+
+export const CHOIR_REMEMBERS_COMPLETE_LINE =
+  "Rook: The Choir remembers your footing. Soft prey named, the hymn skirts quieted. Survive. Learn. Progress — the far road holds the water again.";
 
 export const TEETH_REWARDS = {
   gold: 28,
@@ -457,6 +478,13 @@ export const COIL_REWARDS = {
   combatXp: 200,
   skill: "distance" as SkillId,
   skillXp: 58,
+};
+
+export const CHOIR_REMEMBERS_REWARDS = {
+  gold: 105,
+  combatXp: 210,
+  skill: "shielding" as SkillId,
+  skillXp: 60,
 };
 
 export function loadQuestLog(): QuestLog {
@@ -634,6 +662,16 @@ export function emptyCoilQuest(): CoilQuestProgress {
     reachedCoil: false,
     identifiedVole: false,
     foxDone: false,
+  };
+}
+
+export function emptyChoirRemembersQuest(): ChoirRemembersQuestProgress {
+  return {
+    id: CHOIR_REMEMBERS_QUEST_ID,
+    status: "active",
+    reachedChoir: false,
+    identifiedMite: false,
+    houndDone: false,
   };
 }
 
@@ -871,6 +909,20 @@ export function sanitizeQuestLog(raw: unknown): QuestLog {
     };
   }
 
+  const choirRemembers = obj[CHOIR_REMEMBERS_QUEST_ID];
+  if (choirRemembers && typeof choirRemembers === "object") {
+    const c = choirRemembers as Record<string, unknown>;
+    const status: QuestStatus =
+      c.status === "complete" ? "complete" : "active";
+    log[CHOIR_REMEMBERS_QUEST_ID] = {
+      id: CHOIR_REMEMBERS_QUEST_ID,
+      status,
+      reachedChoir: Boolean(c.reachedChoir),
+      identifiedMite: Boolean(c.identifiedMite),
+      houndDone: Boolean(c.houndDone),
+    };
+  }
+
   return log;
 }
 
@@ -962,6 +1014,12 @@ export function getCoilQuest(
   return log?.[COIL_QUEST_ID] ?? null;
 }
 
+export function getChoirRemembersQuest(
+  log: QuestLog | undefined,
+): ChoirRemembersQuestProgress | null {
+  return log?.[CHOIR_REMEMBERS_QUEST_ID] ?? null;
+}
+
 export function isTeethActive(log: QuestLog | undefined): boolean {
   const q = getTeethQuest(log);
   return Boolean(q && q.status === "active");
@@ -1034,6 +1092,11 @@ export function isEmbercoilActive(log: QuestLog | undefined): boolean {
 
 export function isCoilActive(log: QuestLog | undefined): boolean {
   const q = getCoilQuest(log);
+  return Boolean(q && q.status === "active");
+}
+
+export function isChoirRemembersActive(log: QuestLog | undefined): boolean {
+  const q = getChoirRemembersQuest(log);
   return Boolean(q && q.status === "active");
 }
 
@@ -1112,6 +1175,12 @@ export function embercoilObjectivesMet(q: EmbercoilQuestProgress): boolean {
 
 export function coilObjectivesMet(q: CoilQuestProgress): boolean {
   return q.reachedCoil && q.identifiedVole && q.foxDone;
+}
+
+export function choirRemembersObjectivesMet(
+  q: ChoirRemembersQuestProgress,
+): boolean {
+  return q.reachedChoir && q.identifiedMite && q.houndDone;
 }
 
 /** HUD lines for Teeth sticky panel. */
@@ -1414,6 +1483,27 @@ export function coilHudLines(q: CoilQuestProgress): string[] {
   ];
 }
 
+/** HUD lines for The Choir Remembers. */
+export function choirRemembersHudLines(q: ChoirRemembersQuestProgress): string[] {
+  if (q.status === "complete") {
+    return ["Complete - The Choir remembers"];
+  }
+  return [
+    q.reachedChoir
+      ? "[done] Reach Sunken Choir"
+      : "[ ] Reach Sunken Choir (coastal dock)",
+    q.identifiedMite
+      ? "[done] Identify Briar Mite"
+      : "[ ] Identify a Briar Mite (near look)",
+    q.houndDone
+      ? "[done] Defeat Bark Hound 1/1"
+      : "[ ] Defeat Bark Hound 0/1 (Sunken Choir)",
+    q.reachedChoir && q.identifiedMite && q.houndDone
+      ? "[ ] Return to Rook (the Choir's measure)"
+      : "[ ] Return to Rook with the Choir's measure",
+  ];
+}
+
 
 export type QuestEventResult = {
   log: QuestLog;
@@ -1448,6 +1538,8 @@ export type QuestEventResult = {
   startedEmbercoil?: boolean;
   /** The Coil Remembers auto-started after The Embercoil Gate Opens. */
   startedCoil?: boolean;
+  /** The Choir Remembers auto-started after The Coil Remembers. */
+  startedChoirRemembers?: boolean;
 };
 
 /** If Teeth is complete and Ashwood missing, start Ashwood Watch. */
@@ -1702,6 +1794,24 @@ export function ensureCoilAfterEmbercoil(log: QuestLog): {
   };
 }
 
+/** If The Coil Remembers is complete and The Choir Remembers missing, start it. */
+export function ensureChoirRemembersAfterCoil(log: QuestLog): {
+  log: QuestLog;
+  started: boolean;
+} {
+  const coil = getCoilQuest(log);
+  if (!coil || coil.status !== "complete") {
+    return { log, started: false };
+  }
+  if (getChoirRemembersQuest(log)) {
+    return { log, started: false };
+  }
+  return {
+    log: withChoirRemembersQuest(log, emptyChoirRemembersQuest()),
+    started: true,
+  };
+}
+
 export function withTeethQuest(
   log: QuestLog | undefined,
   quest: TeethQuestProgress,
@@ -1807,6 +1917,13 @@ export function withCoilQuest(
   return { ...(log ?? {}), [COIL_QUEST_ID]: quest };
 }
 
+export function withChoirRemembersQuest(
+  log: QuestLog | undefined,
+  quest: ChoirRemembersQuestProgress,
+): QuestLog {
+  return { ...(log ?? {}), [CHOIR_REMEMBERS_QUEST_ID]: quest };
+}
+
 function finishTeethIfReady(
   log: QuestLog,
   next: TeethQuestProgress,
@@ -1870,6 +1987,24 @@ export function applyIdentify(
   kindId: EnemyKindId,
   continentId?: ContinentId,
 ): QuestEventResult | null {
+  const choirRemembers = getChoirRemembersQuest(log);
+  if (
+    choirRemembers &&
+    choirRemembers.status === "active" &&
+    !choirRemembers.identifiedMite &&
+    kindId === "briar-mite" &&
+    continentId === "sunken-choir"
+  ) {
+    return {
+      log: withChoirRemembersQuest(log, {
+        ...choirRemembers,
+        reachedChoir: true,
+        identifiedMite: true,
+      }),
+      toast: "Identified: Briar Mite / F",
+    };
+  }
+
   const coil = getCoilQuest(log);
   if (
     coil &&
@@ -2063,6 +2198,26 @@ export function applyEnemyKill(
   kindId: EnemyKindId,
   continentId?: ContinentId,
 ): QuestEventResult | null {
+  const choirRemembers = getChoirRemembersQuest(log);
+  if (
+    choirRemembers &&
+    choirRemembers.status === "active" &&
+    kindId === "bark-hound" &&
+    continentId === "sunken-choir" &&
+    !choirRemembers.houndDone
+  ) {
+    return {
+      log: withChoirRemembersQuest(log, {
+        ...choirRemembers,
+        reachedChoir: true,
+        houndDone: true,
+      }),
+      toast: choirRemembers.identifiedMite
+        ? "Bark Hound 1/1 — Return to Rook"
+        : "Bark Hound 1/1 — Name the Briar Mite",
+    };
+  }
+
   const coil = getCoilQuest(log);
   if (
     coil &&
@@ -2782,10 +2937,49 @@ export function applyCoilRookTalk(log: QuestLog): QuestEventResult | null {
   const q = getCoilQuest(log);
   if (!q || q.status !== "active") return null;
   if (!coilObjectivesMet(q)) return null;
+  let out = withCoilQuest(log, { ...q, status: "complete" });
+  const ensured = ensureChoirRemembersAfterCoil(out);
+  out = ensured.log;
   return {
-    log: withCoilQuest(log, { ...q, status: "complete" }),
-    toast: COIL_COMPLETE_LINE,
+    log: out,
+    toast: ensured.started
+      ? CHOIR_REMEMBERS_START_TOAST
+      : COIL_COMPLETE_LINE,
     completedId: COIL_QUEST_ID,
+    startedChoirRemembers: ensured.started,
+  };
+}
+
+/** Mark Sunken Choir reached for The Choir Remembers (sail, gate, or stand). */
+export function applyChoirRemembersReached(
+  log: QuestLog,
+): QuestEventResult | null {
+  const q = getChoirRemembersQuest(log);
+  if (!q || q.status !== "active" || q.reachedChoir) {
+    return null;
+  }
+  return {
+    log: withChoirRemembersQuest(log, { ...q, reachedChoir: true }),
+    toast:
+      q.identifiedMite && q.houndDone
+        ? "Sunken Choir marked — Return to Rook with the Choir's measure"
+        : q.identifiedMite
+          ? "Sunken Choir marked — Quiet one bark-hound packing the hymn skirts"
+          : "Sunken Choir marked — Name the briar-mite that skitters the wet stone",
+  };
+}
+
+/** Complete The Choir Remembers when talking to Rook after the Choir is measured. */
+export function applyChoirRemembersRookTalk(
+  log: QuestLog,
+): QuestEventResult | null {
+  const q = getChoirRemembersQuest(log);
+  if (!q || q.status !== "active") return null;
+  if (!choirRemembersObjectivesMet(q)) return null;
+  return {
+    log: withChoirRemembersQuest(log, { ...q, status: "complete" }),
+    toast: CHOIR_REMEMBERS_COMPLETE_LINE,
+    completedId: CHOIR_REMEMBERS_QUEST_ID,
   };
 }
 
@@ -2835,6 +3029,23 @@ export function applyCairnInspect(
 
 /** Rook line while sticky quests are active / complete. */
 export function rookQuestLine(log: QuestLog | undefined): string | null {
+  const choirRemembers = getChoirRemembersQuest(log);
+  if (choirRemembers) {
+    if (choirRemembers.status === "complete") {
+      return CHOIR_REMEMBERS_COMPLETE_LINE.replace(/^Rook:\s*/, "");
+    }
+    if (!choirRemembers.reachedChoir) {
+      return "The coil remembers your footing, and the glow skirts quieted. The heat's measure reached the drowned cloisters — sail to the Sunken Choir, name the briar-mite that skitters the wet stone, quiet one bark-hound packing the hymn skirts, and bring the Choir's measure home.";
+    }
+    if (!choirRemembers.identifiedMite) {
+      return "The Choir is underfoot. Identify a Briar Mite on Sunken Choir — Name and Rank — then quiet one bark-hound packing the hymn skirts.";
+    }
+    if (!choirRemembers.houndDone) {
+      return "The mite is named. Quiet one Bark Hound packing the hymn skirts, then bring the Choir's measure home.";
+    }
+    return "The Choir remembers. Survive. Learn. Progress — the far road holds the water again when you tell me.";
+  }
+
   const coil = getCoilQuest(log);
   if (coil) {
     if (coil.status === "complete") {
