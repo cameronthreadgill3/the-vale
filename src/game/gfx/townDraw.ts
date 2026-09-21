@@ -1,15 +1,24 @@
 /**
  * Draw Thornreach buildings, signs, and plaza props over ground tiles.
  * Structure depth: roof bevel / under-eave, door-sign lip, south-facade contact.
+ * Ambient motion stays on the prop sheets: cloth sway, hanging signs, lantern flame.
  */
 import { TILE, type WorldMap } from "@/game/world";
 import {
   buildingsOnContinent,
   propsOnContinent,
   type TownBuilding,
+  type TownProp,
   type TownPropKind,
 } from "@/game/world/town";
-import { getPropSheet } from "@/game/gfx/props";
+import {
+  getAwningSheet,
+  getBannerSheet,
+  getPropSheet,
+  propFlameFrame,
+  propSwayFrame,
+  propSwayLean,
+} from "@/game/gfx/props";
 import { TILE_PX } from "@/game/gfx/tiles";
 import { drawSoftShadow, GROUND_SHADOW_ALPHA } from "@/game/gfx/canvasUtil";
 import { drawFloatingLabel } from "@/game/folkCanvas";
@@ -67,25 +76,120 @@ function drawRoofCap(
   ctx.fillRect(peakX - 6, y - 2, 12, 1);
 }
 
+function windPhase(id: string): number {
+  let n = 0;
+  for (let i = 0; i < id.length; i++) n = (n + id.charCodeAt(i) * (i + 1)) | 0;
+  return Math.abs(n % 5) * 0.7;
+}
+
+/** Wall tile beside the door, so the banner does not sit on the shop sign. */
+function bannerTile(b: TownBuilding): { x: number; y: number } {
+  const dx = b.door.x;
+  const dy = b.door.y;
+  const onSide = dx === b.x || dx === b.x + b.w - 1;
+  if (onSide) {
+    const y = dy + 1 < b.y + b.h ? dy + 1 : dy - 1;
+    return { x: dx, y };
+  }
+  const x = dx + 1 < b.x + b.w ? dx + 1 : dx - 1;
+  return { x, y: dy };
+}
+
 function drawDoorSign(
   ctx: CanvasRenderingContext2D,
   b: TownBuilding,
   originX: number,
   originY: number,
+  frame: number,
 ): void {
   const sx = Math.floor((b.door.x + 0.5) * TILE - originX);
   const sy = Math.floor(b.door.y * TILE - originY);
-  ctx.fillStyle = "rgba(8, 10, 6, 0.4)";
-  ctx.fillRect(sx - 9, sy - 6, 20, 8);
+  const lean = propSwayLean(frame);
   ctx.fillStyle = "#3a2a18";
-  ctx.fillRect(sx - 10, sy - 8, 20, 8);
+  ctx.fillRect(sx - 1, sy - 10, 2, 2);
+  ctx.fillStyle = "rgba(8, 10, 6, 0.4)";
+  ctx.fillRect(sx - 9 + lean, sy - 6, 20, 8);
+  ctx.fillStyle = "#3a2a18";
+  ctx.fillRect(sx - 10 + lean, sy - 8, 20, 8);
   ctx.fillStyle = "#5a4430";
-  ctx.fillRect(sx - 10, sy - 8, 20, 1);
-  ctx.fillRect(sx - 10, sy - 8, 1, 8);
+  ctx.fillRect(sx - 10 + lean, sy - 8, 20, 1);
+  ctx.fillRect(sx - 10 + lean, sy - 8, 1, 8);
   ctx.fillStyle = "#2a1c10";
-  ctx.fillRect(sx - 10, sy - 1, 20, 1);
+  ctx.fillRect(sx - 10 + lean, sy - 1, 20, 1);
   ctx.fillStyle = b.signColor;
-  ctx.fillRect(sx - 9, sy - 7, 18, 6);
+  ctx.fillRect(sx - 9 + lean, sy - 7, 18, 6);
+}
+
+function drawShopAwning(
+  ctx: CanvasRenderingContext2D,
+  b: TownBuilding,
+  originX: number,
+  originY: number,
+  frame: number,
+): void {
+  if (!b.shopId) return;
+  const sheet = getAwningSheet(b.signColor, frame);
+  const sx = Math.floor((b.door.x + 0.5) * TILE - originX) - 14;
+  const sy = Math.floor(b.door.y * TILE - originY) - 20;
+  ctx.drawImage(sheet as CanvasImageSource, sx, sy);
+}
+
+function drawFacadeBanner(
+  ctx: CanvasRenderingContext2D,
+  b: TownBuilding,
+  originX: number,
+  originY: number,
+  frame: number,
+): void {
+  const tile = bannerTile(b);
+  const sheet = getBannerSheet(b.signColor, frame);
+  const sx = Math.floor(tile.x * TILE - originX) + 11;
+  const sy = Math.floor(tile.y * TILE - originY) + 2;
+  ctx.drawImage(sheet as CanvasImageSource, sx, sy);
+}
+
+function drawLanternFlicker(
+  ctx: CanvasRenderingContext2D,
+  sx: number,
+  sy: number,
+  timeSec: number,
+  phase: number,
+): void {
+  const pulse =
+    0.76 +
+    0.12 * Math.sin(timeSec * 7.1 + phase) +
+    0.08 * Math.sin(timeSec * 13.4 + phase * 1.3);
+  ctx.save();
+  ctx.globalCompositeOperation = "lighter";
+  ctx.globalAlpha = 0.22 * pulse;
+  ctx.fillStyle = "#f0d060";
+  ctx.fillRect(sx + 14, sy + 9, 4, 4);
+  ctx.restore();
+}
+
+function propFrame(kind: TownPropKind, timeSec: number, phase: number): number {
+  if (kind === "lantern") return propFlameFrame(timeSec, phase);
+  if (kind === "stall" || kind === "notice") return propSwayFrame(timeSec, phase);
+  return 0;
+}
+
+function drawPlazaProp(
+  ctx: CanvasRenderingContext2D,
+  p: TownProp,
+  originX: number,
+  originY: number,
+  timeSec: number,
+): void {
+  const sx = Math.floor(p.x * TILE - originX);
+  const sy = Math.floor(p.y * TILE - originY);
+  const phase = p.x * 0.73 + p.y * 0.41;
+  const shadow = PROP_SHADOW[p.kind];
+  if (shadow) {
+    drawSoftShadow(ctx, sx + shadow.ox, sy + shadow.oy, shadow.rx, shadow.ry, GROUND_SHADOW_ALPHA);
+  }
+  const sheet = getPropSheet(p.kind, propFrame(p.kind, timeSec, phase));
+  ctx.drawImage(sheet as CanvasImageSource, sx, sy, TILE_PX + 1, TILE_PX + 1);
+  if (p.kind === "lantern") drawLanternFlicker(ctx, sx, sy, timeSec, phase);
 }
 
 export function drawTownOverlays(
@@ -94,29 +198,26 @@ export function drawTownOverlays(
   player: { x: number; y: number },
   originX: number,
   originY: number,
+  timeSec = 0,
 ): void {
   if (map.kind !== "overworld") return;
   const buildings = buildingsOnContinent(map.continentId);
   const props = propsOnContinent(map.continentId);
   ctx.imageSmoothingEnabled = false;
   for (const p of props) {
-    const sx = Math.floor(p.x * TILE - originX);
-    const sy = Math.floor(p.y * TILE - originY);
-    const shadow = PROP_SHADOW[p.kind];
-    if (shadow) {
-      drawSoftShadow(ctx, sx + shadow.ox, sy + shadow.oy, shadow.rx, shadow.ry, GROUND_SHADOW_ALPHA);
-    }
-    const sheet = getPropSheet(p.kind);
-    ctx.drawImage(sheet as CanvasImageSource, sx, sy, TILE_PX + 1, TILE_PX + 1);
+    drawPlazaProp(ctx, p, originX, originY, timeSec);
   }
   for (const b of buildings) {
     const bx = Math.floor(b.x * TILE - originX);
     const by = Math.floor(b.y * TILE - originY);
     const bw = b.w * TILE;
     const bh = b.h * TILE;
+    const sway = propSwayFrame(timeSec, windPhase(b.id));
     drawSoftShadow(ctx, bx + bw / 2, by + bh + 2, bw * 0.44, 7, 0.26);
     drawRoofCap(ctx, b, originX, originY);
-    drawDoorSign(ctx, b, originX, originY);
+    drawShopAwning(ctx, b, originX, originY, sway);
+    drawFacadeBanner(ctx, b, originX, originY, sway);
+    drawDoorSign(ctx, b, originX, originY, sway);
   }
   const ptx = player.x / TILE;
   const pty = player.y / TILE;

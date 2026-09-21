@@ -604,7 +604,7 @@ export function advanceCameraAndRender(args: {
   drawAshwoodTint(ctx, map, originX, originY, viewW, viewH);
   drawSurfaceLight(ctx, map, originX, originY, viewW, viewH, _atmosT);
   drawParallaxHaze(ctx, map, originX, originY, viewW, viewH, _atmosT);
-  drawTownOverlays(ctx, map, player, originX, originY);
+  drawTownOverlays(ctx, map, player, originX, originY, _atmosT);
   if (map.kind === "overworld" && isSafeContinent(map.continentId)) {
     const fx = Math.floor((map.spawn.x + 0.5) * TILE - originX);
     const fy = Math.floor((map.spawn.y + 0.5) * TILE - originY);

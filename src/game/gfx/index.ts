@@ -17,7 +17,16 @@ export {
   CANOPY_PX,
   warmTileSheets,
 } from "@/game/gfx/tiles";
-export { getPropSheet } from "@/game/gfx/props";
+export {
+  getPropSheet,
+  getBannerSheet,
+  getAwningSheet,
+  propFlameFrame,
+  propSwayFrame,
+  propSwayLean,
+  PROP_FLAME_FRAMES,
+  PROP_SWAY_FRAMES,
+} from "@/game/gfx/props";
 export {
   getCairnSheet,
   drawHuntCairnSprite,
