@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useRef,
   useState,
   type MutableRefObject,
   type PointerEvent as ReactPointerEvent,
@@ -8,6 +9,11 @@ import {
 import type { SkillId } from "@/game/skills";
 import { skillAbbrev, skillName, type QuickSlots } from "@/game/skills";
 import type { SkillRow } from "@/game/ui/SkillsPanel";
+
+/** Cast-sweep length. Visual chrome only — training and attacks are not gated. */
+const CAST_MS = 640;
+
+type CastId = "1" | "2" | "3" | "attack" | "interact";
 
 export function QuickSkillCluster({
   keysRef,
@@ -25,18 +31,45 @@ export function QuickSkillCluster({
   showInteract: boolean;
 }) {
   const [attackHeld, setAttackHeld] = useState(false);
+  const [casts, setCasts] = useState<Partial<Record<CastId, number>>>({});
+  const pointerAttack = useRef(false);
+  const keyAttack = useRef(false);
+  const castTimers = useRef<Partial<Record<CastId, number>>>({});
+
+  const pulse = useCallback((id: CastId) => {
+    setCasts((prev) => ({ ...prev, [id]: (prev[id] ?? 0) + 1 }));
+    const pending = castTimers.current[id];
+    if (pending) window.clearTimeout(pending);
+    castTimers.current[id] = window.setTimeout(() => {
+      setCasts((prev) => {
+        if (prev[id] == null) return prev;
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+      delete castTimers.current[id];
+    }, CAST_MS);
+  }, []);
+
+  const syncAttackHeld = useCallback(() => {
+    setAttackHeld(pointerAttack.current || keyAttack.current);
+  }, []);
 
   const releaseAttack = useCallback(() => {
+    const was = pointerAttack.current;
+    pointerAttack.current = false;
     keysRef.current.Space = false;
-    setAttackHeld(false);
-  }, [keysRef]);
+    syncAttackHeld();
+    if (was) pulse("attack");
+  }, [keysRef, pulse, syncAttackHeld]);
 
   const attackDown = (e: ReactPointerEvent) => {
     e.preventDefault();
     e.stopPropagation();
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    pointerAttack.current = true;
     keysRef.current.Space = true;
-    setAttackHeld(true);
+    syncAttackHeld();
   };
   const attackUp = (e: ReactPointerEvent) => {
     e.preventDefault();
@@ -45,27 +78,61 @@ export function QuickSkillCluster({
   };
 
   useEffect(() => {
-    const onBlur = () => releaseAttack();
+    const onBlur = () => {
+      const was = pointerAttack.current || keyAttack.current;
+      pointerAttack.current = false;
+      keyAttack.current = false;
+      keysRef.current.Space = false;
+      setAttackHeld(false);
+      if (was) pulse("attack");
+    };
     const onVisibility = () => {
-      if (document.hidden) releaseAttack();
+      if (document.hidden) onBlur();
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.code === "Space" && !e.repeat) {
+        keyAttack.current = true;
+        syncAttackHeld();
+      }
+      if (e.repeat) return;
+      if (e.key === "1" || e.key === "2" || e.key === "3") pulse(e.key);
+      if (e.code === "KeyE") pulse("interact");
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.code !== "Space") return;
+      const was = keyAttack.current;
+      keyAttack.current = false;
+      syncAttackHeld();
+      if (was) pulse("attack");
     };
     window.addEventListener("blur", onBlur);
     document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
     return () => {
       window.removeEventListener("blur", onBlur);
       document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+      for (const id of Object.keys(castTimers.current) as CastId[]) {
+        const timer = castTimers.current[id];
+        if (timer) window.clearTimeout(timer);
+      }
     };
-  }, [releaseAttack]);
+  }, [keysRef, pulse, syncAttackHeld]);
 
   const tapInteract = (e: ReactPointerEvent) => {
     e.preventDefault();
     e.stopPropagation();
     interactRequestRef.current = true;
+    pulse("interact");
   };
 
-  const tapSkill = (skill: SkillId) => (e: ReactPointerEvent) => {
+  const tapSkill = (slot: 1 | 2 | 3, skill: SkillId) => (e: ReactPointerEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    pulse(String(slot) as "1" | "2" | "3");
     onTrain(skill);
   };
 
@@ -88,54 +155,66 @@ export function QuickSkillCluster({
           <button
             type="button"
             aria-label="Interact"
-            className="vale-round-control pointer-events-auto flex h-16 w-16 touch-none flex-col items-center justify-center rounded-full text-xs text-[#e8e6d9]"
+            aria-pressed={casts.interact != null}
+            className={`vale-hotbar-slot pointer-events-auto flex h-16 w-16 touch-none flex-col items-center justify-center rounded-full ${
+              casts.interact != null ? "vale-hotbar-slot-cast" : ""
+            }`}
             onPointerDown={tapInteract}
           >
-            <span className="font-display leading-tight tracking-wide">Interact</span>
-            <span className="mt-0.5 text-[10px] uppercase tracking-wider text-[#a8b09a]">
-              E
+            <span className="vale-hotbar-face">
+              <span className="vale-hotbar-name">Interact</span>
+              <span className="vale-hotbar-key mt-1">E</span>
             </span>
+            {casts.interact != null ? (
+              <span key={casts.interact} className="vale-hotbar-cd" aria-hidden />
+            ) : null}
           </button>
         )}
-        <div className="relative h-[9.75rem] w-[9.75rem]">
+        <div className="vale-hotbar relative h-[9.75rem] w-[9.75rem]">
+          <div className="vale-hotbar-tray" aria-hidden />
           <QuickSlotBtn
             slot={1}
             skill={quickSlots[0]}
             row={rowFor(quickSlots[0])}
-            onPointerDown={tapSkill(quickSlots[0])}
+            castKey={casts["1"]}
+            onPointerDown={tapSkill(1, quickSlots[0])}
             className="absolute left-0 top-1/2 -translate-x-[18%] -translate-y-1/2"
           />
           <QuickSlotBtn
             slot={2}
             skill={quickSlots[1]}
             row={rowFor(quickSlots[1])}
-            onPointerDown={tapSkill(quickSlots[1])}
+            castKey={casts["2"]}
+            onPointerDown={tapSkill(2, quickSlots[1])}
             className="absolute left-1/2 top-0 -translate-x-1/2 -translate-y-[18%]"
           />
           <QuickSlotBtn
             slot={3}
             skill={quickSlots[2]}
             row={rowFor(quickSlots[2])}
-            onPointerDown={tapSkill(quickSlots[2])}
+            castKey={casts["3"]}
+            onPointerDown={tapSkill(3, quickSlots[2])}
             className="absolute right-0 top-1/2 translate-x-[18%] -translate-y-1/2"
           />
           <button
             type="button"
             aria-label="Attack"
-            className={`vale-round-control vale-round-control-attack pointer-events-auto absolute left-1/2 top-1/2 flex h-[4.6rem] w-[4.6rem] -translate-x-1/2 -translate-y-1/2 touch-none flex-col items-center justify-center rounded-full text-xs font-medium transition ${
-              attackHeld
-                ? "vale-round-control-ember text-[#e8e6d9]"
-                : "text-[#e8e6d9]"
-            }`}
+            aria-pressed={attackHeld}
+            className={`vale-hotbar-slot vale-hotbar-attack pointer-events-auto absolute left-1/2 top-1/2 flex h-[4.6rem] w-[4.6rem] -translate-x-1/2 -translate-y-1/2 touch-none flex-col items-center justify-center rounded-full ${
+              attackHeld ? "vale-hotbar-slot-held" : ""
+            } ${casts.attack != null ? "vale-hotbar-slot-cast" : ""}`}
             onPointerDown={attackDown}
             onPointerUp={attackUp}
             onPointerCancel={attackUp}
             onLostPointerCapture={attackUp}
           >
-            <span className="font-display text-sm tracking-wide">Attack</span>
-            <span className="mt-0.5 text-[10px] uppercase tracking-wider text-[#e8c878]">
-              Hold
+            <span className="vale-hotbar-face">
+              <span className="vale-hotbar-name">Attack</span>
+              <span className="vale-hotbar-key mt-1">Hold</span>
             </span>
+            {casts.attack != null ? (
+              <span key={casts.attack} className="vale-hotbar-cd" aria-hidden />
+            ) : null}
           </button>
         </div>
       </div>
@@ -147,12 +226,14 @@ function QuickSlotBtn({
   slot,
   skill,
   row,
+  castKey,
   onPointerDown,
   className,
 }: {
   slot: 1 | 2 | 3;
   skill: SkillId;
   row: SkillRow | undefined;
+  castKey: number | undefined;
   onPointerDown: (e: ReactPointerEvent) => void;
   className: string;
 }) {
@@ -160,20 +241,18 @@ function QuickSlotBtn({
     <button
       type="button"
       aria-label={`Quick skill ${slot}: ${skillName(skill)}`}
-      className={`vale-round-control pointer-events-auto flex h-[3.25rem] w-[3.25rem] min-h-12 min-w-12 touch-none flex-col items-center justify-center rounded-full text-[#e8e6d9] ${className}`}
+      aria-pressed={castKey != null}
+      className={`vale-hotbar-slot pointer-events-auto flex h-[3.25rem] w-[3.25rem] min-h-12 min-w-12 touch-none flex-col items-center justify-center rounded-full ${
+        castKey != null ? "vale-hotbar-slot-cast" : ""
+      } ${className}`}
       onPointerDown={onPointerDown}
     >
-      <span className="text-[10px] uppercase leading-none tracking-wider text-[#c9a227]">
-        {slot}
+      <span className="vale-hotbar-face">
+        <span className="vale-hotbar-key">{slot}</span>
+        <span className="vale-hotbar-name">{skillAbbrev(skill)}</span>
+        {row ? <span className="vale-hotbar-level">{row.level}</span> : null}
       </span>
-      <span className="mt-0.5 text-xs font-medium leading-none">
-        {skillAbbrev(skill)}
-      </span>
-      {row ? (
-        <span className="mt-0.5 text-[9px] tabular-nums leading-none text-[#a8b09a]">
-          {row.level}
-        </span>
-      ) : null}
+      {castKey != null ? <span key={castKey} className="vale-hotbar-cd" aria-hidden /> : null}
     </button>
   );
 }
