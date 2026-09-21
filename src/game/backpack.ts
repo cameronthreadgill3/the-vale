@@ -25,7 +25,10 @@ export const TOAST_PACK_FULL =
   "Pack full — bank items or unlock Premium Backpack";
 
 export const DEATH_RULES_BLURB =
-  "Death respawns you at the continent spawn (hollows eject). You lose about 5% of carried gold (at least 1g if you hold any) and 10% of carried item quantity, rounded down. Banked gold and items never drop.";
+  "Death respawns you at the continent spawn (hollows eject). You lose about 5% of carried gold (at least 1g if you hold any) and 10% of carried item quantity, rounded down. Banked gold and items never drop. A short bones marker sits on the death tile until it fades or you walk away.";
+
+/** Overlay toast duration for the multi-line death summary. */
+export const DEATH_TOAST_MS = 5600;
 
 export function stackWeight(stack: ItemStack): number {
   return getItem(stack.id).weight * stack.qty;
@@ -125,17 +128,15 @@ export function formatItemLoss(lost: ItemStack[]): string {
 }
 
 export function formatDeathToast(goldLost: number, itemsLost: ItemStack[]): string {
+  const lines = ["You fall — respawned at continent spawn."];
   const itemPart = formatItemLoss(itemsLost);
-  if (goldLost > 0 && itemPart) {
-    return `You wake at spawn (−${goldLost}g, lost ${itemPart}).`;
-  }
-  if (goldLost > 0) {
-    return `You wake at spawn (−${goldLost}g).`;
-  }
-  if (itemPart) {
-    return `You wake at spawn (lost ${itemPart}).`;
-  }
-  return "You wake at the continent spawn...";
+  const lost: string[] = [];
+  if (goldLost > 0) lost.push(`${goldLost}g carried gold`);
+  if (itemPart) lost.push(itemPart);
+  if (lost.length > 0) lines.push(`Lost: ${lost.join(" · ")}`);
+  else lines.push("No carried gold or items lost.");
+  lines.push("Banked gold and items are safe.");
+  return lines.join("\n");
 }
 
 export function summarizeDeathLoss(

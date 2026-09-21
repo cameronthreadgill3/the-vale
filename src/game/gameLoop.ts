@@ -52,6 +52,7 @@ import { advanceCameraAndRender } from "@/game/gameLoopRender";
 import { attachCanvasPointers } from "@/game/gameLoopPointers";
 import { createPlayerAttack } from "@/game/gameLoopCombat";
 import { loadQuestLog } from "@/game/quests";
+import { DEATH_KICK_DELAY_MS, placeBodyMarker } from "@/game/bodyMarker";
 
 export function useGameLoopEffect(d: {
   canvasRef: RefObject<HTMLCanvasElement | null>;
@@ -195,6 +196,7 @@ export function useGameLoopEffect(d: {
     let playerIframes = 0;
     let fountainFloatCd = 0;
     let deadLock = false;
+    let deathKick: ReturnType<typeof setTimeout> | null = null;
     let noTargetCd = 0;
     const mouse = { x: 0, y: 0, down: false, worldX: 0, worldY: 0 };
     const combatRng = () => Math.random();
@@ -400,7 +402,17 @@ export function useGameLoopEffect(d: {
           if (snap.hp <= 0 && !deadLock) {
             deadLock = true;
             pushFloat(player.x, player.y - 24, "You fall...", "#a8b09a");
-            onPlayerDeath.current();
+            placeBodyMarker({
+              continentId: map.continentId,
+              hollowIndex: map.hollowIndex,
+              x: player.x,
+              y: player.y,
+            });
+            deathKick = setTimeout(() => {
+              deathKick = null;
+              if (!running) return;
+              onPlayerDeath.current();
+            }, DEATH_KICK_DELAY_MS);
           }
         }
 
@@ -518,6 +530,7 @@ export function useGameLoopEffect(d: {
     raf = requestAnimationFrame(tick);
     return () => {
       running = false;
+      if (deathKick != null) clearTimeout(deathKick);
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", resize);
       window.removeEventListener("keydown", onKeyDown);

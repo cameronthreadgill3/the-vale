@@ -390,7 +390,10 @@ export function GameShell({
       )}
 
       {toast && (
-        <div className="pointer-events-none absolute left-1/2 top-1/3 z-20 -translate-x-1/2 rounded border border-[#2a2e24] bg-[#0c0d0b]/90 px-4 py-2 font-display text-sm tracking-wide text-[#c9a227] shadow-xl">
+        <div
+          role="status"
+          className="pointer-events-none absolute left-1/2 top-[28%] z-20 w-[min(92vw,22rem)] -translate-x-1/2 whitespace-pre-line rounded border border-[#2a2e24] bg-[#0c0d0b]/92 px-3 py-2 text-center font-display text-xs leading-relaxed tracking-wide text-[#c9a227] shadow-xl backdrop-blur-md sm:px-4 sm:text-sm"
+        >
           {toast}
         </div>
       )}
