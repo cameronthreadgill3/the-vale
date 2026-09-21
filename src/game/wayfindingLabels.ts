@@ -50,7 +50,7 @@ export function drawWorldWayfindLabels(
       ctx.arc(fx, fy - 2, 3, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
-      drawFloatingLabel(ctx, fx, fy - 14, "Fountain", "#7ab8c9");
+      drawFloatingLabel(ctx, fx, fy - 14, "Fountain · Safe", "#7ab8c9");
     }
     for (const dk of docks) {
       if (Math.hypot(ptx - (dk.x + 0.5), pty - (dk.y + 0.5)) > range) continue;
@@ -73,6 +73,6 @@ export function drawWorldWayfindLabels(
 
 
 export const STARTER_TIP =
-  "Talk to Rook (watch) · Ashwood edge for the hunt · Fountain heals";
+  "Talk to Rook (watch) · Bank with Cress · Fountain square is safe";
 
 export const STARTER_TIP_MS = 60_000;

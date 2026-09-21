@@ -5,6 +5,7 @@ import type { ValeCharacter } from "@/game/character";
 import type { SkillId } from "@/game/skills";
 import { levelFromXp, progressInLevel, xpToNext } from "@/game/xp";
 import { maxHpFor, maxManaFor } from "@/game/combat";
+import { carriedWeight, maxSlotsFor, maxWeightFor } from "@/game/backpack";
 import { type PromptState, type HudState } from "@/game/canvasConstants";
 import { useGameLoopEffect } from "@/game/gameLoop";
 import type { EnemyKindId } from "@/game/enemies";
@@ -123,6 +124,11 @@ export function useGameCanvas(opts: {
     maxHp: maxHpFor(character),
     mana: character.mana,
     maxMana: maxManaFor(character, cls),
+    weight: carriedWeight(character.inventory),
+    maxWeight: maxWeightFor(character.premiumBackpack),
+    slots: character.inventory.length,
+    maxSlots: maxSlotsFor(character.premiumBackpack),
+    inSafeZone: false,
   });
   const [prompt, setPrompt] = useState<PromptState>(null);
 
@@ -133,6 +139,10 @@ export function useGameCanvas(opts: {
       maxHp: maxHpFor(character),
       mana: character.mana,
       maxMana: maxManaFor(character, cls),
+      weight: carriedWeight(character.inventory),
+      maxWeight: maxWeightFor(character.premiumBackpack),
+      slots: character.inventory.length,
+      maxSlots: maxSlotsFor(character.premiumBackpack),
       level: levelFromXp(character.combatXp),
       xp: character.combatXp,
       progress: progressInLevel(

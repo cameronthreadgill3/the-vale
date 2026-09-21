@@ -36,7 +36,7 @@ export function computePrompt(
   map: WorldMap,
   player: { x: number; y: number },
   docks: { id: string; name: string; x: number; y: number }[],
-  folk: { id: string; name: string; x: number; y: number; shopId?: string }[],
+  folk: { id: string; name: string; x: number; y: number; shopId?: string; bankId?: string }[],
   shops: { id: string; name: string; x: number; y: number }[],
 ): PromptState {
   const px = player.x / TILE;
@@ -69,6 +69,7 @@ export function computePrompt(
         folkId: f.id,
         name: f.name,
         hasShop: Boolean(f.shopId),
+        hasBank: Boolean(f.bankId),
       });
     }
     for (const s of shops) {

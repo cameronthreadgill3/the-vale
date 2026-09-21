@@ -15,6 +15,8 @@ export interface FolkDef {
   color: string;
   /** If set, E opens this shop instead of (or after) talk. */
   shopId?: string;
+  /** If set, dialogue offers the plaza vault. */
+  bankId?: string;
 }
 
 export interface ShopStock {
@@ -82,6 +84,16 @@ export const FOLK: FolkDef[] = [
     x: 25,
     y: 15,
     color: "#8ab87a",
+  },
+  {
+    id: "cress-vault",
+    name: "Cress Vault",
+    line: "The plaza vault. Bank coin and packs before the ashwood takes a bite — what rests here does not drop on death. The fountain square is safe; beasts will not hunt you beside it.",
+    continentId: "thornreach",
+    x: 22,
+    y: 19,
+    color: "#c4b06a",
+    bankId: "thornreach-vault",
   },
   {
     id: "old-reed",

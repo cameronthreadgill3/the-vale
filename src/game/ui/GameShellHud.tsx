@@ -21,6 +21,7 @@ export function GameShellHud({
   teethQuest,
   ashwoodQuest,
   hollowQuest,
+  onOpenPack,
 }: {
   cls: ValeClass;
   character: ValeCharacter;
@@ -29,6 +30,7 @@ export function GameShellHud({
   teethQuest: TeethQuestProgress | null;
   ashwoodQuest: AshwoodQuestProgress | null;
   hollowQuest: HollowQuestProgress | null;
+  onOpenPack: () => void;
 }) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-3">
@@ -147,7 +149,26 @@ export function GameShellHud({
         </div>
         <div className="mt-2 text-[10px] uppercase tracking-wider text-[#6a7260]">
           Tile {hud.x}, {hud.y} · {character.gold}g
+          {character.bankGold > 0 ? ` · Vault ${character.bankGold}g` : ""}
         </div>
+        <button
+          type="button"
+          className="pointer-events-auto mt-1.5 w-full text-left text-[10px] uppercase tracking-wider text-[#6a7260] hover:text-[#c9a227]"
+          onClick={onOpenPack}
+        >
+          <span className={hud.weight >= hud.maxWeight ? "text-[#c45c3e]" : hud.weight / Math.max(1, hud.maxWeight) >= 0.8 ? "text-[#c9a227]" : ""}>
+            Pack {hud.weight}/{hud.maxWeight} wt
+          </span>
+          <span className="text-[#6a7260]"> · {hud.slots}/{hud.maxSlots}</span>
+          {character.premiumBackpack && (
+            <span className="text-[#c9a227]"> · Prem</span>
+          )}
+        </button>
+        {hud.inSafeZone && (
+          <div className="mt-1 text-[10px] uppercase tracking-wider text-[#7ab8c9]">
+            Safe — no beasts here
+          </div>
+        )}
       </div>
     </div>
   );
