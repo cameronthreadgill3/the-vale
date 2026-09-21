@@ -19,7 +19,7 @@ export function CornerTabs({
   const open = skillsOpen || mapOpen;
   return (
     <div className="vale-corner-dock pointer-events-none z-30">
-      <div className="pointer-events-auto flex overflow-hidden rounded border border-[#2a2e24] bg-[#161812]/90 shadow-lg backdrop-blur-md">
+      <div className="vale-tab-bar pointer-events-auto flex">
         <TabBtn
           label="Skills"
           hint="K"
@@ -34,7 +34,7 @@ export function CornerTabs({
         />
       </div>
       {open && (
-        <div className="pointer-events-auto vale-panel vale-corner-panel w-[min(100vw-1.5rem,22rem)] overflow-auto rounded border border-[#2a2e24] bg-[#161812]/95 shadow-xl backdrop-blur-md">
+        <div className="vale-surface vale-panel vale-corner-panel pointer-events-auto w-[min(100vw-1.5rem,22rem)] overflow-auto">
           {skillsOpen ? skillsPanel : mapPanel}
         </div>
       )}
@@ -57,10 +57,8 @@ function TabBtn({
     <button
       type="button"
       onClick={onClick}
-      className={`vale-tap-sm min-w-[5.5rem] flex-1 px-3 py-2 text-xs tracking-wide ${
-        active
-          ? "bg-[#1c1f16] text-[#c9a227]"
-          : "text-[#e8e6d9] hover:bg-[#1c1f16]/70"
+      className={`vale-tab vale-tap-sm min-w-[5.5rem] flex-1 px-3.5 py-2.5 text-xs tracking-wide ${
+        active ? "vale-tab-active" : "hover:bg-[#1c1f16]/70"
       }`}
     >
       <span className="font-display">{label}</span>

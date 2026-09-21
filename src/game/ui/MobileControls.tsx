@@ -142,7 +142,7 @@ export function MobileControls({
       >
         <div
           ref={stickRef}
-          className="relative h-[7.5rem] w-[7.5rem] touch-none rounded-full border border-[#c9a227]/45 bg-[#161812]/72 shadow-lg backdrop-blur-sm"
+          className="vale-round-control relative h-[7.5rem] w-[7.5rem] touch-none rounded-full"
           onPointerDown={onStickDown}
           onPointerMove={onStickMove}
           onPointerUp={onStickUp}
@@ -151,7 +151,7 @@ export function MobileControls({
           aria-label="Move"
         >
           <div
-            className="pointer-events-none absolute left-1/2 top-1/2 h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#c9a227]/70 bg-[#c9a227]/30"
+            className="pointer-events-none absolute left-1/2 top-1/2 h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#c9a227]/55 bg-[#c9a227]/22 shadow-[inset_0_1px_0_rgba(232,230,217,0.12)]"
             style={{
               transform: `translate(calc(-50% + ${knob.x}px), calc(-50% + ${knob.y}px))`,
             }}

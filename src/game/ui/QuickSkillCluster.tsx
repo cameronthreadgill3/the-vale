@@ -65,7 +65,7 @@ export function QuickSkillCluster({
           <button
             type="button"
             aria-label="Interact"
-            className="pointer-events-auto flex h-16 w-16 touch-none flex-col items-center justify-center rounded-full border border-[#c9a227]/35 bg-[#161812]/78 text-xs text-[#e8e6d9] shadow-md backdrop-blur-sm active:border-[#c9a227]/70"
+            className="vale-round-control pointer-events-auto flex h-16 w-16 touch-none flex-col items-center justify-center rounded-full text-xs text-[#e8e6d9]"
             onPointerDown={tapInteract}
           >
             <span className="font-display leading-tight tracking-wide">Interact</span>
@@ -99,10 +99,10 @@ export function QuickSkillCluster({
           <button
             type="button"
             aria-label="Attack"
-            className={`pointer-events-auto absolute left-1/2 top-1/2 flex h-[4.6rem] w-[4.6rem] -translate-x-1/2 -translate-y-1/2 touch-none flex-col items-center justify-center rounded-full border text-xs font-medium shadow-lg backdrop-blur-sm transition ${
+            className={`vale-round-control vale-round-control-attack pointer-events-auto absolute left-1/2 top-1/2 flex h-[4.6rem] w-[4.6rem] -translate-x-1/2 -translate-y-1/2 touch-none flex-col items-center justify-center rounded-full text-xs font-medium transition ${
               attackHeld
-                ? "border-[#e07030] bg-[#e07030]/50 text-[#e8e6d9]"
-                : "border-[#e07030]/60 bg-[#161812]/80 text-[#e8e6d9]"
+                ? "vale-round-control-ember text-[#e8e6d9]"
+                : "text-[#e8e6d9]"
             }`}
             onPointerDown={attackDown}
             onPointerUp={attackUp}
@@ -136,7 +136,7 @@ function QuickSlotBtn({
     <button
       type="button"
       aria-label={`Quick skill ${slot}: ${skillName(skill)}`}
-      className={`pointer-events-auto flex h-[3.25rem] w-[3.25rem] min-h-12 min-w-12 touch-none flex-col items-center justify-center rounded-full border border-[#c9a227]/50 bg-[#161812]/85 text-[#e8e6d9] shadow-md backdrop-blur-sm active:border-[#c9a227]/80 ${className}`}
+      className={`vale-round-control pointer-events-auto flex h-[3.25rem] w-[3.25rem] min-h-12 min-w-12 touch-none flex-col items-center justify-center rounded-full text-[#e8e6d9] ${className}`}
       onPointerDown={onPointerDown}
     >
       <span className="text-[10px] uppercase leading-none tracking-wider text-[#c9a227]">

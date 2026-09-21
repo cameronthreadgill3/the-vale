@@ -66,25 +66,25 @@ export function SkillsPanel({
   }, []);
 
   return (
-    <div className="p-3">
-      <div className="mb-2 flex items-center justify-between gap-2">
+    <div className="p-3.5">
+      <div className="mb-2.5 flex items-center justify-between gap-2">
         <div>
           <div className="font-display text-sm tracking-wide text-[#c9a227]">
             Skills
           </div>
-          <div className="text-[10px] uppercase tracking-wider text-[#6a7260]">
+          <div className="mt-0.5 text-[10px] uppercase tracking-wider text-[#8a9080]">
             Click to train · 1–3 assign a quick slot
           </div>
         </div>
         <button
           type="button"
           onClick={onClose}
-          className="vale-tap-sm rounded px-3 py-2 text-xs text-[#a8b09a] hover:text-[#e8e6d9]"
+          className="vale-tap-sm vale-ghost-btn px-3 py-2 text-xs text-[#a8b09a]"
         >
           Close
         </button>
       </div>
-      <ul className="flex flex-col gap-1.5">
+      <ul className="flex flex-col gap-2">
         {skills.map((s) => {
           const favored = (cls.gainMultipliers[s.id] ?? 1) > 1;
           const isPrimary = cls.primarySkill === s.id;
@@ -93,8 +93,8 @@ export function SkillsPanel({
           return (
             <li key={s.id}>
               <div
-                className={`flex w-full items-stretch gap-1 rounded border px-1 py-1 transition ${
-                  flashing ? "border-[#c9a227]/70 bg-[#1c1f16]" : "border-transparent"
+                className={`vale-skill-row flex w-full items-stretch gap-1 px-1 py-1 transition ${
+                  flashing ? "vale-skill-row-flash" : ""
                 }`}
               >
                 <button
@@ -161,10 +161,10 @@ export function SkillsPanel({
                           e.stopPropagation();
                           onAssignQuickSlot(i, s.id);
                         }}
-                        className={`vale-tap-sm flex h-8 w-8 items-center justify-center rounded border text-xs tabular-nums max-md:h-10 max-md:w-10 ${
+                        className={`vale-tap-sm flex h-8 w-8 items-center justify-center rounded-md border text-xs tabular-nums max-md:h-10 max-md:w-10 ${
                           assigned
-                            ? "border-[#c9a227]/70 bg-[#c9a227]/25 text-[#c9a227]"
-                            : "border-[#2a2e24] text-[#6a7260] hover:border-[#c9a227]/40 hover:text-[#e8e6d9]"
+                            ? "border-[#c9a227]/55 bg-[#c9a227]/18 text-[#f0d060]"
+                            : "border-[#3a3e32] text-[#8a9080] hover:border-[#c9a227]/40 hover:text-[#e8e6d9]"
                         }`}
                       >
                         {i + 1}
@@ -178,18 +178,18 @@ export function SkillsPanel({
         })}
       </ul>
       {professions && professions.length > 0 ? (
-        <div className="mt-3 border-t border-[#2a2e24] pt-2">
+        <div className="mt-3.5 border-t border-[#3a3e32]/80 pt-2.5">
           <div className="font-display text-sm tracking-wide text-[#c9a227]">
             Professions
           </div>
-          <div className="mb-1.5 text-[10px] uppercase tracking-wider text-[#6a7260]">
+          <div className="mb-2 mt-0.5 text-[10px] uppercase tracking-wider text-[#8a9080]">
             Thornreach lite · gather · fish · kettle
           </div>
           <ul className="flex flex-col gap-1.5">
             {professions.map((p) => {
               const into = Math.max(0, Math.round(p.progress * p.next));
               return (
-                <li key={p.id} className="rounded px-2 py-2">
+                <li key={p.id} className="vale-skill-row px-2.5 py-2">
                   <div className="flex items-baseline justify-between gap-2 text-xs">
                     <span className="text-[#e8e6d9]">{p.name}</span>
                     <span className="font-display tabular-nums text-[#c9a227]">

@@ -252,7 +252,7 @@ export function GameShell({
         />
         <div className="flex flex-wrap gap-2">
           {!showMobile && (
-          <div className="w-fit rounded border border-[#2a2e24] bg-[#161812]/80 px-3 py-1.5 text-xs text-[#a8b09a] backdrop-blur-sm">
+          <div className="vale-surface w-fit px-3 py-1.5 text-xs text-[#a8b09a]">
             Move <span className="text-[#e8e6d9]">WASD</span> /{" "}
             <span className="text-[#e8e6d9]">Arrows</span>
             {" | "}
@@ -271,7 +271,7 @@ export function GameShell({
           )}
           <button
             type="button"
-            className="pointer-events-auto rounded border border-[#2a2e24] bg-[#161812]/90 px-3 py-1.5 text-xs text-[#a8b09a] backdrop-blur-sm hover:border-[#c9a227]/50"
+            className="vale-ghost-btn pointer-events-auto px-3 py-1.5 text-xs text-[#a8b09a]"
             onClick={onResetPath}
           >
             Change path
@@ -280,7 +280,7 @@ export function GameShell({
       </div>
 
       {prompt && !overlayOpen && (
-        <div className={`pointer-events-none absolute left-1/2 z-10 -translate-x-1/2 rounded border border-[#c9a227]/50 bg-[#161812]/95 px-4 py-2 text-center text-sm text-[#e8e6d9] shadow-lg backdrop-blur-md bottom-40`}>
+        <div className="vale-text-screen pointer-events-none absolute left-1/2 z-10 -translate-x-1/2 px-4 py-2.5 text-center text-sm text-[#e8e6d9] bottom-40">
           {prompt.kind === "gate" && (
             <>
               <span className="text-[#e8e6d9]">Use gate</span>
@@ -389,13 +389,13 @@ export function GameShell({
         <button
           type="button"
           onClick={() => setStarterTip(false)}
-          className="absolute left-1/2 top-20 z-20 w-[min(92vw,28rem)] -translate-x-1/2 rounded border border-[#c9a227]/55 bg-[#161812]/95 px-3 py-2 text-left text-xs text-[#e8e6d9] shadow-lg backdrop-blur-md sm:text-sm"
+          className="vale-text-screen absolute left-1/2 top-20 z-20 w-[min(92vw,28rem)] -translate-x-1/2 px-3.5 py-2.5 text-left text-xs text-[#e8e6d9] sm:text-sm"
         >
           <div className="font-display text-[11px] tracking-wide text-[#c9a227] sm:text-xs">
             Thornreach — first steps
           </div>
-          <div className="mt-1 text-[#c8c4b0]">{STARTER_TIP}</div>
-          <div className="mt-1 text-[10px] text-[#8a9080]">
+          <div className="mt-1.5 text-[13px] leading-[1.6] text-[#d4d0bc] sm:text-sm">{STARTER_TIP}</div>
+          <div className="mt-1.5 text-[10px] text-[#8a9080]">
             Tap to dismiss · follow the yellow arrow to Rook</div>
         </button>
       )}
@@ -403,7 +403,7 @@ export function GameShell({
       {toast && (
         <div
           role="status"
-          className="pointer-events-none absolute left-1/2 top-[28%] z-20 w-[min(92vw,22rem)] -translate-x-1/2 whitespace-pre-line rounded border border-[#2a2e24] bg-[#0c0d0b]/92 px-3 py-2 text-center font-display text-xs leading-relaxed tracking-wide text-[#c9a227] shadow-xl backdrop-blur-md sm:px-4 sm:text-sm"
+          className="vale-toast pointer-events-none absolute left-1/2 top-[28%] z-20 w-[min(92vw,22rem)] -translate-x-1/2 whitespace-pre-line px-4 py-2.5 text-center text-sm leading-relaxed text-[#e8e6d9] sm:px-5"
         >
           {toast}
         </div>
@@ -412,7 +412,7 @@ export function GameShell({
       {lootToast && (
         <div
           role="status"
-          className="pointer-events-none absolute left-1/2 top-1/3 z-20 w-[min(92vw,20rem)] -translate-x-1/2 rounded border border-[#c9a227]/50 bg-[#0c0d0b]/92 px-3 py-1.5 text-center font-display text-xs tracking-wide text-[#d8c878] shadow-xl backdrop-blur-md sm:px-4 sm:text-sm"
+          className="vale-toast pointer-events-none absolute left-1/2 top-1/3 z-20 w-[min(92vw,20rem)] -translate-x-1/2 px-4 py-2 text-center text-sm leading-relaxed tracking-wide text-[#e8d090] sm:px-5"
         >
           {lootToast}
         </div>

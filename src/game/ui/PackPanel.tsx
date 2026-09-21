@@ -48,7 +48,7 @@ export function PackPanel({
   const equipment = character.equipment ?? emptyEquipment();
 
   return (
-    <div className="vale-panel vale-overlay-above-chrome pointer-events-auto absolute bottom-4 left-1/2 z-30 w-[min(100%-2rem,24rem)] -translate-x-1/2 rounded border border-[#2a2e24] bg-[#161812]/96 p-3 shadow-xl backdrop-blur-md sm:bottom-6">
+    <div className="vale-panel vale-overlay-above-chrome vale-surface pointer-events-auto absolute bottom-4 left-1/2 z-30 w-[min(100%-2rem,24rem)] -translate-x-1/2 p-3.5 sm:bottom-6">
       <div className="mb-2 flex items-center justify-between gap-2">
         <div>
           <div className="font-display text-sm tracking-wide text-[#c9a227]">
@@ -162,7 +162,7 @@ export function PackPanel({
         </ul>
       )}
 
-      <div className="vale-chrome mb-2 rounded-sm px-2.5 py-2">
+      <div className="vale-chrome mb-2 px-3 py-2.5">
         <div className="font-display text-[11px] tracking-wide text-[#c9a227]">
           Premium Backpack
         </div>
@@ -204,7 +204,7 @@ export function PackPanel({
         )}
       </div>
 
-      <div className="vale-chrome mb-2 rounded-sm px-2.5 py-2">
+      <div className="vale-chrome mb-2 px-3 py-2.5">
         <div className="font-display text-[11px] tracking-wide text-[#c9a227]">
           Professions
         </div>

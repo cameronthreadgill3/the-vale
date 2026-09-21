@@ -10,25 +10,25 @@ export function ContinentMapPanel({
 }) {
   const discovered = new Set(character.discoveredContinents);
   return (
-    <div className="p-3">
-      <div className="mb-2 flex items-center justify-between gap-2">
+    <div className="p-3.5">
+      <div className="mb-2.5 flex items-center justify-between gap-2">
         <div>
           <div className="font-display text-sm tracking-wide text-[#c9a227]">
             Continents
           </div>
-          <div className="text-[10px] uppercase tracking-wider text-[#6a7260]">
+          <div className="mt-0.5 text-[10px] uppercase tracking-wider text-[#8a9080]">
             Discovered via gates · M to close
           </div>
         </div>
         <button
           type="button"
           onClick={onClose}
-          className="vale-tap-sm rounded px-3 py-2 text-xs text-[#a8b09a] hover:text-[#e8e6d9]"
+          className="vale-tap-sm vale-ghost-btn px-3 py-2 text-xs text-[#a8b09a]"
         >
           Close
         </button>
       </div>
-      <ul className="flex max-h-[50vh] flex-col gap-1.5 overflow-auto">
+      <ul className="flex max-h-[50vh] flex-col gap-2 overflow-auto">
         {CONTINENTS.map((c) => {
           const known = discovered.has(c.id);
           const here =
@@ -38,7 +38,7 @@ export function ContinentMapPanel({
           return (
             <li
               key={c.id}
-              className="rounded border border-transparent px-2 py-2.5"
+              className="vale-skill-row px-2.5 py-2.5"
               style={{
                 borderColor: here || inHollowHere ? c.palette.gate : "transparent",
                 background:

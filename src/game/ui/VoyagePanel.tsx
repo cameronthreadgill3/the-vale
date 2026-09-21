@@ -20,7 +20,7 @@ export function VoyagePanel({
   const ports = dock.destinations.filter((d) => d !== currentContinent);
 
   return (
-    <div className="vale-panel pointer-events-auto absolute bottom-24 left-1/2 z-30 w-[min(100%-2rem,24rem)] -translate-x-1/2 rounded border border-[#5a9aaa]/40 bg-[#161812]/96 p-4 shadow-xl backdrop-blur-md max-md:bottom-8">
+    <div className="vale-panel vale-text-screen pointer-events-auto absolute bottom-24 left-1/2 z-30 w-[min(100%-2rem,24rem)] -translate-x-1/2 border-[#5a9aaa]/40 px-4 py-3.5 max-md:bottom-8">
       <div className="mb-2 flex items-center justify-between gap-2">
         <div>
           <div className="font-display text-sm tracking-wide text-[#7ab8c9]">
