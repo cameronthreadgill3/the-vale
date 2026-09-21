@@ -10,13 +10,13 @@ import {
   drawNamedFolk,
 } from "@/game/folkCanvas";
 import {
-  drawEnemies,
   drawFloatTexts,
   drawProjectiles,
   type Enemy,
   type FloatText,
   type Projectile,
 } from "@/game/enemies";
+import { drawEnemies } from "@/game/gfx/drawEnemies";
 import type { ValeCharacter } from "@/game/character";
 import type { FolkDef, ShopDef, ShipDock } from "@/game/folk";
 import { computePrompt } from "@/game/gameLoopFrame";
