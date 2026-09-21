@@ -100,8 +100,8 @@ export const THORNREACH_PROFESSION_NODES: ProfessionNode[] = [
     kind: "herb",
     name: "Briar Herb",
     continentId: "thornreach",
-    x: 17,
-    y: 12,
+    x: 21,
+    y: 13,
     itemId: "briar-herb",
     professionId: "gathering",
     xp: 22,
@@ -124,7 +124,7 @@ export const THORNREACH_PROFESSION_NODES: ProfessionNode[] = [
     kind: "scrap",
     name: "Ashwood Scrap",
     continentId: "thornreach",
-    x: 15,
+    x: 18,
     y: 18,
     itemId: "ashwood-scrap",
     professionId: "gathering",
@@ -287,33 +287,41 @@ export function drawProfessionNodes(
     ctx.save();
     ctx.globalAlpha = ready ? 1 : 0.38;
     if (n.kind === "herb") {
+      ctx.fillStyle = "#1a2a14";
+      ctx.fillRect(sx + 6, sy + 18, 20, 8);
       ctx.fillStyle = "#3a5a28";
-      ctx.fillRect(sx + 10, sy + 18, 12, 6);
+      ctx.fillRect(sx + 8, sy + 16, 16, 8);
       ctx.fillStyle = "#6ab84a";
       ctx.beginPath();
-      ctx.moveTo(sx + 16, sy + 8);
-      ctx.lineTo(sx + 11, sy + 20);
-      ctx.lineTo(sx + 21, sy + 20);
+      ctx.moveTo(sx + 16, sy + 4);
+      ctx.lineTo(sx + 8, sy + 20);
+      ctx.lineTo(sx + 24, sy + 20);
       ctx.closePath();
       ctx.fill();
       ctx.fillStyle = "#c9a227";
-      ctx.fillRect(sx + 14, sy + 6, 4, 4);
+      ctx.beginPath();
+      ctx.arc(sx + 16, sy + 8, 3, 0, Math.PI * 2);
+      ctx.fill();
     } else if (n.kind === "scrap") {
+      ctx.fillStyle = "#2a2014";
+      ctx.fillRect(sx + 5, sy + 16, 22, 10);
       ctx.fillStyle = "#4a3a28";
-      ctx.fillRect(sx + 7, sy + 16, 18, 8);
+      ctx.fillRect(sx + 7, sy + 14, 18, 8);
       ctx.fillStyle = "#8a6a3a";
-      ctx.fillRect(sx + 9, sy + 12, 14, 6);
+      ctx.fillRect(sx + 9, sy + 10, 14, 8);
       ctx.fillStyle = "#c4c8c4";
-      ctx.fillRect(sx + 11, sy + 10, 8, 3);
+      ctx.fillRect(sx + 11, sy + 8, 10, 4);
     } else {
+      ctx.fillStyle = "#1a2a28";
+      ctx.fillRect(sx + 6, sy + 14, 20, 12);
       ctx.fillStyle = "#3a5a4a";
-      ctx.fillRect(sx + 8, sy + 14, 16, 10);
+      ctx.fillRect(sx + 8, sy + 16, 16, 10);
       ctx.fillStyle = "#5a8aaa";
       ctx.beginPath();
-      ctx.ellipse(sx + 16, sy + 18, 8, 4, 0, 0, Math.PI * 2);
+      ctx.ellipse(sx + 16, sy + 18, 9, 5, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.fillStyle = "#7ab8c9";
-      ctx.fillRect(sx + 20, sy + 8, 2, 10);
+      ctx.fillRect(sx + 21, sy + 6, 3, 12);
     }
     ctx.restore();
   }

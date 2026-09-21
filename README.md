@@ -170,7 +170,7 @@ Thornreach (starter), Mistmere, Ashen Marches, Sunken Choir, Embercoil, Pale Was
 
 A one-session Tibia-adjacent loop on the starter continent — not a full crafting economy. Three skills share the same cubic XP curve as combat skills and persist on the ValeCharacter / slot snapshot.
 
-1. **Gathering** — press **E** on briar-herb tufts (north of the watch / store) or ashwood scrap piles (west skirt, south of the cobbles).
+1. **Gathering** — press **E** on briar-herb tufts (north rim of the square / north of the store) or ashwood scrap piles (west of the cobbles, south of the square).
 2. **Fishing** — press **E** on the reed pond banks east of the square (basin minnows). Nodes regrow after ~40s.
 3. **Crafting** — talk to **Sera Kettle** on the plaza (south-east of the fountain) and bind 1 briar-herb + 1 ashwood scrap into **Ash-Salve**. Sell the salve, scraps, or minnows at Mara.
 

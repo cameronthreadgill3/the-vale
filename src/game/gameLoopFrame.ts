@@ -110,11 +110,19 @@ export function computePrompt(
       }
     }
     for (const n of professionNodesOnContinent(map.continentId)) {
-      consider(n.x, n.y, {
-        kind: "profession",
-        nodeId: n.id,
-        name: isNodeReady(n.id) ? n.name : `${n.name} (regrowing)`,
-        verb: n.verb,
+      const ready = isNodeReady(n.id);
+      const tx = n.x;
+      const ty = n.y;
+      if (!nearTile(px, py, tx, ty, 1.85)) continue;
+      const dist = Math.hypot(px - (tx + 0.5), py - (ty + 0.5));
+      candidates.push({
+        prompt: {
+          kind: "profession",
+          nodeId: n.id,
+          name: ready ? n.name : `${n.name} (regrowing)`,
+          verb: n.verb,
+        },
+        dist,
       });
     }
   } else {
