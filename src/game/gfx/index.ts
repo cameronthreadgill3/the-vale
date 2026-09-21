@@ -66,6 +66,7 @@ export {
   drawHollowTorchSpots,
   drawHollowDungeonMarkers,
 } from "@/game/gfx/atmosphere";
+export { tickAshDrift, collectAshDriftDepthItems } from "@/game/gfx/ashDrift";
 export { drawViewOverlay } from "@/game/gfx/viewOverlay";
 export {
   makeCanvas,
