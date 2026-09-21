@@ -111,6 +111,13 @@ import {
   dockSpawnForContinent,
   folkOnContinent,
 } from "@/game/folk";
+import {
+  canAffordFare,
+  fareFailToast,
+  farePaidToast,
+  quoteGateFare,
+  quoteShipFare,
+} from "@/game/travelFares";
 import { maxHpFor, LOW_HP_RATIO, LOW_HP_TOAST } from "@/game/combat";
 import { canCarry, formatDeathToast, toastForCarryFail } from "@/game/backpack";
 import {
@@ -252,8 +259,34 @@ export function GameApp() {
   }, [showToast]);
 
   const goContinent = useCallback(
-    (target: ContinentId, from: ContinentId) => {
-      setCharacter((prev) => (prev ? travelToContinent(prev, target) : prev));
+    (target: ContinentId, from: ContinentId): boolean => {
+      let blockedQuote: ReturnType<typeof quoteGateFare> | null = null;
+      let paid = 0;
+      let firstCrossing = false;
+      let travelled = false;
+      setCharacter((prev) => {
+        if (!prev) return prev;
+        const quote = quoteGateFare(
+          prev.continentId,
+          target,
+          prev.discoveredContinents,
+        );
+        if (!canAffordFare(prev.gold, quote)) {
+          blockedQuote = quote;
+          return prev;
+        }
+        paid = quote.gold;
+        firstCrossing = quote.firstCrossing;
+        let next = prev;
+        if (paid > 0) next = setGold(next, next.gold - paid);
+        travelled = true;
+        return travelToContinent(next, target);
+      });
+      if (blockedQuote) {
+        showToast(fareFailToast(blockedQuote));
+        return false;
+      }
+      if (!travelled) return false;
       setArrivedFrom(from);
       setShipSpawn(null);
       setMapOpen(false);
@@ -273,7 +306,7 @@ export function GameApp() {
               () => setToast((t) => (t === gateResult.toast ? null : t)),
               2800,
             );
-            return;
+            return true;
           }
         }
         const mistResult = applyMistmereReached(loadQuestLog());
@@ -285,16 +318,19 @@ export function GameApp() {
               () => setToast((t) => (t === mistResult.toast ? null : t)),
               2800,
             );
-            return;
+            return true;
           }
         }
       }
       const dest = getContinent(target);
-      if (folkOnContinent(target).length === 0) {
+      if (paid > 0 || firstCrossing) {
+        showToast(farePaidToast("gate", dest.name, paid));
+      } else if (folkOnContinent(target).length === 0) {
         showToast(`${dest.name} — ${dest.blurb}`);
       } else {
         showToast(`Gate opens onto ${dest.name}`);
       }
+      return true;
     },
     [showToast],
   );
@@ -588,7 +624,33 @@ export function GameApp() {
 
   const sailTo = useCallback(
     (dest: ContinentId) => {
-      setCharacter((prev) => (prev ? travelToContinent(prev, dest) : prev));
+      let blockedQuote: ReturnType<typeof quoteShipFare> | null = null;
+      let paid = 0;
+      let firstCrossing = false;
+      let travelled = false;
+      setCharacter((prev) => {
+        if (!prev) return prev;
+        const quote = quoteShipFare(
+          prev.continentId,
+          dest,
+          prev.discoveredContinents,
+        );
+        if (!canAffordFare(prev.gold, quote)) {
+          blockedQuote = quote;
+          return prev;
+        }
+        paid = quote.gold;
+        firstCrossing = quote.firstCrossing;
+        let next = prev;
+        if (paid > 0) next = setGold(next, next.gold - paid);
+        travelled = true;
+        return travelToContinent(next, dest);
+      });
+      if (blockedQuote) {
+        showToast(fareFailToast(blockedQuote));
+        return;
+      }
+      if (!travelled) return;
       setArrivedFrom(null);
       setShipSpawn(dockSpawnForContinent(dest));
       setActiveDockId(null);
@@ -604,7 +666,9 @@ export function GameApp() {
         }
       }
       const c = getContinent(dest);
-      if (folkOnContinent(dest).length === 0) {
+      if (paid > 0 || firstCrossing) {
+        showToast(farePaidToast("ship", c.name, paid));
+      } else if (folkOnContinent(dest).length === 0) {
         showToast(`Sailing to ${c.name} — ${c.blurb}`);
       } else {
         showToast(`Sailing to ${c.name}`);

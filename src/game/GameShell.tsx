@@ -3,7 +3,12 @@ import { type ValeClass } from "@/game/classes";
 import { type ContinentId } from "@/game/continents";
 import type { ValeCharacter } from "@/game/character";
 import { defaultQuickSlots, type SkillId } from "@/game/skills";
-import type { ShopDef, ShipDock } from "@/game/folk";
+import { getDock, type ShopDef, type ShipDock } from "@/game/folk";
+import {
+  farePromptSuffix,
+  quoteGateFare,
+  shipDockFareSuffix,
+} from "@/game/travelFares";
 import { ContinentMapPanel } from "@/game/ui/ContinentMapPanel";
 import { SkillsPanel, type ProfessionRow, type SkillRow } from "@/game/ui/SkillsPanel";
 import { CraftPanel } from "@/game/ui/CraftPanel";
@@ -114,7 +119,7 @@ export function GameShell({
   onTrain: (skill: SkillId) => void;
   onAssignQuickSlot: (index: number, skill: SkillId) => void;
   onResetPath: () => void;
-  onTravel: (target: ContinentId, from: ContinentId) => void;
+  onTravel: (target: ContinentId, from: ContinentId) => boolean;
   onEnterHollow: (index: number, returnTile: { x: number; y: number }) => void;
   onExitHollow: () => void;
   onPassivePrimary: (amount: number) => void;
@@ -267,6 +272,15 @@ export function GameShell({
               <span className="text-[#e8e6d9]">Use gate</span>
               {" → "}
               <span className="text-[#c9a227]">{prompt.name}</span>
+              <span className="text-[#c9a227]">
+                {farePromptSuffix(
+                  quoteGateFare(
+                    character.continentId,
+                    prompt.target,
+                    character.discoveredContinents,
+                  ),
+                )}
+              </span>
               <div className="mt-0.5 text-xs text-[#a8b09a]">
                 Walk in or press <span className="text-[#e8e6d9]">E</span>
               </div>
@@ -322,6 +336,13 @@ export function GameShell({
               <span className="text-[#e8e6d9]">Board ship</span>
               {" · "}
               <span className="text-[#7ab8c9]">{prompt.name}</span>
+              <span className="text-[#7ab8c9]">
+                {shipDockFareSuffix(
+                  character.continentId,
+                  getDock(prompt.dockId)?.destinations ?? [],
+                  character.discoveredContinents,
+                )}
+              </span>
               <div className="mt-0.5 text-xs text-[#a8b09a]">
                 Press <span className="text-[#e8e6d9]">E</span>
               </div>
@@ -457,6 +478,7 @@ export function GameShell({
           dock={voyageDock}
           currentContinent={character.continentId}
           discovered={character.discoveredContinents}
+          gold={character.gold}
           onSail={onSail}
           onClose={onCloseVoyage}
         />

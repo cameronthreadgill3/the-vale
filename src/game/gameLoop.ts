@@ -62,7 +62,7 @@ export function useGameLoopEffect(d: {
   trainRef: MutableRefObject<(s: SkillId) => void>;
   toggleSkillsRef: MutableRefObject<() => void>;
   toggleMapRef: MutableRefObject<() => void>;
-  travelRef: MutableRefObject<(t: ContinentId, f: ContinentId) => void>;
+  travelRef: MutableRefObject<(t: ContinentId, f: ContinentId) => boolean>;
   enterHollowRef: MutableRefObject<(i: number, r: { x: number; y: number }) => void>;
   exitHollowRef: MutableRefObject<() => void>;
   openFolkRef: MutableRefObject<(folkId: string) => void>;
@@ -162,6 +162,7 @@ export function useGameLoopEffect(d: {
     let camY = player.y;
     let raf = 0;
     let last = performance.now();
+    let fareDeniedTile: string | null = null;
     let running = true;
     let hudAccum = 0;
     let promptAccum = 0;
@@ -220,7 +221,7 @@ export function useGameLoopEffect(d: {
         interactLock.current = false;
       }, 400);
       if (p.kind === "gate") {
-        travelRef.current(p.target, character.continentId);
+        travelRef.current(p.target, characterRef.current.continentId);
       } else if (p.kind === "hollow") {
         const tx = Math.floor(player.x / TILE);
         const ty = Math.floor(player.y / TILE);
@@ -443,6 +444,10 @@ export function useGameLoopEffect(d: {
 
       const standingTx = Math.floor(player.x / TILE);
       const standingTy = Math.floor(player.y / TILE);
+      const standingKey = `${standingTx},${standingTy}`;
+      if (fareDeniedTile && fareDeniedTile !== standingKey) {
+        fareDeniedTile = null;
+      }
       if (
         !paused &&
         standingTx >= 0 &&
@@ -454,10 +459,16 @@ export function useGameLoopEffect(d: {
         const stand = map.tiles[standingTy]![standingTx]!;
         if (stand === "gate") {
           const g = map.gates.find((x) => x.x === standingTx && x.y === standingTy);
-          if (g) {
-            interactLock.current = true;
-            travelRef.current(g.targetContinentId, character.continentId);
-            return;
+          if (g && fareDeniedTile !== standingKey) {
+            const ok = travelRef.current(
+              g.targetContinentId,
+              characterRef.current.continentId,
+            );
+            if (ok) {
+              interactLock.current = true;
+              return;
+            }
+            fareDeniedTile = standingKey;
           }
         } else if (stand === "hollow") {
           const h = map.hollows.find((x) => x.x === standingTx && x.y === standingTy);
