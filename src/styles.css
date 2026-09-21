@@ -708,6 +708,219 @@ body {
   margin-top: 0;
 }
 
+/*
+ * Character select and account gate — same lip, well, and type rhythm
+ * as dialogue, skills, and the vault. Page-only; in-world panels stay put.
+ */
+.vale-gate-stage {
+  background:
+    radial-gradient(ellipse 72% 42% at 50% -12%, rgba(201, 162, 39, 0.16), transparent 62%),
+    radial-gradient(ellipse 80% 48% at 50% 118%, rgba(0, 0, 0, 0.55), transparent 54%),
+    var(--vale-bg);
+}
+
+.vale-gate-hero {
+  font-family: "IBM Plex Mono", ui-monospace, "Courier New", monospace;
+  font-size: 1.65rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  line-height: 1.15;
+  text-transform: uppercase;
+  color: var(--vale-gold);
+  text-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.72),
+    0 0 18px rgba(201, 162, 39, 0.2);
+}
+
+@media (min-width: 640px) {
+  .vale-gate-hero {
+    font-size: 2rem;
+  }
+}
+
+.vale-gate-label {
+  display: block;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  color: #b4bba6;
+}
+
+.vale-gate-field {
+  display: block;
+  width: 100%;
+  margin-top: 0.35rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--vale-gold) 28%, #1c2016);
+  border-radius: 0.4rem;
+  background: linear-gradient(180deg, #070806 0%, #12160e 100%);
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.62),
+    inset 0 1px 0 rgba(0, 0, 0, 0.5);
+  color: var(--vale-ink);
+  font-size: 0.875rem;
+  line-height: 1.4;
+  outline: none;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.vale-gate-field::placeholder {
+  color: #6e7664;
+}
+
+.vale-gate-field:focus {
+  border-color: color-mix(in srgb, var(--vale-gold) 64%, #3a3420);
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.62),
+    0 0 0 1px color-mix(in srgb, var(--vale-gold) 32%, transparent);
+}
+
+.vale-gate-field:-webkit-autofill {
+  -webkit-text-fill-color: var(--vale-ink);
+  caret-color: var(--vale-ink);
+  transition: background-color 9999s ease-out;
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.62),
+    inset 0 0 0 1000px #0c0e0a;
+}
+
+.vale-gate-name {
+  margin-top: 0.15rem;
+  font-family: "IBM Plex Mono", ui-monospace, "Courier New", monospace;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  line-height: 1.25;
+  color: #f3f0e4;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6);
+}
+
+.vale-gate-slot-empty {
+  min-height: 9.5rem;
+  padding: 1rem 1rem 0.9rem;
+  border: 1px dashed color-mix(in srgb, var(--vale-gold) 36%, #2a2e22);
+  border-radius: 0.45rem;
+  background: linear-gradient(180deg, #070806 0%, #12160e 100%);
+  box-shadow:
+    inset 0 3px 8px rgba(0, 0, 0, 0.66),
+    inset 0 1px 0 rgba(0, 0, 0, 0.55);
+}
+
+.vale-gate-choice {
+  width: 100%;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 140ms ease, filter 140ms ease;
+}
+
+.vale-gate-choice:hover {
+  border-color: color-mix(in srgb, var(--vale-row-mark, var(--vale-gold)) 55%, #3a4030);
+  filter: brightness(1.08);
+}
+
+.vale-gate-choice:focus-visible {
+  outline: 2px solid var(--vale-gold);
+  outline-offset: 2px;
+}
+
+.vale-gate-actions {
+  justify-content: center;
+}
+
+.vale-ghost-btn.vale-gate-danger:hover {
+  border-color: color-mix(in srgb, #c97a7a 62%, #2a2e24);
+  color: #c97a7a;
+  background:
+    linear-gradient(180deg, rgba(201, 122, 122, 0.14), transparent 60%),
+    #1c1f16;
+}
+
+.vale-gate-portrait {
+  display: grid;
+  width: 3rem;
+  height: 3rem;
+  flex-shrink: 0;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--vale-gold) 30%, #1c2016);
+  border-radius: 0.35rem;
+  background: linear-gradient(180deg, #070806 0%, #14180f 100%);
+  box-shadow:
+    inset 0 2px 5px rgba(0, 0, 0, 0.62),
+    inset 0 1px 0 rgba(0, 0, 0, 0.45);
+}
+
+.vale-gate-portrait img {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+/* Clerk sits inside the gate frame; its own card stays clear of a second bevel. */
+.vale-gate-clerk .cl-rootBox,
+.vale-gate-clerk .cl-cardBox {
+  width: 100%;
+}
+
+.vale-gate-clerk .cl-card {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.vale-gate-clerk .cl-headerTitle {
+  font-family: "IBM Plex Mono", ui-monospace, "Courier New", monospace;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--vale-gold);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.65);
+}
+
+.vale-gate-clerk .cl-headerSubtitle,
+.vale-gate-clerk .cl-footerActionText {
+  color: #c3c8b4;
+  letter-spacing: 0.015em;
+}
+
+.vale-gate-clerk .cl-formFieldLabel {
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #b4bba6;
+}
+
+.vale-gate-clerk .cl-formFieldInput {
+  border: 1px solid color-mix(in srgb, var(--vale-gold) 28%, #1c2016);
+  border-radius: 0.4rem;
+  background: linear-gradient(180deg, #070806 0%, #12160e 100%);
+  box-shadow:
+    inset 0 2px 6px rgba(0, 0, 0, 0.62),
+    inset 0 1px 0 rgba(0, 0, 0, 0.5);
+  color: var(--vale-ink);
+}
+
+.vale-gate-clerk .cl-formButtonPrimary {
+  border: 1px solid color-mix(in srgb, var(--vale-gold) 46%, #2a2e24);
+  border-radius: 0.4rem;
+  background: linear-gradient(180deg, rgba(201, 162, 39, 0.16), rgba(201, 162, 39, 0.04));
+  box-shadow: inset 0 1px 0 rgba(244, 236, 210, 0.1);
+  color: var(--vale-gold);
+  font-family: "IBM Plex Mono", ui-monospace, "Courier New", monospace;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.vale-gate-clerk .cl-footerActionLink,
+.vale-gate-clerk .cl-formFieldAction {
+  color: var(--vale-gold);
+}
+
 .vale-meter {
   height: 0.55rem;
   overflow: hidden;

@@ -4,6 +4,63 @@ import { isClerkConfigured } from "@/account/clerkConfig";
 import { demoSignIn, demoSignUp } from "@/account/demoAuth";
 import type { ValeAccountUser } from "@/account/types";
 
+type GateMode = "sign-in" | "sign-up";
+
+const clerkAppearance = {
+  variables: {
+    colorPrimary: "#c9a227",
+    colorBackground: "#12160e",
+    colorText: "#e8e6d9",
+    colorTextSecondary: "#b4bba6",
+    colorInputBackground: "#070806",
+    colorInputText: "#e8e6d9",
+    colorNeutral: "#9aa288",
+    borderRadius: "0.4rem",
+    fontFamily: '"IBM Plex Sans", Figtree, system-ui, sans-serif',
+    fontFamilyButtons: '"IBM Plex Mono", ui-monospace, monospace',
+  },
+  elements: {
+    rootBox: "w-full",
+    cardBox: "w-full",
+    card: "w-full",
+  },
+};
+
+function ModeTabs({
+  mode,
+  onChange,
+}: {
+  mode: GateMode;
+  onChange: (mode: GateMode) => void;
+}) {
+  return (
+    <div className="vale-tab-bar w-full" role="tablist" aria-label="Account">
+      <button
+        type="button"
+        role="tab"
+        aria-selected={mode === "sign-in"}
+        className={`vale-tab vale-tap-sm flex-1 px-3 py-2 ${
+          mode === "sign-in" ? "vale-tab-active" : ""
+        }`}
+        onClick={() => onChange("sign-in")}
+      >
+        Sign in
+      </button>
+      <button
+        type="button"
+        role="tab"
+        aria-selected={mode === "sign-up"}
+        className={`vale-tab vale-tap-sm flex-1 px-3 py-2 ${
+          mode === "sign-up" ? "vale-tab-active" : ""
+        }`}
+        onClick={() => onChange("sign-up")}
+      >
+        Sign up
+      </button>
+    </div>
+  );
+}
+
 export function AccountGate({
   onDemoSignedIn,
   onContinueOffline,
@@ -12,7 +69,7 @@ export function AccountGate({
   onContinueOffline: () => void;
 }) {
   const clerkOn = isClerkConfigured();
-  const [mode, setMode] = useState<"sign-in" | "sign-up">("sign-in");
+  const [mode, setMode] = useState<GateMode>("sign-in");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -34,19 +91,20 @@ export function AccountGate({
 
   return (
     <div
-      className="flex h-full w-full items-center justify-center overflow-auto overscroll-contain bg-[#0c0d0b] p-4 sm:p-8"
+      className="vale-gate-stage flex h-full w-full items-center justify-center overflow-auto overscroll-contain p-4 sm:p-8"
       style={{ WebkitOverflowScrolling: "touch" }}
     >
-      <div className="w-full max-w-md">
-        <h1 className="font-display text-center text-2xl tracking-wide text-[#c9a227] sm:text-3xl">
-          The Vale
-        </h1>
-        <p className="mt-2 text-center text-sm text-[#a8b09a]">
-          Create an account to unlock four character slots.
-        </p>
+      <div className="vale-text-screen w-full max-w-md px-5 py-5 sm:px-6 sm:py-6">
+        <div className="text-center">
+          <div className="vale-screen-kicker">Account</div>
+          <h1 className="vale-gate-hero mt-1.5">The Vale</h1>
+          <p className="vale-screen-aside">
+            Create an account to unlock four character slots.
+          </p>
+        </div>
 
         {!clerkOn && (
-          <div className="mt-4 rounded border border-[#c9a227]/35 bg-[#161812] px-3 py-2 text-xs leading-relaxed text-[#a8b09a]">
+          <div className="vale-ledger-line mt-4 px-3 py-2.5 text-xs leading-relaxed text-[#c3c8b4]">
             <span className="text-[#c9a227]">Setup:</span> Clerk keys are not
             configured. Running in <strong className="text-[#e8e6d9]">demo mode</strong>{" "}
             (local accounts only). Set{" "}
@@ -57,97 +115,36 @@ export function AccountGate({
         )}
 
         {clerkOn ? (
-          <div className="mt-6 flex flex-col items-center gap-3">
-            <div className="flex gap-2">
-              <button
-                type="button"
-                className={`rounded border px-3 py-1.5 text-xs ${
-                  mode === "sign-in"
-                    ? "border-[#c9a227] text-[#c9a227]"
-                    : "border-[#2a2e24] text-[#a8b09a]"
-                }`}
-                onClick={() => setMode("sign-in")}
-              >
-                Sign in
-              </button>
-              <button
-                type="button"
-                className={`rounded border px-3 py-1.5 text-xs ${
-                  mode === "sign-up"
-                    ? "border-[#c9a227] text-[#c9a227]"
-                    : "border-[#2a2e24] text-[#a8b09a]"
-                }`}
-                onClick={() => setMode("sign-up")}
-              >
-                Sign up
-              </button>
-            </div>
-            <div className="w-full [&_.cl-rootBox]:mx-auto [&_.cl-card]:bg-[#161812] [&_.cl-card]:border-[#2a2e24]">
+          <div className="vale-skill-section flex flex-col items-stretch gap-3">
+            <ModeTabs mode={mode} onChange={setMode} />
+            <div className="vale-gate-clerk w-full">
               {mode === "sign-in" ? (
                 <SignIn
                   routing="hash"
                   signUpUrl="#sign-up"
-                  appearance={{
-                    variables: {
-                      colorPrimary: "#c9a227",
-                      colorBackground: "#161812",
-                      colorText: "#e8e6d9",
-                    },
-                  }}
+                  appearance={clerkAppearance}
                 />
               ) : (
                 <SignUp
                   routing="hash"
                   signInUrl="#sign-in"
-                  appearance={{
-                    variables: {
-                      colorPrimary: "#c9a227",
-                      colorBackground: "#161812",
-                      colorText: "#e8e6d9",
-                    },
-                  }}
+                  appearance={clerkAppearance}
                 />
               )}
             </div>
-            <p className="text-center text-[11px] text-[#6a7260]">
+            <p className="vale-screen-hint text-center">
               Use email + password. Set username / display name in the Clerk profile
               after sign-up.
             </p>
           </div>
         ) : (
-          <form
-            onSubmit={submitDemo}
-            className="mt-6 space-y-3 rounded border border-[#2a2e24] bg-[#161812] p-4"
-          >
-            <div className="flex gap-2">
-              <button
-                type="button"
-                className={`flex-1 rounded border px-3 py-1.5 text-xs ${
-                  mode === "sign-in"
-                    ? "border-[#c9a227] text-[#c9a227]"
-                    : "border-[#2a2e24] text-[#a8b09a]"
-                }`}
-                onClick={() => setMode("sign-in")}
-              >
-                Sign in
-              </button>
-              <button
-                type="button"
-                className={`flex-1 rounded border px-3 py-1.5 text-xs ${
-                  mode === "sign-up"
-                    ? "border-[#c9a227] text-[#c9a227]"
-                    : "border-[#2a2e24] text-[#a8b09a]"
-                }`}
-                onClick={() => setMode("sign-up")}
-              >
-                Sign up
-              </button>
-            </div>
+          <form onSubmit={submitDemo} className="vale-skill-section space-y-3">
+            <ModeTabs mode={mode} onChange={setMode} />
             {mode === "sign-up" && (
-              <label className="block text-xs text-[#a8b09a]">
+              <label className="vale-gate-label">
                 Account display name
                 <input
-                  className="mt-1 w-full rounded border border-[#2a2e24] bg-[#0c0d0b] px-3 py-2 text-sm text-[#e8e6d9] outline-none focus:border-[#c9a227]/60"
+                  className="vale-gate-field"
                   value={displayName}
                   onChange={(ev) => setDisplayName(ev.target.value)}
                   autoComplete="nickname"
@@ -156,22 +153,22 @@ export function AccountGate({
                 />
               </label>
             )}
-            <label className="block text-xs text-[#a8b09a]">
+            <label className="vale-gate-label">
               Email
               <input
                 type="email"
-                className="mt-1 w-full rounded border border-[#2a2e24] bg-[#0c0d0b] px-3 py-2 text-sm text-[#e8e6d9] outline-none focus:border-[#c9a227]/60"
+                className="vale-gate-field"
                 value={email}
                 onChange={(ev) => setEmail(ev.target.value)}
                 autoComplete="email"
                 required
               />
             </label>
-            <label className="block text-xs text-[#a8b09a]">
+            <label className="vale-gate-label">
               Password
               <input
                 type="password"
-                className="mt-1 w-full rounded border border-[#2a2e24] bg-[#0c0d0b] px-3 py-2 text-sm text-[#e8e6d9] outline-none focus:border-[#c9a227]/60"
+                className="vale-gate-field"
                 value={password}
                 onChange={(ev) => setPassword(ev.target.value)}
                 autoComplete={mode === "sign-up" ? "new-password" : "current-password"}
@@ -186,22 +183,22 @@ export function AccountGate({
             )}
             <button
               type="submit"
-              className="vale-tap w-full rounded border border-[#c9a227]/60 bg-[#1c1f16] px-4 py-2.5 text-sm text-[#c9a227] hover:border-[#c9a227]"
+              className="vale-tap vale-ghost-btn vale-ghost-btn-accent w-full px-4 py-2.5 text-sm"
             >
               {mode === "sign-up" ? "Create account" : "Sign in"}
             </button>
           </form>
         )}
 
-        <p className="mt-6 text-center">
+        <div className="vale-screen-actions vale-gate-actions">
           <button
             type="button"
             onClick={onContinueOffline}
-            className="text-xs text-[#6a7260] underline-offset-2 hover:text-[#a8b09a] hover:underline"
+            className="vale-tap vale-ghost-btn px-4 py-2 text-xs text-[#a8b09a]"
           >
             Continue offline (local) — character slots
           </button>
-        </p>
+        </div>
       </div>
     </div>
   );

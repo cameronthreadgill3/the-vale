@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { getClass } from "@/game/classes";
 import { slotShownLevel } from "@/account/slots";
 import type { CharacterSlot, SlotArray, ValeAccountUser } from "@/account/types";
@@ -26,46 +27,48 @@ export function CharacterSlots({
 }) {
   return (
     <div
-      className="flex h-full w-full items-center justify-center overflow-auto overscroll-contain bg-[#0c0d0b] p-4 sm:p-8"
+      className="vale-gate-stage flex h-full w-full items-center justify-center overflow-auto overscroll-contain p-4 sm:p-8"
       style={{ WebkitOverflowScrolling: "touch" }}
     >
       <div className="w-full max-w-3xl">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h1 className="font-display text-2xl tracking-wide text-[#c9a227] sm:text-3xl">
-              Character slots
-            </h1>
-            <p className="mt-1 text-sm text-[#a8b09a]">
-              Signed in as{" "}
-              <span className="text-[#e8e6d9]">{user.displayName}</span>
-              <span className="text-[#6a7260]"> · {user.email}</span>
-              {user.demo && (
-                <span className="ml-2 rounded border border-[#c9a227]/40 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-[#c9a227]">
-                  demo
-                </span>
-              )}
-            </p>
+        <div className="vale-text-screen px-4 py-4 sm:px-5 sm:py-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <div className="vale-screen-kicker">Account</div>
+              <h1 className="vale-screen-title vale-screen-title-lg mt-1">
+                Character slots
+              </h1>
+              <p className="vale-screen-hint">
+                Signed in as{" "}
+                <span className="text-[#f3f0e4]">{user.displayName}</span>
+                <span> · {user.email}</span>
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onSignOut}
+              className="vale-tap-sm vale-ghost-btn px-3 py-2 text-xs text-[#a8b09a]"
+            >
+              {signOutLabel}
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={onSignOut}
-            className="rounded border border-[#2a2e24] bg-[#161812] px-3 py-1.5 text-xs text-[#a8b09a] hover:border-[#c9a227]/50 hover:text-[#e8e6d9]"
-          >
-            {signOutLabel}
-          </button>
+          {user.demo && (
+            <div className="vale-inv-stats mt-3">
+              <span className="vale-inv-chip vale-inv-chip-gold">Demo</span>
+            </div>
+          )}
+          <p className="vale-screen-aside">
+            Four paths per account. Saves sync to{" "}
+            {user.id === "offline"
+              ? "local offline storage (this browser)"
+              : user.demo
+                ? "local demo storage"
+                : "Clerk user metadata (compact snapshots — migrate to Postgres for production)"}
+            . New characters begin on Thornreach with Teeth in the Grass.
+          </p>
         </div>
 
-        <p className="mt-3 text-xs text-[#6a7260]">
-          Four paths per account. Saves sync to{" "}
-          {user.id === "offline"
-            ? "local offline storage (this browser)"
-            : user.demo
-              ? "local demo storage"
-              : "Clerk user metadata (compact snapshots — migrate to Postgres for production)"}
-          . New characters begin on Thornreach with Teeth in the Grass.
-        </p>
-
-        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {Array.from({ length: SLOT_COUNT }, (_, i) => (
             <SlotCard
               key={i}
@@ -80,15 +83,15 @@ export function CharacterSlots({
         </div>
 
         {guestAvailable && onImportGuest && (
-          <p className="mt-6 text-center">
+          <div className="mt-6 flex justify-center">
             <button
               type="button"
               onClick={onImportGuest}
-              className="text-xs text-[#6a7260] underline-offset-2 hover:text-[#a8b09a] hover:underline"
+              className="vale-tap vale-ghost-btn px-4 py-2 text-xs text-[#a8b09a]"
             >
               Import offline local save into first empty slot
             </button>
-          </p>
+          </div>
         )}
       </div>
     </div>
@@ -112,20 +115,20 @@ function SlotCard({
 }) {
   if (!slot) {
     return (
-      <div className="flex min-h-[9rem] flex-col justify-between rounded border border-dashed border-[#2a2e24] bg-[#12140f] p-4">
+      <div className="vale-gate-slot-empty flex flex-col justify-between">
         <div>
-          <div className="text-[10px] uppercase tracking-wider text-[#6a7260]">
-            Slot {index + 1}
-          </div>
-          <p className="mt-2 text-sm text-[#a8b09a]">Empty</p>
+          <div className="vale-skill-meta">Slot {index + 1}</div>
+          <p className="vale-skill-name vale-skill-name-dim mt-2">Empty</p>
         </div>
-        <button
-          type="button"
-          onClick={onCreate}
-          className="vale-tap mt-3 rounded border border-[#c9a227]/50 bg-[#1c1f16] px-3 py-2 text-sm text-[#c9a227] hover:border-[#c9a227]"
-        >
-          Create
-        </button>
+        <div className="vale-inv-foot">
+          <button
+            type="button"
+            onClick={onCreate}
+            className="vale-tap vale-ghost-btn vale-ghost-btn-accent w-full px-3 py-2 text-sm"
+          >
+            Create
+          </button>
+        </div>
       </div>
     );
   }
@@ -136,33 +139,29 @@ function SlotCard({
 
   return (
     <div
-      className="flex min-h-[9rem] flex-col justify-between rounded border border-[#2a2e24] bg-[#161812] p-4"
-      style={{ borderLeftWidth: 4, borderLeftColor: cls.accent }}
+      className="vale-skill-row vale-map-row-here flex min-h-[9.5rem] flex-col justify-between p-4"
+      style={{ "--vale-row-mark": cls.accent } as CSSProperties}
     >
       <div>
-        <div className="text-[10px] uppercase tracking-wider text-[#6a7260]">
-          Slot {index + 1}
-        </div>
-        <div className="mt-1 font-display text-lg tracking-wide text-[#e8e6d9]">
-          {slot.name}
-        </div>
-        <p className="mt-1 text-sm" style={{ color: cls.accent }}>
+        <div className="vale-skill-meta">Slot {index + 1}</div>
+        <div className="vale-gate-name">{slot.name}</div>
+        <p className="vale-skill-level mt-1" style={{ color: cls.accent }}>
           {cls.name} · Lv {level}
         </p>
-        <p className="mt-1 text-[10px] text-[#6a7260]">Updated {updated}</p>
+        <p className="vale-screen-hint">Updated {updated}</p>
       </div>
-      <div className="mt-3 flex gap-2">
+      <div className="vale-inv-foot flex gap-2">
         <button
           type="button"
           onClick={onPlay}
-          className="vale-tap flex-1 rounded border border-[#c9a227]/50 bg-[#1c1f16] px-3 py-2 text-sm text-[#c9a227] hover:border-[#c9a227]"
+          className="vale-tap vale-ghost-btn vale-ghost-btn-accent flex-1 px-3 py-2 text-sm"
         >
           Play
         </button>
         <button
           type="button"
           onClick={onDelete}
-          className="rounded border border-[#2a2e24] px-3 py-2 text-xs text-[#a8b09a] hover:border-[#c97a7a]/60 hover:text-[#c97a7a]"
+          className="vale-tap-sm vale-ghost-btn vale-gate-danger px-3 py-2 text-xs text-[#a8b09a]"
         >
           Delete
         </button>
