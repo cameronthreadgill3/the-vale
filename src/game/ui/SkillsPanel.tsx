@@ -161,7 +161,7 @@ export function SkillsPanel({
                           e.stopPropagation();
                           onAssignQuickSlot(i, s.id);
                         }}
-                        className={`vale-tap-sm flex h-8 w-8 items-center justify-center rounded border text-xs tabular-nums ${
+                        className={`vale-tap-sm flex h-8 w-8 items-center justify-center rounded border text-xs tabular-nums max-md:h-10 max-md:w-10 ${
                           assigned
                             ? "border-[#c9a227]/70 bg-[#c9a227]/25 text-[#c9a227]"
                             : "border-[#2a2e24] text-[#6a7260] hover:border-[#c9a227]/40 hover:text-[#e8e6d9]"

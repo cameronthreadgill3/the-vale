@@ -48,6 +48,72 @@ body {
   box-shadow: inset 0 0 0 1px #0a0b08, 0 2px 0 #0a0b08;
 }
 
+/* Soft backing so HUD text stays readable over busy tiles. */
+.vale-hud-panel {
+  background: color-mix(in srgb, var(--vale-chrome) 90%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow:
+    inset 0 0 0 1px #0a0b08,
+    0 2px 0 #0a0b08,
+    0 4px 14px rgba(0, 0, 0, 0.42);
+}
+
+.vale-meter {
+  height: 0.55rem;
+  overflow: hidden;
+  border-radius: 2px;
+  background: #050604;
+  box-shadow: inset 0 0 0 1px #1a1410;
+}
+
+.vale-meter-ember {
+  background: #1a1410;
+  box-shadow: inset 0 0 0 1px #4a2818;
+}
+
+.vale-meter-low {
+  box-shadow: inset 0 0 0 1px #a03030;
+}
+
+.vale-meter-ember-sheen {
+  height: 2px;
+  background: rgba(248, 200, 80, 0.55);
+}
+
+@media (pointer: coarse), (max-width: 768px) {
+  .vale-hud {
+    max-height: calc(100dvh - 10.75rem);
+    overflow: hidden;
+  }
+
+  .vale-hud-quest {
+    max-height: min(7.25rem, 26dvh);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .vale-meter {
+    height: 0.65rem;
+  }
+
+  /* Keep the top HUD strip (quest + HP + path) out of the virtual stick. */
+  .game-root > .absolute.inset-x-0.top-0 {
+    max-height: calc(100dvh - 10.5rem);
+    overflow: hidden;
+  }
+}
+
+@media (max-height: 480px) {
+  .vale-hud {
+    max-height: calc(100dvh - 9.5rem);
+  }
+
+  .vale-hud-quest {
+    max-height: 4.5rem;
+  }
+}
+
 .image-rendering-pixelated,
 canvas.game-canvas {
   image-rendering: pixelated;

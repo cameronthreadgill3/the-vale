@@ -90,27 +90,28 @@ export function drawEnemyChrome(
     const sx = Math.floor(e.x - originX);
     const sy = Math.floor(e.y - originY);
     const boss = isHollowBoss(e.kind.id);
-    ctx.fillStyle = boss ? "#e8c878" : "#c9c4a8";
-    ctx.fillText(`${e.kind.name} · ${e.kind.rank}`, sx, sy - e.kind.radius - 14);
+    const label = `${e.kind.name} · ${e.kind.rank}`;
+    const tw = ctx.measureText(label).width;
+    const lx = sx - tw / 2 - 3;
+    const ly = sy - e.kind.radius - 23;
+    ctx.fillStyle = "rgba(12, 13, 11, 0.78)";
+    ctx.fillRect(lx, ly, tw + 6, 11);
+    ctx.fillStyle = boss ? "#e8c878" : "#e8e6d9";
+    ctx.fillText(label, sx, sy - e.kind.radius - 14);
     const ratio = e.hp / e.kind.maxHp;
-    const barW = boss ? 26 : 16;
+    const barW = boss ? 28 : 18;
     const barH = boss ? 4 : 3;
     const bx = sx - barW / 2;
     const by = sy - e.kind.radius - 10;
-    if (boss) {
-      ctx.fillStyle = "#1a1410";
-      ctx.fillRect(bx - 1, by - 1, barW + 2, barH + 2);
-      ctx.fillStyle = "#4a2818";
-      ctx.fillRect(bx, by, barW, barH);
-      ctx.fillStyle = ratio > 0.35 ? "#e07030" : "#a03030";
-      ctx.fillRect(bx, by, barW * ratio, barH);
+    ctx.fillStyle = "#1a1410";
+    ctx.fillRect(bx - 1, by - 1, barW + 2, barH + 2);
+    ctx.fillStyle = boss ? "#4a2818" : "#1a1c16";
+    ctx.fillRect(bx, by, barW, barH);
+    ctx.fillStyle = ratio > 0.35 ? (boss ? "#e07030" : "#c45c3e") : "#a03030";
+    ctx.fillRect(bx, by, barW * ratio, barH);
+    if (boss || ratio <= 0.35) {
       ctx.fillStyle = "rgba(248,200,80,0.55)";
       ctx.fillRect(bx, by, barW * ratio, 1);
-    } else {
-      ctx.fillStyle = "#1a1c16";
-      ctx.fillRect(bx, by, barW, barH);
-      ctx.fillStyle = ratio > 0.35 ? "#c45c3e" : "#a03030";
-      ctx.fillRect(bx, by, barW * ratio, barH);
     }
   }
 }

@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-/** Skills + Map share one corner dock (desktop bottom-left, mobile top-right). */
+/** Skills + Map share one corner dock (desktop bottom-left, mobile above the stick). */
 export function CornerTabs({
   skillsOpen,
   mapOpen,
@@ -18,7 +18,7 @@ export function CornerTabs({
 }) {
   const open = skillsOpen || mapOpen;
   return (
-    <div className="pointer-events-none absolute z-30 flex max-w-[min(100%-1.5rem,22rem)] flex-col gap-1 max-md:right-3 max-md:top-20 max-md:max-h-[calc(100dvh-11.5rem)] md:bottom-6 md:left-6 md:flex-col-reverse">
+    <div className="pointer-events-none absolute z-30 flex max-w-[min(100%-1.5rem,22rem)] flex-col-reverse gap-1 max-md:bottom-[9.5rem] max-md:left-[max(0.75rem,env(safe-area-inset-left))] max-md:max-h-[calc(100dvh-12.5rem)] md:bottom-6 md:left-6">
       <div className="pointer-events-auto flex overflow-hidden rounded border border-[#2a2e24] bg-[#161812]/90 shadow-lg backdrop-blur-md">
         <TabBtn
           label="Skills"
@@ -64,7 +64,7 @@ function TabBtn({
       }`}
     >
       <span className="font-display">{label}</span>
-      <span className="ml-1.5 text-[9px] uppercase tracking-wider text-[#6a7260]">
+      <span className="ml-1.5 text-[10px] uppercase tracking-wider text-[#a8b09a]">
         {hint}
       </span>
     </button>

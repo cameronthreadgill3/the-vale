@@ -142,20 +142,21 @@ export function MobileControls({
       >
         <div
           ref={stickRef}
-          className="relative h-[7.25rem] w-[7.25rem] touch-none rounded-full border border-[#c9a227]/35 bg-[#161812]/55 shadow-lg backdrop-blur-sm"
+          className="relative h-[7.5rem] w-[7.5rem] touch-none rounded-full border border-[#c9a227]/45 bg-[#161812]/72 shadow-lg backdrop-blur-sm"
           onPointerDown={onStickDown}
           onPointerMove={onStickMove}
           onPointerUp={onStickUp}
           onPointerCancel={onStickUp}
           role="presentation"
+          aria-label="Move"
         >
           <div
-            className="pointer-events-none absolute left-1/2 top-1/2 h-11 w-11 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#c9a227]/60 bg-[#c9a227]/25"
+            className="pointer-events-none absolute left-1/2 top-1/2 h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full border border-[#c9a227]/70 bg-[#c9a227]/30"
             style={{
               transform: `translate(calc(-50% + ${knob.x}px), calc(-50% + ${knob.y}px))`,
             }}
           />
-          <span className="pointer-events-none absolute inset-x-0 bottom-1 text-center text-[9px] uppercase tracking-wider text-[#a8b09a]/80">
+          <span className="pointer-events-none absolute inset-x-0 bottom-1.5 text-center font-display text-[11px] uppercase tracking-wider text-[#e8e6d9]">
             Move
           </span>
         </div>

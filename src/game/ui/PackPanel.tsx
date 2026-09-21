@@ -48,7 +48,7 @@ export function PackPanel({
   const equipment = character.equipment ?? emptyEquipment();
 
   return (
-    <div className="vale-panel pointer-events-auto absolute bottom-4 left-1/2 z-30 w-[min(100%-2rem,24rem)] -translate-x-1/2 rounded border border-[#2a2e24] bg-[#161812]/96 p-3 shadow-xl backdrop-blur-md max-md:bottom-8 sm:bottom-6">
+    <div className="vale-panel pointer-events-auto absolute bottom-4 left-1/2 z-30 w-[min(100%-2rem,24rem)] -translate-x-1/2 rounded border border-[#2a2e24] bg-[#161812]/96 p-3 shadow-xl backdrop-blur-md max-md:bottom-[10.5rem] sm:bottom-6">
       <div className="mb-2 flex items-center justify-between gap-2">
         <div>
           <div className="font-display text-sm tracking-wide text-[#c9a227]">

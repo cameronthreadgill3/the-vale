@@ -2,6 +2,7 @@ import type { ValeClass } from "@/game/classes";
 import type { ValeCharacter } from "@/game/character";
 import { getItem } from "@/game/items";
 import type { HudState } from "@/game/canvasConstants";
+import { LOW_HP_RATIO } from "@/game/combat";
 import {
   TEETH_QUEST_TITLE,
   ASHWOOD_QUEST_TITLE,
@@ -30,6 +31,31 @@ function equippedLine(character: ValeCharacter): string {
   return bits.length > 0 ? bits.join(" · ") : "Unarmed";
 }
 
+function activeQuest(
+  mistmereQuest: MistmereQuestProgress | null,
+  gateWatchQuest: GateWatchQuestProgress | null,
+  hollowQuest: HollowQuestProgress | null,
+  ashwoodQuest: AshwoodQuestProgress | null,
+  teethQuest: TeethQuestProgress | null,
+): { title: string; lines: string[] } | null {
+  if (mistmereQuest?.status === "active") {
+    return { title: MISTMERE_QUEST_TITLE, lines: mistmereHudLines(mistmereQuest) };
+  }
+  if (gateWatchQuest?.status === "active") {
+    return { title: GATE_QUEST_TITLE, lines: gateWatchHudLines(gateWatchQuest) };
+  }
+  if (hollowQuest?.status === "active") {
+    return { title: HOLLOW_QUEST_TITLE, lines: hollowHudLines(hollowQuest) };
+  }
+  if (ashwoodQuest?.status === "active") {
+    return { title: ASHWOOD_QUEST_TITLE, lines: ashwoodHudLines(ashwoodQuest) };
+  }
+  if (teethQuest?.status === "active") {
+    return { title: TEETH_QUEST_TITLE, lines: teethHudLines(teethQuest) };
+  }
+  return null;
+}
+
 export function GameShellHud({
   cls,
   character,
@@ -53,17 +79,32 @@ export function GameShellHud({
   mistmereQuest: MistmereQuestProgress | null;
   onOpenPack: () => void;
 }) {
+  const quest = activeQuest(
+    mistmereQuest,
+    gateWatchQuest,
+    hollowQuest,
+    ashwoodQuest,
+    teethQuest,
+  );
+  const hpRatio = hud.maxHp > 0 ? hud.hp / hud.maxHp : 0;
+  const hpLow = hpRatio <= LOW_HP_RATIO;
+  const packHeavy = hud.weight >= hud.maxWeight;
+  const packHigh = hud.weight / Math.max(1, hud.maxWeight) >= 0.8;
+
   return (
-    <div className="flex flex-wrap items-end justify-between gap-3">
-      <div>
-        <h1 className="font-display text-xl tracking-wide text-[#c9a227] sm:text-2xl">
+    <div className="vale-hud grid w-full grid-cols-[minmax(0,1fr)_auto] items-start gap-2 sm:gap-3">
+      <div className="min-w-0">
+        <h1 className="font-display text-lg tracking-wide text-[#c9a227] sm:text-2xl">
           The Vale
         </h1>
-        <p className="mt-0.5 text-xs text-[#a8b09a] sm:text-sm">
-          {hud.huntZoneLabel
-            ? `${locationLabel} · ${hud.huntZoneLabel}`
-            : locationLabel}
+        <p className="mt-0.5 text-xs leading-snug text-[#c8c4b0] sm:text-sm">
+          {locationLabel}
         </p>
+        {hud.huntZoneLabel && (
+          <p className="text-[11px] leading-snug text-[#a8b09a] sm:text-xs">
+            {hud.huntZoneLabel}
+          </p>
+        )}
         <p
           className="mt-1 font-display text-sm tracking-wide sm:text-base"
           style={{ color: cls.accent }}
@@ -71,145 +112,87 @@ export function GameShellHud({
           {cls.name}
         </p>
         {hud.objectiveLabel && (
-          <div className="vale-chrome mt-2 max-w-xs rounded-sm border-[#c9a227]/55 bg-[#12140e]/95 px-2.5 py-1.5 text-[11px] leading-snug text-[#f0d060] sm:text-xs">
-            <span className="font-display tracking-wide">
-              → {hud.objectiveLabel}
-            </span>
-            {typeof hud.objectiveDist === "number" && (
-              <span className="ml-1 text-[#a8b09a]">
-                · {hud.objectiveDist} tiles
-              </span>
-            )}
+          <div className="vale-hud-panel vale-chrome mt-2 max-w-xs rounded-sm border-[#c9a227]/70 px-2.5 py-1.5 text-[12px] leading-snug text-[#f0d060] sm:text-sm">
+            <div className="text-[9px] uppercase tracking-wider text-[#c9a227]/90">
+              Objective
+            </div>
+            <div className="font-display tracking-wide">
+              {hud.objectiveLabel}
+              {typeof hud.objectiveDist === "number" && (
+                <span className="ml-1 font-sans text-[11px] text-[#c8c4b0] sm:text-xs">
+                  · {hud.objectiveDist} tiles
+                </span>
+              )}
+            </div>
           </div>
         )}
-        {mistmereQuest && mistmereQuest.status === "active" ? (
-          <div className="vale-chrome mt-2 max-w-xs rounded-sm px-2.5 py-1.5 text-[10px] leading-relaxed text-[#9aa288] sm:text-xs">
-            <div className="font-display text-[11px] tracking-wide text-[#c9a227] sm:text-xs">
-              {MISTMERE_QUEST_TITLE}
-            </div>
-            <ul className="mt-1 space-y-0.5">
-              {mistmereHudLines(mistmereQuest).map((line) => (
-                <li key={line}>{line}</li>
-              ))}
-            </ul>
-          </div>
-        ) : gateWatchQuest && gateWatchQuest.status === "active" ? (
-          <div className="vale-chrome mt-2 max-w-xs rounded-sm px-2.5 py-1.5 text-[10px] leading-relaxed text-[#9aa288] sm:text-xs">
-            <div className="font-display text-[11px] tracking-wide text-[#c9a227] sm:text-xs">
-              {GATE_QUEST_TITLE}
-            </div>
-            <ul className="mt-1 space-y-0.5">
-              {gateWatchHudLines(gateWatchQuest).map((line) => (
-                <li key={line}>{line}</li>
-              ))}
-            </ul>
-          </div>
-        ) : hollowQuest && hollowQuest.status === "active" ? (
-          <div className="vale-chrome mt-2 max-w-xs rounded-sm px-2.5 py-1.5 text-[10px] leading-relaxed text-[#9aa288] sm:text-xs">
-            <div className="font-display text-[11px] tracking-wide text-[#c9a227] sm:text-xs">
-              {HOLLOW_QUEST_TITLE}
-            </div>
-            <ul className="mt-1 space-y-0.5">
-              {hollowHudLines(hollowQuest).map((line) => (
-                <li key={line}>{line}</li>
-              ))}
-            </ul>
-          </div>
-        ) : ashwoodQuest && ashwoodQuest.status === "active" ? (
-          <div className="vale-chrome mt-2 max-w-xs rounded-sm px-2.5 py-1.5 text-[10px] leading-relaxed text-[#9aa288] sm:text-xs">
-            <div className="font-display text-[11px] tracking-wide text-[#c9a227] sm:text-xs">
-              {ASHWOOD_QUEST_TITLE}
-            </div>
-            <ul className="mt-1 space-y-0.5">
-              {ashwoodHudLines(ashwoodQuest).map((line) => (
-                <li key={line}>{line}</li>
-              ))}
-            </ul>
-          </div>
-        ) : (
-          teethQuest &&
-          teethQuest.status === "active" && (
-            <div className="vale-chrome mt-2 max-w-xs rounded-sm px-2.5 py-1.5 text-[10px] leading-relaxed text-[#9aa288] sm:text-xs">
-              <div className="font-display text-[11px] tracking-wide text-[#c9a227] sm:text-xs">
-                {TEETH_QUEST_TITLE}
-              </div>
-              <ul className="mt-1 space-y-0.5">
-                {teethHudLines(teethQuest).map((line) => (
-                  <li key={line}>{line}</li>
-                ))}
-              </ul>
-            </div>
-          )
-        )}
+        {quest && <QuestHudCard title={quest.title} lines={quest.lines} />}
       </div>
-      <div className="vale-chrome rounded-sm px-3 py-2 text-xs text-[#e0dcc8] sm:text-sm">
+      <div className="vale-hud-vitals vale-hud-panel vale-chrome w-[8.75rem] shrink-0 rounded-sm px-2.5 py-2 text-xs text-[#e0dcc8] sm:w-36 sm:px-3 sm:text-sm">
         <div className="font-display" style={{ color: cls.accent }}>
           Level {hud.level}
         </div>
         <div className="mt-1 text-[#a8b09a]">
           XP {hud.xp} / {hud.next}
         </div>
-        <div className="mt-1.5 h-1.5 w-28 overflow-hidden rounded-sm bg-[#050604]">
-          <div
-            className="h-full rounded"
-            style={{
-              width: `${Math.round(hud.progress * 100)}%`,
-              background: cls.accent,
-            }}
-          />
-        </div>
+        <HudMeter ratio={hud.progress} fill={cls.accent} />
         <div className="mt-2">
-          <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-[#6a7260]">
-            <span>HP</span>
-            <span className="normal-case tracking-normal text-[#e8e6d9]">
+          <div className="flex items-center justify-between text-[10px] uppercase tracking-wider text-[#8a9080] sm:text-[11px]">
+            <span className={hpLow ? "text-[#e07030]" : ""}>HP</span>
+            <span
+              className={`normal-case tracking-normal tabular-nums ${
+                hpLow ? "text-[#f0d060]" : "text-[#e8e6d9]"
+              }`}
+            >
               {hud.hp}/{hud.maxHp}
             </span>
           </div>
-          <div className="mt-0.5 h-1.5 w-28 overflow-hidden rounded-sm bg-[#050604]">
-            <div
-              className="h-full rounded bg-[#c45c3e]"
-              style={{
-                width: `${hud.maxHp > 0 ? Math.round((hud.hp / hud.maxHp) * 100) : 0}%`,
-              }}
-            />
-          </div>
+          <HudMeter
+            ratio={hpRatio}
+            fill={hpLow ? "#a03030" : "#e07030"}
+            ember
+            low={hpLow}
+          />
           {hud.maxMana > 0 && (
             <>
-              <div className="mt-1.5 flex items-center justify-between text-[10px] uppercase tracking-wider text-[#6a7260]">
+              <div className="mt-1.5 flex items-center justify-between text-[10px] uppercase tracking-wider text-[#8a9080] sm:text-[11px]">
                 <span>Mana</span>
-                <span className="normal-case tracking-normal text-[#e8e6d9]">
+                <span className="normal-case tracking-normal tabular-nums text-[#e8e6d9]">
                   {hud.mana}/{hud.maxMana}
                 </span>
               </div>
-              <div className="mt-0.5 h-1.5 w-28 overflow-hidden rounded-sm bg-[#050604]">
-                <div
-                  className="h-full rounded bg-[#4a8ab8]"
-                  style={{
-                    width: `${hud.maxMana > 0 ? Math.round((hud.mana / hud.maxMana) * 100) : 0}%`,
-                  }}
-                />
-              </div>
+              <HudMeter
+                ratio={hud.maxMana > 0 ? hud.mana / hud.maxMana : 0}
+                fill="#4a8ab8"
+              />
             </>
           )}
         </div>
-        <div className="mt-2 text-[10px] uppercase tracking-wider text-[#6a7260]">
+        <div className="mt-2 text-[10px] uppercase tracking-wider text-[#8a9080]">
           Tile {hud.x}, {hud.y} · {character.gold}g
           {character.bankGold > 0 ? ` · Vault ${character.bankGold}g` : ""}
         </div>
         <button
           type="button"
-          className="pointer-events-auto mt-1.5 w-full text-left text-[10px] uppercase tracking-wider text-[#6a7260] hover:text-[#c9a227]"
+          className="pointer-events-auto mt-1 w-full rounded-sm py-1.5 text-left text-[11px] uppercase tracking-wider text-[#8a9080] hover:text-[#c9a227]"
           onClick={onOpenPack}
         >
-          <span className={hud.weight >= hud.maxWeight ? "text-[#c45c3e]" : hud.weight / Math.max(1, hud.maxWeight) >= 0.8 ? "text-[#c9a227]" : ""}>
+          <span
+            className={
+              packHeavy ? "text-[#e07030]" : packHigh ? "text-[#c9a227]" : ""
+            }
+          >
             Pack {hud.weight}/{hud.maxWeight} wt
           </span>
-          <span className="text-[#6a7260]"> · {hud.slots}/{hud.maxSlots}</span>
+          <span className="text-[#8a9080]">
+            {" "}
+            · {hud.slots}/{hud.maxSlots}
+          </span>
           {character.premiumBackpack && (
             <span className="text-[#c9a227]"> · Prem</span>
           )}
         </button>
-        <div className="mt-0.5 truncate text-[10px] text-[#a8b09a]">
+        <div className="mt-0.5 truncate text-[10px] text-[#c8c4b0]">
           {equippedLine(character)}
         </div>
         {hud.inSafeZone && (
@@ -217,6 +200,63 @@ export function GameShellHud({
             Safe — no beasts here
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function QuestHudCard({ title, lines }: { title: string; lines: string[] }) {
+  const current = lines.findIndex((line) => line.startsWith("[ ]"));
+  return (
+    <div className="vale-hud-quest vale-hud-panel vale-chrome pointer-events-auto mt-2 max-w-xs rounded-sm px-2.5 py-1.5 text-[11px] leading-relaxed text-[#c8c4b0] sm:text-xs">
+      <div className="font-display text-[12px] tracking-wide text-[#c9a227] sm:text-sm">
+        {title}
+      </div>
+      <ul className="mt-1 space-y-0.5">
+        {lines.map((line, i) => {
+          const done = line.startsWith("[done]");
+          const isNow = i === current;
+          return (
+            <li
+              key={line}
+              className={
+                done
+                  ? "text-[#6a7260]"
+                  : isNow
+                    ? "text-[#f0d060]"
+                    : "text-[#c8c4b0]"
+              }
+            >
+              {isNow ? <span className="text-[#c9a227]">▸ </span> : null}
+              {line}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+function HudMeter({
+  ratio,
+  fill,
+  ember = false,
+  low = false,
+}: {
+  ratio: number;
+  fill: string;
+  ember?: boolean;
+  low?: boolean;
+}) {
+  const width = `${Math.round(Math.max(0, Math.min(1, ratio)) * 100)}%`;
+  return (
+    <div
+      className={`vale-meter mt-0.5 w-full ${ember ? "vale-meter-ember" : ""} ${
+        low ? "vale-meter-low" : ""
+      }`}
+    >
+      <div className="vale-meter-fill h-full rounded-sm" style={{ width, background: fill }}>
+        {ember && <div className="vale-meter-ember-sheen" />}
       </div>
     </div>
   );
