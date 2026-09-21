@@ -24,7 +24,7 @@ import { CornerTabs } from "@/game/ui/CornerTabs";
 import { GameShellHud } from "@/game/ui/GameShellHud";
 import { STARTER_TIP, STARTER_TIP_MS } from "@/game/wayfinding";
 import type { EnemyKindId } from "@/game/enemies";
-import type { TeethQuestProgress, AshwoodQuestProgress, HollowQuestProgress, GateWatchQuestProgress, MistmereQuestProgress, WatchlineQuestProgress, AshveilQuestProgress, ChoirCountsQuestProgress, WharfQuestProgress, GreenGateQuestProgress, SpineQuestProgress } from "@/game/quests";
+import type { TeethQuestProgress, AshwoodQuestProgress, HollowQuestProgress, GateWatchQuestProgress, MistmereQuestProgress, WatchlineQuestProgress, AshveilQuestProgress, ChoirCountsQuestProgress, WharfQuestProgress, GreenGateQuestProgress, SpineQuestProgress, PaleQuestProgress } from "@/game/quests";
 import type { ItemId, EquipSlot } from "@/game/items";
 
 export function GameShell({
@@ -94,6 +94,7 @@ export function GameShell({
   wharfQuest,
   greenGateQuest,
   spineQuest,
+  paleQuest,
   onInspectCairn,
   onWorkNode,
   onOpenCraft,
@@ -172,6 +173,7 @@ export function GameShell({
   wharfQuest: WharfQuestProgress | null;
   greenGateQuest: GreenGateQuestProgress | null;
   spineQuest: SpineQuestProgress | null;
+  paleQuest: PaleQuestProgress | null;
   onInspectCairn: (cairnId: string) => void;
   onWorkNode: (nodeId: string) => void;
   onOpenCraft: () => void;
@@ -251,6 +253,7 @@ export function GameShell({
           wharfQuest={wharfQuest}
           greenGateQuest={greenGateQuest}
           spineQuest={spineQuest}
+          paleQuest={paleQuest}
           onOpenPack={onTogglePack}
         />
         <div className="flex flex-wrap gap-2">

@@ -26,6 +26,7 @@ import {
   getWharfQuest,
   getGreenGateQuest,
   getSpineQuest,
+  getPaleQuest,
   isTeethActive,
   isAshwoodActive,
   isHollowActive,
@@ -37,6 +38,7 @@ import {
   isWharfActive,
   isGreenGateActive,
   isSpineActive,
+  isPaleActive,
   loadQuestLog,
   type TeethQuestProgress,
   type AshwoodQuestProgress,
@@ -49,6 +51,7 @@ import {
   type WharfQuestProgress,
   type GreenGateQuestProgress,
   type SpineQuestProgress,
+  type PaleQuestProgress,
 } from "@/game/quests";
 import { ASHWOOD_CAIRNS } from "@/game/cairns";
 import { huntZoneById } from "@/game/huntZones";
@@ -79,6 +82,10 @@ export function resolveQuestObjective(
   map: WorldMap,
 ): WayfindObjective | null {
   const log = loadQuestLog();
+  if (isPaleActive(log)) {
+    const q = getPaleQuest(log);
+    if (q) return objectiveForPale(q, player, enemies, folk, map);
+  }
   if (isSpineActive(log)) {
     const q = getSpineQuest(log);
     if (q) return objectiveForSpine(q, player, enemies, folk, map);
@@ -260,6 +267,187 @@ export function objectiveForSpine(
       label: "Gate back to Rook (Thornreach)",
       x: (home.x + 0.5) * TILE,
       y: (home.y + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  return {
+    label: "Return to Rook (Thornreach)",
+    x: player.x + TILE * 8,
+    y: player.y - TILE * 2,
+    kind: "landmark",
+  };
+}
+
+export function objectiveForPale(
+  q: PaleQuestProgress,
+  player: { x: number; y: number },
+  enemies: Enemy[],
+  folk: FolkDef[],
+  map: WorldMap,
+): WayfindObjective | null {
+  if (q.status !== "active") return null;
+  const rook = folk.find((f) => f.id === "rook");
+
+  if (!q.reachedPale) {
+    const gate = continentGateOnMap(map, "pale-wastes");
+    if (gate) {
+      return {
+        label: "Reach Pale Wastes gate",
+        x: (gate.x + 0.5) * TILE,
+        y: (gate.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    const toSpine = continentGateOnMap(map, "verdant-spine");
+    if (toSpine) {
+      return {
+        label: "Gate to Pale Wastes (Verdant Spine)",
+        x: (toSpine.x + 0.5) * TILE,
+        y: (toSpine.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    const home = continentGateOnMap(map, "thornreach");
+    if (home) {
+      return {
+        label: "Gate toward Verdant Spine",
+        x: (home.x + 0.5) * TILE,
+        y: (home.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    return {
+      label: "Find Pale Wastes gate (Verdant Spine)",
+      x: player.x + TILE * 8,
+      y: player.y - TILE * 2,
+      kind: "landmark",
+    };
+  }
+
+  if (!q.identifiedMite) {
+    const mite = nearestEnemy(player, enemies, "briar-mite");
+    if (mite) {
+      return { label: "Identify Briar Mite", x: mite.x, y: mite.y, kind: "enemy" };
+    }
+    if (map.continentId === "pale-wastes" && map.kind === "overworld") {
+      return {
+        label: "Find Briar Mite (Pale Wastes)",
+        x: player.x + TILE * 6,
+        y: player.y - TILE * 4,
+        kind: "landmark",
+      };
+    }
+    const toPale = continentGateOnMap(map, "pale-wastes");
+    if (toPale) {
+      return {
+        label: "Gate to Briar Mite (Pale Wastes)",
+        x: (toPale.x + 0.5) * TILE,
+        y: (toPale.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    const toSpine = continentGateOnMap(map, "verdant-spine");
+    if (toSpine) {
+      return {
+        label: "Gate toward Pale Wastes",
+        x: (toSpine.x + 0.5) * TILE,
+        y: (toSpine.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    const home = continentGateOnMap(map, "thornreach");
+    if (home) {
+      return {
+        label: "Gate toward Verdant Spine",
+        x: (home.x + 0.5) * TILE,
+        y: (home.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    return {
+      label: "Find Briar Mite (Pale Wastes)",
+      x: player.x + TILE * 6,
+      y: player.y - TILE * 4,
+      kind: "landmark",
+    };
+  }
+
+  if (!q.ratDone) {
+    const rat = nearestEnemy(player, enemies, "needle-rat");
+    if (rat) {
+      return {
+        label: "Defeat Needle Rat (0/1)",
+        x: rat.x,
+        y: rat.y,
+        kind: "enemy",
+      };
+    }
+    if (map.continentId === "pale-wastes" && map.kind === "overworld") {
+      return {
+        label: "Find Needle Rat (Pale Wastes)",
+        x: player.x + TILE * 6,
+        y: player.y - TILE * 4,
+        kind: "landmark",
+      };
+    }
+    const toPale = continentGateOnMap(map, "pale-wastes");
+    if (toPale) {
+      return {
+        label: "Gate to Needle Rat (Pale Wastes)",
+        x: (toPale.x + 0.5) * TILE,
+        y: (toPale.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    const toSpine = continentGateOnMap(map, "verdant-spine");
+    if (toSpine) {
+      return {
+        label: "Gate toward Pale Wastes",
+        x: (toSpine.x + 0.5) * TILE,
+        y: (toSpine.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    const home = continentGateOnMap(map, "thornreach");
+    if (home) {
+      return {
+        label: "Gate toward Verdant Spine",
+        x: (home.x + 0.5) * TILE,
+        y: (home.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    return {
+      label: "Find Needle Rat (Pale Wastes)",
+      x: player.x + TILE * 6,
+      y: player.y - TILE * 4,
+      kind: "landmark",
+    };
+  }
+
+  if (rook) {
+    return {
+      label: "Return to Rook",
+      x: (rook.x + 0.5) * TILE,
+      y: (rook.y + 0.5) * TILE,
+      kind: "folk",
+    };
+  }
+  const home = continentGateOnMap(map, "thornreach");
+  if (home) {
+    return {
+      label: "Gate back to Rook (Thornreach)",
+      x: (home.x + 0.5) * TILE,
+      y: (home.y + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  const toSpineHome = continentGateOnMap(map, "verdant-spine");
+  if (toSpineHome) {
+    return {
+      label: "Gate toward Rook (Verdant Spine)",
+      x: (toSpineHome.x + 0.5) * TILE,
+      y: (toSpineHome.y + 0.5) * TILE,
       kind: "landmark",
     };
   }
