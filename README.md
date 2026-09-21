@@ -278,6 +278,17 @@ After *The Edge Remembers* completes, Rook starts **The Wharf Remembers** (`ensu
 
 Rewards: ~110g + ~220 combat XP + magic skill XP. Yellow arrow: coastal dock toward Nightglass → nearest Gorse Fox on Nightglass Coast → nearest Needle Rat on Nightglass Coast → return dock/gate(s) → Rook. Reuses existing docks, gates, and fauna (gorse-fox / needle-rat pads while sticky) — no new geometry. Captain Vesper is optional flavor only — no Vesper talk or Bark Hound redo from *The Wharf Answers*. First Story Accession texture only — Survive · Learn · Progress. No Lucas transplant.
 
+### Nineteenth sticky quest — The Mere Remembers
+
+After *The Wharf Remembers* completes, Rook starts **The Mere Remembers** (`ensureMereRemembersAfterWharf`): the Wharf's tide measure washed back to the reed-mere. Walk the Mistmere gate, name the briar-mite that skitters the fog, quiet one bark-hound packing the mere, and bring the Mere's measure home.
+
+1. **Reach** Mistmere overworld (gate / travel / stand)
+2. **Identify** 1 **Briar Mite** (`briar-mite`) on Mistmere only (near-field look / Name · Rank)
+3. **Defeat** 1 **Bark Hound** (`bark-hound`) on Mistmere only
+4. Return by gate/path and report to **Rook**
+
+Rewards: ~115g + ~230 combat XP + shielding skill XP. Yellow arrow: Mistmere gate/path → nearest Briar Mite on Mistmere → nearest Bark Hound on Mistmere → return → Rook. Reuses existing gates, docks, and fauna (briar-mite / bark-hound pads while sticky) — no new geometry. First Story Accession texture only — Survive · Learn · Progress. No Lucas transplant.
+
 ### Thornreach hollows (mini-dungeon + boss stub)
 
 Thornreach hollows read as a short dungeon: rooms and corridors, a single lit **↑ Surface** exit at the entrance (the deep room is no longer a second door), denser Shade Wisps the farther you walk, and a marked **Ashveil chamber** in the deepest room.

@@ -1,6 +1,6 @@
 /** Extra early fauna while Teeth in the Grass is sticky. */
-import { spawnHuntEcology, ensureTeethPrey, ensureGorseFoxes, ensureAshVoles, ensureSpineHounds, ensureBriarMites, ensurePaleRats, ensureAshenHounds, ensureAshenRats, ensureEmberRats, ensureEmberHounds, ensureCoilVoles, ensureCoilFoxes, ensureChoirMites, ensureChoirHounds, ensureEdgeVoles, ensureEdgeHounds, ensureWharfFoxes, ensureWharfRats } from "@/game/spawnEcology";
-import { isTeethActive, isGreenGateActive, isSpineActive, isPaleActive, isAshenActive, isEmbercoilActive, isCoilActive, isChoirRemembersActive, isEdgeRemembersActive, isWharfRemembersActive, loadQuestLog } from "@/game/quests";
+import { spawnHuntEcology, ensureTeethPrey, ensureGorseFoxes, ensureAshVoles, ensureSpineHounds, ensureBriarMites, ensurePaleRats, ensureAshenHounds, ensureAshenRats, ensureEmberRats, ensureEmberHounds, ensureCoilVoles, ensureCoilFoxes, ensureChoirMites, ensureChoirHounds, ensureEdgeVoles, ensureEdgeHounds, ensureWharfFoxes, ensureWharfRats, ensureMereMites, ensureMereHounds } from "@/game/spawnEcology";
+import { isTeethActive, isGreenGateActive, isSpineActive, isPaleActive, isAshenActive, isEmbercoilActive, isCoilActive, isChoirRemembersActive, isEdgeRemembersActive, isWharfRemembersActive, isMereRemembersActive, loadQuestLog } from "@/game/quests";
 import type { Enemy } from "@/game/enemies";
 import type { ContinentId } from "@/game/continents";
 import { townBlockedTiles, type WorldMap } from "@/game/world";
@@ -82,6 +82,14 @@ export function spawnEnemiesForQuest(
   ) {
     ensureWharfFoxes(enemies, map, continentId, blocked, 2);
     ensureWharfRats(enemies, map, continentId, blocked, 1);
+  }
+  if (
+    map.kind === "overworld" &&
+    continentId === "mistmere" &&
+    isMereRemembersActive(loadQuestLog())
+  ) {
+    ensureMereMites(enemies, map, continentId, blocked, 2);
+    ensureMereHounds(enemies, map, continentId, blocked, 1);
   }
   const boost =
     map.kind === "overworld" &&
