@@ -31,6 +31,12 @@ import {
   type EquipmentLoadout,
 } from "@/game/equipment";
 
+import {
+  emptyProfessionXp,
+  sanitizeProfessionXp,
+  type ProfessionId,
+} from "@/game/professions";
+
 import { getActiveCharacterKey, GUEST_CHARACTER_KEY } from "@/account/storageScope";
 
 export type { EquipmentLoadout } from "@/game/equipment";
@@ -80,6 +86,8 @@ export interface ValeCharacter {
   metFolk: string[];
   /** Three assignable hotbar skills (keys 1–3). */
   quickSlots: QuickSlots;
+  /** Lite profession XP (Gathering / Fishing / Crafting) — same cubic curve. */
+  professionXp: Record<ProfessionId, number>;
 }
 
 function isClassId(v: unknown): v is ClassId {
@@ -210,6 +218,7 @@ export function loadCharacter(): ValeCharacter | null {
       premiumBackpack: rec.premiumBackpack === true,
       metFolk: sanitizeMetFolk(rec.metFolk),
       quickSlots: sanitizeQuickSlots(rec.quickSlots, rec.classId),
+      professionXp: sanitizeProfessionXp(rec.professionXp),
     };
     const synced = syncVitals(loaded, loaded.hp <= 0);
     if (!Array.isArray(rec.quickSlots) || rec.quickSlots.length < 3) {
@@ -251,6 +260,7 @@ export function createCharacter(classId: ClassId): ValeCharacter {
     premiumBackpack: false,
     metFolk: [],
     quickSlots: defaultQuickSlots(classId),
+    professionXp: emptyProfessionXp(),
   };
   saveCharacter(character);
   return syncVitals(character, true);
@@ -272,6 +282,23 @@ export function awardSkillXp(
   const next = character.skillXp[skill] + gained;
   character.skillXp[skill] = next;
   saveCharacter(character);
+  return next;
+}
+
+/** Award profession XP (no class multiplier). Returns the updated character. */
+export function awardProfessionXp(
+  character: ValeCharacter,
+  profession: ProfessionId,
+  amount: number,
+): ValeCharacter {
+  const gained = Math.max(0, Math.floor(amount));
+  const professionXp = {
+    ...emptyProfessionXp(),
+    ...character.professionXp,
+  };
+  professionXp[profession] = (professionXp[profession] ?? 0) + gained;
+  const next = { ...character, professionXp };
+  saveCharacter(next);
   return next;
 }
 

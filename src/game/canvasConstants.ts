@@ -9,10 +9,11 @@ export type PromptState =
   | { kind: "gate"; target: ContinentId; name: string }
   | { kind: "hollow"; index: number }
   | { kind: "exit" }
-  | { kind: "folk"; folkId: string; name: string; hasShop: boolean; hasBank: boolean }
+  | { kind: "folk"; folkId: string; name: string; hasShop: boolean; hasBank: boolean; hasCraft?: boolean }
   | { kind: "shop"; shopId: string; name: string }
   | { kind: "ship"; dockId: string; name: string }
   | { kind: "cairn"; cairnId: string; name: string }
+  | { kind: "profession"; nodeId: string; name: string; verb: "Gather" | "Fish" }
   | null;
 
 export type HudState = {

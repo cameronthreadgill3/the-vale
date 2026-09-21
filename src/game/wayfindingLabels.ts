@@ -10,6 +10,7 @@ import {
   huntZoneTableLabel,
   huntZoneWayfindLabel,
 } from "@/game/huntZones";
+import { professionNodesOnContinent } from "@/game/professions";
 
 /** High-contrast landmark labels within ~8 tiles. */
 export function drawWorldWayfindLabels(
@@ -60,6 +61,14 @@ export function drawWorldWayfindLabels(
       const dx = Math.floor((dk.x + 0.5) * TILE - originX);
       const dy = Math.floor((dk.y + 0.5) * TILE - originY);
       drawFloatingLabel(ctx, dx, dy - 14, "Ship dock · " + dk.name, "#7ab8c9");
+    }
+    for (const n of professionNodesOnContinent(map.continentId)) {
+      if (Math.hypot(ptx - (n.x + 0.5), pty - (n.y + 0.5)) > range) continue;
+      const nx = Math.floor((n.x + 0.5) * TILE - originX);
+      const ny = Math.floor((n.y + 0.5) * TILE - originY);
+      const color =
+        n.kind === "fish" ? "#7ab8c9" : n.kind === "herb" ? "#6ab84a" : "#c4a070";
+      drawFloatingLabel(ctx, nx, ny - 14, `${n.verb} · ${n.name}`, color);
     }
   } else {
     for (let ty = 0; ty < map.height; ty++) {

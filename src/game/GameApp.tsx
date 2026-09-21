@@ -3,6 +3,7 @@ import { getClass, type ClassId } from "@/game/classes";
 import { getContinent, type ContinentId } from "@/game/continents";
 import {
   awardSkillXp,
+  awardProfessionXp,
   clearCharacter,
   createCharacter,
   clearHollowReturn,
@@ -84,7 +85,16 @@ import {
   skillSnapshot,
   type SkillId,
 } from "@/game/skills";
-import { isItemId, type EquipSlot, type ItemId } from "@/game/items";
+import { getItem, isItemId, type EquipSlot, type ItemId } from "@/game/items";
+import {
+  PROFESSIONS,
+  getCraftRecipe,
+  getProfessionNode,
+  isNodeReady,
+  markNodeUsed,
+  professionName,
+  professionSnapshot,
+} from "@/game/professions";
 import {
   getFolk,
   getShop,
@@ -113,6 +123,13 @@ function skillRowsFrom(character: ValeCharacter) {
   });
 }
 
+function professionRowsFrom(character: ValeCharacter) {
+  return PROFESSIONS.map((p) => {
+    const xp = character.professionXp?.[p.id] ?? 0;
+    return { id: p.id, name: p.name, blurb: p.blurb, ...professionSnapshot(xp) };
+  });
+}
+
 export function GameApp() {
   const [character, setCharacter] = useState<ValeCharacter | null>(() =>
     loadCharacter(),
@@ -133,14 +150,17 @@ export function GameApp() {
     line: string;
     hasShop: boolean;
     hasBank?: boolean;
+    hasCraft?: boolean;
     shopId?: string;
     bankId?: string;
+    craftId?: string;
   } | null>(null);
   const [activeShopId, setActiveShopId] = useState<string | null>(null);
   const [activeDockId, setActiveDockId] = useState<string | null>(null);
   const [bankOpen, setBankOpen] = useState(false);
   const [packOpen, setPackOpen] = useState(false);
   const [premiumUnlocking, setPremiumUnlocking] = useState(false);
+  const [craftOpen, setCraftOpen] = useState(false);
 
   const pickClass = useCallback((id: ClassId) => {
     const created = createCharacter(id);
@@ -172,6 +192,7 @@ export function GameApp() {
     setActiveDockId(null);
     setBankOpen(false);
     setPackOpen(false);
+    setCraftOpen(false);
     setWorldEpoch(0);
   }, []);
 
@@ -232,6 +253,7 @@ export function GameApp() {
       setActiveDockId(null);
       setBankOpen(false);
       setPackOpen(false);
+      setCraftOpen(false);
       if (target === "mistmere") {
         const gateResult = applyGateReached(loadQuestLog());
         if (gateResult) {
@@ -358,8 +380,10 @@ export function GameApp() {
       line,
       hasShop: Boolean(folk.shopId),
       hasBank: Boolean(folk.bankId),
+      hasCraft: Boolean(folk.craftId),
       shopId: folk.shopId,
       bankId: folk.bankId,
+      craftId: folk.craftId,
     });
     setCharacter((prev) => (prev ? markFolkMet(prev, folkId) : prev));
   }, [character, showToast]);
@@ -368,7 +392,17 @@ export function GameApp() {
     setDialogue(null);
     setActiveDockId(null);
     setBankOpen(false);
+    setCraftOpen(false);
     setActiveShopId(shopId);
+  }, []);
+
+  const openCraft = useCallback(() => {
+    setDialogue(null);
+    setActiveShopId(null);
+    setActiveDockId(null);
+    setBankOpen(false);
+    setPackOpen(false);
+    setCraftOpen(true);
   }, []);
 
   const openShip = useCallback((dockId: string) => {
@@ -726,6 +760,83 @@ export function GameApp() {
     [persistQuestResult, showToast],
   );
 
+  const handleWorkNode = useCallback(
+    (nodeId: string) => {
+      const node = getProfessionNode(nodeId);
+      if (!node) return;
+      if (!isNodeReady(nodeId)) {
+        showToast(`${node.name} is still regrowing`);
+        return;
+      }
+      setCharacter((prev) => {
+        if (!prev) return prev;
+        const added = tryAddInventoryItem(prev, node.itemId, 1);
+        if (!added.ok) {
+          queueMicrotask(() => showToast(toastForCarryFail(added.reason)));
+          return prev;
+        }
+        markNodeUsed(nodeId);
+        const before = added.character.professionXp?.[node.professionId] ?? 0;
+        const next = awardProfessionXp(added.character, node.professionId, node.xp);
+        const after = next.professionXp[node.professionId];
+        const beforeLvl = professionSnapshot(before).level;
+        const afterLvl = professionSnapshot(after).level;
+        const item = getItem(node.itemId);
+        queueMicrotask(() => {
+          if (afterLvl > beforeLvl) {
+            showToast(
+              `${item.name} · ${professionName(node.professionId)} reached level ${afterLvl}`,
+            );
+          } else {
+            showToast(`${node.verb} ${item.name} · +${node.xp} ${professionName(node.professionId)} XP`);
+          }
+          setSkillTick((t) => t + 1);
+        });
+        return next;
+      });
+    },
+    [showToast],
+  );
+
+  const handleCraft = useCallback(
+    (recipeId: string) => {
+      const recipe = getCraftRecipe(recipeId);
+      if (!recipe) return;
+      setCharacter((prev) => {
+        if (!prev) return prev;
+        let working = prev;
+        for (const ing of recipe.ingredients) {
+          const removed = removeInventoryItem(working, ing.itemId, ing.qty);
+          if (!removed) {
+            queueMicrotask(() => showToast("Missing materials"));
+            return prev;
+          }
+          working = removed;
+        }
+        const added = tryAddInventoryItem(working, recipe.resultId, recipe.resultQty);
+        if (!added.ok) {
+          queueMicrotask(() => showToast(toastForCarryFail(added.reason)));
+          return prev;
+        }
+        const before = added.character.professionXp?.crafting ?? 0;
+        const next = awardProfessionXp(added.character, "crafting", recipe.xp);
+        const afterLvl = professionSnapshot(next.professionXp.crafting).level;
+        const beforeLvl = professionSnapshot(before).level;
+        const result = getItem(recipe.resultId);
+        queueMicrotask(() => {
+          if (afterLvl > beforeLvl) {
+            showToast(`Crafting reached level ${afterLvl}`);
+          } else {
+            showToast(`Crafted ${result.name} · +${recipe.xp} Crafting XP`);
+          }
+          setSkillTick((t) => t + 1);
+        });
+        return next;
+      });
+    },
+    [showToast],
+  );
+
   const handleInspectCairn = useCallback(
     (cairnId: string) => {
       setCharacter((prev) => {
@@ -845,6 +956,7 @@ export function GameApp() {
     setActiveDockId(null);
     setBankOpen(false);
     setPackOpen(false);
+    setCraftOpen(false);
     setMapOpen(false);
     setSkillsOpen(false);
     setWorldEpoch((e) => e + 1);
@@ -857,6 +969,7 @@ export function GameApp() {
 
   const cls = getClass(character.classId);
   const skills = skillRowsFrom(character);
+  const professions = professionRowsFrom(character);
   const continent = getContinent(character.continentId);
   const inHollow = character.hollowIndex !== null;
   const locationKey = `${character.continentId}:${character.hollowIndex ?? "over"}:${shipSpawn ? "ship" : "gate"}:${worldEpoch}`;
@@ -869,6 +982,7 @@ export function GameApp() {
       character={character}
       cls={cls}
       skills={skills}
+      professions={professions}
       skillsOpen={skillsOpen}
       mapOpen={mapOpen}
       skillTick={skillTick}
@@ -882,6 +996,7 @@ export function GameApp() {
       shop={shop}
       bankOpen={bankOpen}
       packOpen={packOpen}
+      craftOpen={craftOpen}
       premiumUnlocking={premiumUnlocking}
       voyageDock={voyageDock}
       onToggleSkills={toggleSkills}
@@ -919,6 +1034,10 @@ export function GameApp() {
       onEnemyKill={handleEnemyKill}
       onIdentify={handleIdentify}
       onInspectCairn={handleInspectCairn}
+      onWorkNode={handleWorkNode}
+      onOpenCraft={openCraft}
+      onCloseCraft={() => setCraftOpen(false)}
+      onCraft={handleCraft}
       teethQuest={getTeethQuest(loadQuestLog())}
       ashwoodQuest={getAshwoodQuest(loadQuestLog())}
       hollowQuest={getHollowQuest(loadQuestLog())}

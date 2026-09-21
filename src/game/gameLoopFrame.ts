@@ -4,6 +4,7 @@ import { TILE, isSolid, nearTile, type WorldMap } from "@/game/world";
 import { buildingsOnContinent, THORNREACH_DEPOT } from "@/game/world/town";
 import { PLAYER_RADIUS, INTERACT_RADIUS, type PromptState } from "@/game/canvasConstants";
 import { cairnsOnContinent } from "@/game/cairns";
+import { professionNodesOnContinent, isNodeReady } from "@/game/professions";
 import { getTeethQuest, isAshwoodActive, loadQuestLog } from "@/game/quests";
 
 export function tryMovePlayer(
@@ -37,7 +38,7 @@ export function computePrompt(
   map: WorldMap,
   player: { x: number; y: number },
   docks: { id: string; name: string; x: number; y: number }[],
-  folk: { id: string; name: string; x: number; y: number; shopId?: string; bankId?: string }[],
+  folk: { id: string; name: string; x: number; y: number; shopId?: string; bankId?: string; craftId?: string }[],
   shops: { id: string; name: string; x: number; y: number }[],
 ): PromptState {
   const px = player.x / TILE;
@@ -71,6 +72,7 @@ export function computePrompt(
         name: f.name,
         hasShop: Boolean(f.shopId),
         hasBank: Boolean(f.bankId),
+        hasCraft: Boolean(f.craftId),
       });
     }
     for (const s of shops) {
@@ -95,6 +97,7 @@ export function computePrompt(
             name: clerk.name,
             hasShop: Boolean(clerk.shopId),
             hasBank: Boolean(clerk.bankId),
+            hasCraft: Boolean(clerk.craftId),
           });
         }
       }
@@ -105,6 +108,22 @@ export function computePrompt(
       for (const c of cairnsOnContinent(map.continentId)) {
         consider(c.x, c.y, { kind: "cairn", cairnId: c.id, name: c.name });
       }
+    }
+    for (const n of professionNodesOnContinent(map.continentId)) {
+      const ready = isNodeReady(n.id);
+      const tx = n.x;
+      const ty = n.y;
+      if (!nearTile(px, py, tx, ty, 1.85)) continue;
+      const dist = Math.hypot(px - (tx + 0.5), py - (ty + 0.5));
+      candidates.push({
+        prompt: {
+          kind: "profession",
+          nodeId: n.id,
+          name: ready ? n.name : `${n.name} (regrowing)`,
+          verb: n.verb,
+        },
+        dist,
+      });
     }
   } else {
     // Exit tile nearby (single surface door at the hollow entrance).

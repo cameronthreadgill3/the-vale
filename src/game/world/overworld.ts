@@ -14,6 +14,7 @@ import {
 } from "@/game/world/types";
 import { stampThornreachTown } from "@/game/world/town";
 import { stampHuntCairnTiles, huntZonesFor } from "@/game/huntZones";
+import { stampProfessionSpots } from "@/game/professions";
 
 /** Edge slots for gates - N/E/S/W midpoints with slight offsets. */
 function gateSlots(
@@ -177,6 +178,7 @@ export function generateOverworld(continentId: ContinentId): WorldMap {
   };
   stampThornreachTown(map);
   stampHuntCairnTiles(map);
+  stampProfessionSpots(map);
   return map;
 }
 
