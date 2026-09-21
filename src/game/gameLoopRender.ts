@@ -16,7 +16,12 @@ import {
   type FloatText,
   type Projectile,
 } from "@/game/enemies";
-import { drawEnemies } from "@/game/gfx/drawEnemies";
+import { drawEnemies, tickEnemyGfx } from "@/game/gfx/drawEnemies";
+import {
+  drawVignette,
+  drawAshwoodTint,
+  drawHollowTorchSpots,
+} from "@/game/gfx/atmosphere";
 import type { ValeCharacter } from "@/game/character";
 import type { FolkDef, ShopDef, ShipDock } from "@/game/folk";
 import { computePrompt } from "@/game/gameLoopFrame";
@@ -40,6 +45,7 @@ let _lastPy = 0;
 let _facing: Facing = "south";
 let _walkPhase = 0;
 let _moving = false;
+let _atmosT = 0;
 
 export function advanceCameraAndRender(args: {
   ctx: CanvasRenderingContext2D;
@@ -95,6 +101,7 @@ export function advanceCameraAndRender(args: {
       drawTile(ctx, kind, pal, sx, sy, tx, ty);
     }
   }
+  drawAshwoodTint(ctx, map, originX, originY, viewW, viewH);
   if (map.darkness > 0) {
     const pxLight = Math.floor(player.x - originX);
     const pyLight = Math.floor(player.y - originY);
@@ -108,9 +115,10 @@ export function advanceCameraAndRender(args: {
   drawShipDocks(ctx, docks, originX, originY);
   drawShopMarkers(ctx, shops, folk, originX, originY);
   drawNamedFolk(ctx, folk, originX, originY, player);
-  drawWorldWayfindLabels(ctx, map, docks, player, originX, originY);
   mouse.worldX = originX + mouse.x;
   mouse.worldY = originY + mouse.y;
+  _atmosT += dt;
+  tickEnemyGfx(dt);
   drawEnemies(ctx, enemies, originX, originY);
   drawProjectiles(ctx, projectiles, originX, originY);
   const px = Math.floor(player.x - originX);
@@ -132,6 +140,10 @@ export function advanceCameraAndRender(args: {
   const walkFrame = _moving ? (Math.floor(_walkPhase) % 4) : 0;
   drawPlayer(ctx, character, px, py, _facing, walkFrame, playerFlash, accent);
   drawFloatTexts(ctx, floatTexts, originX, originY);
+  drawHollowTorchSpots(ctx, map, originX, originY, viewW, viewH, player, _atmosT);
+  drawVignette(ctx, viewW, viewH);
+  drawWorldWayfindLabels(ctx, map, docks, player, originX, originY);
+
 
   const objective = resolveQuestObjective(player, enemies, folk, map);
   const radarDots = collectRadarDots(player, enemies, folk, docks, map, objective);

@@ -51,3 +51,20 @@ export function mixHex(a: string, b: string, t: number): string {
   const bl = lerp(parseInt(ha.slice(4, 6), 16), parseInt(hb.slice(4, 6), 16));
   return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${bl.toString(16).padStart(2, "0")}`;
 }
+
+/** Soft elliptical drop shadow under sprites (cheap, no blur filter). */
+export function drawSoftShadow(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  rx: number,
+  ry: number,
+  alpha = 0.32,
+): void {
+  ctx.save();
+  ctx.fillStyle = `rgba(0,0,0,${alpha})`;
+  ctx.beginPath();
+  ctx.ellipse(Math.floor(cx), Math.floor(cy), Math.max(2, rx), Math.max(1, ry), 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}

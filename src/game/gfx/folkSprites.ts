@@ -2,7 +2,7 @@
  * Simple clothed pixel folk figures (original Vale art).
  * Cached per color; name labels stay in folkCanvas.
  */
-import { makeCanvas, ctx2d, px, shadeHex } from "@/game/gfx/canvasUtil";
+import { makeCanvas, ctx2d, px, shadeHex, drawSoftShadow } from "@/game/gfx/canvasUtil";
 
 export const FOLK_FRAME = 32;
 
@@ -65,6 +65,7 @@ export function drawFolkSprite(
 ): void {
   const sheet = getFolkSheet(color);
   const size = 36;
+  drawSoftShadow(ctx, sx, sy + size * 0.22, size * 0.28, size * 0.1, 0.32);
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(
     sheet as CanvasImageSource,
