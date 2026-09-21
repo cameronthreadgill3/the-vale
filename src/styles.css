@@ -1058,6 +1058,203 @@ body {
     0 3px 0 rgba(0, 0, 0, 0.4);
 }
 
+/*
+ * Continent map only. Soft outer lip, the Map key's gold catch, and the
+ * current-place well live here so the skills book, account tabs, and the
+ * shared text-screen stay put.
+ */
+.vale-tab-bar-map {
+  border-color: color-mix(in srgb, var(--vale-gold) 56%, #24281c);
+  box-shadow:
+    0 0 0 1px #050604,
+    inset 0 1px 0 rgba(244, 236, 210, 0.16),
+    inset 0 4px 10px rgba(0, 0, 0, 0.72),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.55),
+    0 1px 0 rgba(244, 236, 210, 0.07),
+    0 12px 22px rgba(0, 0, 0, 0.5),
+    0 0 16px rgba(201, 162, 39, 0.08);
+}
+
+.vale-tab-bar-map::after {
+  left: 14px;
+  right: 14px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(246, 231, 176, 0.82) 16%,
+    rgba(201, 162, 39, 0.92) 50%,
+    rgba(246, 231, 176, 0.82) 84%,
+    transparent
+  );
+}
+
+.vale-tab-map {
+  box-shadow:
+    0 0 0 1px #050604,
+    inset 0 1px 0 rgba(244, 236, 210, 0.42),
+    inset 0 -10px 12px rgba(0, 0, 0, 0.32),
+    0 3px 0 #070806,
+    0 6px 10px rgba(0, 0, 0, 0.38);
+}
+
+.vale-tab-map::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  top: 4px;
+  left: 16%;
+  right: 16%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(246, 231, 176, 0.78),
+    transparent
+  );
+}
+
+.vale-tab-map:hover {
+  box-shadow:
+    0 0 0 1px #050604,
+    inset 0 1px 0 rgba(255, 248, 220, 0.5),
+    inset 0 -10px 12px rgba(0, 0, 0, 0.28),
+    0 3px 0 #070806,
+    0 8px 14px rgba(0, 0, 0, 0.42);
+}
+
+.vale-tab-map:active,
+.vale-tab-map.vale-tab-active {
+  box-shadow:
+    0 0 0 1px #050604,
+    inset 0 4px 8px rgba(0, 0, 0, 0.58),
+    inset 0 -2px 0 #c9a227,
+    0 0 12px rgba(201, 162, 39, 0.16);
+}
+
+.vale-tab-map:active::before,
+.vale-tab-map.vale-tab-active::before {
+  opacity: 0.4;
+}
+
+.vale-map-sheet.vale-text-screen {
+  border-color: color-mix(in srgb, var(--vale-gold) 56%, #24281c);
+  border-left-width: 3px;
+  border-left-color: color-mix(in srgb, var(--vale-gold) 78%, #3a3420);
+  box-shadow:
+    0 0 0 1px #050604,
+    inset 0 1px 0 rgba(244, 236, 210, 0.36),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.58),
+    inset -1px 0 0 rgba(0, 0, 0, 0.46),
+    inset 1px 0 0 rgba(244, 236, 210, 0.08),
+    inset 0 16px 20px rgba(201, 162, 39, 0.08),
+    inset 0 -18px 20px rgba(0, 0, 0, 0.48),
+    0 1px 0 rgba(244, 236, 210, 0.07),
+    0 14px 26px rgba(0, 0, 0, 0.52),
+    0 0 20px rgba(201, 162, 39, 0.09);
+}
+
+.vale-map-sheet.vale-text-screen::after {
+  left: 14px;
+  right: 14px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(246, 231, 176, 0.82) 16%,
+    rgba(201, 162, 39, 0.92) 50%,
+    rgba(246, 231, 176, 0.82) 84%,
+    transparent
+  );
+}
+
+.vale-map-title {
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  line-height: 1.25;
+}
+
+.vale-map-kicker {
+  margin-top: 0.28rem;
+  letter-spacing: 0.16em;
+}
+
+.vale-map-sheet .vale-map-row {
+  border-color: color-mix(in srgb, var(--vale-gold) 42%, #2a2e22);
+  box-shadow:
+    inset 0 1px 0 rgba(244, 236, 210, 0.28),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.45),
+    inset 0 -12px 14px rgba(0, 0, 0, 0.42),
+    0 1px 0 rgba(244, 236, 210, 0.05),
+    0 3px 0 rgba(0, 0, 0, 0.4);
+}
+
+.vale-map-sheet .vale-map-row::after {
+  left: 12px;
+  right: 12px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(246, 231, 176, 0.55) 18%,
+    rgba(201, 162, 39, 0.72) 50%,
+    rgba(246, 231, 176, 0.55) 82%,
+    transparent
+  );
+}
+
+.vale-map-sheet .vale-map-row-here {
+  border-left-width: 3px;
+  border-left-color: var(--vale-row-mark, var(--vale-gold));
+  background:
+    linear-gradient(180deg, rgba(255, 248, 220, 0.06), transparent 55%),
+    rgba(0, 0, 0, 0.28);
+  box-shadow:
+    inset 0 1px 0 rgba(244, 236, 210, 0.16),
+    inset 0 3px 7px rgba(0, 0, 0, 0.48),
+    inset 3px 0 0 var(--vale-row-mark, var(--vale-gold)),
+    0 1px 0 rgba(244, 236, 210, 0.05);
+}
+
+.vale-map-place {
+  letter-spacing: 0.08em;
+}
+
+.vale-map-sheet .vale-map-row-here .vale-map-place:not(.vale-skill-name-dim) {
+  text-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.55),
+    0 0 12px rgba(201, 162, 39, 0.16);
+}
+
+.vale-map-mark {
+  margin-left: 0.45rem;
+  letter-spacing: 0.16em;
+  color: var(--vale-gold);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.55);
+}
+
+.vale-map-blurb {
+  margin-top: 0.28rem;
+  line-height: 1.55;
+}
+
+.vale-map-sheet .vale-ghost-btn {
+  border-color: color-mix(in srgb, var(--vale-gold) 40%, #2a2e24);
+  font-family: "IBM Plex Mono", ui-monospace, "Courier New", monospace;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  box-shadow:
+    0 0 0 1px rgba(5, 6, 4, 0.8),
+    inset 0 1px 0 rgba(244, 236, 210, 0.22),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.45),
+    0 2px 0 #070806;
+}
+
+@media (min-width: 640px) {
+  .vale-map-title {
+    font-size: 0.8125rem;
+  }
+}
+
 /* Bank / pack — measured chips and recessed wells. Row lip stays on skill tokens.
    vale-text-screen is position:relative, which beats the utility `absolute`. */
 .vale-inv-panel {
