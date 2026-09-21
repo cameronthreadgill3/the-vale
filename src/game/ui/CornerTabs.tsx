@@ -57,14 +57,12 @@ function TabBtn({
     <button
       type="button"
       onClick={onClick}
-      className={`vale-tab vale-tap-sm min-w-[5.5rem] flex-1 px-3.5 py-2.5 text-xs tracking-wide ${
-        active ? "vale-tab-active" : "hover:bg-[#1c1f16]/70"
+      className={`vale-tab vale-tap-sm min-w-[5.5rem] flex-1 px-3.5 py-2.5 ${
+        active ? "vale-tab-active" : ""
       }`}
     >
-      <span className="font-display">{label}</span>
-      <span className="ml-1.5 text-[10px] uppercase tracking-wider text-[#a8b09a]">
-        {hint}
-      </span>
+      <span>{label}</span>
+      <span className="vale-tab-hint">{hint}</span>
     </button>
   );
 }
