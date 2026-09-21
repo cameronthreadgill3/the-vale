@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import type { ValeClass } from "@/game/classes";
 import type { QuickSlots, SkillId } from "@/game/skills";
 import type { ProfessionId } from "@/game/professions";
@@ -69,8 +69,8 @@ export function SkillsPanel({
     <div className="p-3.5">
       <div className="mb-2.5 flex items-center justify-between gap-2">
         <div>
-          <div className="vale-screen-title">Skills</div>
-          <div className="vale-screen-kicker">
+          <div className="vale-screen-title vale-skills-title">Skills</div>
+          <div className="vale-screen-kicker vale-skills-kicker">
             Click to train · 1–3 assign a quick slot
           </div>
         </div>
@@ -91,9 +91,14 @@ export function SkillsPanel({
           return (
             <li key={s.id}>
               <div
-                className={`vale-skill-row flex w-full items-stretch gap-1 px-1 py-1 transition ${
-                  flashing ? "vale-skill-row-flash" : ""
-                }`}
+                className={`vale-skill-row vale-skills-row flex w-full items-stretch gap-1 px-1 py-1 transition ${
+                  isPrimary ? "vale-skills-row-primary" : ""
+                } ${flashing ? "vale-skill-row-flash" : ""}`}
+                style={
+                  isPrimary
+                    ? ({ "--vale-row-mark": cls.accent } as CSSProperties)
+                    : undefined
+                }
               >
                 <button
                   type="button"
@@ -101,22 +106,22 @@ export function SkillsPanel({
                   className="vale-tap-sm flex min-w-0 flex-1 flex-col gap-1 rounded px-2 py-2 text-left hover:bg-[rgba(255,248,220,0.04)]"
                 >
                   <div className="flex items-baseline justify-between gap-2">
-                    <span className="vale-skill-name">
+                    <span className="vale-skill-name vale-skills-name">
                       {s.name}
                       {isPrimary ? (
-                        <span className="vale-skill-tag" style={{ color: cls.accent }}>
+                        <span className="vale-skill-tag vale-skills-tag" style={{ color: cls.accent }}>
                           · primary
                         </span>
                       ) : null}
                       {favored && !isPrimary ? (
-                        <span className="vale-skill-tag text-[#6e7664]">· favored</span>
+                        <span className="vale-skill-tag vale-skills-tag text-[#6e7664]">· favored</span>
                       ) : null}
                     </span>
-                    <span className="vale-skill-level tabular-nums" style={{ color: cls.accent }}>
+                    <span className="vale-skill-level vale-skills-level tabular-nums" style={{ color: cls.accent }}>
                       Lv {s.level}
                     </span>
                   </div>
-                  <div className="vale-skill-meta flex items-center justify-between">
+                  <div className="vale-skill-meta vale-skills-meta flex items-center justify-between">
                     <span>
                       {into} / {s.next} XP
                     </span>
@@ -150,7 +155,7 @@ export function SkillsPanel({
                           e.stopPropagation();
                           onAssignQuickSlot(i, s.id);
                         }}
-                        className={`vale-skill-slot vale-tap-sm flex h-8 w-8 items-center justify-center text-xs tabular-nums max-md:h-10 max-md:w-10 ${
+                        className={`vale-skill-slot vale-skills-slot vale-tap-sm flex h-8 w-8 items-center justify-center text-xs tabular-nums max-md:h-10 max-md:w-10 ${
                           assigned ? "vale-skill-slot-on" : ""
                         }`}
                       >
@@ -165,24 +170,24 @@ export function SkillsPanel({
         })}
       </ul>
       {professions && professions.length > 0 ? (
-        <div className="vale-skill-section">
-          <div className="vale-screen-title">Professions</div>
-          <div className="vale-screen-kicker mb-2">
+        <div className="vale-skill-section vale-skills-section">
+          <div className="vale-screen-title vale-skills-title">Professions</div>
+          <div className="vale-screen-kicker vale-skills-kicker mb-2">
             Thornreach lite · gather · fish · kettle
           </div>
           <ul className="flex flex-col gap-1.5">
             {professions.map((p) => {
               const into = Math.max(0, Math.round(p.progress * p.next));
               return (
-                <li key={p.id} className="vale-skill-row px-2.5 py-2">
+                <li key={p.id} className="vale-skill-row vale-skills-row px-2.5 py-2">
                   <div className="flex items-baseline justify-between gap-2">
-                    <span className="vale-skill-name">{p.name}</span>
-                    <span className="vale-skill-level tabular-nums text-[#c9a227]">
+                    <span className="vale-skill-name vale-skills-name">{p.name}</span>
+                    <span className="vale-skill-level vale-skills-level tabular-nums text-[#c9a227]">
                       Lv {p.level}
                     </span>
                   </div>
-                  <div className="vale-skill-blurb">{p.blurb}</div>
-                  <div className="vale-skill-meta mt-1 flex items-center justify-between">
+                  <div className="vale-skill-blurb vale-skills-blurb">{p.blurb}</div>
+                  <div className="vale-skill-meta vale-skills-meta mt-1 flex items-center justify-between">
                     <span>
                       {into} / {p.next} XP
                     </span>

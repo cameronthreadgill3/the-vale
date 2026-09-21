@@ -21,13 +21,14 @@ export function CornerTabs({
     <div className="vale-corner-dock pointer-events-none z-30">
       <div
         className={`vale-tab-bar pointer-events-auto flex${
-          mapOpen ? " vale-tab-bar-map" : ""
+          skillsOpen ? " vale-tab-bar-skills" : mapOpen ? " vale-tab-bar-map" : ""
         }`}
       >
         <TabBtn
           label="Skills"
           hint="K"
           active={skillsOpen}
+          skills
           onClick={onToggleSkills}
         />
         <TabBtn
@@ -41,7 +42,7 @@ export function CornerTabs({
       {open && (
         <div
           className={`vale-text-screen vale-panel vale-corner-panel pointer-events-auto w-[min(100vw-1.5rem,22rem)] overflow-auto${
-            mapOpen ? " vale-map-sheet" : ""
+            skillsOpen ? " vale-skills-sheet" : mapOpen ? " vale-map-sheet" : ""
           }`}
         >
           {skillsOpen ? skillsPanel : mapPanel}
@@ -56,12 +57,14 @@ function TabBtn({
   hint,
   active,
   lip = false,
+  skills = false,
   onClick,
 }: {
   label: string;
   hint: string;
   active: boolean;
   lip?: boolean;
+  skills?: boolean;
   onClick: () => void;
 }) {
   return (
@@ -70,7 +73,7 @@ function TabBtn({
       onClick={onClick}
       className={`vale-tab vale-tap-sm min-w-[5.5rem] flex-1 px-3.5 py-2.5${
         lip ? " vale-tab-map" : ""
-      }${active ? " vale-tab-active" : ""}`}
+      }${skills ? " vale-tab-skills" : ""}${active ? " vale-tab-active" : ""}`}
     >
       <span>{label}</span>
       <span className="vale-tab-hint">{hint}</span>
