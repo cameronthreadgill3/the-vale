@@ -1,6 +1,7 @@
 /**
  * Draw Thornreach buildings, signs, and plaza props over ground tiles.
  * Structure depth: roof bevel / under-eave, door-sign lip, south-facade contact.
+ * A thin AO crease and a low amber rim sit on props, eaves, and awnings.
  * Ambient motion stays on the prop sheets: cloth sway, hanging signs, lantern flame.
  * The lantern glass pulse is a few additive pixels on that same cycle.
  */
@@ -22,6 +23,15 @@ import {
 } from "@/game/gfx/props";
 import { TILE_PX } from "@/game/gfx/tiles";
 import { drawSoftShadow, GROUND_SHADOW_ALPHA } from "@/game/gfx/canvasUtil";
+import {
+  drawAwningVolume,
+  drawEaveVolume,
+  drawFacadeRim,
+  drawPropContactAo,
+  drawPropCanopyShade,
+  drawPropRimBounce,
+  propRimGain,
+} from "@/game/gfx/contactAo";
 import { drawLanternGlassFlicker } from "@/game/gfx/lampFlicker";
 import { drawFloatingLabel } from "@/game/folkCanvas";
 
@@ -54,6 +64,7 @@ function drawRoofCap(
   drawSoftShadow(ctx, peakX, baseY + 4, w * 0.42, 5, 0.3);
   ctx.fillStyle = "rgba(12, 14, 8, 0.22)";
   ctx.fillRect(x + 1, y + 4, w - 2, 7);
+  drawEaveVolume(ctx, left, y + 9, right - left);
   // SE slope (away from light)
   ctx.fillStyle = "rgba(32, 24, 14, 0.94)";
   ctx.beginPath();
@@ -134,6 +145,7 @@ function drawShopAwning(
   const sx = Math.floor((b.door.x + 0.5) * TILE - originX) - 14;
   const sy = Math.floor(b.door.y * TILE - originY) - 20;
   ctx.drawImage(sheet as CanvasImageSource, sx, sy);
+  drawAwningVolume(ctx, sx, sy);
 }
 
 function drawFacadeBanner(
@@ -169,6 +181,7 @@ function propFrame(kind: TownPropKind, timeSec: number, phase: number): number {
 function drawPlazaProp(
   ctx: CanvasRenderingContext2D,
   p: TownProp,
+  props: readonly TownProp[],
   originX: number,
   originY: number,
   timeSec: number,
@@ -179,10 +192,15 @@ function drawPlazaProp(
   const shadow = PROP_SHADOW[p.kind];
   if (shadow) {
     drawSoftShadow(ctx, sx + shadow.ox, sy + shadow.oy, shadow.rx, shadow.ry, GROUND_SHADOW_ALPHA);
+    drawPropContactAo(ctx, p.kind, sx, sy);
   }
   const sheet = getPropSheet(p.kind, propFrame(p.kind, timeSec, phase));
   ctx.drawImage(sheet as CanvasImageSource, sx, sy, TILE_PX + 1, TILE_PX + 1);
   if (p.kind === "lantern") drawLanternFlicker(ctx, sx, sy, timeSec, phase);
+  if (shadow) {
+    drawPropCanopyShade(ctx, p.kind, sx, sy);
+    drawPropRimBounce(ctx, p.kind, sx, sy, propRimGain(p, props, timeSec));
+  }
 }
 
 export function drawTownOverlays(
@@ -198,7 +216,7 @@ export function drawTownOverlays(
   const props = propsOnContinent(map.continentId);
   ctx.imageSmoothingEnabled = false;
   for (const p of props) {
-    drawPlazaProp(ctx, p, originX, originY, timeSec);
+    drawPlazaProp(ctx, p, props, originX, originY, timeSec);
   }
   for (const b of buildings) {
     const bx = Math.floor(b.x * TILE - originX);
@@ -207,6 +225,7 @@ export function drawTownOverlays(
     const bh = b.h * TILE;
     const sway = propSwayFrame(timeSec, windPhase(b.id));
     drawSoftShadow(ctx, bx + bw / 2, by + bh + 2, bw * 0.44, 7, 0.26);
+    drawFacadeRim(ctx, bx, by, bw, bh);
     drawRoofCap(ctx, b, originX, originY);
     drawShopAwning(ctx, b, originX, originY, sway);
     drawFacadeBanner(ctx, b, originX, originY, sway);
