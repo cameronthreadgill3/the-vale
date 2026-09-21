@@ -318,7 +318,7 @@ export function GameShell({
             <>
               <span className="text-[#e8e6d9]">
                 {prompt.hasBank
-                  ? "Talk / Bank"
+                  ? "Talk / Open bank"
                   : prompt.hasCraft
                     ? "Talk / Craft"
                     : prompt.hasShop

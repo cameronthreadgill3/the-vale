@@ -31,10 +31,10 @@ export function BankPanel({
       <div className="mb-2 flex items-center justify-between gap-2">
         <div>
           <div className="font-display text-sm tracking-wide text-[#c9a227]">
-            Thornreach Vault
+            Bank · Thornreach Vault
           </div>
           <div className="text-[10px] uppercase tracking-wider text-[#6a7260]">
-            Banked items never drop on death
+            Gold and items here never drop on death
           </div>
         </div>
         <button
@@ -48,19 +48,19 @@ export function BankPanel({
 
       <div className="mb-2 flex flex-wrap gap-x-3 gap-y-1 text-[10px] uppercase tracking-wider text-[#6a7260]">
         <span>
-          Pack {weight}/{maxW} wt · {slots}/{maxS}
+          Pack {weight}/{maxW} wt · {slots}/{maxS} slots
         </span>
-        <span>Purse {character.gold}g</span>
-        <span>Vault {character.bankGold}g</span>
+        <span>Carried gold {character.gold}g</span>
+        <span>Bank gold {character.bankGold}g</span>
       </div>
 
       <div className="mb-3 grid grid-cols-2 gap-2">
         <section>
           <div className="mb-1 text-[10px] uppercase tracking-wider text-[#6a7260]">
-            Carried
+            Pack items
           </div>
           {character.inventory.length === 0 ? (
-            <p className="px-1 text-xs text-[#6a7260]">Empty pack.</p>
+            <p className="px-1 text-xs text-[#6a7260]">No items in pack.</p>
           ) : (
             <ul className="flex max-h-36 flex-col gap-1 overflow-y-auto">
               {character.inventory.map((stack) => {
@@ -79,7 +79,7 @@ export function BankPanel({
                       onClick={() => onDepositItem(stack.id)}
                       className="vale-tap-sm shrink-0 rounded border border-[#2a2e24] px-2 py-1.5 text-[10px] text-[#c9a227] hover:border-[#c9a227]/50"
                     >
-                      Bank
+                      Deposit
                     </button>
                   </li>
                 );
@@ -89,10 +89,10 @@ export function BankPanel({
         </section>
         <section>
           <div className="mb-1 text-[10px] uppercase tracking-wider text-[#6a7260]">
-            Vault
+            Bank items
           </div>
           {character.bank.length === 0 ? (
-            <p className="px-1 text-xs text-[#6a7260]">Empty vault.</p>
+            <p className="px-1 text-xs text-[#6a7260]">No items in bank.</p>
           ) : (
             <ul className="flex max-h-36 flex-col gap-1 overflow-y-auto">
               {character.bank.map((stack) => {
@@ -111,7 +111,7 @@ export function BankPanel({
                       onClick={() => onWithdrawItem(stack.id)}
                       className="vale-tap-sm shrink-0 rounded border border-[#2a2e24] px-2 py-1.5 text-[10px] text-[#a8b09a] hover:border-[#c9a227]/40 hover:text-[#e8e6d9]"
                     >
-                      Take
+                      Withdraw
                     </button>
                   </li>
                 );
@@ -128,7 +128,7 @@ export function BankPanel({
           onClick={() => onDepositGold(Math.min(10, character.gold))}
           className="vale-tap-sm rounded border border-[#2a2e24] px-3 py-2 text-xs text-[#c9a227] disabled:cursor-not-allowed disabled:opacity-40 hover:enabled:border-[#c9a227]/50"
         >
-          Bank 10g
+          Deposit 10g
         </button>
         <button
           type="button"
@@ -136,7 +136,7 @@ export function BankPanel({
           onClick={() => onDepositGold(character.gold)}
           className="vale-tap-sm rounded border border-[#2a2e24] px-3 py-2 text-xs text-[#c9a227] disabled:cursor-not-allowed disabled:opacity-40 hover:enabled:border-[#c9a227]/50"
         >
-          Bank all gold
+          Deposit all gold
         </button>
         <button
           type="button"
@@ -144,7 +144,7 @@ export function BankPanel({
           onClick={() => onWithdrawGold(Math.min(10, character.bankGold))}
           className="vale-tap-sm rounded border border-[#2a2e24] px-3 py-2 text-xs text-[#a8b09a] disabled:cursor-not-allowed disabled:opacity-40 hover:enabled:border-[#c9a227]/40 hover:enabled:text-[#e8e6d9]"
         >
-          Take 10g
+          Withdraw 10g
         </button>
         <button
           type="button"
@@ -152,7 +152,7 @@ export function BankPanel({
           onClick={() => onWithdrawGold(character.bankGold)}
           className="vale-tap-sm rounded border border-[#2a2e24] px-3 py-2 text-xs text-[#a8b09a] disabled:cursor-not-allowed disabled:opacity-40 hover:enabled:border-[#c9a227]/40 hover:enabled:text-[#e8e6d9]"
         >
-          Take all gold
+          Withdraw all gold
         </button>
       </div>
     </div>

@@ -25,4 +25,4 @@ export function isInSafeZone(
   return dist <= SAFE_ZONE_RADIUS_TILES;
 }
 
-export const SAFE_ZONE_LABEL = "Safe";
+export const SAFE_ZONE_LABEL = "Safe zone";

@@ -32,7 +32,7 @@ export function DialogueOverlay({
             onClick={onOpenBank}
             className="vale-tap rounded border border-[#2a2e24] bg-[#1c1f16] px-4 py-2.5 text-sm text-[#c9a227] hover:border-[#c9a227]/50"
           >
-            Bank
+            Open bank
           </button>
         )}
         {hasShop && onOpenShop && (

@@ -1,5 +1,6 @@
 /** Wayfinding landmark labels + starter tip. */
 import { TILE, type WorldMap } from "@/game/world";
+import { SAFE_ZONE_LABEL } from "@/game/safeZone";
 import { getContinent } from "@/game/continents";
 import type { ShipDock } from "@/game/folk";
 import { drawFloatingLabel } from "@/game/folkCanvas";
@@ -54,7 +55,7 @@ export function drawWorldWayfindLabels(
     if (Math.hypot(ptx - (sx + 0.5), pty - (sy + 0.5)) <= range) {
       const fx = Math.floor((sx + 0.5) * TILE - originX);
       const fy = Math.floor((sy + 0.5) * TILE - originY);
-      drawFloatingLabel(ctx, fx, fy - 18, "Fountain · Safe", "#7ab8c9");
+      drawFloatingLabel(ctx, fx, fy - 18, `Fountain · ${SAFE_ZONE_LABEL}`, "#7ab8c9");
     }
     for (const dk of docks) {
       if (Math.hypot(ptx - (dk.x + 0.5), pty - (dk.y + 0.5)) > range) continue;
