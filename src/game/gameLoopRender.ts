@@ -70,6 +70,7 @@ import {
   getCoilQuest,
   getChoirRemembersQuest,
   getEdgeRemembersQuest,
+  getWharfRemembersQuest,
   isAshveilActive,
   isGreenGateActive,
   isSpineActive,
@@ -79,6 +80,7 @@ import {
   isCoilActive,
   isChoirRemembersActive,
   isEdgeRemembersActive,
+  isWharfRemembersActive,
   loadQuestLog,
   notifyQuestUi,
   saveQuestLog,
@@ -110,6 +112,7 @@ const EMBERCOIL_IDENTIFY_TILES = 3.6;
 const COIL_IDENTIFY_TILES = 3.6;
 const CHOIR_REMEMBERS_IDENTIFY_TILES = 3.6;
 const EDGE_REMEMBERS_IDENTIFY_TILES = 3.6;
+const WHARF_REMEMBERS_IDENTIFY_TILES = 3.6;
 
 /** Chamber reach + Ember Identify without patching assembled gameLoop. */
 function tickAshveilField(
@@ -375,6 +378,33 @@ function tickEdgeRemembersField(
   }
 }
 
+/** Gorse Fox Identify on Nightglass Coast without patching assembled gameLoop. */
+function tickWharfRemembersField(
+  player: { x: number; y: number },
+  map: WorldMap,
+  enemies: Enemy[],
+): void {
+  if (!isWharfRemembersActive(loadQuestLog())) return;
+  const log = loadQuestLog();
+  const q = getWharfRemembersQuest(log);
+  if (!q || q.status !== "active" || q.identifiedFox) return;
+  if (map.kind !== "overworld" || map.continentId !== "nightglass-coast") return;
+
+  for (const e of enemies) {
+    if (e.ai === "dead" || e.hp <= 0) continue;
+    if (e.kind.id !== "gorse-fox") continue;
+    const dist = Math.hypot(e.x - player.x, e.y - player.y) / TILE;
+    if (dist <= WHARF_REMEMBERS_IDENTIFY_TILES) {
+      const result = applyIdentify(loadQuestLog(), "gorse-fox", "nightglass-coast");
+      if (result) {
+        saveQuestLog(result.log);
+        notifyQuestUi(result.toast);
+      }
+      break;
+    }
+  }
+}
+
 export function advanceCameraAndRender(args: {
   ctx: CanvasRenderingContext2D;
   canvas: HTMLCanvasElement;
@@ -563,6 +593,7 @@ export function advanceCameraAndRender(args: {
   tickCoilField(player, map, enemies);
   tickChoirRemembersField(player, map, enemies);
   tickEdgeRemembersField(player, map, enemies);
+  tickWharfRemembersField(player, map, enemies);
   const objective = resolveQuestObjective(player, enemies, folk, map);
   const radarDots = collectRadarDots(player, enemies, folk, docks, map, objective);
   drawCompass(ctx, viewW);

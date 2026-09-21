@@ -33,6 +33,7 @@ import {
   COIL_QUEST_TITLE,
   CHOIR_REMEMBERS_QUEST_TITLE,
   EDGE_REMEMBERS_QUEST_TITLE,
+  WHARF_REMEMBERS_QUEST_TITLE,
   teethHudLines,
   ashwoodHudLines,
   hollowHudLines,
@@ -50,6 +51,7 @@ import {
   coilHudLines,
   choirRemembersHudLines,
   edgeRemembersHudLines,
+  wharfRemembersHudLines,
   type TeethQuestProgress,
   type AshwoodQuestProgress,
   type HollowQuestProgress,
@@ -67,6 +69,7 @@ import {
   type CoilQuestProgress,
   type ChoirRemembersQuestProgress,
   type EdgeRemembersQuestProgress,
+  type WharfRemembersQuestProgress,
 } from "@/game/quests";
 
 function equippedLine(character: ValeCharacter): string {
@@ -80,6 +83,7 @@ function equippedLine(character: ValeCharacter): string {
 }
 
 function activeQuest(
+  wharfRemembersQuest: WharfRemembersQuestProgress | null,
   edgeRemembersQuest: EdgeRemembersQuestProgress | null,
   choirRemembersQuest: ChoirRemembersQuestProgress | null,
   coilQuest: CoilQuestProgress | null,
@@ -98,6 +102,9 @@ function activeQuest(
   ashwoodQuest: AshwoodQuestProgress | null,
   teethQuest: TeethQuestProgress | null,
 ): { title: string; lines: string[] } | null {
+  if (wharfRemembersQuest?.status === "active") {
+    return { title: WHARF_REMEMBERS_QUEST_TITLE, lines: wharfRemembersHudLines(wharfRemembersQuest) };
+  }
   if (edgeRemembersQuest?.status === "active") {
     return { title: EDGE_REMEMBERS_QUEST_TITLE, lines: edgeRemembersHudLines(edgeRemembersQuest) };
   }
@@ -174,6 +181,7 @@ export function GameShellHud({
   coilQuest,
   choirRemembersQuest,
   edgeRemembersQuest,
+  wharfRemembersQuest,
   onOpenPack,
 }: {
   cls: ValeClass;
@@ -197,10 +205,12 @@ export function GameShellHud({
   coilQuest: CoilQuestProgress | null;
   choirRemembersQuest: ChoirRemembersQuestProgress | null;
   edgeRemembersQuest: EdgeRemembersQuestProgress | null;
+  wharfRemembersQuest: WharfRemembersQuestProgress | null;
   onOpenPack: () => void;
 }) {
   const [muted, setMuted] = useState(isAudioMuted);
   const quest = activeQuest(
+    wharfRemembersQuest,
     edgeRemembersQuest,
     choirRemembersQuest,
     coilQuest,

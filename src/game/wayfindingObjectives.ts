@@ -33,6 +33,7 @@ import {
   getCoilQuest,
   getChoirRemembersQuest,
   getEdgeRemembersQuest,
+  getWharfRemembersQuest,
   isTeethActive,
   isAshwoodActive,
   isHollowActive,
@@ -50,6 +51,7 @@ import {
   isCoilActive,
   isChoirRemembersActive,
   isEdgeRemembersActive,
+  isWharfRemembersActive,
   loadQuestLog,
   type TeethQuestProgress,
   type AshwoodQuestProgress,
@@ -68,6 +70,7 @@ import {
   type CoilQuestProgress,
   type ChoirRemembersQuestProgress,
   type EdgeRemembersQuestProgress,
+  type WharfRemembersQuestProgress,
 } from "@/game/quests";
 import { ASHWOOD_CAIRNS } from "@/game/cairns";
 import { huntZoneById } from "@/game/huntZones";
@@ -98,6 +101,10 @@ export function resolveQuestObjective(
   map: WorldMap,
 ): WayfindObjective | null {
   const log = loadQuestLog();
+  if (isWharfRemembersActive(log)) {
+    const q = getWharfRemembersQuest(log);
+    if (q) return objectiveForWharfRemembers(q, player, enemies, folk, map);
+  }
   if (isEdgeRemembersActive(log)) {
     const q = getEdgeRemembersQuest(log);
     if (q) return objectiveForEdgeRemembers(q, player, enemies, folk, map);
@@ -1431,6 +1438,155 @@ export function objectiveForChoirRemembers(
   };
 }
 
+export function objectiveForWharfRemembers(
+  q: WharfRemembersQuestProgress,
+  player: { x: number; y: number },
+  enemies: Enemy[],
+  folk: FolkDef[],
+  map: WorldMap,
+): WayfindObjective | null {
+  if (q.status !== "active") return null;
+  const rook = folk.find((f) => f.id === "rook");
+  const onWharf = map.continentId === "nightglass-coast" && map.kind === "overworld";
+
+  if (!q.reachedNightglass && !onWharf) {
+    return objectiveTowardNightglass(player, map, {
+      dock: "Sail to Nightglass Coast",
+      landing: "Nightglass Wharf",
+      gate: "Gate to Nightglass Coast",
+      viaMist: "Mistmere gate / coastal dock",
+      fallback: "Find a coastal dock toward Nightglass",
+    });
+  }
+
+  if (!q.identifiedFox) {
+    if (onWharf) {
+      const fox = nearestEnemy(player, enemies, "gorse-fox");
+      if (fox) {
+        return { label: "Identify Gorse Fox", x: fox.x, y: fox.y, kind: "enemy" };
+      }
+      return {
+        label: "Find Gorse Fox (Nightglass Coast)",
+        x: player.x + TILE * 6,
+        y: player.y - TILE * 4,
+        kind: "landmark",
+      };
+    }
+    return objectiveTowardNightglass(player, map, {
+      dock: "Sail to Gorse Fox (Nightglass)",
+      landing: "Nightglass Wharf / Gorse Fox",
+      gate: "Gate to Gorse Fox (Nightglass)",
+      viaMist: "Mistmere gate / coastal dock",
+      fallback: "Find Gorse Fox (Nightglass Coast)",
+    });
+  }
+
+  if (!q.ratDone) {
+    if (onWharf) {
+      const rat = nearestEnemy(player, enemies, "needle-rat");
+      if (rat) {
+        return {
+          label: "Defeat Needle Rat (0/1)",
+          x: rat.x,
+          y: rat.y,
+          kind: "enemy",
+        };
+      }
+      return {
+        label: "Find Needle Rat (Nightglass Coast)",
+        x: player.x + TILE * 6,
+        y: player.y - TILE * 4,
+        kind: "landmark",
+      };
+    }
+    return objectiveTowardNightglass(player, map, {
+      dock: "Sail to Needle Rat (Nightglass)",
+      landing: "Nightglass Wharf / Needle Rat",
+      gate: "Gate to Needle Rat (Nightglass)",
+      viaMist: "Mistmere gate / coastal dock",
+      fallback: "Find Needle Rat (Nightglass Coast)",
+    });
+  }
+
+  if (rook) {
+    return {
+      label: "Return to Rook",
+      x: (rook.x + 0.5) * TILE,
+      y: (rook.y + 0.5) * TILE,
+      kind: "folk",
+    };
+  }
+  const home = continentGateOnMap(map, "thornreach");
+  if (home) {
+    return {
+      label: "Gate back to Rook (Thornreach)",
+      x: (home.x + 0.5) * TILE,
+      y: (home.y + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  const toMistHome = continentGateOnMap(map, "mistmere");
+  if (toMistHome) {
+    return {
+      label: "Gate toward Rook (Mistmere)",
+      x: (toMistHome.x + 0.5) * TILE,
+      y: (toMistHome.y + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  const toChoirHome = continentGateOnMap(map, "sunken-choir");
+  if (toChoirHome) {
+    return {
+      label: "Gate toward Rook (Sunken Choir)",
+      x: (toChoirHome.x + 0.5) * TILE,
+      y: (toChoirHome.y + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  const toSpineHome = continentGateOnMap(map, "verdant-spine");
+  if (toSpineHome) {
+    return {
+      label: "Gate toward Rook (Verdant Spine)",
+      x: (toSpineHome.x + 0.5) * TILE,
+      y: (toSpineHome.y + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  const wharfHome = dockOnMap(map, NIGHTGLASS_WHARF_DOCK_ID);
+  if (wharfHome) {
+    return {
+      label: "Sail toward Rook (Mistmere)",
+      x: (wharfHome.x + 0.5) * TILE,
+      y: (wharfHome.y + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  const landingHome = dockOnMap(map, CHOIR_LANDING_DOCK_ID);
+  if (landingHome) {
+    return {
+      label: "Sail toward Rook (Mistmere)",
+      x: (landingHome.x + 0.5) * TILE,
+      y: (landingHome.y + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  const pierHome = dockOnMap(map, MISTMERE_PIER_DOCK_ID);
+  if (pierHome) {
+    return {
+      label: "Sail toward Rook (Thornreach)",
+      x: (pierHome.x + 0.5) * TILE,
+      y: (pierHome.y + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  return {
+    label: "Return to Rook (Thornreach)",
+    x: player.x + TILE * 8,
+    y: player.y - TILE * 2,
+    kind: "landmark",
+  };
+}
+
 export function objectiveForGreenGate(
   q: GreenGateQuestProgress,
   player: { x: number; y: number },
@@ -2360,6 +2516,79 @@ function objectiveTowardSunkenChoir(
       label: labels.viaMist,
       x: (toNight.x + 0.5) * TILE,
       y: (toNight.y + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  return {
+    label: labels.fallback,
+    x: player.x + TILE * 8,
+    y: player.y - TILE * 2,
+    kind: "landmark",
+  };
+}
+
+function objectiveTowardNightglass(
+  player: { x: number; y: number },
+  map: WorldMap,
+  labels: {
+    dock: string;
+    landing: string;
+    gate: string;
+    viaMist: string;
+    fallback: string;
+  },
+): WayfindObjective {
+  const landing = dockOnMap(map, NIGHTGLASS_WHARF_DOCK_ID);
+  if (landing) {
+    return {
+      label: labels.landing,
+      x: (landing.x + 0.5) * TILE,
+      y: (landing.y + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  const coastal = dockTowardContinent(map, "nightglass-coast");
+  if (coastal) {
+    return {
+      label: labels.dock,
+      x: (coastal.x + 0.5) * TILE,
+      y: (coastal.y + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  const gate = continentGateOnMap(map, "nightglass-coast");
+  if (gate) {
+    return {
+      label: labels.gate,
+      x: (gate.x + 0.5) * TILE,
+      y: (gate.y + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  const toMist = continentGateOnMap(map, "mistmere");
+  if (toMist) {
+    return {
+      label: labels.viaMist,
+      x: (toMist.x + 0.5) * TILE,
+      y: (toMist.y + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  const toChoir = continentGateOnMap(map, "sunken-choir");
+  if (toChoir) {
+    return {
+      label: labels.viaMist,
+      x: (toChoir.x + 0.5) * TILE,
+      y: (toChoir.y + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  const toSpine = continentGateOnMap(map, "verdant-spine");
+  if (toSpine) {
+    return {
+      label: labels.viaMist,
+      x: (toSpine.x + 0.5) * TILE,
+      y: (toSpine.y + 0.5) * TILE,
       kind: "landmark",
     };
   }

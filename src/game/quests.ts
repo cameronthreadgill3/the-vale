@@ -26,6 +26,7 @@ export const EMBERCOIL_QUEST_ID = "the-embercoil-gate-opens" as const;
 export const COIL_QUEST_ID = "the-coil-remembers" as const;
 export const CHOIR_REMEMBERS_QUEST_ID = "the-choir-remembers" as const;
 export const EDGE_REMEMBERS_QUEST_ID = "the-edge-remembers" as const;
+export const WHARF_REMEMBERS_QUEST_ID = "the-wharf-remembers" as const;
 
 /** Depot clerk — Cress Ledger in folk.ts. */
 export const CRESS_FOLK_ID = "cress-ledger" as const;
@@ -63,7 +64,8 @@ export type QuestId =
   | typeof EMBERCOIL_QUEST_ID
   | typeof COIL_QUEST_ID
   | typeof CHOIR_REMEMBERS_QUEST_ID
-  | typeof EDGE_REMEMBERS_QUEST_ID;
+  | typeof EDGE_REMEMBERS_QUEST_ID
+  | typeof WHARF_REMEMBERS_QUEST_ID;
 
 export type QuestStatus = "active" | "complete";
 
@@ -254,6 +256,17 @@ export interface EdgeRemembersQuestProgress {
   houndDone: boolean;
 }
 
+export interface WharfRemembersQuestProgress {
+  id: typeof WHARF_REMEMBERS_QUEST_ID;
+  status: QuestStatus;
+  /** Arrived on Nightglass Coast (sail, gate, or stand). */
+  reachedNightglass: boolean;
+  /** First successful Identify of a Gorse Fox on Nightglass Coast. */
+  identifiedFox: boolean;
+  /** Needle Rat defeated on Nightglass Coast (target 1; continent-scoped). */
+  ratDone: boolean;
+}
+
 export type QuestLog = {
   [TEETH_QUEST_ID]?: TeethQuestProgress;
   [ASHWOOD_QUEST_ID]?: AshwoodQuestProgress;
@@ -272,6 +285,7 @@ export type QuestLog = {
   [COIL_QUEST_ID]?: CoilQuestProgress;
   [CHOIR_REMEMBERS_QUEST_ID]?: ChoirRemembersQuestProgress;
   [EDGE_REMEMBERS_QUEST_ID]?: EdgeRemembersQuestProgress;
+  [WHARF_REMEMBERS_QUEST_ID]?: WharfRemembersQuestProgress;
 };
 
 export const TEETH_RATS_NEEDED = 3;
@@ -295,6 +309,7 @@ export const EMBERCOIL_QUEST_TITLE = "The Embercoil Gate Opens";
 export const COIL_QUEST_TITLE = "The Coil Remembers";
 export const CHOIR_REMEMBERS_QUEST_TITLE = "The Choir Remembers";
 export const EDGE_REMEMBERS_QUEST_TITLE = "The Edge Remembers";
+export const WHARF_REMEMBERS_QUEST_TITLE = "The Wharf Remembers";
 
 export const TEETH_START_TOAST =
   "Rook: Ashwood edge has wrong prey - Identify first.";
@@ -397,6 +412,12 @@ export const EDGE_REMEMBERS_START_TOAST =
 
 export const EDGE_REMEMBERS_COMPLETE_LINE =
   "Rook: The edge remembers. Soft prey named, the home pack quieted, and the ledger holds the water's count. Survive. Learn. Progress — the road begins at our own grass.";
+
+export const WHARF_REMEMBERS_START_TOAST =
+  "Rook: The Edge remembers your footing. The water's measure washed back to the black strand — sail to Nightglass Coast, name the gorse-fox that hunts the wharf skirts, quiet one needle-rat packing the shore, and bring the Wharf's measure home. Survive. Learn. Progress.";
+
+export const WHARF_REMEMBERS_COMPLETE_LINE =
+  "Rook: The Wharf remembers your footing. Soft prey named, the shore pack quieted. Survive. Learn. Progress — the far road holds the tide again.";
 
 export const TEETH_REWARDS = {
   gold: 28,
@@ -515,6 +536,13 @@ export const EDGE_REMEMBERS_REWARDS = {
   combatXp: 220,
   skill: "shielding" as SkillId,
   skillXp: 65,
+};
+
+export const WHARF_REMEMBERS_REWARDS = {
+  gold: 110,
+  combatXp: 220,
+  skill: "magic" as SkillId,
+  skillXp: 62,
 };
 
 export function loadQuestLog(): QuestLog {
@@ -713,6 +741,16 @@ export function emptyEdgeRemembersQuest(): EdgeRemembersQuestProgress {
     reachedEdge: false,
     identifiedVole: false,
     houndDone: false,
+  };
+}
+
+export function emptyWharfRemembersQuest(): WharfRemembersQuestProgress {
+  return {
+    id: WHARF_REMEMBERS_QUEST_ID,
+    status: "active",
+    reachedNightglass: false,
+    identifiedFox: false,
+    ratDone: false,
   };
 }
 
@@ -979,6 +1017,20 @@ export function sanitizeQuestLog(raw: unknown): QuestLog {
     };
   }
 
+  const wharfRemembers = obj[WHARF_REMEMBERS_QUEST_ID];
+  if (wharfRemembers && typeof wharfRemembers === "object") {
+    const w = wharfRemembers as Record<string, unknown>;
+    const status: QuestStatus =
+      w.status === "complete" ? "complete" : "active";
+    log[WHARF_REMEMBERS_QUEST_ID] = {
+      id: WHARF_REMEMBERS_QUEST_ID,
+      status,
+      reachedNightglass: Boolean(w.reachedNightglass),
+      identifiedFox: Boolean(w.identifiedFox),
+      ratDone: Boolean(w.ratDone),
+    };
+  }
+
   return log;
 }
 
@@ -1082,6 +1134,12 @@ export function getEdgeRemembersQuest(
   return log?.[EDGE_REMEMBERS_QUEST_ID] ?? null;
 }
 
+export function getWharfRemembersQuest(
+  log: QuestLog | undefined,
+): WharfRemembersQuestProgress | null {
+  return log?.[WHARF_REMEMBERS_QUEST_ID] ?? null;
+}
+
 export function isTeethActive(log: QuestLog | undefined): boolean {
   const q = getTeethQuest(log);
   return Boolean(q && q.status === "active");
@@ -1164,6 +1222,11 @@ export function isChoirRemembersActive(log: QuestLog | undefined): boolean {
 
 export function isEdgeRemembersActive(log: QuestLog | undefined): boolean {
   const q = getEdgeRemembersQuest(log);
+  return Boolean(q && q.status === "active");
+}
+
+export function isWharfRemembersActive(log: QuestLog | undefined): boolean {
+  const q = getWharfRemembersQuest(log);
   return Boolean(q && q.status === "active");
 }
 
@@ -1254,6 +1317,12 @@ export function edgeRemembersObjectivesMet(
   q: EdgeRemembersQuestProgress,
 ): boolean {
   return q.talkedCress && q.reachedEdge && q.identifiedVole && q.houndDone;
+}
+
+export function wharfRemembersObjectivesMet(
+  q: WharfRemembersQuestProgress,
+): boolean {
+  return q.reachedNightglass && q.identifiedFox && q.ratDone;
 }
 
 /** HUD lines for Teeth sticky panel. */
@@ -1601,6 +1670,27 @@ export function edgeRemembersHudLines(q: EdgeRemembersQuestProgress): string[] {
   ];
 }
 
+/** HUD lines for The Wharf Remembers. */
+export function wharfRemembersHudLines(q: WharfRemembersQuestProgress): string[] {
+  if (q.status === "complete") {
+    return ["Complete - The Wharf remembers"];
+  }
+  return [
+    q.reachedNightglass
+      ? "[done] Reach Nightglass Coast"
+      : "[ ] Reach Nightglass Coast (coastal dock)",
+    q.identifiedFox
+      ? "[done] Identify Gorse Fox"
+      : "[ ] Identify a Gorse Fox (near look)",
+    q.ratDone
+      ? "[done] Defeat Needle Rat 1/1"
+      : "[ ] Defeat Needle Rat 0/1 (Nightglass Coast)",
+    q.reachedNightglass && q.identifiedFox && q.ratDone
+      ? "[ ] Return to Rook (the Wharf's measure)"
+      : "[ ] Return to Rook with the Wharf's measure",
+  ];
+}
+
 
 export type QuestEventResult = {
   log: QuestLog;
@@ -1639,6 +1729,8 @@ export type QuestEventResult = {
   startedChoirRemembers?: boolean;
   /** The Edge Remembers auto-started after The Choir Remembers. */
   startedEdgeRemembers?: boolean;
+  /** The Wharf Remembers auto-started after The Edge Remembers. */
+  startedWharfRemembers?: boolean;
 };
 
 /** If Teeth is complete and Ashwood missing, start Ashwood Watch. */
@@ -1929,6 +2021,24 @@ export function ensureEdgeRemembersAfterChoir(log: QuestLog): {
   };
 }
 
+/** If The Edge Remembers is complete and The Wharf Remembers missing, start it. */
+export function ensureWharfRemembersAfterEdge(log: QuestLog): {
+  log: QuestLog;
+  started: boolean;
+} {
+  const edge = getEdgeRemembersQuest(log);
+  if (!edge || edge.status !== "complete") {
+    return { log, started: false };
+  }
+  if (getWharfRemembersQuest(log)) {
+    return { log, started: false };
+  }
+  return {
+    log: withWharfRemembersQuest(log, emptyWharfRemembersQuest()),
+    started: true,
+  };
+}
+
 export function withTeethQuest(
   log: QuestLog | undefined,
   quest: TeethQuestProgress,
@@ -2048,6 +2158,13 @@ export function withEdgeRemembersQuest(
   return { ...(log ?? {}), [EDGE_REMEMBERS_QUEST_ID]: quest };
 }
 
+export function withWharfRemembersQuest(
+  log: QuestLog | undefined,
+  quest: WharfRemembersQuestProgress,
+): QuestLog {
+  return { ...(log ?? {}), [WHARF_REMEMBERS_QUEST_ID]: quest };
+}
+
 function finishTeethIfReady(
   log: QuestLog,
   next: TeethQuestProgress,
@@ -2111,6 +2228,24 @@ export function applyIdentify(
   kindId: EnemyKindId,
   continentId?: ContinentId,
 ): QuestEventResult | null {
+  const wharfRemembers = getWharfRemembersQuest(log);
+  if (
+    wharfRemembers &&
+    wharfRemembers.status === "active" &&
+    !wharfRemembers.identifiedFox &&
+    kindId === "gorse-fox" &&
+    continentId === "nightglass-coast"
+  ) {
+    return {
+      log: withWharfRemembersQuest(log, {
+        ...wharfRemembers,
+        reachedNightglass: true,
+        identifiedFox: true,
+      }),
+      toast: "Identified: Gorse Fox / F",
+    };
+  }
+
   const edgeRemembers = getEdgeRemembersQuest(log);
   if (
     edgeRemembers &&
@@ -2340,6 +2475,26 @@ export function applyEnemyKill(
   kindId: EnemyKindId,
   continentId?: ContinentId,
 ): QuestEventResult | null {
+  const wharfRemembers = getWharfRemembersQuest(log);
+  if (
+    wharfRemembers &&
+    wharfRemembers.status === "active" &&
+    kindId === "needle-rat" &&
+    continentId === "nightglass-coast" &&
+    !wharfRemembers.ratDone
+  ) {
+    return {
+      log: withWharfRemembersQuest(log, {
+        ...wharfRemembers,
+        reachedNightglass: true,
+        ratDone: true,
+      }),
+      toast: wharfRemembers.identifiedFox
+        ? "Needle Rat 1/1 — Return to Rook"
+        : "Needle Rat 1/1 — Name the Gorse Fox",
+    };
+  }
+
   const edgeRemembers = getEdgeRemembersQuest(log);
   if (
     edgeRemembers &&
@@ -3195,10 +3350,49 @@ export function applyEdgeRemembersRookTalk(
   const q = getEdgeRemembersQuest(log);
   if (!q || q.status !== "active") return null;
   if (!edgeRemembersObjectivesMet(q)) return null;
+  let out = withEdgeRemembersQuest(log, { ...q, status: "complete" });
+  const ensured = ensureWharfRemembersAfterEdge(out);
+  out = ensured.log;
   return {
-    log: withEdgeRemembersQuest(log, { ...q, status: "complete" }),
-    toast: EDGE_REMEMBERS_COMPLETE_LINE,
+    log: out,
+    toast: ensured.started
+      ? WHARF_REMEMBERS_START_TOAST
+      : EDGE_REMEMBERS_COMPLETE_LINE,
     completedId: EDGE_REMEMBERS_QUEST_ID,
+    startedWharfRemembers: ensured.started,
+  };
+}
+
+/** Mark Nightglass Coast reached for The Wharf Remembers (sail, gate, or stand). */
+export function applyWharfRemembersReached(
+  log: QuestLog,
+): QuestEventResult | null {
+  const q = getWharfRemembersQuest(log);
+  if (!q || q.status !== "active" || q.reachedNightglass) {
+    return null;
+  }
+  return {
+    log: withWharfRemembersQuest(log, { ...q, reachedNightglass: true }),
+    toast:
+      q.identifiedFox && q.ratDone
+        ? "Nightglass Coast marked — Return to Rook with the Wharf's measure"
+        : q.identifiedFox
+          ? "Nightglass Coast marked — Quiet one needle-rat packing the shore"
+          : "Nightglass Coast marked — Name the gorse-fox that hunts the wharf skirts",
+  };
+}
+
+/** Complete The Wharf Remembers when talking to Rook after the shore is measured. */
+export function applyWharfRemembersRookTalk(
+  log: QuestLog,
+): QuestEventResult | null {
+  const q = getWharfRemembersQuest(log);
+  if (!q || q.status !== "active") return null;
+  if (!wharfRemembersObjectivesMet(q)) return null;
+  return {
+    log: withWharfRemembersQuest(log, { ...q, status: "complete" }),
+    toast: WHARF_REMEMBERS_COMPLETE_LINE,
+    completedId: WHARF_REMEMBERS_QUEST_ID,
   };
 }
 
@@ -3248,6 +3442,23 @@ export function applyCairnInspect(
 
 /** Rook line while sticky quests are active / complete. */
 export function rookQuestLine(log: QuestLog | undefined): string | null {
+  const wharfRemembers = getWharfRemembersQuest(log);
+  if (wharfRemembers) {
+    if (wharfRemembers.status === "complete") {
+      return WHARF_REMEMBERS_COMPLETE_LINE.replace(/^Rook:\s*/, "");
+    }
+    if (!wharfRemembers.reachedNightglass) {
+      return "The Edge remembers your footing. The water's measure washed back to the black strand — sail to Nightglass Coast, name the gorse-fox that hunts the wharf skirts, quiet one needle-rat packing the shore, and bring the Wharf's measure home.";
+    }
+    if (!wharfRemembers.identifiedFox) {
+      return "The Wharf is underfoot. Identify a Gorse Fox on Nightglass Coast — Name and Rank — then quiet one needle-rat packing the shore.";
+    }
+    if (!wharfRemembers.ratDone) {
+      return "The fox is named. Quiet one Needle Rat packing the Nightglass shore, then bring the Wharf's measure home.";
+    }
+    return "The Wharf remembers. Survive. Learn. Progress — the far road holds the tide again when you tell me.";
+  }
+
   const edgeRemembers = getEdgeRemembersQuest(log);
   if (edgeRemembers) {
     if (edgeRemembers.status === "complete") {
