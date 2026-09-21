@@ -9,6 +9,7 @@ import { carriedWeight, maxSlotsFor, maxWeightFor } from "@/game/backpack";
 import { type PromptState, type HudState } from "@/game/canvasConstants";
 import { useGameLoopEffect } from "@/game/gameLoop";
 import type { EnemyKindId } from "@/game/enemies";
+import type { ItemId } from "@/game/items";
 
 export function useGameCanvas(opts: {
   character: ValeCharacter;
@@ -31,6 +32,7 @@ export function useGameCanvas(opts: {
     skill: SkillId,
     skillXp: number,
     gold: number,
+    loot?: ItemId[],
   ) => void;
   onEnemyKill: (kindId: EnemyKindId) => void;
   onIdentify: (kindId: EnemyKindId) => void;

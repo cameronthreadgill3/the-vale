@@ -1,5 +1,5 @@
 import type { ValeCharacter } from "@/game/character";
-import { getItem, type ItemId } from "@/game/items";
+import { getItem, isEquippable, itemStatLine, type ItemId } from "@/game/items";
 import type { ShopDef } from "@/game/folk";
 import { sellPrice } from "@/game/folk";
 import {
@@ -65,7 +65,7 @@ export function ShopPanel({
               <div className="min-w-0 flex-1">
                 <div className="truncate text-xs text-[#e8e6d9]">{item.name}</div>
                 <div className="truncate text-[10px] text-[#6a7260]">
-                  {item.blurb} · {item.weight} wt
+                  {isEquippable(item) ? itemStatLine(item) : `${item.blurb} · ${item.weight} wt`}
                   {!carry.ok
                     ? carry.reason === "weight"
                       ? " · too heavy"

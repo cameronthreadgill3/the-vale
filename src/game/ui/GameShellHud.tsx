@@ -1,5 +1,6 @@
 import type { ValeClass } from "@/game/classes";
 import type { ValeCharacter } from "@/game/character";
+import { getItem } from "@/game/items";
 import type { HudState } from "@/game/canvasConstants";
 import {
   TEETH_QUEST_TITLE,
@@ -12,6 +13,16 @@ import {
   type AshwoodQuestProgress,
   type HollowQuestProgress,
 } from "@/game/quests";
+
+function equippedLine(character: ValeCharacter): string {
+  const eq = character.equipment;
+  if (!eq) return "Unarmed";
+  const bits: string[] = [];
+  if (character.equipment.weapon) bits.push(getItem(character.equipment.weapon).name);
+  if (character.equipment.armor) bits.push(getItem(character.equipment.armor).name);
+  if (character.equipment.shield) bits.push(getItem(character.equipment.shield).name);
+  return bits.length > 0 ? bits.join(" · ") : "Unarmed";
+}
 
 export function GameShellHud({
   cls,
@@ -164,6 +175,9 @@ export function GameShellHud({
             <span className="text-[#c9a227]"> · Prem</span>
           )}
         </button>
+        <div className="mt-0.5 truncate text-[10px] text-[#a8b09a]">
+          {equippedLine(character)}
+        </div>
         {hud.inSafeZone && (
           <div className="mt-1 text-[10px] uppercase tracking-wider text-[#7ab8c9]">
             Safe — no beasts here

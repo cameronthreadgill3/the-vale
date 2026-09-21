@@ -19,6 +19,7 @@ import { GameShellHud } from "@/game/ui/GameShellHud";
 import { STARTER_TIP, STARTER_TIP_MS } from "@/game/wayfinding";
 import type { EnemyKindId } from "@/game/enemies";
 import type { TeethQuestProgress, AshwoodQuestProgress, HollowQuestProgress } from "@/game/quests";
+import type { ItemId, EquipSlot } from "@/game/items";
 
 export function GameShell({
   character,
@@ -66,6 +67,8 @@ export function GameShell({
   onBuy,
   onSell,
   onSail,
+  onEquip,
+  onUnequip,
   onCombatReward,
   onEnemyKill,
   onIdentify,
@@ -121,11 +124,14 @@ export function GameShell({
   onBuy: (itemId: string, price: number) => void;
   onSell: (itemId: string, price: number) => void;
   onSail: (dest: ContinentId) => void;
+  onEquip: (itemId: string) => void;
+  onUnequip: (slot: EquipSlot) => void;
   onCombatReward: (
     combatXp: number,
     skill: SkillId,
     skillXp: number,
     gold: number,
+    loot?: ItemId[],
   ) => void;
   onEnemyKill: (kindId: EnemyKindId) => void;
   onIdentify: (kindId: EnemyKindId) => void;
@@ -146,7 +152,7 @@ export function GameShell({
   }, []);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.code !== "KeyB" || e.repeat) return;
+      if ((e.code !== "KeyB" && e.code !== "KeyI") || e.repeat) return;
       const t = e.target as HTMLElement | null;
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA")) return;
       e.preventDefault();
@@ -212,7 +218,7 @@ export function GameShell({
             {" | "}
             <span className="text-[#e8e6d9]">E</span> talk/shop/bank
             {" | "}
-            <span className="text-[#e8e6d9]">B</span> pack
+            <span className="text-[#e8e6d9]">B</span>/<span className="text-[#e8e6d9]">I</span> pack
             {" | "}
             <span className="text-[#e8e6d9]">M</span> map
             {" | "}
@@ -394,6 +400,8 @@ export function GameShell({
           unlocking={premiumUnlocking}
           onUnlockDemo={onUnlockPremiumDemo}
           onUnlockStripe={onUnlockPremiumStripe}
+          onEquip={onEquip}
+          onUnequip={onUnequip}
           onClose={onTogglePack}
         />
       )}

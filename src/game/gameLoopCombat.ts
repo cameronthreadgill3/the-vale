@@ -16,6 +16,8 @@ import {
 } from "@/game/enemies";
 import type { ValeCharacter } from "@/game/character";
 import type { SkillId } from "@/game/skills";
+import type { ItemId } from "@/game/items";
+import { rollLoot, lootFloatLabel } from "@/game/loot";
 import type { MutableRefObject } from "react";
 import type { MouseState } from "@/game/gameLoopPointers";
 
@@ -27,6 +29,7 @@ export function createPlayerAttack(opts: {
     skill: SkillId,
     skillXp: number,
     gold: number,
+    loot?: ItemId[],
   ) => void>;
   onEnemyKill: MutableRefObject<(kindId: EnemyKindId) => void>;
   onVitals: MutableRefObject<(hp: number, mana: number) => void>;
@@ -96,11 +99,21 @@ export function createPlayerAttack(opts: {
         target.kind.goldMin +
         Math.floor(opts.combatRng() * (target.kind.goldMax - target.kind.goldMin + 1));
       pushFloat(target.x, target.y - 22, `+${goldGain}g`, "#c9a227");
+      const loot = rollLoot(target.kind.id, opts.combatRng);
+      loot.forEach((id, i) => {
+        pushFloat(
+          target.x,
+          target.y - 34 - i * 12,
+          `+${lootFloatLabel(id)}`,
+          "#d8c878",
+        );
+      });
       opts.onCombatReward.current(
         target.kind.xpBase,
         profile.skill,
         Math.max(4, Math.floor(target.kind.xpBase * 0.35)),
         goldGain,
+        loot,
       );
       opts.onEnemyKill.current(target.kind.id);
       if (profile.healOnKill > 0) {

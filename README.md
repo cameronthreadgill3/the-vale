@@ -24,7 +24,7 @@ Open the URL Vite prints (usually http://localhost:5173).
 - **WASD** or **Arrow keys** — move
 - **Space** or **left click** — attack nearest foe in range (hold to auto-swing on cooldown)
 - **E** — interact (gates, hollows, folk, shops, bank, ships) — still works when not in a fight prompt
-- **B** — backpack / Premium Backpack
+- **B** or **I** — backpack (worn gear, pack weight / slots, Premium Backpack, equip / unequip)
 - **M** — continent map (discovered lands)
 - **K** — toggle skills panel
 - **1–3** — use assigned quick skills (around Attack)
@@ -53,9 +53,9 @@ Open the URL Vite prints (usually http://localhost:5173).
 Tibia-flavored, scoped tight:
 
 - **HP** (and **mana** for Hearthmage / Verdant) on the HUD; max HP scales lightly with combat level and shielding
-- Attack uses the class’s combat skill (sword / axe / distance / magic / fist); damage scales with that skill + a small roll
-- **Shielding** reduces damage taken
-- Killing foes grants **combat XP**, **skill XP** on the skill used, and a little **gold**
+- Attack uses the class’s combat skill (sword / axe / distance / magic / fist); damage scales with that skill + worn weapon attack + a small roll
+- **Shielding** plus worn armor / shield reduces damage taken
+- Killing foes grants **combat XP**, **skill XP** on the skill used, a little **gold**, and a **loot roll** from that fauna's table (Needle Tooth, Bark Hide, Ashwood Blade, …)
 - Hostiles: **Needle Rat** (Beast Lv.2 F) and **Bark Hound** (Beast Lv.4 F) from Accession texture, plus shade wisps in deeper hollows; sparse briar mites — seeded; never on NPCs/gates
 - Simple AI: wander → aggro → chase → melee hit on cooldown
 - Floating damage numbers; death respawns at continent spawn (hollows eject) with HP restored
@@ -67,7 +67,8 @@ Tibia-flavored, scoped tight:
 - Items have **weight**. Default pack is **20 slots / 80 wt**. HUD shows `Pack wt/max · slots`. Buy and withdraw are blocked when overweight or full (toast).
 - **Thornreach plaza / fountain** is a safe zone (dashed ring): beasts will not aggro or attack while you or they stand in the square. Fountain still heals at the basin.
 - **Cress Vault** (west of the fountain) banks items and gold. Vault contents persist on the character save and are ignored by death loss.
-- **Premium Backpack** unlocks **32 slots** and **+50% weight capacity**, stored on the character. **Pack (B)** has a **Demo unlock** that works without Stripe keys. If `VITE_STRIPE_PUBLISHABLE_KEY` + price id are set, Stripe Checkout is an optional path (`POST /api/create-checkout-session`, verify on return).
+- **Premium Backpack** unlocks **32 slots** and **+50% weight capacity**, stored on the character. **Pack (B / I)** has a **Demo unlock** that works without Stripe keys. If `VITE_STRIPE_PUBLISHABLE_KEY` + price id are set, Stripe Checkout is an optional path (`POST /api/create-checkout-session`, verify on return).
+- New paths start with a **class starter kit** already worn (e.g. Warden sword + buckler + vest). Combat uses worn weapon attack and armor/shield defense.
 
 
 ### First sticky quest — Teeth in the Grass
@@ -123,8 +124,9 @@ Thornreach (starter), Mistmere, Ashen Marches, Sunken Choir, Embercoil, Pale Was
 ### Folk, shops, and ships
 
 - Named NPCs on Thornreach (Rook watch-captain, Mara shop, Noll healer, **Cress Vault** banker), Mistmere (Old Reed guide), Sunken Choir, Ashen Marches, and Nightglass Coast — First Story echoes only; no Hollow Reach cast
-- Shops: Thornreach General Store, Mistmere Pier Market, Choir Cloister Stores — buy/sell with starting gold (blocked if the pack cannot carry the weight)
+- Shops: Thornreach General Store, Mistmere Pier Market, Choir Cloister Stores — buy/sell with starting gold (blocked if the pack cannot carry the weight); Mara, Selene, and the Choir Keeper also stock **weapons and armor** by tier (Fledgling → Basin → Ashwood → Thorn → Choir-mist)
 - Thornreach vault: deposit/withdraw items and gold with Cress
+- **Backpack (B / I)** — worn slots plus pack stacks. Default **20 slots / 80 wt** (Premium 32 / +50%). Corpse loot that will not fit is left behind.
 - Ships link Mistmere ↔ Sunken Choir ↔ Nightglass Coast with short voyage flavor
 
 ### Builds
