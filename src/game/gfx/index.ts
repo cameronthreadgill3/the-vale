@@ -44,6 +44,7 @@ export {
   px,
   shadeHex,
   mixHex,
+  paintVolume,
   drawSoftShadow,
   addPixelVolume,
   GROUND_SHADOW_ALPHA,

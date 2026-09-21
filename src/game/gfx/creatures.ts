@@ -1,9 +1,9 @@
 /**
- * Original creature pixel sprites for The Vale (gfx pass 3).
+ * Original creature pixel sprites for The Vale (character/creature polish).
  * Needle Rat, Bark Hound, Ash-vole, Gorse Fox, Briar Mite, Shade Wisp,
- * Ashveil Ember — 4 walk/bob frames with pose changes. Cached sheets, not CipSoft.
+ * Ashveil Ember — 4 walk/bob frames. Painted NW/SE volume on dedicated paints.
  */
-import { makeCanvas, ctx2d, px, shadeHex, drawSoftShadow, addPixelVolume, GROUND_SHADOW_ALPHA } from "@/game/gfx/canvasUtil";
+import { makeCanvas, ctx2d, px, shadeHex, paintVolume, drawSoftShadow, addPixelVolume, GROUND_SHADOW_ALPHA } from "@/game/gfx/canvasUtil";
 
 export type CreatureKindId =
   | "briar-mite"
@@ -47,18 +47,24 @@ function paintNeedleRat(ctx: CanvasRenderingContext2D, flash: boolean, frame: nu
   const s = stride(frame);
   const tail = frame === 1 ? -1 : frame === 3 ? 1 : 0;
   const jaw = frame === 2 ? 1 : 0;
-  // body
-  px(ctx, 7, 14 + by, dark, 17, 11);
+  // body — dark underlay + NW ridge / SE belly weight
+  px(ctx, 6, 14 + by, dark, 19, 12);
   px(ctx, 8, 13 + by, fur, 15, 11);
+  paintVolume(ctx, 8, 13 + by, 15, 11, fur, 1.18, 0.72);
   px(ctx, 9, 16 + by, belly, 11, 6);
+  paintVolume(ctx, 9, 16 + by, 11, 6, belly, 1.12, 0.76);
+  px(ctx, 10, 21 + by, shadeHex(belly, 0.68), 9, 2);
   px(ctx, 10, 14 + by, ridge, 10, 2);
+  px(ctx, 10, 14 + by, shadeHex(ridge, 1.22), 4, 2);
   px(ctx, 12, 13 + by, dark, 2, 2);
   px(ctx, 16, 13 + by, dark, 2, 2);
   // head / snout
   px(ctx, 19, 11 + by, dark, 10, 10);
   px(ctx, 20, 12 + by, fur, 9, 8);
+  paintVolume(ctx, 20, 12 + by, 9, 8, fur, 1.16, 0.74);
   px(ctx, 24, 14 + by, dark, 7, 6);
   px(ctx, 26, 15 + by, belly, 5, 4);
+  paintVolume(ctx, 26, 15 + by, 5, 4, belly, 1.14, 0.78);
   // needle teeth
   px(ctx, 28, 16 + by + jaw, tooth, 1, 3);
   px(ctx, 29, 15 + by + jaw, tooth, 1, 4);
@@ -83,12 +89,16 @@ function paintNeedleRat(ctx: CanvasRenderingContext2D, flash: boolean, frame: nu
   px(ctx, 21 - s, 24 + by, claw, 2, 4);
   px(ctx, 9 + s, 27 + by, dark, 2, 1);
   px(ctx, 17 + s, 27 + by, dark, 2, 1);
+  px(ctx, 9 + s, 27 + by, "#1a1814", 2, 1);
+  px(ctx, 17 + s, 27 + by, "#1a1814", 2, 1);
   // tail lash
   px(ctx, 5, 16 + by + tail, dark, 4, 3);
   px(ctx, 3, 14 + by + tail, dark, 3, 3);
   px(ctx, 2, 11 + by, fur, 3, 4);
+  paintVolume(ctx, 2, 11 + by, 3, 4, fur, 1.16, 0.74);
   px(ctx, 1, 9 + by - tail, ridge, 2, 3);
-  px(ctx, 7, 13 + by, "#1a1814", 1, 11);
+  px(ctx, 7, 13 + by, "#1a1814", 1, 12);
+  px(ctx, 8, 24 + by, "#1a1814", 16, 1);
 }
 
 function paintBarkHound(ctx: CanvasRenderingContext2D, flash: boolean, frame: number): void {
@@ -101,20 +111,26 @@ function paintBarkHound(ctx: CanvasRenderingContext2D, flash: boolean, frame: nu
   const by = bobY(frame);
   const s = stride(frame);
   const hack = frame === 2 ? -1 : 0;
-  // torso
-  px(ctx, 5, 12 + by, dark, 19, 13);
+  // torso — heavier SE underbelly, NW hide gleam
+  px(ctx, 4, 12 + by, dark, 21, 14);
   px(ctx, 6, 11 + by, hide, 17, 13);
+  paintVolume(ctx, 6, 11 + by, 17, 13, hide, 1.18, 0.7);
   px(ctx, 7, 14 + by, bark, 13, 7);
+  paintVolume(ctx, 7, 14 + by, 13, 7, bark, 1.14, 0.72);
+  px(ctx, 8, 20 + by, shadeHex(bark, 0.62), 12, 3);
   // bark plates
   px(ctx, 8, 12 + by + hack, plate, 5, 3);
+  paintVolume(ctx, 8, 12 + by + hack, 5, 3, plate, 1.2, 0.75);
   px(ctx, 14, 11 + by + hack, dark, 6, 3);
   px(ctx, 9, 16 + by, plate, 7, 2);
   px(ctx, 12, 18 + by, dark, 5, 2);
   // head
   px(ctx, 17, 7 + by, hide, 12, 12);
+  paintVolume(ctx, 17, 7 + by, 12, 12, hide, 1.16, 0.72);
   px(ctx, 19, 9 + by, dark, 10, 9);
   px(ctx, 21, 11 + by, hide, 8, 6);
   px(ctx, 24, 13 + by, bark, 5, 4);
+  paintVolume(ctx, 24, 13 + by, 5, 4, bark, 1.14, 0.76);
   px(ctx, 23, 10 + by, eye, 3, 3);
   px(ctx, 24, 11 + by, "#1a1814", 1, 1);
   px(ctx, 25, 10 + by, "#f8f4e8", 1, 1);
@@ -138,11 +154,15 @@ function paintBarkHound(ctx: CanvasRenderingContext2D, flash: boolean, frame: nu
   px(ctx, 21 - s, 23 + by + liftR, dark, 3, 6 - liftR);
   px(ctx, 7 + s, 28 + by, plate, 3, 1);
   px(ctx, 16 + s, 28 + by, plate, 3, 1);
+  px(ctx, 7 + s, 28 + by, "#1a1814", 3, 1);
+  px(ctx, 16 + s, 28 + by, "#1a1814", 3, 1);
   // tail
   const tw = frame === 3 ? 1 : 0;
   px(ctx, 3, 14 + by, bark, 4, 4);
+  paintVolume(ctx, 3, 14 + by, 4, 4, bark, 1.16, 0.72);
   px(ctx, 1, 11 + by - tw, dark, 4, 4);
   px(ctx, 0, 8 + by, plate, 3, 4);
+  px(ctx, 5, 24 + by, "#1a1814", 18, 1);
 }
 
 function paintBriarMite(ctx: CanvasRenderingContext2D, flash: boolean, frame: number): void {
@@ -154,17 +174,21 @@ function paintBriarMite(ctx: CanvasRenderingContext2D, flash: boolean, frame: nu
   const by = bobY(frame);
   const s = stride(frame);
   const open = frame % 2 === 1 ? 1 : 0;
-  // segmented body
-  px(ctx, 9, 13 + by, dark, 14, 12);
+  // segmented body — shell dome NW, belly SE
+  px(ctx, 8, 13 + by, dark, 16, 13);
   px(ctx, 10, 12 + by, shell, 12, 12);
+  paintVolume(ctx, 10, 12 + by, 12, 12, shell, 1.2, 0.7);
   px(ctx, 11, 15 + by, belly, 10, 5);
+  paintVolume(ctx, 11, 15 + by, 10, 5, belly, 1.14, 0.76);
   px(ctx, 12, 13 + by, dark, 8, 2);
   px(ctx, 13, 18 + by, thorn, 6, 2);
-  px(ctx, 14, 14 + by, shadeHex(shell, 1.2), 4, 3);
+  px(ctx, 14, 14 + by, shadeHex(shell, 1.28), 4, 3);
+  px(ctx, 16, 21 + by, shadeHex(shell, 0.62), 6, 2);
   // thorn crown
   px(ctx, 8, 10 + by, thorn, 2, 4);
   px(ctx, 14, 8 + by, dark, 3, 5);
   px(ctx, 14, 7 + by, thorn, 3, 3);
+  px(ctx, 14, 7 + by, shadeHex(thorn, 1.25), 2, 2);
   px(ctx, 21, 10 + by, thorn, 2, 4);
   px(ctx, 11, 10 + by, thorn, 2, 3);
   px(ctx, 18, 9 + by, thorn, 2, 4);
@@ -184,6 +208,7 @@ function paintBriarMite(ctx: CanvasRenderingContext2D, flash: boolean, frame: nu
   px(ctx, 21 + s, 20 + by, dark, 3, 2);
   px(ctx, 12, 25 + by, dark, 2, 3);
   px(ctx, 18, 25 + by, dark, 2, 3);
+  px(ctx, 10, 24 + by, "#1a1814", 12, 1);
 }
 
 function paintShadeWisp(ctx: CanvasRenderingContext2D, flash: boolean, frame: number): void {
@@ -194,14 +219,20 @@ function paintShadeWisp(ctx: CanvasRenderingContext2D, flash: boolean, frame: nu
   const by = bobY(frame) - (frame === 2 ? 1 : 0);
   const sway = stride(frame);
   const pulse = frame === 1 || frame === 3 ? 1 : 0;
-  // outer flame
+  // outer flame — darker envelope, hotter NW core (keep diamond, don't flatten)
+  px(ctx, 13 + sway, 5 + by, dark, 6, 6);
+  px(ctx, 11 + sway, 10 + by, dark, 10, 9);
+  px(ctx, 9 + sway, 16 + by, dark, 14, 10);
   px(ctx, 14 + sway, 6 + by, dark, 4, 5);
   px(ctx, 12 + sway, 10 + by, dark, 8, 8);
   px(ctx, 10 + sway, 16 + by, dark, 12, 9);
   px(ctx, 13 + sway, 8 + by, core, 6, 16);
+  paintVolume(ctx, 13 + sway, 8 + by, 6, 16, core, 1.22, 0.78);
   px(ctx, 11 + sway, 12 + by, glow, 10, 12);
+  paintVolume(ctx, 11 + sway, 12 + by, 10, 12, glow, 1.18, 0.8);
   px(ctx, 13 + sway, 14 + by, shadeHex(glow, 1.25), 6, 7);
   px(ctx, 15 + sway, 11 + by, hot, 2 + pulse, 3);
+  px(ctx, 14 + sway, 10 + by, hot, 2, 2);
   // inner eye
   px(ctx, 15 + sway, 16 + by, "#1a1020", 2, 2);
   px(ctx, 15 + sway, 15 + by, hot, 2, 1);
@@ -249,7 +280,7 @@ function paintAshveilEmber(ctx: CanvasRenderingContext2D, flash: boolean, frame:
   px(ctx, 27 + sway, 9 + by + pulse, ashL, 2, 4);
   px(ctx, 28 + sway, 6 + by, ash, 1, 3);
 
-  // Irregular coal hull — offset chunks, not a smooth oval.
+  // Irregular coal hull — offset chunks, not a smooth oval. NW gleam / SE weight.
   px(ctx, 8 + sway, 12 + by, ashD, 16, 12);
   px(ctx, 7 + sway, 15 + by, ashD, 18, 8);
   px(ctx, 6 + sway, 17 + by, ashD, 3, 5);
@@ -257,14 +288,18 @@ function paintAshveilEmber(ctx: CanvasRenderingContext2D, flash: boolean, frame:
   px(ctx, 23 + sway, 13 + by, ashD, 4, 8);
   px(ctx, 24 + sway, 12 + by, ash, 3, 4);
   px(ctx, 9 + sway, 13 + by, ash, 14, 10);
+  paintVolume(ctx, 9 + sway, 13 + by, 14, 10, ash, 1.16, 0.68);
   px(ctx, 10 + sway, 14 + by, ashL, 5, 3);
   px(ctx, 16 + sway, 15 + by, ashL, 4, 2);
+  px(ctx, 18 + sway, 19 + by, ashD, 6, 4);
+  px(ctx, 19 + sway, 21 + by, rim, 5, 2);
   px(ctx, 7 + sway, 15 + by, rim, 1, 8);
   px(ctx, 24 + sway, 13 + by, rim, 1, 8);
 
   // Hood / brow so it reads as a held spirit, not a lantern.
   px(ctx, 10 + sway, 10 + by, ashD, 12, 4);
   px(ctx, 11 + sway, 9 + by, ash, 10, 3);
+  paintVolume(ctx, 11 + sway, 9 + by, 10, 3, ash, 1.18, 0.72);
   px(ctx, 12 + sway, 10 + by, ashL, 8, 2);
   px(ctx, 12 + sway, 11 + by, rim, 3, 1);
   px(ctx, 17 + sway, 11 + by, rim, 3, 1);
@@ -298,6 +333,7 @@ function paintAshveilEmber(ctx: CanvasRenderingContext2D, flash: boolean, frame:
   px(ctx, 11 + sway, 26 + by, ash, 4, 2);
   px(ctx, 17 + sway, 26 + by, ash, 3, 3);
   px(ctx, 13 + sway, 27 + by, ashL, 2, 2);
+  px(ctx, 10 + sway, 25 + by, rim, 12, 1);
 
   // Jagged flame crown LAST so the hood cannot bury it.
   px(ctx, 14 + sway, 6 + by - lick, ember, 4, 4);
@@ -339,17 +375,22 @@ function paintAshVole(ctx: CanvasRenderingContext2D, flash: boolean, frame: numb
   const ear = frame === 1 ? -1 : 0;
   const snuff = frame === 2 ? 1 : 0;
   const puff = frame === 1 || frame === 3;
-  // chubby oval — lower and rounder than Needle Rat
-  px(ctx, 8, 16 + by, dark, 14, 9);
+  // chubby oval — lower and rounder than Needle Rat; SE belly, NW back
+  px(ctx, 7, 16 + by, dark, 16, 10);
   px(ctx, 9, 15 + by, fur, 13, 9);
+  paintVolume(ctx, 9, 15 + by, 13, 9, fur, 1.16, 0.72);
   px(ctx, 10, 17 + by, ash, 10, 3);
+  paintVolume(ctx, 10, 17 + by, 10, 3, ash, 1.14, 0.74);
   px(ctx, 11, 19 + by, belly, 9, 4);
+  paintVolume(ctx, 11, 19 + by, 9, 4, belly, 1.12, 0.78);
+  px(ctx, 12, 22 + by, shadeHex(belly, 0.7), 8, 2);
   px(ctx, 12, 16 + by, dust, 6, 2);
   px(ctx, 14, 15 + by, ash, 3, 2);
   px(ctx, 17, 16 + by, ash, 2, 2);
   // blunt head / snout (incisors, not needles)
   px(ctx, 18, 13 + by, dark, 9, 9);
   px(ctx, 19, 14 + by, fur, 8, 7);
+  paintVolume(ctx, 19, 14 + by, 8, 7, fur, 1.16, 0.74);
   px(ctx, 23, 16 + by + snuff, dark, 6, 5);
   px(ctx, 24, 17 + by + snuff, dust, 5, 3);
   px(ctx, 27, 18 + by + snuff, nose, 2, 2);
@@ -378,9 +419,11 @@ function paintAshVole(ctx: CanvasRenderingContext2D, flash: boolean, frame: numb
   // stub tail
   px(ctx, 6, 19 + by, dark, 3, 3);
   px(ctx, 5, 17 + by, fur, 3, 3);
+  paintVolume(ctx, 5, 17 + by, 3, 3, fur, 1.14, 0.76);
   px(ctx, 5, 16 + by, ash, 2, 2);
   // outline hint
-  px(ctx, 8, 16 + by, "#1a1814", 1, 8);
+  px(ctx, 8, 16 + by, "#1a1814", 1, 9);
+  px(ctx, 9, 24 + by, "#1a1814", 13, 1);
   // ash dust puff on the stride
   if (puff) {
     px(ctx, 10 + s, 27 + by, dust, 2, 1);
@@ -402,14 +445,18 @@ function paintGorseFox(ctx: CanvasRenderingContext2D, flash: boolean, frame: num
   const s = stride(frame);
   const hack = frame === 2 ? -1 : 0;
   const tw = frame === 1 ? 1 : frame === 3 ? -1 : 0;
-  // lean torso — brighter rust than Bark Hound hide
-  px(ctx, 6, 14 + by, dark, 17, 10);
+  // lean torso — brighter rust than Bark Hound hide; NW gleam, SE chest
+  px(ctx, 5, 14 + by, dark, 19, 11);
   px(ctx, 7, 13 + by, hide, 16, 10);
+  paintVolume(ctx, 7, 13 + by, 16, 10, hide, 1.18, 0.72);
   px(ctx, 8, 16 + by, rust, 12, 5);
+  paintVolume(ctx, 8, 16 + by, 12, 5, rust, 1.16, 0.74);
   px(ctx, 9, 17 + by, chest, 10, 5);
+  paintVolume(ctx, 9, 17 + by, 10, 5, chest, 1.12, 0.8);
   px(ctx, 11, 14 + by, rust, 6, 2);
   // head / pointed muzzle
   px(ctx, 18, 8 + by, hide, 10, 10);
+  paintVolume(ctx, 18, 8 + by, 10, 10, hide, 1.16, 0.74);
   px(ctx, 20, 10 + by, dark, 9, 8);
   px(ctx, 22, 12 + by, hide, 7, 5);
   px(ctx, 24, 13 + by, chest, 5, 3);
@@ -439,11 +486,16 @@ function paintGorseFox(ctx: CanvasRenderingContext2D, flash: boolean, frame: num
   px(ctx, 16 + s, 26 + by, sock, 2, 2);
   px(ctx, 12 - s, 26 + by, sock, 2, 2);
   px(ctx, 20 - s, 26 + by, sock, 2, 2);
+  px(ctx, 8 + s, 27 + by, "#1a1410", 2, 1);
+  px(ctx, 16 + s, 27 + by, "#1a1410", 2, 1);
   // bushy gorse-bristle tail (the tell)
   px(ctx, 4, 14 + by, hide, 4, 5);
+  paintVolume(ctx, 4, 14 + by, 4, 5, hide, 1.16, 0.74);
   px(ctx, 2, 12 + by - tw, rust, 4, 5);
+  paintVolume(ctx, 2, 12 + by - tw, 4, 5, rust, 1.14, 0.72);
   px(ctx, 1, 9 + by - tw, gorseDark, 4, 5);
   px(ctx, 0, 7 + by - tw, gorse, 3, 4);
+  paintVolume(ctx, 0, 7 + by - tw, 3, 4, gorse, 1.18, 0.78);
   px(ctx, 1, 8 + by - tw, gorse, 2, 2);
   px(ctx, 3, 10 + by, gorse, 2, 2);
   px(ctx, 2, 13 + by, gorseDark, 2, 2);
@@ -491,7 +543,7 @@ function paintCreature(
       break;
   }
   if (id !== "shade-wisp" && id !== "ashveil-ember") {
-    addPixelVolume(ctx, CREATURE_FRAME, CREATURE_FRAME, 0.11, 0.15);
+    addPixelVolume(ctx, CREATURE_FRAME, CREATURE_FRAME, 0.14, 0.18);
   }
   return c;
 }

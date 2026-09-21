@@ -92,6 +92,30 @@ function luma(r: number, g: number, b: number): number {
 }
 
 /**
+ * Painted NW highlight + SE shade on a filled rect (light from the north-west).
+ * Use on torso/body masses so volume still reads after the sheet is scaled up;
+ * `addPixelVolume` only bevels 1px silhouette edges.
+ */
+export function paintVolume(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  fill: string,
+  highlight = 1.2,
+  shade = 0.74,
+): void {
+  if (w < 2 || h < 2) return;
+  const hw = Math.max(1, Math.floor(w * 0.42));
+  const hh = Math.max(1, Math.floor(h * 0.3));
+  const sw = Math.max(1, Math.floor(w * 0.36));
+  const sh = Math.max(1, Math.floor(h * 0.34));
+  px(ctx, x, y, shadeHex(fill, highlight), hw, hh);
+  px(ctx, x + (w - sw), y + (h - sh), shadeHex(fill, shade), sw, sh);
+}
+
+/**
  * Subtle NW highlight / SE shade on opaque fill pixels.
  * Near-black outline ink is left alone and treated as empty so chunky Vale
  * outlines still get a volume bevel on the fill they wrap.
