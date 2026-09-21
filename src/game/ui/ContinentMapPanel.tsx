@@ -14,8 +14,8 @@ export function ContinentMapPanel({
     <div className="p-3.5">
       <div className="mb-2.5 flex items-center justify-between gap-2">
         <div>
-          <div className="vale-screen-title">Continents</div>
-          <div className="vale-screen-kicker">
+          <div className="vale-screen-title vale-map-title">Continents</div>
+          <div className="vale-screen-kicker vale-map-kicker">
             Discovered via gates · M to close
           </div>
         </div>
@@ -37,7 +37,7 @@ export function ContinentMapPanel({
           return (
             <li
               key={c.id}
-              className={`vale-skill-row px-2.5 py-2.5 ${
+              className={`vale-skill-row vale-map-row px-2.5 py-2.5 ${
                 here || inHollowHere ? "vale-map-row-here" : ""
               }`}
               style={
@@ -48,18 +48,18 @@ export function ContinentMapPanel({
             >
               <div className="flex items-baseline justify-between gap-2">
                 <span
-                  className={`vale-skill-name ${known ? "" : "vale-skill-name-dim"}`}
+                  className={`vale-skill-name vale-map-place ${known ? "" : "vale-skill-name-dim"}`}
                   style={known ? { color: c.palette.gate } : undefined}
                 >
                   {known ? c.name : "???"}
                 </span>
                 {(here || inHollowHere) && (
-                  <span className="vale-skill-tag text-[#b4bba6]">
+                  <span className="vale-skill-tag vale-map-mark">
                     {inHollowHere ? "hollow" : "here"}
                   </span>
                 )}
               </div>
-              {known && <p className="vale-skill-blurb">{c.blurb}</p>}
+              {known && <p className="vale-skill-blurb vale-map-blurb">{c.blurb}</p>}
             </li>
           );
         })}
