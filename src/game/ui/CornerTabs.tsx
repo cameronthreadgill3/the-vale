@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-/** Skills + Map share one corner dock (desktop bottom-left, mobile above the stick). */
+/** Skills + Map share one corner dock (desktop bottom-left, mobile below HP). */
 export function CornerTabs({
   skillsOpen,
   mapOpen,
@@ -18,7 +18,7 @@ export function CornerTabs({
 }) {
   const open = skillsOpen || mapOpen;
   return (
-    <div className="pointer-events-none absolute z-30 flex max-w-[min(100%-1.5rem,22rem)] flex-col-reverse gap-1 max-md:bottom-[9.5rem] max-md:left-[max(0.75rem,env(safe-area-inset-left))] max-md:max-h-[calc(100dvh-12.5rem)] md:bottom-6 md:left-6">
+    <div className="vale-corner-dock pointer-events-none z-30">
       <div className="pointer-events-auto flex overflow-hidden rounded border border-[#2a2e24] bg-[#161812]/90 shadow-lg backdrop-blur-md">
         <TabBtn
           label="Skills"
@@ -34,7 +34,7 @@ export function CornerTabs({
         />
       </div>
       {open && (
-        <div className="pointer-events-auto vale-panel vale-corner-panel w-[min(100vw-1.5rem,22rem)] overflow-auto rounded border border-[#2a2e24] bg-[#161812]/95 shadow-xl backdrop-blur-md max-md:max-h-[calc(100dvh-13rem)] md:max-h-[min(58vh,28rem)]">
+        <div className="pointer-events-auto vale-panel vale-corner-panel w-[min(100vw-1.5rem,22rem)] overflow-auto rounded border border-[#2a2e24] bg-[#161812]/95 shadow-xl backdrop-blur-md">
           {skillsOpen ? skillsPanel : mapPanel}
         </div>
       )}

@@ -128,7 +128,7 @@ export function GameShellHud({
         )}
         {quest && <QuestHudCard title={quest.title} lines={quest.lines} />}
       </div>
-      <div className="vale-hud-vitals vale-hud-panel vale-chrome w-[8.75rem] shrink-0 rounded-sm px-2.5 py-2 text-xs text-[#e0dcc8] sm:w-36 sm:px-3 sm:text-sm">
+      <div className="vale-hud-vitals vale-hud-panel vale-chrome mt-9 w-[8.75rem] shrink-0 rounded-sm px-2.5 py-2 text-xs text-[#e0dcc8] sm:mt-10 sm:w-36 sm:px-3 sm:text-sm">
         <div className="font-display" style={{ color: cls.accent }}>
           Level {hud.level}
         </div>
@@ -169,8 +169,12 @@ export function GameShellHud({
           )}
         </div>
         <div className="mt-2 text-[10px] uppercase tracking-wider text-[#8a9080]">
-          Tile {hud.x}, {hud.y} · {character.gold}g
-          {character.bankGold > 0 ? ` · Vault ${character.bankGold}g` : ""}
+          {character.gold}g
+          <span className="vale-hud-extra">
+            {" "}
+            · Tile {hud.x}, {hud.y}
+            {character.bankGold > 0 ? ` · Vault ${character.bankGold}g` : ""}
+          </span>
         </div>
         <button
           type="button"
@@ -192,7 +196,7 @@ export function GameShellHud({
             <span className="text-[#c9a227]"> · Prem</span>
           )}
         </button>
-        <div className="mt-0.5 truncate text-[10px] text-[#c8c4b0]">
+        <div className="vale-hud-extra mt-0.5 truncate text-[10px] text-[#c8c4b0]">
           {equippedLine(character)}
         </div>
         {hud.inSafeZone && (
