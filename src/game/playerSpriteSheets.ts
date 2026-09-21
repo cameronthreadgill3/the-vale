@@ -255,7 +255,7 @@ function drawClass(
       px(ctx, hx - 2, cy - 14 + b + sw, p.a, 5, 3);
       paintVolume(ctx, hx - 2, cy - 14 + b + sw, 5, 3, p.a, 1.2, 0.75);
       if (facing !== "north") {
-        const sx = facing === "west" ? cx - 10 : facing === "east" ? cx + 8 : cx - 10;
+        const sx = facing === "west" ? cx + 5 : facing === "east" ? cx - 10 : cx - 10;
         outlinedVolume(ctx, sx - 3, cy - 1 + b, 7, 7, STEEL, 1.18, 0.7);
         px(ctx, sx - 1, cy + 1 + b, p.b, 3, 3);
       }
@@ -272,11 +272,14 @@ function drawClass(
     } else if (id === "warden") {
       const hx = facing === "north" || facing === "south" ? cx + 9 : cx + (side || 1) * 10;
       outlinedVolume(ctx, hx - 1, cy - 10 + b + sw, 3, 16, STEEL, 1.22, 0.68);
-      const sx = facing === "west" ? cx - 11 : facing === "east" ? cx + 8 : cx - 11;
+      const sx = facing === "west" ? cx + 6 : facing === "east" ? cx - 12 : cx - 11;
       if (facing !== "north") {
-        outlinedVolume(ctx, sx - 5, cy - 4 + b, 10, 11, p.c, 1.16, 0.72);
-        px(ctx, sx - 4, cy - 3 + b, STEEL, 8, 9);
-        paintVolume(ctx, sx - 4, cy - 3 + b, 8, 9, STEEL, 1.18, 0.7);
+        const sideView = facing === "west" || facing === "east";
+        const swd = sideView ? 8 : 10;
+        const shd = sideView ? 10 : 11;
+        outlinedVolume(ctx, sx - 5, cy - 4 + b, swd, shd, p.c, 1.16, 0.72);
+        px(ctx, sx - 4, cy - 3 + b, STEEL, swd - 2, shd - 2);
+        paintVolume(ctx, sx - 4, cy - 3 + b, swd - 2, shd - 2, STEEL, 1.18, 0.7);
         px(ctx, sx - 1, cy - 1 + b, p.b, 3, 7);
         px(ctx, sx - 3, cy + 1 + b, p.b, 7, 3);
       }
