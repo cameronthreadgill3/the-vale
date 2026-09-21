@@ -21,6 +21,7 @@ import {
   type GateWatchQuestProgress,
 } from "@/game/quests";
 import { ASHWOOD_CAIRNS } from "@/game/cairns";
+import { huntZoneById } from "@/game/huntZones";
 
 export type WayfindObjective = {
   label: string;
@@ -37,6 +38,8 @@ export type RadarDot = {
 };
 
 export const WAYFIND_LABEL_RANGE = 8;
+/** Hunt cairns read from farther than folk/gates so Rec. bands are wayfindable. */
+export const HUNT_CAIRN_LABEL_RANGE = 12;
 export const WAYFIND_RADAR_RANGE = 14;
 
 export function resolveQuestObjective(
@@ -255,20 +258,22 @@ export function objectiveForTeeth(
         kind: "enemy",
       };
     }
+    const ashwood = cairnPixel("ashwood-edge", player.x + TILE * 6, player.y);
     return {
-      label: "Hunt Needle Rats (ashwood edge)",
-      x: player.x + TILE * 6,
-      y: player.y,
+      label: "Hunt Needle Rats (Ashwood Edge · Rec. 2–4)",
+      x: ashwood.x,
+      y: ashwood.y,
       kind: "landmark",
     };
   }
   if (!q.houndDone) {
     const hound = nearestEnemy(player, enemies, "bark-hound");
     if (hound) return { label: "Survive Bark Hound", x: hound.x, y: hound.y, kind: "enemy" };
+    const north = cairnPixel("north-ashwood", player.x + TILE * 8, player.y - TILE * 2);
     return {
-      label: "Find Bark Hound (ashwood)",
-      x: player.x + TILE * 8,
-      y: player.y - TILE * 2,
+      label: "Find Bark Hound (North Ashwood · Rec. 3–5)",
+      x: north.x,
+      y: north.y,
       kind: "landmark",
     };
   }
@@ -319,6 +324,16 @@ function nearestEnemy(
     }
   }
   return best;
+}
+
+function cairnPixel(
+  zoneId: string,
+  fallbackX: number,
+  fallbackY: number,
+): { x: number; y: number } {
+  const zone = huntZoneById(zoneId);
+  if (!zone) return { x: fallbackX, y: fallbackY };
+  return { x: (zone.cairn.x + 0.5) * TILE, y: (zone.cairn.y + 0.5) * TILE };
 }
 
 export function tilesAway(

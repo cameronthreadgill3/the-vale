@@ -45,6 +45,7 @@ import {
 import { warmCreatureSheets } from "@/game/gfx/creatures";
 import { warmFolkSheets } from "@/game/gfx/folkSprites";
 import { flushDepth, type DepthItem } from "@/game/gfx/depth";
+import { drawHuntCairns } from "@/game/huntZones";
 import {
   resolveQuestObjective,
   tilesAway,
@@ -53,6 +54,7 @@ import {
   drawRadar,
   collectRadarDots,
   drawWorldWayfindLabels,
+  huntZoneLabelForPlayer,
 } from "@/game/wayfinding";
 
 /** Position-delta walk state (avoids patching assembled gameLoop). */
@@ -155,6 +157,9 @@ export function advanceCameraAndRender(args: {
     drawCairns(ctx, cairnsOnContinent(map.continentId), originX, originY, TILE);
   }
   drawShopMarkers(ctx, shops, folk, originX, originY);
+  if (map.kind === "overworld") {
+    drawHuntCairns(ctx, map.continentId, originX, originY);
+  }
   mouse.worldX = originX + mouse.x;
   mouse.worldY = originY + mouse.y;
   const px = Math.floor(player.x - originX);
@@ -256,6 +261,7 @@ export function advanceCameraAndRender(args: {
       inSafeZone: isInSafeZone(character.continentId, map, player.x, player.y),
       objectiveLabel: objective ? objective.label : null,
       objectiveDist: objective ? tilesAway(player, objective) : null,
+      huntZoneLabel: huntZoneLabelForPlayer(map, player),
     });
   }
   promptAccum += dt;

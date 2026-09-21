@@ -63,7 +63,7 @@ export const FOLK: FolkDef[] = [
   {
     id: "rook",
     name: "Rook",
-    line: "Watch-captain of this square. Survive first. Learn the ashwood edge. Progress when the System allows. Needle rats in the basin grass; bark hounds pack from the trees. Shops and the depot sit on the cobbles — talk to folk before you bleed in the grass.",
+    line: "Watch-captain of this square. Survive first. Learn the ashwood edge. Cairns mark the hunting grounds — read the Rec. before you walk in. Needle rats in the basin grass; bark hounds pack from the trees. Ash-voles and gorse foxes fill the skirts. Shops and the depot sit on the cobbles — talk to folk before you bleed in the grass.",
     continentId: "thornreach",
     x: 22,
     y: 16,

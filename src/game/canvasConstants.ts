@@ -37,6 +37,8 @@ export type HudState = {
   objectiveLabel?: string | null;
   /** Distance to objective in tiles. */
   objectiveDist?: number | null;
+  /** Current hunt ground · rec-level, when standing in a Thornreach zone. */
+  huntZoneLabel?: string | null;
 };
 
 /** Combat pacing / ranges (seconds, tiles). */

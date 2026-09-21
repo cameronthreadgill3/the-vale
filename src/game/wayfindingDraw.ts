@@ -8,6 +8,7 @@ import {
   type RadarDot,
   type WayfindObjective,
 } from "@/game/wayfindingObjectives";
+import { huntZonesFor } from "@/game/huntZones";
 
 /** Edge arrow / on-screen marker toward the quest objective. */
 export function drawObjectivePointer(
@@ -221,13 +222,19 @@ export function collectRadarDots(
     for (const b of buildingsOnContinent(map.continentId)) {
       push((b.door.x + 0.5) * TILE, (b.door.y + 0.5) * TILE, b.signColor);
     }
+    for (const z of huntZonesFor(map.continentId)) {
+      push((z.cairn.x + 0.5) * TILE, (z.cairn.y + 0.5) * TILE, z.labelColor);
+    }
   } else if (map.exit) {
     push((map.exit.x + 0.5) * TILE, (map.exit.y + 0.5) * TILE, "#c9a227");
   }
   for (const e of enemies) {
     if (e.hp <= 0) continue;
     const hunt =
-      e.kind.id === "needle-rat" || e.kind.id === "bark-hound";
+      e.kind.id === "needle-rat" ||
+      e.kind.id === "bark-hound" ||
+      e.kind.id === "ash-vole" ||
+      e.kind.id === "gorse-fox";
     push(e.x, e.y, hunt ? "#e07050" : "#8a9080");
   }
   if (objective) {
