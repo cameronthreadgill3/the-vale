@@ -11,6 +11,8 @@ export {
   CANOPY_PX,
   warmTileSheets,
 } from "@/game/gfx/tiles";
+export { getPropSheet } from "@/game/gfx/props";
+export { drawTownOverlays } from "@/game/gfx/townDraw";
 export {
   drawCreatureSprite,
   getCreatureSheet,

@@ -17,14 +17,30 @@ import { drawSoftShadow } from "@/game/gfx/canvasUtil";
 /** Subtle classic-client grid (optional). */
 export const DRAW_TILE_GRID = true;
 
-const HARD = new Set<GroundTile>(["path", "dirt", "water", "stone", "gate", "hollow", "exit"]);
+const HARD = new Set<GroundTile>([
+  "path",
+  "cobble",
+  "dirt",
+  "water",
+  "stone",
+  "wall",
+  "floor",
+  "door",
+  "gate",
+  "hollow",
+  "exit",
+]);
 const LAND = new Set<GroundTile>([
   "grass",
   "grassAlt",
   "dirt",
   "path",
+  "cobble",
   "stone",
   "flower",
+  "wall",
+  "floor",
+  "door",
   "gate",
   "hollow",
   "exit",

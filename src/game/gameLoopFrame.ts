@@ -1,6 +1,7 @@
 /** Movement and interaction-prompt helpers for the game loop. */
 import { getContinent } from "@/game/continents";
 import { TILE, isSolid, nearTile, type WorldMap } from "@/game/world";
+import { buildingsOnContinent, THORNREACH_DEPOT } from "@/game/world/town";
 import { PLAYER_RADIUS, INTERACT_RADIUS, type PromptState } from "@/game/canvasConstants";
 import { cairnsOnContinent } from "@/game/cairns";
 import { getTeethQuest, isAshwoodActive, loadQuestLog } from "@/game/quests";
@@ -76,6 +77,27 @@ export function computePrompt(
       // Skip shop marker if a folk with that shop already covers the tile.
       if (folk.some((f) => f.x === s.x && f.y === s.y && f.shopId === s.id)) continue;
       consider(s.x, s.y, { kind: "shop", shopId: s.id, name: s.name });
+    }
+    for (const b of buildingsOnContinent(map.continentId)) {
+      if (b.shopId) {
+        consider(b.door.x, b.door.y, {
+          kind: "shop",
+          shopId: b.shopId,
+          name: b.name,
+        });
+      }
+      if (b.id === THORNREACH_DEPOT.buildingId) {
+        const clerk = folk.find((f) => f.id === THORNREACH_DEPOT.folkId);
+        if (clerk) {
+          consider(b.door.x, b.door.y, {
+            kind: "folk",
+            folkId: clerk.id,
+            name: clerk.name,
+            hasShop: Boolean(clerk.shopId),
+            hasBank: Boolean(clerk.bankId),
+          });
+        }
+      }
     }
     const qlog = loadQuestLog();
     const teethDone = getTeethQuest(qlog)?.status === "complete";

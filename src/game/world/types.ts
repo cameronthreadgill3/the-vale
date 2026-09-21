@@ -13,9 +13,13 @@ export type GroundTile =
   | "grassAlt"
   | "dirt"
   | "path"
+  | "cobble"
   | "stone"
   | "water"
   | "flower"
+  | "wall"
+  | "floor"
+  | "door"
   | "gate"
   | "hollow"
   | "exit";
@@ -52,9 +56,14 @@ export interface WorldMap {
 }
 
 export function isSolid(tile: GroundTile, kind: "overworld" | "hollow"): boolean {
-  if (tile === "water" || tile === "stone") return true;
+  if (tile === "water" || tile === "stone" || tile === "wall") return true;
   void kind;
   return false;
+}
+
+/** Plaza houses — skip fauna and keep interiors walkable. */
+export function isTownStructureTile(tile: GroundTile): boolean {
+  return tile === "wall" || tile === "floor" || tile === "door";
 }
 
 export function clearArea(

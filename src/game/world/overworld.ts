@@ -12,6 +12,7 @@ import {
   type HollowMarker,
   type WorldMap,
 } from "@/game/world/types";
+import { stampThornreachTown } from "@/game/world/town";
 
 /** Edge slots for gates - N/E/S/W midpoints with slight offsets. */
 function gateSlots(
@@ -128,7 +129,7 @@ export function generateOverworld(continentId: ContinentId): WorldMap {
       tries++;
     } while (
       tries < 40 &&
-      (Math.hypot(hx - sx, hy - sy) < 6 ||
+      (Math.hypot(hx - sx, hy - sy) < (continentId === "thornreach" ? 11 : 6) ||
         gates.some((g) => Math.hypot(g.x - hx, g.y - hy) < 4) ||
         hollows.some((h0) => Math.hypot(h0.x - hx, h0.y - hy) < 5))
     );
@@ -155,7 +156,7 @@ export function generateOverworld(continentId: ContinentId): WorldMap {
     }
   }
 
-  return {
+  const map: WorldMap = {
     kind: "overworld",
     continentId,
     hollowIndex: null,
@@ -170,6 +171,8 @@ export function generateOverworld(continentId: ContinentId): WorldMap {
     spawn: { x: sx, y: sy },
     returnTile: null,
   };
+  stampThornreachTown(map);
+  return map;
 }
 
 export function spawnNearArrivalGate(
