@@ -37,6 +37,13 @@ export {
 } from "@/game/gfx/cairn";
 export { drawTownOverlays } from "@/game/gfx/townDraw";
 export {
+  warmFlamePulse,
+  drawLanternGlassFlicker,
+  drawPathLampGlow,
+  collectPathLampDepthItems,
+  isPathLamp,
+} from "@/game/gfx/lampFlicker";
+export {
   drawCreatureSprite,
   getCreatureSheet,
   creatureWalkFrame,

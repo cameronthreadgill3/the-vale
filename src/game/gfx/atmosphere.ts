@@ -1,22 +1,14 @@
 /**
  * Lightweight atmosphere overlays — vignette, ashwood umbra/silver, hollow torch spots,
  * plus a premium depth/motion/light layer (parallax haze, motes, warm/cool zones).
- * Keep labels readable (low alpha, drawn under wayfinding).
+ * Plaza lanterns and ashwood path lamps share one warm pulse, kept under labels.
  */
 import { TILE, type WorldMap } from "@/game/world";
 import { propsOnContinent } from "@/game/world/town";
 import { fountainFrameAt, tileVariantAt } from "@/game/gfx/tiles";
 import { drawSoftShadow } from "@/game/gfx/canvasUtil";
+import { drawPathLampGlow, warmFlamePulse } from "@/game/gfx/lampFlicker";
 import type { DepthItem } from "@/game/gfx/depth";
-
-function torchFlicker(timeSec: number, seed: number): number {
-  return (
-    0.76 +
-    0.12 * Math.sin(timeSec * 7.1 + seed * 1.7) +
-    0.08 * Math.sin(timeSec * 13.4 + seed * 2.3) +
-    0.05 * Math.sin(timeSec * 23.0 + seed * 0.9)
-  );
-}
 
 /** Soft screen vignette; alpha kept modest so HUD / labels stay clear. */
 export function drawVignette(
@@ -156,7 +148,7 @@ export function drawHollowTorchSpots(
     const s = spots[i]!;
     const sx = Math.floor(s.x - originX);
     const sy = Math.floor(s.y - originY);
-    const flicker = torchFlicker(timeSec, i);
+    const flicker = warmFlamePulse(timeSec, i);
     const isPlayer = i === spots.length - 1;
     const r = (isPlayer ? 74 : s.wall ? 56 : 48) * flicker;
     const g = ctx.createRadialGradient(sx, sy, 2, sx, sy, r);
@@ -434,7 +426,8 @@ export function drawSurfaceLight(
       const lx = Math.floor(prop.x * TILE + 16 - originX);
       const ly = Math.floor(prop.y * TILE + 10 - originY);
       if (lx < -40 || ly < -40 || lx > viewW + 40 || ly > viewH + 40) continue;
-      const pulse = 0.78 + 0.22 * Math.sin(timeSec * 5.2 + prop.x * 0.7);
+      const phase = prop.x * 0.73 + prop.y * 0.41;
+      const pulse = warmFlamePulse(timeSec, phase);
       const g = ctx.createRadialGradient(lx, ly, 2, lx, ly, 40);
       g.addColorStop(0, `rgba(255, 176, 80, ${0.2 * pulse})`);
       g.addColorStop(0.45, `rgba(220, 120, 40, ${0.07 * pulse})`);
@@ -442,6 +435,7 @@ export function drawSurfaceLight(
       ctx.fillStyle = g;
       ctx.fillRect(lx - 40, ly - 40, 80, 80);
     }
+    drawPathLampGlow(ctx, map, originX, originY, viewW, viewH, timeSec);
   }
   ctx.restore();
 }

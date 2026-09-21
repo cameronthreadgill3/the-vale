@@ -2,6 +2,7 @@
  * Draw Thornreach buildings, signs, and plaza props over ground tiles.
  * Structure depth: roof bevel / under-eave, door-sign lip, south-facade contact.
  * Ambient motion stays on the prop sheets: cloth sway, hanging signs, lantern flame.
+ * The lantern glass pulse is a few additive pixels on that same cycle.
  */
 import { TILE, type WorldMap } from "@/game/world";
 import {
@@ -21,6 +22,7 @@ import {
 } from "@/game/gfx/props";
 import { TILE_PX } from "@/game/gfx/tiles";
 import { drawSoftShadow, GROUND_SHADOW_ALPHA } from "@/game/gfx/canvasUtil";
+import { drawLanternGlassFlicker } from "@/game/gfx/lampFlicker";
 import { drawFloatingLabel } from "@/game/folkCanvas";
 
 /** Ground-contact ellipses matching player/cairn `drawSoftShadow` language. */
@@ -155,16 +157,7 @@ function drawLanternFlicker(
   timeSec: number,
   phase: number,
 ): void {
-  const pulse =
-    0.76 +
-    0.12 * Math.sin(timeSec * 7.1 + phase) +
-    0.08 * Math.sin(timeSec * 13.4 + phase * 1.3);
-  ctx.save();
-  ctx.globalCompositeOperation = "lighter";
-  ctx.globalAlpha = 0.22 * pulse;
-  ctx.fillStyle = "#f0d060";
-  ctx.fillRect(sx + 14, sy + 9, 4, 4);
-  ctx.restore();
+  drawLanternGlassFlicker(ctx, sx, sy, timeSec, phase);
 }
 
 function propFrame(kind: TownPropKind, timeSec: number, phase: number): number {
