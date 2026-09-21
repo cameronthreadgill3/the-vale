@@ -1,6 +1,14 @@
 /** Creature sprite drawing (keeps enemies.ts AI untouched). Original Vale art. */
 import type { Enemy } from "@/game/enemies";
-import { drawCreatureSprite } from "@/game/gfx/creatures";
+import { drawCreatureSprite, creatureWalkFrame } from "@/game/gfx/creatures";
+import { drawSoftShadow } from "@/game/gfx/canvasUtil";
+
+let _animT = 0;
+
+/** Advance shared creature anim clock (call once per render frame). */
+export function tickEnemyGfx(dt: number): void {
+  _animT += dt;
+}
 
 export function drawEnemies(
   ctx: CanvasRenderingContext2D,
@@ -8,11 +16,14 @@ export function drawEnemies(
   originX: number,
   originY: number,
 ): void {
-  for (const e of enemies) {
+  // Y-sort enemies for depth
+  const sorted = enemies.slice().sort((a, b) => a.y - b.y);
+  for (const e of sorted) {
     const sx = Math.floor(e.x - originX);
     const sy = Math.floor(e.y - originY);
     if (e.ai === "dead") {
       ctx.globalAlpha = Math.max(0, e.corpseT / 1.4) * 0.55;
+      drawSoftShadow(ctx, sx, sy + 2, e.kind.radius * 0.9, e.kind.radius * 0.35, 0.4);
       ctx.fillStyle = e.kind.colorDark;
       ctx.beginPath();
       ctx.ellipse(sx, sy + 2, e.kind.radius * 0.9, e.kind.radius * 0.4, 0, 0, Math.PI * 2);
@@ -20,10 +31,8 @@ export function drawEnemies(
       ctx.globalAlpha = 1;
       continue;
     }
-    ctx.fillStyle = "rgba(0,0,0,0.3)";
-    ctx.beginPath();
-    ctx.ellipse(sx, sy + e.kind.radius * 0.55, e.kind.radius * 0.8, e.kind.radius * 0.35, 0, 0, Math.PI * 2);
-    ctx.fill();
+    const moving = e.ai === "chase" || e.ai === "attack";
+    const frame = creatureWalkFrame(_animT, moving);
     drawCreatureSprite(
       ctx,
       e.kind.id,
@@ -33,19 +42,20 @@ export function drawEnemies(
       sy,
       e.kind.radius,
       e.flash > 0,
+      frame,
     );
-    ctx.font = "9px Figtree, system-ui, sans-serif";
+    ctx.font = "9px \"IBM Plex Mono\", ui-monospace, monospace";
     ctx.textAlign = "center";
     ctx.fillStyle = "#c9c4a8";
     ctx.fillText(
       `${e.kind.name} · ${e.kind.rank}`,
       sx,
-      sy - e.kind.radius - 10,
+      sy - e.kind.radius - 12,
     );
     const ratio = e.hp / e.kind.maxHp;
     ctx.fillStyle = "#1a1c16";
-    ctx.fillRect(sx - 8, sy - e.kind.radius - 6, 16, 3);
+    ctx.fillRect(sx - 8, sy - e.kind.radius - 8, 16, 3);
     ctx.fillStyle = ratio > 0.35 ? "#c45c3e" : "#a03030";
-    ctx.fillRect(sx - 8, sy - e.kind.radius - 6, 16 * ratio, 3);
+    ctx.fillRect(sx - 8, sy - e.kind.radius - 8, 16 * ratio, 3);
   }
 }
