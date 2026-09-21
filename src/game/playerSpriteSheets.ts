@@ -4,7 +4,7 @@
  * Pass 3: clearer 4-frame stride, arm swing, facing silhouettes.
  */
 import type { ClassId } from "@/game/classes";
-import { makeCanvas, ctx2d, px, shadeHex } from "@/game/gfx/canvasUtil";
+import { makeCanvas, ctx2d, px, shadeHex, addPixelVolume } from "@/game/gfx/canvasUtil";
 
 export const FRAME = 32;
 export const COLS = 4;
@@ -115,6 +115,7 @@ function drawTorso(
   const b = bob(frame);
   const w = wide ? 12 : 10;
   outlined(ctx, cx - w / 2, cy - 4 + b, w, 11, color);
+  px(ctx, cx - w / 2 + 1, cy - 3 + b, shadeHex(color, 1.2), Math.max(2, Math.floor(w / 2) - 1), 2);
 }
 
 function drawArms(
@@ -264,6 +265,7 @@ export function paintClassSheet(classId: ClassId): HTMLCanvasElement | Offscreen
       drawClass(ctx, classId, col * FRAME + FRAME / 2, row * FRAME + FRAME / 2 + 2, facing, col);
     }
   }
+  addPixelVolume(ctx, SHEET, SHEET, 0.13, 0.16);
   return canvas;
 }
 
@@ -273,6 +275,7 @@ export function paintSouthPreview(classId: ClassId): HTMLCanvasElement | Offscre
   ctx.clearRect(0, 0, FRAME, FRAME);
   ctx.imageSmoothingEnabled = false;
   drawClass(ctx, classId, FRAME / 2, FRAME / 2 + 2, "south", 0);
+  addPixelVolume(ctx, FRAME, FRAME, 0.13, 0.16);
   return canvas;
 }
 

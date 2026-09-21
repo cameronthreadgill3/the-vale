@@ -3,7 +3,7 @@
  * Needle Rat, Bark Hound, Ash-vole, Gorse Fox, Briar Mite, Shade Wisp,
  * Ashveil Ember — 4 walk/bob frames with pose changes. Cached sheets, not CipSoft.
  */
-import { makeCanvas, ctx2d, px, shadeHex, drawSoftShadow } from "@/game/gfx/canvasUtil";
+import { makeCanvas, ctx2d, px, shadeHex, drawSoftShadow, addPixelVolume, GROUND_SHADOW_ALPHA } from "@/game/gfx/canvasUtil";
 
 export type CreatureKindId =
   | "briar-mite"
@@ -490,6 +490,9 @@ function paintCreature(
       px(ctx, 11, 13, color, 10, 10);
       break;
   }
+  if (id !== "shade-wisp" && id !== "ashveil-ember") {
+    addPixelVolume(ctx, CREATURE_FRAME, CREATURE_FRAME, 0.11, 0.15);
+  }
   return c;
 }
 
@@ -529,10 +532,10 @@ export function drawCreatureSprite(
   drawSoftShadow(
     ctx,
     sx,
-    sy + size * 0.28,
-    size * (ember ? 0.4 : 0.34),
-    size * (ember ? 0.16 : 0.13),
-    flash ? 0.2 : ember ? 0.46 : 0.38,
+    sy + size * 0.34,
+    size * (ember ? 0.42 : 0.36),
+    size * (ember ? 0.15 : 0.13),
+    flash ? 0.2 : ember ? 0.46 : GROUND_SHADOW_ALPHA,
   );
   if (ember) {
     ctx.save();

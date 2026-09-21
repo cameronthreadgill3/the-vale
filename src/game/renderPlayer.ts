@@ -6,7 +6,7 @@ import {
   getPlayerSprite,
   type Facing,
 } from "@/game/playerSprites";
-import { drawSoftShadow } from "@/game/gfx/canvasUtil";
+import { drawSoftShadow, GROUND_SHADOW_ALPHA } from "@/game/gfx/canvasUtil";
 
 export function drawPlayer(
   ctx: CanvasRenderingContext2D,
@@ -18,7 +18,7 @@ export function drawPlayer(
   playerFlash: number,
   accent: { accent: string; accentLite: string; accentDark: string },
 ): void {
-  drawSoftShadow(ctx, px, py + 6, PLAYER_RADIUS * 0.95, PLAYER_RADIUS * 0.4, 0.36);
+  drawSoftShadow(ctx, px, py + 10, PLAYER_RADIUS * 1.05, PLAYER_RADIUS * 0.42, GROUND_SHADOW_ALPHA);
 
   const sheet = getPlayerSprite(character.classId);
   if (sheet) {

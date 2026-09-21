@@ -52,9 +52,12 @@ export function mixHex(a: string, b: string, t: number): string {
   return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${bl.toString(16).padStart(2, "0")}`;
 }
 
+/** Shared ground-contact alpha so player / folk / creatures sit on the same plane. */
+export const GROUND_SHADOW_ALPHA = 0.38;
+
 /**
- * Two-layer elliptical drop shadow (outer wash + darker contact).
- * Cheap, no blur filter — reads as ground contact for depth sorting.
+ * Three-layer elliptical drop shadow (outer wash + mid + darker contact).
+ * Cheap, no blur filter — light from the north-west, contact sits slightly south-east.
  */
 export function drawSoftShadow(
   ctx: CanvasRenderingContext2D,
@@ -62,18 +65,74 @@ export function drawSoftShadow(
   cy: number,
   rx: number,
   ry: number,
-  alpha = 0.32,
+  alpha = GROUND_SHADOW_ALPHA,
 ): void {
-  const x = Math.floor(cx);
-  const y = Math.floor(cy) + 1;
+  const x = Math.floor(cx) + 1;
+  const y = Math.floor(cy) + 2;
+  const outerRx = Math.max(3, rx * 1.28);
+  const outerRy = Math.max(2, ry * 1.36);
   ctx.save();
-  ctx.fillStyle = `rgba(0, 0, 0, ${alpha * 0.42})`;
+  ctx.fillStyle = `rgba(12, 14, 8, ${alpha * 0.22})`;
+  ctx.beginPath();
+  ctx.ellipse(x, y, outerRx, outerRy, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = `rgba(0, 0, 0, ${alpha * 0.4})`;
   ctx.beginPath();
   ctx.ellipse(x, y, Math.max(2, rx), Math.max(1, ry), 0, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = `rgba(0, 0, 0, ${alpha * 0.75})`;
+  ctx.fillStyle = `rgba(0, 0, 0, ${alpha * 0.78})`;
   ctx.beginPath();
-  ctx.ellipse(x, y, Math.max(1, rx * 0.5), Math.max(1, ry * 0.48), 0, 0, Math.PI * 2);
+  ctx.ellipse(x, y, Math.max(1, rx * 0.48), Math.max(1, ry * 0.42), 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
+}
+
+function luma(r: number, g: number, b: number): number {
+  return 0.3 * r + 0.59 * g + 0.11 * b;
+}
+
+/**
+ * Subtle NW highlight / SE shade on opaque fill pixels.
+ * Near-black outline ink is left alone and treated as empty so chunky Vale
+ * outlines still get a volume bevel on the fill they wrap.
+ */
+export function addPixelVolume(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  highlight = 0.12,
+  shade = 0.16,
+): void {
+  const img = ctx.getImageData(0, 0, w, h);
+  const src = img.data;
+  const out = new Uint8ClampedArray(src);
+  const at = (x: number, y: number) => (y * w + x) * 4;
+  const fillAt = (x: number, y: number): boolean => {
+    if (x < 0 || y < 0 || x >= w || y >= h) return false;
+    const i = at(x, y);
+    if (src[i + 3]! <= 20) return false;
+    return luma(src[i]!, src[i + 1]!, src[i + 2]!) >= 26;
+  };
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = at(x, y);
+      if (!fillAt(x, y)) continue;
+      let t = 0;
+      if (!fillAt(x, y - 1) || !fillAt(x - 1, y)) t += highlight;
+      if (!fillAt(x, y + 1) || !fillAt(x + 1, y)) t -= shade;
+      if (t === 0) continue;
+      const r = src[i]!;
+      const g = src[i + 1]!;
+      const b = src[i + 2]!;
+      const lift = (c: number) =>
+        t > 0
+          ? Math.round(c + (255 - c) * t)
+          : Math.round(c * (1 + t));
+      out[i] = Math.max(0, Math.min(255, lift(r)));
+      out[i + 1] = Math.max(0, Math.min(255, lift(g)));
+      out[i + 2] = Math.max(0, Math.min(255, lift(b)));
+    }
+  }
+  src.set(out);
+  ctx.putImageData(img, 0, 0);
 }

@@ -5,6 +5,7 @@ import { TILE } from "@/game/world";
 import {
   getTileSheet,
   getGrassEdgeSheet,
+  getGrassSpillSheet,
   getWaterShoreSheet,
   paletteColor,
   tileVariantAt,
@@ -30,6 +31,9 @@ const HARD = new Set<GroundTile>([
   "hollow",
   "exit",
 ]);
+const GRASS = new Set<GroundTile>(["grass", "grassAlt"]);
+/** Walkway tiles that take a grass lip so turf reads above the path. */
+const SPILL_ON = new Set<GroundTile>(["path", "cobble", "dirt", "wall", "floor", "door"]);
 const LAND = new Set<GroundTile>([
   "grass",
   "grassAlt",
@@ -85,7 +89,7 @@ export function drawTile(
   ctx.drawImage(sheet as CanvasImageSource, sx, sy, TILE + 1, TILE + 1);
 
   if (kind === "stone" && mode === "overworld") {
-    drawSoftShadow(ctx, sx + TILE / 2, sy + TILE - 3, 11, 5, 0.3);
+    drawSoftShadow(ctx, sx + TILE / 2, sy + TILE - 2, 13, 6, 0.34);
   }
 
   if (kind === "grass" || kind === "grassAlt") {
@@ -105,6 +109,24 @@ export function drawTile(
     }
     if (e && HARD.has(e)) {
       ctx.drawImage(getGrassEdgeSheet(gColor, "e", variant) as CanvasImageSource, sx, sy, TILE + 1, TILE + 1);
+    }
+  } else if (SPILL_ON.has(kind)) {
+    const gColor = paletteColor(pal, "grass");
+    const n = neighbor(map, tx, ty, 0, -1);
+    const s = neighbor(map, tx, ty, 0, 1);
+    const w = neighbor(map, tx, ty, -1, 0);
+    const e = neighbor(map, tx, ty, 1, 0);
+    if (n && GRASS.has(n)) {
+      ctx.drawImage(getGrassSpillSheet(gColor, "n", variant) as CanvasImageSource, sx, sy, TILE + 1, TILE + 1);
+    }
+    if (s && GRASS.has(s)) {
+      ctx.drawImage(getGrassSpillSheet(gColor, "s", variant) as CanvasImageSource, sx, sy, TILE + 1, TILE + 1);
+    }
+    if (w && GRASS.has(w)) {
+      ctx.drawImage(getGrassSpillSheet(gColor, "w", variant) as CanvasImageSource, sx, sy, TILE + 1, TILE + 1);
+    }
+    if (e && GRASS.has(e)) {
+      ctx.drawImage(getGrassSpillSheet(gColor, "e", variant) as CanvasImageSource, sx, sy, TILE + 1, TILE + 1);
     }
   }
 

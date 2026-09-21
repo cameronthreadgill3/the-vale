@@ -2,7 +2,7 @@
  * Distinct clothed pixel folk (original Vale art, gfx pass 3).
  * Cached per folk-id + color. Labels stay in folkCanvas.
  */
-import { makeCanvas, ctx2d, px, shadeHex, mixHex, drawSoftShadow } from "@/game/gfx/canvasUtil";
+import { makeCanvas, ctx2d, px, shadeHex, mixHex, drawSoftShadow, addPixelVolume, GROUND_SHADOW_ALPHA } from "@/game/gfx/canvasUtil";
 
 export const FOLK_FRAME = 32;
 
@@ -57,6 +57,7 @@ function body(
   px(ctx, 16, 20, pants, 3, 5);
   px(ctx, 11, 12, OUT, 10, 10);
   px(ctx, 12, 12, tunic, 8, 9);
+  px(ctx, 13, 13, shadeHex(tunic, 1.18), 3, 2);
   px(ctx, 12, 18, tunicDark, 8, 3);
   if (opts?.skirt) px(ctx, 11, 18, tunicDark, 10, 5);
   px(ctx, 9, 13, SKIN, 3, 6);
@@ -226,6 +227,7 @@ function paintFolk(color: string, folkId: string | undefined): Sheet {
     default:
       paintGeneric(ctx, color);
   }
+  addPixelVolume(ctx, FOLK_FRAME, FOLK_FRAME, 0.13, 0.17);
   return c;
 }
 
@@ -248,7 +250,7 @@ export function drawFolkSprite(
 ): void {
   const sheet = getFolkSheet(color, folkId);
   const size = 44;
-  drawSoftShadow(ctx, sx, sy + size * 0.24, size * 0.3, size * 0.11, 0.36);
+  drawSoftShadow(ctx, sx, sy + size * 0.34, size * 0.36, size * 0.13, GROUND_SHADOW_ALPHA);
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(
     sheet as CanvasImageSource,
