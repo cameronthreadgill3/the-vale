@@ -5,7 +5,7 @@
  */
 import { TILE, type WorldMap } from "@/game/world";
 import { propsOnContinent } from "@/game/world/town";
-import { tileVariantAt } from "@/game/gfx/tiles";
+import { fountainFrameAt, tileVariantAt } from "@/game/gfx/tiles";
 import { drawSoftShadow } from "@/game/gfx/canvasUtil";
 import type { DepthItem } from "@/game/gfx/depth";
 
@@ -291,6 +291,93 @@ function tileKind(map: WorldMap, tx: number, ty: number): string | null {
   return map.tiles[ty]![tx] ?? null;
 }
 
+/** Pixel-snapped travel in [0, span). */
+function drift(timeSec: number, speed: number, seed: number, span: number): number {
+  const s = Math.max(1, span);
+  const n = Math.floor(timeSec * speed + seed);
+  return ((n % s) + s) % s;
+}
+
+/**
+ * Soft highlight on a water tile. Two short streaks plus a rare sparkle,
+ * and a foam glint where the tile meets land. Low alpha, inside the tile.
+ */
+function drawWaterShimmer(
+  ctx: CanvasRenderingContext2D,
+  map: WorldMap,
+  sx: number,
+  sy: number,
+  tx: number,
+  ty: number,
+  timeSec: number,
+): void {
+  const frame = fountainFrameAt(timeSec);
+  const span = TILE - 12;
+  for (let i = 0; i < 2; i++) {
+    const len = 4 + ((tx + i + frame) % 3);
+    const col = drift(timeSec, i === 0 ? 8 : 5, tx * 9 + ty * 4 + i * 13, span - len);
+    const row = 4 + ((tx * 5 + ty * 3 + frame * 4 + i * 11) % (TILE - 10));
+    ctx.fillStyle = i === 0 ? "rgba(214, 238, 255, 0.26)" : "rgba(176, 208, 224, 0.16)";
+    ctx.fillRect(sx + 3 + col, sy + row, len, 1);
+  }
+  if (((Math.floor(timeSec * 3) + tx * 3 + ty) % 5) === frame) {
+    const sparkX = 4 + ((tx * 7 + frame * 5) % 22);
+    const sparkY = 4 + ((ty * 5 + frame * 3) % 22);
+    ctx.fillStyle = "rgba(236, 248, 255, 0.38)";
+    ctx.fillRect(sx + sparkX, sy + sparkY, 1, 1);
+  }
+  const shores: { dx: number; dy: number }[] = [
+    { dx: 0, dy: -1 },
+    { dx: 0, dy: 1 },
+    { dx: -1, dy: 0 },
+    { dx: 1, dy: 0 },
+  ];
+  ctx.fillStyle = "rgba(220, 240, 248, 0.24)";
+  for (let i = 0; i < shores.length; i++) {
+    const e = shores[i]!;
+    const n = tileKind(map, tx + e.dx, ty + e.dy);
+    if (n === null || n === "water") continue;
+    const slide = drift(timeSec, 6, tx * 3 + ty + i * 7, TILE - 10);
+    if (e.dy !== 0) {
+      const y = e.dy < 0 ? 1 : TILE - 2;
+      ctx.fillRect(sx + 2 + slide, sy + y, 5, 1);
+    } else {
+      const x = e.dx < 0 ? 1 : TILE - 2;
+      ctx.fillRect(sx + x, sy + 2 + slide, 1, 5);
+    }
+  }
+}
+
+/**
+ * Ripple and sparkle on the plaza fountain basin only.
+ * The wayfinding label sits above the tile, so this stays in the pool (y ≥ 18).
+ */
+function drawFountainBasinShimmer(
+  ctx: CanvasRenderingContext2D,
+  sx: number,
+  sy: number,
+  timeSec: number,
+): void {
+  const frame = fountainFrameAt(timeSec);
+  const bands = [
+    { x: 8, y: 19 + (frame % 3), w: 7, color: "rgba(232, 246, 255, 0.4)" },
+    { x: 17, y: 23 + ((frame + 1) % 3), w: 6, color: "rgba(200, 228, 240, 0.28)" },
+  ];
+  for (const b of bands) {
+    ctx.fillStyle = b.color;
+    ctx.fillRect(sx + b.x, sy + b.y, b.w, 1);
+  }
+  const sparks: [number, number][] = [
+    [9 + (frame % 2), 21],
+    [21 - (frame % 2), 22],
+    [12 + (frame % 3), 25],
+  ];
+  ctx.fillStyle = "rgba(255, 252, 245, 0.45)";
+  for (const [x, y] of sparks) {
+    if (((x + y + frame) & 1) === 0) ctx.fillRect(sx + x, sy + y, 1, 1);
+  }
+}
+
 /**
  * Cool water, a warm fountain pool, lantern glow, and continuous shimmer
  * on top of the baked water/fountain frames.
@@ -317,13 +404,7 @@ export function drawSurfaceLight(
       if (kind === "water") {
         ctx.fillStyle = "rgba(24, 52, 74, 0.1)";
         ctx.fillRect(sx, sy, TILE, TILE);
-        const dash = Math.floor((timeSec * 20 + tx * 9 + ty * 4) % (TILE - 8));
-        const row = 6 + ((tx * 5 + ty * 3) % 16);
-        ctx.fillStyle = "rgba(214, 238, 255, 0.42)";
-        ctx.fillRect(sx + dash, sy + row, 7, 1);
-        const rise = Math.floor((timeSec * 12 + tx * 6) % (TILE - 6));
-        ctx.fillStyle = "rgba(170, 210, 230, 0.28)";
-        ctx.fillRect(sx + 4 + (ty % 8), sy + rise, 1, 4);
+        drawWaterShimmer(ctx, map, sx, sy, tx, ty, timeSec);
       } else if (kind === "flower") {
         const fountain = map.spawn.x === tx && map.spawn.y === ty;
         if (fountain) {
@@ -333,6 +414,7 @@ export function drawSurfaceLight(
           g.addColorStop(1, "transparent");
           ctx.fillStyle = g;
           ctx.fillRect(sx - 8, sy - 4, TILE + 16, TILE + 12);
+          drawFountainBasinShimmer(ctx, sx, sy, timeSec);
           for (let i = 0; i < 3; i++) {
             const t = (timeSec * 0.85 + i * 0.33) % 1;
             ctx.fillStyle = `rgba(240, 248, 255, ${0.55 * (1 - t)})`;
