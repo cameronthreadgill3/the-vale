@@ -21,6 +21,12 @@ import {
   professionSnapshot,
 } from "@/game/professions";
 
+function loadBand(ratio: number): "ok" | "high" | "full" {
+  if (ratio >= 1) return "full";
+  if (ratio >= 0.8) return "high";
+  return "ok";
+}
+
 export function PackPanel({
   character,
   unlocking,
@@ -43,22 +49,16 @@ export function PackPanel({
   const slots = character.inventory.length;
   const maxS = maxSlotsFor(character.premiumBackpack);
   const ratio = maxW > 0 ? weight / maxW : 0;
-  const bar =
-    ratio >= 1 ? "#c45c3e" : ratio >= 0.8 ? "#c9a227" : "#7ab85a";
   const demo = isPremiumDemoAllowed();
   const stripe = isStripeClientConfigured();
   const equipment = character.equipment ?? emptyEquipment();
 
   return (
-    <div className="vale-panel vale-overlay-above-chrome vale-text-screen pointer-events-auto absolute bottom-4 left-1/2 z-30 w-[min(100%-2rem,24rem)] -translate-x-1/2 p-3.5 sm:bottom-6">
-      <div className="mb-2 flex items-center justify-between gap-2">
+    <div className="vale-panel vale-inv-panel vale-overlay-above-chrome vale-text-screen pointer-events-auto absolute bottom-4 left-1/2 z-30 w-[min(100%-2rem,26rem)] -translate-x-1/2 p-3.5 sm:bottom-6">
+      <div className="mb-2.5 flex items-center justify-between gap-2">
         <div>
           <div className="vale-screen-title">Pack</div>
-          <div className="vale-screen-kicker flex flex-wrap gap-x-3 gap-y-0.5">
-            <span>{formatWeightChrome(weight, maxW)}</span>
-            <span>{formatSlotsChrome(slots, maxS)}</span>
-            {character.premiumBackpack ? <span>Premium</span> : null}
-          </div>
+          <div className="vale-screen-kicker">B or I to close</div>
         </div>
         <button
           type="button"
@@ -69,46 +69,52 @@ export function PackPanel({
         </button>
       </div>
 
-      <div className="mb-2 h-1.5 overflow-hidden rounded-sm bg-[#050604]">
+      <div className="vale-inv-stats mb-2">
+        <span className="vale-inv-chip">{formatWeightChrome(weight, maxW)}</span>
+        <span className="vale-inv-chip">{formatSlotsChrome(slots, maxS)}</span>
+        {character.premiumBackpack ? (
+          <span className="vale-inv-chip vale-inv-chip-gold">Premium</span>
+        ) : null}
+      </div>
+
+      <div
+        className="vale-skill-meter vale-inv-meter mb-3"
+        data-load={loadBand(ratio)}
+      >
         <div
-          className="h-full rounded"
-          style={{
-            width: `${Math.min(100, Math.round(ratio * 100))}%`,
-            background: bar,
-          }}
+          className="vale-skill-meter-fill"
+          style={{ width: `${Math.min(100, Math.round(ratio * 100))}%` }}
         />
       </div>
 
-      <div className="vale-screen-kicker mb-1">Worn</div>
-      <ul className="mb-3 flex flex-col gap-1">
+      <div className="vale-screen-kicker mb-1.5">Worn</div>
+      <ul className="flex flex-col gap-1.5">
         {EQUIP_SLOTS.map((slot) => {
           const id = equipment[slot];
           const item = id ? getItem(id) : null;
           return (
             <li
               key={slot}
-              className="vale-ledger-line flex items-center justify-between gap-2 px-2 py-2"
+              className="vale-skill-row flex items-center justify-between gap-2 px-2 py-2"
             >
               <div className="min-w-0 flex-1">
-                <div className="text-[10px] uppercase tracking-wider text-[#6a7260]">
-                  {SLOT_LABEL[slot]}
-                </div>
+                <div className="vale-skill-meta">{SLOT_LABEL[slot]}</div>
                 {item ? (
                   <>
-                    <div className="truncate text-xs text-[#e8e6d9]">{item.name}</div>
-                    <div className="truncate text-[10px] text-[#6a7260]">
+                    <div className="vale-skill-name truncate">{item.name}</div>
+                    <div className="vale-skill-blurb truncate">
                       {itemStatLine(item)}
                     </div>
                   </>
                 ) : (
-                  <div className="text-xs text-[#6a7260]">Empty</div>
+                  <div className="vale-skill-name vale-skill-name-dim">Empty</div>
                 )}
               </div>
               {item && (
                 <button
                   type="button"
                   onClick={() => onUnequip(slot)}
-                  className="vale-tap-sm shrink-0 rounded border border-[#2a2e24] px-3 py-2 text-xs text-[#a8b09a] hover:border-[#c9a227]/40 hover:text-[#e8e6d9]"
+                  className="vale-tap-sm vale-ghost-btn shrink-0 px-3 py-2 text-xs text-[#a8b09a]"
                 >
                   Unequip
                 </button>
@@ -118,60 +124,70 @@ export function PackPanel({
         })}
       </ul>
 
-      <div className="vale-screen-kicker mb-1">Pack items</div>
-      {character.inventory.length === 0 ? (
-        <p className="mb-3 px-1 text-xs text-[#6a7260]">Empty pack.</p>
-      ) : (
-        <ul className="mb-3 flex max-h-32 flex-col gap-1 overflow-y-auto">
-          {character.inventory.map((stack) => {
-            const item = getItem(stack.id);
-            const gear = isEquippable(item);
-            return (
-              <li
-                key={stack.id}
-                className="vale-ledger-line flex items-center justify-between gap-2 px-2 py-1.5 text-xs text-[#e8e6d9]"
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="truncate">
-                    {item.name}{" "}
-                    <span className="text-[#6a7260]">×{stack.qty}</span>
+      <div className="vale-skill-section">
+        <div className="vale-screen-title vale-screen-title-sm">Pack items</div>
+        {character.inventory.length === 0 ? (
+          <p className="vale-inv-empty">Empty pack.</p>
+        ) : (
+          <ul className="mt-1.5 flex max-h-36 flex-col gap-1.5 overflow-y-auto">
+            {character.inventory.map((stack) => {
+              const item = getItem(stack.id);
+              const gear = isEquippable(item);
+              return (
+                <li
+                  key={stack.id}
+                  className="vale-skill-row flex items-center justify-between gap-2 px-2 py-2"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate">
+                      <span className="vale-skill-name">{item.name}</span>
+                      <span className="vale-skill-tag text-[#c9a227]">
+                        ×{stack.qty}
+                      </span>
+                    </div>
+                    <div className="vale-skill-blurb truncate">
+                      {gear
+                        ? itemStatLine(item)
+                        : `${item.weight} wt · ${item.blurb}`}
+                    </div>
                   </div>
-                  <div className="truncate text-[10px] text-[#6a7260]">
-                    {gear ? itemStatLine(item) : `${item.weight} wt · ${item.blurb}`}
-                  </div>
-                </div>
-                {gear ? (
-                  <button
-                    type="button"
-                    onClick={() => onEquip(stack.id)}
-                    className="vale-tap-sm shrink-0 rounded border border-[#2a2e24] px-3 py-2 text-xs text-[#c9a227] hover:border-[#c9a227]/50"
-                  >
-                    Equip
-                  </button>
-                ) : (
-                  <span className="shrink-0 text-[10px] uppercase tracking-wider text-[#6a7260]">
-                    {item.weight * stack.qty} wt
-                  </span>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      )}
+                  {gear ? (
+                    <button
+                      type="button"
+                      onClick={() => onEquip(stack.id)}
+                      className="vale-tap-sm vale-ghost-btn vale-ghost-btn-accent shrink-0 px-3 py-2 text-xs"
+                    >
+                      Equip
+                    </button>
+                  ) : (
+                    <span className="vale-skill-level shrink-0 tabular-nums text-[#9aa288]">
+                      {item.weight * stack.qty} wt
+                    </span>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
 
-      <div className="vale-ledger-line mb-2 px-3 py-2.5">
+      <div
+        className={`vale-skill-row mt-3 px-3 py-2.5 ${
+          character.premiumBackpack ? "vale-inv-kept" : ""
+        }`}
+      >
         <div className="vale-screen-title vale-screen-title-sm">
           Premium Backpack
         </div>
         {character.premiumBackpack ? (
-          <p className="mt-1 text-xs leading-relaxed text-[#a8b09a]">
+          <p className="vale-skill-blurb">
             Unlocked — {PREMIUM_BACKPACK_SLOTS} slots and +
             {Math.round(PREMIUM_WEIGHT_BONUS * 100)}% carry weight. Persists
             with this character.
           </p>
         ) : (
           <>
-            <p className="mt-1 text-xs leading-relaxed text-[#a8b09a]">
+            <p className="vale-skill-blurb">
               {PREMIUM_BACKPACK_SLOTS} slots and +
               {Math.round(PREMIUM_WEIGHT_BONUS * 100)}% weight capacity.
             </p>
@@ -181,7 +197,7 @@ export function PackPanel({
                   type="button"
                   disabled={unlocking}
                   onClick={onUnlockDemo}
-                  className="vale-tap-sm rounded border border-[#c9a227]/50 bg-[#1c1f16] px-3 py-2 text-xs text-[#c9a227] hover:border-[#c9a227] disabled:opacity-40"
+                  className="vale-tap-sm vale-ghost-btn vale-ghost-btn-accent px-3 py-2 text-xs disabled:opacity-40"
                 >
                   Demo unlock
                 </button>
@@ -191,7 +207,7 @@ export function PackPanel({
                   type="button"
                   disabled={unlocking}
                   onClick={onUnlockStripe}
-                  className="vale-tap-sm rounded border border-[#2a2e24] px-3 py-2 text-xs text-[#e8e6d9] hover:border-[#c9a227]/50 disabled:opacity-40"
+                  className="vale-tap-sm vale-ghost-btn px-3 py-2 text-xs text-[#e8e6d9] disabled:opacity-40"
                 >
                   Stripe checkout
                 </button>
@@ -201,27 +217,30 @@ export function PackPanel({
         )}
       </div>
 
-      <div className="vale-ledger-line mb-2 px-3 py-2.5">
-        <div className="vale-screen-title vale-screen-title-sm">
-          Professions
-        </div>
-        <div className="mt-1 flex flex-col gap-0.5 text-[10px] text-[#a8b09a]">
+      <div className="vale-skill-section">
+        <div className="vale-screen-title vale-screen-title-sm">Professions</div>
+        <ul className="mt-1.5 flex flex-col gap-1.5">
           {PROFESSIONS.map((p) => {
             const xp = (character.professionXp ?? emptyProfessionXp())[p.id];
             const snap = professionSnapshot(xp);
             return (
-              <div key={p.id} className="flex justify-between gap-2">
-                <span>{p.name}</span>
-                <span className="tabular-nums text-[#c9a227]">Lv {snap.level}</span>
-              </div>
+              <li
+                key={p.id}
+                className="vale-skill-row flex items-baseline justify-between gap-2 px-2.5 py-1.5"
+              >
+                <span className="vale-skill-name">{p.name}</span>
+                <span className="vale-skill-level tabular-nums text-[#c9a227]">
+                  Lv {snap.level}
+                </span>
+              </li>
             );
           })}
-        </div>
+        </ul>
       </div>
 
-      <p className="text-[10px] leading-relaxed text-[#6a7260]">
-        {DEATH_RULES_BLURB}
-      </p>
+      <div className="vale-inv-foot">
+        <p className="vale-screen-hint">{DEATH_RULES_BLURB}</p>
+      </div>
     </div>
   );
 }
