@@ -53,6 +53,7 @@ import { attachCanvasPointers } from "@/game/gameLoopPointers";
 import { createPlayerAttack } from "@/game/gameLoopCombat";
 import { loadQuestLog } from "@/game/quests";
 import { DEATH_KICK_DELAY_MS, placeBodyMarker } from "@/game/bodyMarker";
+import { hitStopScale, noteConnectedHit, resetCombatJuice } from "@/game/combatJuice";
 
 export function useGameLoopEffect(d: {
   canvasRef: RefObject<HTMLCanvasElement | null>;
@@ -107,6 +108,7 @@ export function useGameLoopEffect(d: {
   } = d;
 
   useEffect(() => {
+    resetCombatJuice();
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -330,8 +332,12 @@ export function useGameLoopEffect(d: {
 
     const tick = (now: number) => {
       if (!running) return;
-      const dt = Math.min(0.05, (now - last) / 1000);
+      // Connected hits dip this clock for a few frames. Floats, the hit
+      // flash, and the vignette stay on it so the hitch does not tear them
+      // off the world. The window is short enough that they are not restyled.
+      const realDt = Math.min(0.05, (now - last) / 1000);
       last = now;
+      const dt = realDt * hitStopScale(realDt);
       const keys = keysRef.current;
       const paused = deadLock || overlayOpenRef.current;
       // Dialogue and shops pause the world. The vault does not: the joystick
@@ -413,6 +419,7 @@ export function useGameLoopEffect(d: {
             }
           }
           if (nearest && best > 0.01) {
+            noteConnectedHit(nearest.x - player.x, nearest.y - player.y);
             const kx = (player.x - nearest.x) / best;
             const ky = (player.y - nearest.y) / best;
             const nx = player.x + kx * HIT_KNOCKBACK_PX;
@@ -420,6 +427,8 @@ export function useGameLoopEffect(d: {
             tryMovePlayer(map, player, nx, ny) ||
               tryMovePlayer(map, player, nx, player.y) ||
               tryMovePlayer(map, player, player.x, ny);
+          } else {
+            noteConnectedHit(0, 0);
           }
           pushFloat(player.x, player.y - 12, String(taken), "#c45c3e");
           onVitals.current(snap.hp, snap.mana);
@@ -561,6 +570,7 @@ export function useGameLoopEffect(d: {
     raf = requestAnimationFrame(tick);
     return () => {
       running = false;
+      resetCombatJuice();
       if (deathKick != null) clearTimeout(deathKick);
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", resize);

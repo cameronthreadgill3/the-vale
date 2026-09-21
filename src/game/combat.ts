@@ -44,6 +44,17 @@ export function applyFountainHeal(
 export const HIT_IFRAMES_SEC = 0.55;
 /** Knockback distance on hit (pixels) so retreat stays readable. */
 export const HIT_KNOCKBACK_PX = 30;
+/**
+ * Real seconds of slowed time after a connected hit.
+ * Short on purpose: flash, damage floats, and the vignette share the clock.
+ */
+export const HIT_STOP_SEC = 0.048;
+/** World scale during that window. A dip, not a hard lock, so it stays soft. */
+export const HIT_STOP_SCALE = 0.2;
+/** Camera lean toward the exchange, in pixels. It eases home; it does not shake. */
+export const HIT_SETTLE_PX = 4;
+/** How fast the lean returns (1/s) once the dip lets the clock run. */
+export const HIT_SETTLE_RATE = 8.5;
 /** HP ratio that triggers a one-shot low-HP toast. */
 export const LOW_HP_RATIO = 0.35;
 export const LOW_HP_TOAST = "Low HP — retreat to the fountain!";

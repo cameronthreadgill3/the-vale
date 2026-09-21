@@ -3,6 +3,7 @@ import { TILE, type WorldMap } from "@/game/world";
 import { type HudState, type PromptState } from "@/game/canvasConstants";
 import { levelFromXp, progressInLevel, xpToNext } from "@/game/xp";
 import { maxHpFor, maxManaFor } from "@/game/combat";
+import { resetCombatJuice, sampleHitSettle } from "@/game/combatJuice";
 import { carriedWeight, maxSlotsFor, maxWeightFor } from "@/game/backpack";
 import { isInSafeZone, isSafeContinent, SAFE_ZONE_RADIUS_TILES } from "@/game/safeZone";
 import { getClass } from "@/game/classes";
@@ -152,6 +153,8 @@ function easeCamera(
     _lookY = 0;
     _shadowLagX = 0;
     _shadowLagY = 0;
+    // A gate snap should not carry a fight's lean into the new view.
+    if (jumped) resetCombatJuice();
     return { camX: player.x, camY: player.y - CAM_SOUTH };
   }
 
@@ -190,7 +193,10 @@ function easeCamera(
     nx = player.x + ox * scale;
     ny = player.y + oy * scale;
   }
-  return { camX: nx, camY: ny };
+  // After the follow filter so the lean is not smoothed away.
+  // Decay rides dt: the hit-stop dip holds it, then it eases home.
+  const settle = sampleHitSettle(dt);
+  return { camX: nx + settle.x, camY: ny + settle.y };
 }
 
 const ASHVEIL_CHAMBER_REACH_TILES = 2.4;

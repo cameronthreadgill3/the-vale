@@ -23,6 +23,7 @@ import type { MutableRefObject } from "react";
 import type { MouseState } from "@/game/gameLoopPointers";
 import { playHit } from "@/game/audio";
 import { punchCreatureHit } from "@/game/gfx/hitFlash";
+import { noteConnectedHit } from "@/game/combatJuice";
 
 export function createPlayerAttack(opts: {
   characterRef: MutableRefObject<ValeCharacter>;
@@ -85,6 +86,7 @@ export function createPlayerAttack(opts: {
     target.hp -= dmg;
     target.flash = 0.15;
     punchCreatureHit(target);
+    noteConnectedHit(target.x - opts.player.x, target.y - opts.player.y);
     playHit("enemy");
     pushFloat(target.x, target.y - 10, String(dmg), "#e8e6d9");
     if (profile.style !== "melee") {
