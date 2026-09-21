@@ -4,9 +4,10 @@ import type { ValeCharacter } from "@/game/character";
 import {
   drawPlayerSprite,
   getPlayerSprite,
+  PLAYER_SPRITE_SIZE,
   type Facing,
 } from "@/game/playerSprites";
-import { drawSoftShadow, GROUND_SHADOW_ALPHA } from "@/game/gfx/canvasUtil";
+import { drawContactShadow } from "@/game/gfx/contactShadow";
 
 export function drawPlayer(
   ctx: CanvasRenderingContext2D,
@@ -17,10 +18,21 @@ export function drawPlayer(
   walkFrame: number,
   playerFlash: number,
   accent: { accent: string; accentLite: string; accentDark: string },
+  /** Idle breath. The contact blob stays put so the body lifts off the ground. */
   lift = 0,
+  /** Screen-space shift so the blob trails the boots (ground sticks, body leads). */
+  shadowLagX = 0,
+  shadowLagY = 0,
 ): void {
-  // Shadow stays on the ground when the body takes an idle breath.
-  drawSoftShadow(ctx, px, py + 12, PLAYER_RADIUS * 1.12, PLAYER_RADIUS * 0.4, GROUND_SHADOW_ALPHA);
+  const footY = py + PLAYER_SPRITE_SIZE * 0.35;
+  drawContactShadow(
+    ctx,
+    px + shadowLagX,
+    footY + shadowLagY,
+    PLAYER_RADIUS * 1.55,
+    PLAYER_RADIUS * 0.52,
+    0.58,
+  );
 
   const sheet = getPlayerSprite(character.classId);
   if (sheet) {

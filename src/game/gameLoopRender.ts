@@ -110,6 +110,75 @@ let _lastPlayerFlash = 0;
 let _walkSampled = false;
 let _atmosT = 0;
 let _gfxWarmed = false;
+/** Smoothed look-ahead so the view leans into the walk, then settles. */
+let _lookX = 0;
+let _lookY = 0;
+/** Contact blob lags the boots by a few pixels. */
+let _shadowLagX = 0;
+let _shadowLagY = 0;
+
+/** Catch-up rate (1/s). At a 140px/s walk the player leads center by ~24px, then settles. */
+const CAM_EASE = 3.9;
+const CAM_LOOK = 12;
+const CAM_MAX_LAG = 34;
+const CAM_SNAP = 240;
+/** Rest the player a few pixels below center so more ground reads to the north. */
+const CAM_SOUTH = 6;
+
+function easeCamera(
+  camX: number,
+  camY: number,
+  player: { x: number; y: number },
+  dt: number,
+): { camX: number; camY: number } {
+  const dx = player.x - _lastPx;
+  const dy = player.y - _lastPy;
+  const jumped = _walkSampled && Math.hypot(dx, dy) > CAM_SNAP;
+  if (!_walkSampled || jumped) {
+    _lookX = 0;
+    _lookY = 0;
+    _shadowLagX = 0;
+    _shadowLagY = 0;
+    return { camX: player.x, camY: player.y - CAM_SOUTH };
+  }
+
+  const dist = Math.hypot(dx, dy);
+  const dtSafe = Math.max(dt, 1 / 120);
+  let wishX = 0;
+  let wishY = 0;
+  let lagX = 0;
+  let lagY = 0;
+  if (dist > 0.35) {
+    const speed = dist / dtSafe;
+    const aim = Math.min(1, speed / 90);
+    wishX = (dx / dist) * CAM_LOOK * aim;
+    wishY = (dy / dist) * CAM_LOOK * aim;
+    const cap = Math.min(2.5, dist * 0.45);
+    lagX = (-dx / dist) * cap;
+    lagY = (-dy / dist) * cap;
+  }
+  const lookEase = 1 - Math.exp(-8 * dt);
+  _lookX += (wishX - _lookX) * lookEase;
+  _lookY += (wishY - _lookY) * lookEase;
+  const lagEase = 1 - Math.exp(-12 * dt);
+  _shadowLagX += (lagX - _shadowLagX) * lagEase;
+  _shadowLagY += (lagY - _shadowLagY) * lagEase;
+
+  const targetX = player.x + _lookX;
+  const targetY = player.y + _lookY - CAM_SOUTH;
+  const follow = 1 - Math.exp(-CAM_EASE * dt);
+  let nx = camX + (targetX - camX) * follow;
+  let ny = camY + (targetY - camY) * follow;
+  const ox = nx - player.x;
+  const oy = ny - player.y;
+  const od = Math.hypot(ox, oy);
+  if (od > CAM_MAX_LAG) {
+    const scale = CAM_MAX_LAG / od;
+    nx = player.x + ox * scale;
+    ny = player.y + oy * scale;
+  }
+  return { camX: nx, camY: ny };
+}
 
 const ASHVEIL_CHAMBER_REACH_TILES = 2.4;
 const ASHVEIL_IDENTIFY_TILES = 3.6;
@@ -502,8 +571,7 @@ export function advanceCameraAndRender(args: {
     setHud, setPrompt, promptRef,
   } = args;
 
-  camX += (player.x - camX) * Math.min(1, 8 * dt);
-  camY += (player.y - camY) * Math.min(1, 8 * dt);
+  ({ camX, camY } = easeCamera(camX, camY, player, dt));
   const viewW = canvas.clientWidth;
   const viewH = canvas.clientHeight;
   const originX = camX - viewW / 2;
@@ -601,15 +669,31 @@ export function advanceCameraAndRender(args: {
   _lastPlayerFlash = playerFlash;
 
   tickMotes(dt, map, originX, originY, viewW, viewH);
+  const groundShift = {
+    x: Math.max(-2.5, Math.min(2.5, (camX - player.x) * 0.08)),
+    y: Math.max(-2.5, Math.min(2.5, (camY - player.y) * 0.08)),
+  };
   const depth: DepthItem[] = [
     ...collectFolkDepthItems(folk, originX, originY, _atmosT),
-    ...collectEnemyDepthItems(enemies, originX, originY),
+    ...collectEnemyDepthItems(enemies, originX, originY, groundShift),
     ...collectMoteDepthItems(originX, originY, _atmosT),
     {
       y: player.y,
       x: player.x,
       draw: (c) => {
-        drawPlayer(c, character, px, py, _facing, walkFrame, playerFlash, accent, idleLift);
+        drawPlayer(
+          c,
+          character,
+          px,
+          py,
+          _facing,
+          walkFrame,
+          playerFlash,
+          accent,
+          idleLift,
+          _shadowLagX + groundShift.x,
+          _shadowLagY + groundShift.y,
+        );
       },
     },
   ];
