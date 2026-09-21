@@ -74,8 +74,20 @@ export function computePrompt(
       if (folk.some((f) => f.x === s.x && f.y === s.y && f.shopId === s.id)) continue;
       consider(s.x, s.y, { kind: "shop", shopId: s.id, name: s.name });
     }
-  } else if (map.exit) {
-    consider(map.exit.x, map.exit.y, { kind: "exit" });
+  } else {
+    // Any exit tile nearby (spawn entrance + deep exit).
+    const ty0 = Math.max(0, Math.floor(py) - 2);
+    const ty1 = Math.min(map.height - 1, Math.ceil(py) + 2);
+    const tx0 = Math.max(0, Math.floor(px) - 2);
+    const tx1 = Math.min(map.width - 1, Math.ceil(px) + 2);
+    for (let ty = ty0; ty <= ty1; ty++) {
+      for (let tx = tx0; tx <= tx1; tx++) {
+        if (map.tiles[ty]![tx] === "exit") {
+          consider(tx, ty, { kind: "exit" });
+        }
+      }
+    }
+    if (map.exit) consider(map.exit.x, map.exit.y, { kind: "exit" });
   }
 
   if (candidates.length === 0) return null;

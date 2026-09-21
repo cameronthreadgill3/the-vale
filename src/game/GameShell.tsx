@@ -113,8 +113,6 @@ export function GameShell({
     onPlayerDeath,
   });
 
-  void skillTick;
-
   const locationLabel = inHollow
     ? `${continentName} | Hollow ${(hollowIndex ?? 0) + 1}`
     : continentName;
@@ -189,9 +187,9 @@ export function GameShell({
           )}
           {prompt.kind === "exit" && (
             <>
-              Hollow exit
+              Exit hollow
               <div className="mt-0.5 text-xs text-[#a8b09a]">
-                Return with <span className="text-[#e8e6d9]">E</span> or walk onto the tile
+                Press <span className="text-[#e8e6d9]">E</span> or walk onto the exit tile
               </div>
             </>
           )}
@@ -237,6 +235,7 @@ export function GameShell({
         <SkillsPanel
           cls={cls}
           skills={skills}
+          skillTick={skillTick}
           onTrain={onTrain}
           onClose={onToggleSkills}
         />

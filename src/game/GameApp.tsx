@@ -94,23 +94,35 @@ export function GameApp() {
     setWorldEpoch(0);
   }, []);
 
+  const showToast = useCallback((msg: string) => {
+    setToast(msg);
+    window.setTimeout(() => setToast((t) => (t === msg ? null : t)), 2200);
+  }, []);
+
   const trainSkill = useCallback((skill: SkillId) => {
     setCharacter((prev) => {
       if (!prev) return prev;
+      const before = prev.skillXp[skill];
       const next: ValeCharacter = {
         ...prev,
         skillXp: { ...prev.skillXp },
       };
       awardSkillXp(next, skill, TRAIN_SKILL_XP);
+      const gained = next.skillXp[skill] - before;
+      const beforeLvl = skillSnapshot(before).level;
+      const afterLvl = skillSnapshot(next.skillXp[skill]).level;
+      const label = SKILLS.find((s) => s.id === skill)?.name ?? skill;
+      queueMicrotask(() => {
+        if (afterLvl > beforeLvl) {
+          showToast(`${label} reached level ${afterLvl}`);
+        } else {
+          showToast(`${label} +${gained} XP`);
+        }
+      });
       return { ...next, skillXp: { ...next.skillXp } };
     });
     setSkillTick((t) => t + 1);
-  }, []);
-
-  const showToast = useCallback((msg: string) => {
-    setToast(msg);
-    window.setTimeout(() => setToast((t) => (t === msg ? null : t)), 2200);
-  }, []);
+  }, [showToast]);
 
   const goContinent = useCallback(
     (target: ContinentId, from: ContinentId) => {

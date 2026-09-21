@@ -80,11 +80,17 @@ export function generateHollow(
   const spawnX = first.x + Math.floor(first.rw / 2);
   const spawnY = first.y + Math.floor(first.rh / 2);
   clearArea(tiles, spawnX, spawnY, 1, "path", w, h);
+  // Entrance doubles as exit so E / Interact works from spawn without hunting.
+  tiles[spawnY]![spawnX] = "exit";
 
   const last = rooms[rooms.length - 1]!;
-  const exitX = last.x + Math.floor(last.rw / 2);
-  const exitY = last.y + Math.floor(last.rh / 2);
-  tiles[exitY]![exitX] = "exit";
+  const deepX = last.x + Math.floor(last.rw / 2);
+  const deepY = last.y + Math.floor(last.rh / 2);
+  if (deepX !== spawnX || deepY !== spawnY) {
+    tiles[deepY]![deepX] = "exit";
+  }
+  const exitX = spawnX;
+  const exitY = spawnY;
 
   for (let i = 0; i < 5; i++) {
     const tx = randInt(rng, 2, w - 3);
@@ -96,14 +102,15 @@ export function generateHollow(
   }
 
   const base = continent.palette;
+  // Keep hollow mood but raise contrast so tiles / exits stay readable.
   const palette: BiomePalette = {
-    grass: shade(base.grass, 0.65),
-    grassAlt: shade(base.grassAlt, 0.65),
-    dirt: shade(base.dirt, 0.7),
-    path: shade(base.path, 0.75),
-    stone: shade(base.stone, 0.85),
-    water: shade(base.water, 0.8),
-    flower: shade(base.flower, 0.6),
+    grass: shade(base.grass, 0.88),
+    grassAlt: shade(base.grassAlt, 0.88),
+    dirt: shade(base.dirt, 0.9),
+    path: shade(base.path, 0.95),
+    stone: shade(base.stone, 0.92),
+    water: shade(base.water, 0.9),
+    flower: shade(base.flower, 0.85),
     gate: base.gate,
     hollow: base.hollow,
     exit: base.exit,
@@ -117,7 +124,7 @@ export function generateHollow(
     height: h,
     tiles,
     palette,
-    darkness: 0.35,
+    darkness: 0.14,
     gates: [],
     hollows: [],
     exit: { x: exitX, y: exitY },

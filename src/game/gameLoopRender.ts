@@ -4,10 +4,12 @@ import { PLAYER_RADIUS, type HudState, type PromptState } from "@/game/canvasCon
 import { levelFromXp, progressInLevel, xpToNext } from "@/game/xp";
 import { maxHpFor, maxManaFor } from "@/game/combat";
 import { getClass } from "@/game/classes";
+import { getContinent } from "@/game/continents";
 import {
   drawShipDocks,
   drawShopMarkers,
   drawNamedFolk,
+  drawFloatingLabel,
 } from "@/game/folkCanvas";
 import {
   drawEnemies,
@@ -80,34 +82,80 @@ export function advanceCameraAndRender(args: {
       }
       if (kind === "gate") {
         ctx.strokeStyle = "#e8e6d9";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(sx + 4, sy + 4, TILE - 8, TILE - 8);
-        ctx.fillStyle = "rgba(255,255,255,0.15)";
-        ctx.fillRect(sx + 8, sy + 8, TILE - 16, TILE - 16);
+        ctx.lineWidth = 3;
+        ctx.strokeRect(sx + 2, sy + 2, TILE - 4, TILE - 4);
+        ctx.fillStyle = "rgba(255,255,255,0.22)";
+        ctx.fillRect(sx + 6, sy + 6, TILE - 12, TILE - 12);
+        ctx.fillStyle = pal.gate;
+        ctx.fillRect(sx + TILE / 2 - 3, sy + 4, 6, TILE - 8);
       } else if (kind === "hollow") {
         ctx.beginPath();
-        ctx.fillStyle = "rgba(0,0,0,0.45)";
-        ctx.arc(sx + TILE / 2, sy + TILE / 2, 10, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(0,0,0,0.55)";
+        ctx.arc(sx + TILE / 2, sy + TILE / 2, 12, 0, Math.PI * 2);
         ctx.fill();
         ctx.strokeStyle = pal.hollow;
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.strokeStyle = "#e8e6d9";
+        ctx.lineWidth = 1.5;
+        ctx.arc(sx + TILE / 2, sy + TILE / 2, 5, 0, Math.PI * 2);
         ctx.stroke();
       } else if (kind === "exit") {
+        ctx.strokeStyle = "#e8e6d9";
+        ctx.lineWidth = 3;
+        ctx.strokeRect(sx + 4, sy + 4, TILE - 8, TILE - 8);
+        ctx.fillStyle = "rgba(200,180,100,0.4)";
+        ctx.fillRect(sx + 8, sy + 8, TILE - 16, TILE - 16);
         ctx.strokeStyle = pal.exit;
         ctx.lineWidth = 2;
-        ctx.strokeRect(sx + 6, sy + 6, TILE - 12, TILE - 12);
-        ctx.fillStyle = "rgba(200,180,100,0.25)";
-        ctx.fillRect(sx + 10, sy + 10, TILE - 20, TILE - 20);
+        ctx.strokeRect(sx + 8, sy + 8, TILE - 16, TILE - 16);
       }
     }
   }
   if (map.darkness > 0) {
-    ctx.fillStyle = `rgba(0,0,0,${map.darkness})`;
+    // Soft vignette + local light around the player so exits stay readable.
+    const pxLight = Math.floor(player.x - originX);
+    const pyLight = Math.floor(player.y - originY);
+    const g = ctx.createRadialGradient(pxLight, pyLight, 28, pxLight, pyLight, 220);
+    g.addColorStop(0, `rgba(0,0,0,${Math.max(0, map.darkness * 0.15)})`);
+    g.addColorStop(0.45, `rgba(0,0,0,${map.darkness * 0.55})`);
+    g.addColorStop(1, `rgba(0,0,0,${Math.min(0.55, map.darkness + 0.22)})`);
+    ctx.fillStyle = g;
     ctx.fillRect(0, 0, viewW, viewH);
   }
   drawShipDocks(ctx, docks, originX, originY);
   drawShopMarkers(ctx, shops, folk, originX, originY);
-  drawNamedFolk(ctx, folk, originX, originY);
+  drawNamedFolk(ctx, folk, originX, originY, player);
+  // Near-field name tags for gates / hollows.
+  if (map.kind === "overworld") {
+    const ptx = player.x / TILE;
+    const pty = player.y / TILE;
+    for (const g of map.gates) {
+      if (Math.hypot(ptx - (g.x + 0.5), pty - (g.y + 0.5)) > 5.5) continue;
+      const gx = Math.floor((g.x + 0.5) * TILE - originX);
+      const gy = Math.floor((g.y + 0.5) * TILE - originY);
+      drawFloatingLabel(ctx, gx, gy - 10, getContinent(g.targetContinentId).name, "#c9a227");
+    }
+    for (const h of map.hollows) {
+      if (Math.hypot(ptx - (h.x + 0.5), pty - (h.y + 0.5)) > 5.5) continue;
+      const hx = Math.floor((h.x + 0.5) * TILE - originX);
+      const hy = Math.floor((h.y + 0.5) * TILE - originY);
+      drawFloatingLabel(ctx, hx, hy - 10, `Hollow ${h.index + 1}`, "#b89ad4");
+    }
+  } else if (map.exit) {
+    const ptx = player.x / TILE;
+    const pty = player.y / TILE;
+    for (let ty = 0; ty < map.height; ty++) {
+      for (let tx = 0; tx < map.width; tx++) {
+        if (map.tiles[ty]![tx] !== "exit") continue;
+        if (Math.hypot(ptx - (tx + 0.5), pty - (ty + 0.5)) > 5.5) continue;
+        const ex = Math.floor((tx + 0.5) * TILE - originX);
+        const ey = Math.floor((ty + 0.5) * TILE - originY);
+        drawFloatingLabel(ctx, ex, ey - 10, "Exit hollow", "#c9a227");
+      }
+    }
+  }
   mouse.worldX = originX + mouse.x;
   mouse.worldY = originY + mouse.y;
   drawEnemies(ctx, enemies, originX, originY);
