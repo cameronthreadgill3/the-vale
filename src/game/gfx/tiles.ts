@@ -7,7 +7,7 @@
  */
 import type { BiomePalette } from "@/game/continents";
 import type { GroundTile } from "@/game/world";
-import { makeCanvas, ctx2d, px, shadeHex, mixHex } from "@/game/gfx/canvasUtil";
+import { makeCanvas, ctx2d, px, shadeHex, mixHex, addPixelVolume } from "@/game/gfx/canvasUtil";
 
 export const TILE_PX = 32;
 export const TILE_VARIANTS = 8;
@@ -35,10 +35,11 @@ export function fountainFrameAt(timeSec: number): number {
 }
 
 function paintGrass(ctx: CanvasRenderingContext2D, base: string, variant: number): void {
-  const dark = shadeHex(base, 0.7);
-  const mid = shadeHex(base, 0.9);
-  const lite = shadeHex(base, 1.22);
+  const dark = shadeHex(base, 0.68);
+  const mid = shadeHex(base, 0.88);
+  const lite = shadeHex(base, 1.24);
   const blade = mixHex(base, "#8cbc70", 0.28);
+  const bladeTip = mixHex(base, "#d4e8b8", 0.4);
   const pebble = mixHex(base, "#6a6050", 0.45);
   const flower = ["#c45c3e", "#c9a227", "#8ab87a", "#7ab8c9"][variant % 4]!;
   for (let y = 0; y < TILE_PX; y++) {
@@ -47,12 +48,13 @@ function paintGrass(ctx: CanvasRenderingContext2D, base: string, variant: number
       px(ctx, x, y, n < 2 ? dark : n < 4 ? mid : n < 6 ? base : lite);
     }
   }
-  const tufts = 8 + (variant % 5);
+  const tufts = 11 + (variant % 5);
   for (let i = 0; i < tufts; i++) {
     const x = (i * 7 + variant * 5) % 28 + 2;
     const y = (i * 11 + variant * 3) % 26 + 2;
     const h = 2 + (i + variant) % 3;
     px(ctx, x, y, blade, 1, h);
+    px(ctx, x, y, bladeTip, 1, 1);
     px(ctx, x + 1, y + 1, dark, 1, Math.max(1, h - 1));
   }
   if (variant % 4 === 2) {
@@ -260,6 +262,9 @@ function paintAshwoodBase(ctx: CanvasRenderingContext2D, base: string, variant: 
   const barkLite = mixHex(bark, "#7a786c", 0.4);
   const moss = mixHex(bark, "#3a5a38", 0.45);
   const ox = (variant % 5) - 2;
+  // duff under the trunk — local umbra, not a repeating grass gradient
+  px(ctx, 9 + ox, 23, shadeHex(grass, 0.62), 14, 8);
+  px(ctx, 11 + ox, 25, shadeHex(grass, 0.5), 10, 5);
   // roots
   px(ctx, 10 + ox, 26, barkDark, 5, 3);
   px(ctx, 17 + ox, 27, barkDark, 5, 2);
@@ -299,6 +304,11 @@ function paintCaveWall(
   px(ctx, 8 + (variant % 6), 0, dark, 1, 32);
   px(ctx, 20, 4, moss, 4, 3);
   px(ctx, 4, 18, moss, 3, 2);
+  // cave lip — ceiling shade and floor contact so hollow walls aren't a flat slab
+  px(ctx, 0, 0, shadeHex(rock, 0.48), TILE_PX, 2);
+  px(ctx, 1, 2, lite, 6, 1);
+  px(ctx, 0, 30, shadeHex(rock, 0.42), TILE_PX, 2);
+  px(ctx, 0, 28, dark, TILE_PX, 1);
   // torch sconce on some variants
   if (variant % 3 === 0) {
     paintTorch(ctx, 13, 6, anim);
@@ -500,21 +510,40 @@ export function getTileSheet(
 function paintGrassEdge(base: string, dir: EdgeDir, variant: number): Sheet {
   const c = makeCanvas(TILE_PX, TILE_PX);
   const ctx = ctx2d(c);
+  const crack = shadeHex(base, 0.38);
   const dark = shadeHex(base, 0.55);
   const mid = shadeHex(base, 0.78);
-  const lite = mixHex(base, "#6a8a50", 0.3);
-  const depth = 5;
+  const blade = mixHex(base, "#6a8a48", 0.32);
+  const tip = mixHex(base, "#d0e0b0", 0.38);
+  const depth = 6;
   for (let i = 0; i < TILE_PX; i++) {
-    const jag = ((i * 3 + variant * 5) & 3);
+    const jag = (i * 3 + variant * 5) & 3;
     const d = depth - jag;
+    const tone = (k: number) => (k === 0 ? crack : k === 1 ? dark : k === 2 ? mid : blade);
     if (dir === "n") {
-      for (let k = 0; k < d; k++) px(ctx, i, k, k === 0 ? dark : k === 1 ? mid : lite);
+      for (let k = 0; k < d; k++) px(ctx, i, k, tone(k));
     } else if (dir === "s") {
-      for (let k = 0; k < d; k++) px(ctx, i, TILE_PX - 1 - k, k === 0 ? dark : k === 1 ? mid : lite);
+      for (let k = 0; k < d; k++) px(ctx, i, TILE_PX - 1 - k, tone(k));
     } else if (dir === "w") {
-      for (let k = 0; k < d; k++) px(ctx, k, i, k === 0 ? dark : k === 1 ? mid : lite);
+      for (let k = 0; k < d; k++) px(ctx, k, i, tone(k));
     } else {
-      for (let k = 0; k < d; k++) px(ctx, TILE_PX - 1 - k, i, k === 0 ? dark : k === 1 ? mid : lite);
+      for (let k = 0; k < d; k++) px(ctx, TILE_PX - 1 - k, i, tone(k));
+    }
+    if ((i + variant) % 3 === 0) {
+      const tuft = 2 + ((i + variant) % 3);
+      if (dir === "n") {
+        px(ctx, i, d, blade, 1, tuft);
+        px(ctx, i, d, tip, 1, 1);
+      } else if (dir === "s") {
+        px(ctx, i, TILE_PX - 1 - d - tuft + 1, blade, 1, tuft);
+        px(ctx, i, TILE_PX - d - tuft, tip, 1, 1);
+      } else if (dir === "w") {
+        px(ctx, d, i, blade, tuft, 1);
+        px(ctx, d, i, tip, 1, 1);
+      } else {
+        px(ctx, TILE_PX - d - tuft, i, blade, tuft, 1);
+        px(ctx, TILE_PX - d - tuft, i, tip, 1, 1);
+      }
     }
   }
   return c;
@@ -527,6 +556,51 @@ export function getGrassEdgeSheet(color: string, dir: EdgeDir, variant: number):
   if (!sheet) {
     sheet = paintGrassEdge(color, dir, v);
     edgeCache.set(key, sheet);
+  }
+  return sheet;
+}
+
+const spillCache = new Map<string, Sheet>();
+
+/** Grass blades spilling onto a hard neighbor — reads as a raised turf lip. */
+function paintGrassSpill(base: string, dir: EdgeDir, variant: number): Sheet {
+  const c = makeCanvas(TILE_PX, TILE_PX);
+  const ctx = ctx2d(c);
+  const dark = shadeHex(base, 0.5);
+  const blade = mixHex(base, "#6a8a48", 0.35);
+  const tip = mixHex(base, "#d0e0b0", 0.42);
+  for (let i = 0; i < TILE_PX; i++) {
+    if ((i + variant * 3) % 2 === 0) continue;
+    const jag = (i * 5 + variant * 2) & 3;
+    const len = 2 + (jag % 3);
+    if (dir === "n") {
+      px(ctx, i, 0, dark, 1, len);
+      px(ctx, i, 0, blade, 1, Math.max(1, len - 1));
+      px(ctx, i, 0, tip, 1, 1);
+    } else if (dir === "s") {
+      px(ctx, i, TILE_PX - len, dark, 1, len);
+      px(ctx, i, TILE_PX - len + 1, blade, 1, Math.max(1, len - 1));
+      px(ctx, i, TILE_PX - 1, tip, 1, 1);
+    } else if (dir === "w") {
+      px(ctx, 0, i, dark, len, 1);
+      px(ctx, 0, i, blade, Math.max(1, len - 1), 1);
+      px(ctx, 0, i, tip, 1, 1);
+    } else {
+      px(ctx, TILE_PX - len, i, dark, len, 1);
+      px(ctx, TILE_PX - len + 1, i, blade, Math.max(1, len - 1), 1);
+      px(ctx, TILE_PX - 1, i, tip, 1, 1);
+    }
+  }
+  return c;
+}
+
+export function getGrassSpillSheet(color: string, dir: EdgeDir, variant: number): Sheet {
+  const v = ((variant % TILE_VARIANTS) + TILE_VARIANTS) % TILE_VARIANTS;
+  const key = `${color}|${dir}|${v}`;
+  let sheet = spillCache.get(key);
+  if (!sheet) {
+    sheet = paintGrassSpill(color, dir, v);
+    spillCache.set(key, sheet);
   }
   return sheet;
 }
@@ -596,12 +670,15 @@ function paintAshwoodCanopy(base: string, variant: number): Sheet {
   const c = makeCanvas(CANOPY_PX, CANOPY_PX);
   const ctx = ctx2d(c);
   const canopy = mixHex(base, "#244828", 0.5);
-  const dark = shadeHex(canopy, 0.62);
+  const dark = shadeHex(canopy, 0.55);
+  const umbra = shadeHex(canopy, 0.38);
   const mid = mixHex(canopy, "#3a6040", 0.25);
   const lite = mixHex(canopy, "#c8dcc8", 0.38);
-  const silver = "#b8c8b0";
+  const silver = "#c4d4c4";
   const ox = (variant % 5) - 2;
   const oy = ((variant * 3) % 5) - 2;
+  // south umbra first so the mass reads above the grass
+  blob(ctx, 8 + ox, 26 + oy, 48, 24, umbra);
   blob(ctx, 6 + ox, 10 + oy, 52, 36, dark);
   blob(ctx, 2 + ox, 14 + oy, 28, 26, mid);
   blob(ctx, 24 + ox, 6 + oy, 34, 30, canopy);
@@ -610,18 +687,21 @@ function paintAshwoodCanopy(base: string, variant: number): Sheet {
   blob(ctx, 8 + ox, 20 + oy, 22, 18, dark);
   blob(ctx, 30 + ox, 18 + oy, 20, 16, mid);
   blob(ctx, 20 + ox, 8 + oy, 18, 16, canopy);
-  // silver-edged leaves
+  blob(ctx, 14 + ox, 0 + oy, 22, 12, mixHex(canopy, "#d0e4d0", 0.22));
+  // silver-edged leaves — denser on the north rim
   const sparks = [
     [8 + ox, 16], [12 + ox, 8], [24 + ox, 6], [36 + ox, 12],
     [40 + ox, 20], [30 + ox, 8], [16 + ox, 22], [22 + ox, 4],
     [6 + ox, 24], [34 + ox, 28], [18 + ox, 12], [42 + ox, 16],
     [50 + ox, 18], [28 + ox, 32], [10 + ox, 30], [48 + ox, 10],
     [14 + ox, 14], [38 + ox, 22], [20 + ox, 26], [44 + ox, 30],
+    [18 + ox, 2], [28 + ox, 0], [38 + ox, 4], [10 + ox, 6],
   ];
   for (let i = 0; i < sparks.length; i++) {
     const [sx, sy] = sparks[i]!;
     px(ctx, sx, sy + oy, i % 3 === 0 ? silver : lite, 2, 1);
   }
+  addPixelVolume(ctx, CANOPY_PX, CANOPY_PX, 0.1, 0.2);
   return c;
 }
 
@@ -681,6 +761,7 @@ export function warmTileSheets(pal: BiomePalette): void {
         if (kind === "grass") {
           for (const dir of ["n", "s", "e", "w"] as const) {
             getGrassEdgeSheet(color, dir, v);
+            getGrassSpillSheet(color, dir, v);
           }
         }
         if (kind === "water") {

@@ -3,6 +3,7 @@ export { drawTile, DRAW_TILE_GRID, TILE_PX, fountainFrameAt } from "@/game/gfx/d
 export {
   getTileSheet,
   getGrassEdgeSheet,
+  getGrassSpillSheet,
   getWaterShoreSheet,
   getAshwoodCanopySheet,
   tileVariantAt,
@@ -37,5 +38,14 @@ export {
   drawHollowTorchSpots,
   drawHollowDungeonMarkers,
 } from "@/game/gfx/atmosphere";
-export { makeCanvas, ctx2d, px, shadeHex, mixHex, drawSoftShadow } from "@/game/gfx/canvasUtil";
+export {
+  makeCanvas,
+  ctx2d,
+  px,
+  shadeHex,
+  mixHex,
+  drawSoftShadow,
+  addPixelVolume,
+  GROUND_SHADOW_ALPHA,
+} from "@/game/gfx/canvasUtil";
 export { flushDepth, type DepthItem } from "@/game/gfx/depth";

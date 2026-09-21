@@ -6,7 +6,7 @@ import {
   creatureWalkFrame,
   type CreatureKindId,
 } from "@/game/gfx/creatures";
-import { drawSoftShadow } from "@/game/gfx/canvasUtil";
+import { drawSoftShadow, GROUND_SHADOW_ALPHA } from "@/game/gfx/canvasUtil";
 import type { DepthItem } from "@/game/gfx/depth";
 import { flushDepth } from "@/game/gfx/depth";
 
@@ -43,7 +43,7 @@ export function collectEnemyDepthItems(
         if (e.ai === "dead") {
           const fade = Math.max(0, e.corpseT / 1.4);
           ctx.globalAlpha = fade * 0.55;
-          drawSoftShadow(ctx, sx, sy + 2, e.kind.radius * 0.9, e.kind.radius * 0.35, 0.4);
+          drawSoftShadow(ctx, sx, sy + 4, e.kind.radius * 0.95, e.kind.radius * 0.36, GROUND_SHADOW_ALPHA);
           ctx.fillStyle = e.kind.colorDark;
           ctx.beginPath();
           ctx.ellipse(sx, sy + 2, e.kind.radius * 0.9, e.kind.radius * 0.4, 0, 0, Math.PI * 2);

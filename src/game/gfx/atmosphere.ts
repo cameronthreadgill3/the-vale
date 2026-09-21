@@ -1,6 +1,5 @@
 /**
- * Lightweight atmosphere overlays — vignette, ashwood silver tint, hollow torch spots.
- * Pass 3: multi-frequency torch flicker; sconces aligned with cave-wall torch tiles.
+ * Lightweight atmosphere overlays — vignette, ashwood umbra/silver, hollow torch spots.
  * Keep labels readable (low alpha, drawn under wayfinding).
  */
 import { TILE, type WorldMap } from "@/game/world";
@@ -20,20 +19,20 @@ export function drawVignette(
   ctx: CanvasRenderingContext2D,
   viewW: number,
   viewH: number,
-  strength = 0.26,
+  strength = 0.24,
 ): void {
   const cx = viewW / 2;
   const cy = viewH / 2;
-  const r = Math.hypot(cx, cy) * 0.92;
-  const g = ctx.createRadialGradient(cx, cy, r * 0.35, cx, cy, r);
+  const r = Math.hypot(cx, cy) * 0.94;
+  const g = ctx.createRadialGradient(cx, cy, r * 0.42, cx, cy, r);
   g.addColorStop(0, "rgba(0,0,0,0)");
-  g.addColorStop(0.65, "rgba(0,0,0,0)");
-  g.addColorStop(1, `rgba(8,10,6,${strength})`);
+  g.addColorStop(0.72, "rgba(0,0,0,0)");
+  g.addColorStop(1, `rgba(10,14,8,${strength})`);
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, viewW, viewH);
 }
 
-/** Cool silver-leaf wash over ashwood (stone) clusters — overworld only. */
+/** Ground umbra under ashwood plus a faint north silver rim — overworld only. */
 export function drawAshwoodTint(
   ctx: CanvasRenderingContext2D,
   map: WorldMap,
@@ -48,17 +47,24 @@ export function drawAshwoodTint(
   const endTX = Math.min(map.width - 1, Math.ceil((originX + viewW) / TILE) + 1);
   const endTY = Math.min(map.height - 1, Math.ceil((originY + viewH) / TILE) + 1);
   ctx.save();
-  ctx.globalAlpha = 0.09;
   for (let ty = startTY; ty <= endTY; ty++) {
     for (let tx = startTX; tx <= endTX; tx++) {
       if (map.tiles[ty]![tx] !== "stone") continue;
       const sx = Math.floor(tx * TILE - originX);
       const sy = Math.floor(ty * TILE - originY);
-      const g = ctx.createRadialGradient(sx + 16, sy + 8, 4, sx + 16, sy + 8, 42);
-      g.addColorStop(0, "#d0e0d0");
-      g.addColorStop(1, "transparent");
-      ctx.fillStyle = g;
-      ctx.fillRect(sx - 12, sy - 16, TILE + 24, TILE + 24);
+      const umbra = ctx.createRadialGradient(sx + 16, sy + 22, 4, sx + 16, sy + 24, 38);
+      umbra.addColorStop(0, "rgba(8, 14, 8, 0.28)");
+      umbra.addColorStop(0.55, "rgba(12, 20, 10, 0.12)");
+      umbra.addColorStop(1, "transparent");
+      ctx.fillStyle = umbra;
+      ctx.fillRect(sx - 16, sy - 4, TILE + 32, TILE + 28);
+      ctx.globalAlpha = 0.07;
+      const silver = ctx.createRadialGradient(sx + 16, sy + 4, 3, sx + 16, sy + 4, 36);
+      silver.addColorStop(0, "#d4e4d4");
+      silver.addColorStop(1, "transparent");
+      ctx.fillStyle = silver;
+      ctx.fillRect(sx - 10, sy - 18, TILE + 20, TILE + 16);
+      ctx.globalAlpha = 1;
     }
   }
   ctx.restore();

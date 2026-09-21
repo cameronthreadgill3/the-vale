@@ -3,7 +3,7 @@
  * Cached OffscreenCanvas / canvas sheets — not redrawn every frame.
  * Vale art only; not CipSoft / Tibia assets.
  */
-import { makeCanvas, ctx2d, px, shadeHex, mixHex, drawSoftShadow } from "@/game/gfx/canvasUtil";
+import { makeCanvas, ctx2d, px, shadeHex, mixHex, drawSoftShadow, GROUND_SHADOW_ALPHA } from "@/game/gfx/canvasUtil";
 
 export const CAIRN_FRAME_W = 32;
 export const CAIRN_FRAME_H = 40;
@@ -210,7 +210,7 @@ function blitCairn(
   sy: number,
   sheet: Sheet,
 ): void {
-  drawSoftShadow(ctx, sx, sy + 8, 13, 5, 0.36);
+  drawSoftShadow(ctx, sx, sy + 9, 13, 5, GROUND_SHADOW_ALPHA);
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(
     sheet as CanvasImageSource,
