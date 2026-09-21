@@ -33,6 +33,7 @@ import {
   collectMoteDepthItems,
   drawHollowTorchSpots,
 } from "@/game/gfx/atmosphere";
+import { tickAshDrift, collectAshDriftDepthItems } from "@/game/gfx/ashDrift";
 import { drawViewOverlay } from "@/game/gfx/viewOverlay";
 import type { ValeCharacter } from "@/game/character";
 import { FOLK, type FolkDef, type ShopDef, type ShipDock } from "@/game/folk";
@@ -675,6 +676,7 @@ export function advanceCameraAndRender(args: {
   _hitFlashVis = Math.max(0, _hitFlashVis - dt);
 
   tickMotes(dt, map, originX, originY, viewW, viewH);
+  tickAshDrift(dt, map, originX, originY, viewW, viewH, _atmosT);
   const groundShift = {
     x: Math.max(-2.5, Math.min(2.5, (camX - player.x) * 0.08)),
     y: Math.max(-2.5, Math.min(2.5, (camY - player.y) * 0.08)),
@@ -683,6 +685,7 @@ export function advanceCameraAndRender(args: {
     ...collectFolkDepthItems(folk, originX, originY, _atmosT),
     ...collectEnemyDepthItems(enemies, originX, originY, groundShift),
     ...collectMoteDepthItems(originX, originY, _atmosT),
+    ...collectAshDriftDepthItems(originX, originY, _atmosT),
     {
       y: player.y,
       x: player.x,
