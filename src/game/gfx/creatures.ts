@@ -221,8 +221,8 @@ function paintShadeWisp(ctx: CanvasRenderingContext2D, flash: boolean, frame: nu
 }
 
 /**
- * Hollow boss — wide cinder-and-veil, not a scaled Shade Wisp diamond.
- * Dense ember heart, ash mantle, violet/orange flicker, pulse on walk frames.
+ * Hollow boss — jagged coal-and-veil, not a scaled Shade Wisp diamond.
+ * Paint order: smoke → hull → face/core/cracks → crown last so flames sit on top.
  */
 function paintAshveilEmber(ctx: CanvasRenderingContext2D, flash: boolean, frame: number): void {
   const ashD = flash ? "#b0a088" : "#1a1218";
@@ -236,88 +236,93 @@ function paintAshveilEmber(ctx: CanvasRenderingContext2D, flash: boolean, frame:
   const crack = flash ? "#ffd090" : "#c04820";
   const spark = flash ? "#fff8e0" : "#ffd070";
   const rim = flash ? "#6a5840" : "#0c0a0c";
-  const by = bobY(frame) - (frame === 2 ? 1 : 0);
+  const by = bobY(frame);
   const sway = frame === 1 ? 1 : frame === 3 ? -1 : 0;
   const pulse = frame === 1 || frame === 3 ? 1 : 0;
-  const lick = frame === 2 ? 1 : 0;
+  const lick = frame === 2 ? 2 : pulse ? 1 : 0;
 
-  // Short jagged crown — a coal fire, not a tall wisp tip.
-  px(ctx, 14 + sway, 5 + by - lick, ember, 4, 3);
-  px(ctx, 15 + sway, 4 + by - lick, emberH, 2, 2);
-  px(ctx, 11 + sway, 7 + by, ember, 3, 3);
-  px(ctx, 18 + sway, 6 + by, ember, 3, 4);
-  px(ctx, 10 + sway, 8 + by, crack, 2, 2);
-  px(ctx, 20 + sway, 7 + by, emberH, 2, 2);
-  if (pulse || lick) {
-    px(ctx, 15 + sway, 3 + by - lick, heart, 2, 2);
-    px(ctx, 9 + sway, 6 + by, spark, 1, 2);
-    px(ctx, 22 + sway, 5 + by, spark, 1, 2);
-  }
+  // Rising ash columns (behind the body).
+  px(ctx, 5 + sway, 11 + by, ash, 2, 5);
+  px(ctx, 4 + sway, 7 + by - pulse, ashL, 2, 5);
+  px(ctx, 3 + sway, 4 + by - pulse, ash, 1, 4);
+  px(ctx, 26 + sway, 13 + by, ash, 2, 5);
+  px(ctx, 27 + sway, 9 + by + pulse, ashL, 2, 4);
+  px(ctx, 28 + sway, 6 + by, ash, 1, 3);
 
-  // Wide charcoal hull + ash mantle (urn / hood, grounded).
-  px(ctx, 8 + sway, 10 + by, ashD, 16, 14);
-  px(ctx, 6 + sway, 13 + by, ashD, 20, 11);
-  px(ctx, 9 + sway, 9 + by, ash, 14, 14);
-  px(ctx, 7 + sway, 14 + by, ash, 18, 9);
-  px(ctx, 10 + sway, 8 + by, ash, 12, 4);
-  px(ctx, 11 + sway, 7 + by, ashL, 10, 3);
-  px(ctx, 12 + sway, 11 + by, ashL, 8, 3);
-  px(ctx, 5 + sway, 13 + by, rim, 1, 11);
-  px(ctx, 26 + sway, 13 + by, rim, 1, 11);
+  // Irregular coal hull — offset chunks, not a smooth oval.
+  px(ctx, 8 + sway, 12 + by, ashD, 16, 12);
+  px(ctx, 7 + sway, 15 + by, ashD, 18, 8);
+  px(ctx, 6 + sway, 17 + by, ashD, 3, 5);
+  px(ctx, 5 + sway, 18 + by, ash, 2, 3);
+  px(ctx, 23 + sway, 13 + by, ashD, 4, 8);
+  px(ctx, 24 + sway, 12 + by, ash, 3, 4);
+  px(ctx, 9 + sway, 13 + by, ash, 14, 10);
+  px(ctx, 10 + sway, 14 + by, ashL, 5, 3);
+  px(ctx, 16 + sway, 15 + by, ashL, 4, 2);
+  px(ctx, 7 + sway, 15 + by, rim, 1, 8);
+  px(ctx, 24 + sway, 13 + by, rim, 1, 8);
 
-  // Violet flicker rim around the held core.
-  px(ctx, 11 + sway, 13 + by, violet, 10, 8);
-  px(ctx, 10 + sway, 15 + by, violetH, 12, 5);
-  px(ctx, 12 + sway, 12 + by, shadeHex(violet, 1.15), 8, 3);
-
-  // Dense ember heart — compact oval, not a vertical flame stripe.
-  px(ctx, 12 + sway, 14 + by, ember, 8, 8);
-  px(ctx, 13 + sway, 15 + by, emberH, 6, 6 + pulse);
-  px(ctx, 14 + sway, 16 + by, heart, 4, 4 + pulse);
-  px(ctx, 15 + sway, 17 + by, heart, 2, 2);
-
-  // Twin ember slits in the hood.
+  // Hood / brow so it reads as a held spirit, not a lantern.
+  px(ctx, 10 + sway, 10 + by, ashD, 12, 4);
+  px(ctx, 11 + sway, 9 + by, ash, 10, 3);
+  px(ctx, 12 + sway, 10 + by, ashL, 8, 2);
+  px(ctx, 12 + sway, 11 + by, rim, 3, 1);
+  px(ctx, 17 + sway, 11 + by, rim, 3, 1);
   px(ctx, 12 + sway, 12 + by, emberH, 2, 2);
   px(ctx, 18 + sway, 12 + by, emberH, 2, 2);
-  px(ctx, 12 + sway, 12 + by, heart, 1, 1);
+  px(ctx, 13 + sway, 12 + by, heart, 1, 1);
   px(ctx, 19 + sway, 12 + by, heart, 1, 1);
 
-  // Coal fissures.
-  px(ctx, 10 + sway, 16 + by, crack, 2, 5);
-  px(ctx, 20 + sway, 15 + by, crack, 2, 4);
-  px(ctx, 14 + sway, 22 + by, ember, 4, 2);
-  px(ctx, 8 + sway, 18 + by, crack, 2, 2);
+  // Thin violet halo around the held core (family flicker, not a wisp body).
+  px(ctx, 11 + sway, 16 + by, violet, 10, 6);
+  px(ctx, 12 + sway, 15 + by, violetH, 8, 2);
+  if (pulse) {
+    px(ctx, 8 + sway, 16 + by, violetH, 2, 2);
+    px(ctx, 22 + sway, 17 + by, violet, 2, 2);
+  }
 
-  // Ash skirt pooling toward the floor.
-  px(ctx, 9 + sway, 24 + by, ashD, 14, 3);
-  px(ctx, 11 + sway, 26 + by, ash, 10, 2);
-  px(ctx, 13 + sway, 27 + by, ashL, 6, 1);
+  // Concentric ember heart.
+  px(ctx, 13 + sway, 17 + by, ember, 6, 6);
+  px(ctx, 14 + sway, 18 + by, emberH, 4, 4 + pulse);
+  px(ctx, 15 + sway, 19 + by, heart, 2, 2 + pulse);
 
-  // Side ash wisps (drift with pulse).
-  px(ctx, 4 + sway, 16 + by, ash, 3, 4);
-  px(ctx, 3 + sway, 14 + by - pulse, ashL, 2, 3);
-  px(ctx, 25 + sway, 15 + by, ash, 3, 4);
-  px(ctx, 27 + sway, 13 + by + pulse, ashL, 2, 3);
+  // 1px coal fissures radiating from the heart.
+  px(ctx, 11 + sway, 18 + by, crack, 2, 1);
+  px(ctx, 10 + sway, 19 + by, crack, 1, 3);
+  px(ctx, 19 + sway, 17 + by, crack, 2, 1);
+  px(ctx, 21 + sway, 16 + by, ember, 1, 3);
+  px(ctx, 15 + sway, 23 + by, crack, 2, 2);
 
-  // Frame sparks + cooler ash motes — orbit unlike the wisp's tight loop.
-  const mx = [5, 25, 7, 24][frame]!;
-  const my = [20, 9, 8, 22][frame]!;
+  // Dripping ash skirt (grounded vs floating wisp).
+  px(ctx, 9 + sway, 24 + by, ashD, 14, 2);
+  px(ctx, 11 + sway, 26 + by, ash, 4, 2);
+  px(ctx, 17 + sway, 26 + by, ash, 3, 3);
+  px(ctx, 13 + sway, 27 + by, ashL, 2, 2);
+
+  // Jagged flame crown LAST so the hood cannot bury it.
+  px(ctx, 14 + sway, 6 + by - lick, ember, 4, 4);
+  px(ctx, 15 + sway, 4 + by - lick, emberH, 2, 3);
+  px(ctx, 15 + sway, 3 + by - lick, heart, 1, 2);
+  px(ctx, 11 + sway, 7 + by, ember, 3, 3);
+  px(ctx, 11 + sway, 6 + by, emberH, 2, 2);
+  px(ctx, 19 + sway, 6 + by, ember, 3, 4);
+  px(ctx, 20 + sway, 5 + by, emberH, 2, 2);
+  if (pulse || lick) {
+    px(ctx, 16 + sway, 2 + by - lick, spark, 1, 2);
+    px(ctx, 10 + sway, 5 + by, spark, 1, 2);
+    px(ctx, 22 + sway, 4 + by, spark, 1, 2);
+  }
+
+  // Orbiting sparks + cooler ash motes (wider path than the wisp).
+  const mx = [4, 26, 6, 25][frame]!;
+  const my = [20, 8, 6, 22][frame]!;
   px(ctx, mx, my + by, spark, 2, 2);
-  const ax = [24, 6, 26, 5][frame]!;
-  const ay = [12, 21, 18, 10][frame]!;
+  const ax = [25, 5, 27, 4][frame]!;
+  const ay = [11, 21, 17, 9][frame]!;
   px(ctx, ax, ay + by, ashL, 2, 2);
-  if (frame === 1) {
-    px(ctx, 8 + sway, 5 + by, spark, 2, 2);
-    px(ctx, 23 + sway, 18 + by, emberH, 2, 2);
-  }
-  if (frame === 2) {
-    px(ctx, 16 + sway, 2 + by, emberH, 2, 3);
-    px(ctx, 5 + sway, 20 + by, ash, 2, 2);
-  }
-  if (frame === 3) {
-    px(ctx, 21 + sway, 5 + by, spark, 2, 2);
-    px(ctx, 7 + sway, 19 + by, ember, 2, 2);
-  }
+  if (frame === 1) px(ctx, 23 + sway, 20 + by, emberH, 2, 2);
+  if (frame === 2) px(ctx, 16 + sway, 1 + by, emberH, 2, 2);
+  if (frame === 3) px(ctx, 7 + sway, 20 + by, ember, 2, 2);
 }
 
 function paintAshVole(ctx: CanvasRenderingContext2D, flash: boolean, frame: number): void {
