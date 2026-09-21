@@ -1,13 +1,13 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { GameApp } from "@/game/GameApp";
+import { AccountApp } from "@/account/AccountApp";
 import "./styles.css";
 
 const root = document.getElementById("root");
 if (root) {
   createRoot(root).render(
     <StrictMode>
-      <GameApp />
+      <AccountApp />
     </StrictMode>,
   );
 }

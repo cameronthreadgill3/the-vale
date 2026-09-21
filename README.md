@@ -97,6 +97,40 @@ npm run build:itch   # itch.io HTML5 pack → dist-itch/
 
 After merging to `main`, Vercel should serve the React client (class select → Thornreach). If the live site still shows a non-clickable “Enter the Vale” card, force a redeploy with Framework Preset **Vite** and Output Directory **dist**.
 
+## Accounts & character slots
+
+Players sign up with **email + password** (and an account display name), then pick one of **four character slots**. Empty slots open the existing class-select flow; filled slots show name / class / level with **Play** and **Delete**. Logout returns to the account gate.
+
+### Auth: Clerk (preferred) + demo fallback
+
+| Env var | Where | Purpose |
+|---------|--------|---------|
+| `VITE_CLERK_PUBLISHABLE_KEY` | Vite client / Vercel | Clerk publishable key (`pk_…`). Enables live sign-up / sign-in UI. |
+| `CLERK_SECRET_KEY` | Vercel server (future `api/*`) | Clerk secret for backend verification. Not required for the metadata MVP. |
+
+Copy `.env.example` → `.env.local` for local dev. On Vercel: Project → Settings → Environment Variables.
+
+**If keys are missing**, the app does **not** crash: it shows a setup banner and runs **demo mode** (accounts + slots stored in `localStorage` only).
+
+**Offline playtests:** use **Continue offline (local)** on the account screen — same `vale-character-v1` guest save as before. After signing in you can **Import offline local save into first empty slot**.
+
+### Character storage (pragmatic MVP)
+
+Slot snapshots (compact `ValeCharacter` + quest log) live in:
+
+1. **Clerk** `user.unsafeMetadata.valeCharacterSlots` when Clerk is configured, or
+2. **Demo** `localStorage` key `vale-demo-slots:<userId>` when keys are missing.
+
+Active play still uses scoped `localStorage` (`vale-char:<userId>:<slot>` / `vale-quests:<userId>:<slot>`) and writes back into the slot snapshot when you return to **Characters**.
+
+> **Production follow-up:** move slots to **Neon Postgres** (or Vercel KV) behind `api/*` routes with `@clerk/backend`. Clerk metadata is fine for early playtests (few KB per character) but is not a long-term game DB.
+
+### UI flow
+
+1. Boot → Account gate (Sign up / Sign in) unless already signed in  
+2. Character slots → 4 cards (Create / Play / Delete)  
+3. Play → existing `GameApp` with that slot’s save  
+4. **Characters** / **Sign out** chrome returns to slots / gate  
 
 ## Theme
 
