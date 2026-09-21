@@ -9,13 +9,16 @@ import {
   getTeethQuest,
   getAshwoodQuest,
   getHollowQuest,
+  getGateWatchQuest,
   isTeethActive,
   isAshwoodActive,
   isHollowActive,
+  isGateWatchActive,
   loadQuestLog,
   type TeethQuestProgress,
   type AshwoodQuestProgress,
   type HollowQuestProgress,
+  type GateWatchQuestProgress,
 } from "@/game/quests";
 import { ASHWOOD_CAIRNS } from "@/game/cairns";
 
@@ -43,6 +46,10 @@ export function resolveQuestObjective(
   map: WorldMap,
 ): WayfindObjective | null {
   const log = loadQuestLog();
+  if (isGateWatchActive(log)) {
+    const q = getGateWatchQuest(log);
+    if (q) return objectiveForGateWatch(q, player, folk, map);
+  }
   if (isHollowActive(log)) {
     const q = getHollowQuest(log);
     if (q) return objectiveForHollow(q, player, enemies, folk, map);
@@ -56,6 +63,52 @@ export function resolveQuestObjective(
     if (q) return objectiveForTeeth(q, player, enemies, folk);
   }
   return null;
+}
+
+export function objectiveForGateWatch(
+  q: GateWatchQuestProgress,
+  player: { x: number; y: number },
+  folk: FolkDef[],
+  map: WorldMap,
+): WayfindObjective | null {
+  if (q.status !== "active") return null;
+  const rook = folk.find((f) => f.id === "rook");
+
+  if (!q.gateReached) {
+    const gate = mistmereGateOnMap(map);
+    if (gate) {
+      return {
+        label: "Reach Mistmere gate",
+        x: (gate.x + 0.5) * TILE,
+        y: (gate.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+    return {
+      label: "Find Mistmere gate (Thornreach)",
+      x: player.x + TILE * 8,
+      y: player.y - TILE * 2,
+      kind: "landmark",
+    };
+  }
+
+  if (rook) {
+    return {
+      label: "Return to Rook",
+      x: (rook.x + 0.5) * TILE,
+      y: (rook.y + 0.5) * TILE,
+      kind: "folk",
+    };
+  }
+  return null;
+}
+
+function mistmereGateOnMap(
+  map: WorldMap,
+): { x: number; y: number } | null {
+  if (!map.gates || map.gates.length === 0) return null;
+  const g = map.gates.find((x) => x.targetContinentId === "mistmere");
+  return g ? { x: g.x, y: g.y } : null;
 }
 
 export function objectiveForHollow(
