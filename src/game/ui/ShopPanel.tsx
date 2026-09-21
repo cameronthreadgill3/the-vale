@@ -113,7 +113,7 @@ export function ShopPanel({
   const ratio = maxW > 0 ? weight / maxW : 0;
 
   return (
-    <div className="vale-panel vale-inv-panel vale-shop-sheet vale-overlay-above-chrome vale-text-screen pointer-events-auto absolute bottom-4 left-1/2 z-30 w-[min(100%-2rem,28rem)] -translate-x-1/2 p-3.5 sm:bottom-6">
+    <div className="vale-panel vale-shop-sheet vale-text-screen pointer-events-auto absolute bottom-4 left-1/2 z-30 w-[min(100%-2rem,28rem)] -translate-x-1/2 p-3.5 max-md:bottom-8 sm:bottom-6">
       <div className="mb-2.5 flex items-center justify-between gap-2">
         <div className="min-w-0">
           <div className="vale-screen-title">{shop.name}</div>
@@ -187,7 +187,7 @@ export function ShopPanel({
           </div>
         </section>
 
-        <section className="vale-inv-well vale-inv-well-vault">
+        <section className="vale-inv-well vale-shop-pack">
           <div className="vale-screen-kicker mb-1.5">Your pack</div>
           {character.inventory.length === 0 ? (
             <p className="vale-inv-empty">Empty pack.</p>
