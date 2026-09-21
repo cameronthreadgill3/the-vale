@@ -22,6 +22,7 @@ export const GREEN_GATE_QUEST_ID = "the-green-gate-keeps" as const;
 export const SPINE_QUEST_ID = "the-spine-remembers" as const;
 export const PALE_QUEST_ID = "the-pale-gate-opens" as const;
 export const ASHEN_QUEST_ID = "the-ashen-gate-opens" as const;
+export const EMBERCOIL_QUEST_ID = "the-embercoil-gate-opens" as const;
 
 /** Depot clerk — Cress Ledger in folk.ts. */
 export const CRESS_FOLK_ID = "cress-ledger" as const;
@@ -55,7 +56,8 @@ export type QuestId =
   | typeof GREEN_GATE_QUEST_ID
   | typeof SPINE_QUEST_ID
   | typeof PALE_QUEST_ID
-  | typeof ASHEN_QUEST_ID;
+  | typeof ASHEN_QUEST_ID
+  | typeof EMBERCOIL_QUEST_ID;
 
 export type QuestStatus = "active" | "complete";
 
@@ -200,6 +202,17 @@ export interface AshenQuestProgress {
   ratDone: boolean;
 }
 
+export interface EmbercoilQuestProgress {
+  id: typeof EMBERCOIL_QUEST_ID;
+  status: QuestStatus;
+  /** Reached Embercoil overworld (travel, stand, or arrive via Ashen / Pale gate). */
+  reachedEmbercoil: boolean;
+  /** First successful Identify of a Needle Rat on Embercoil. */
+  identifiedRat: boolean;
+  /** Bark Hound defeated on Embercoil (target 1; continent-scoped). */
+  houndDone: boolean;
+}
+
 export type QuestLog = {
   [TEETH_QUEST_ID]?: TeethQuestProgress;
   [ASHWOOD_QUEST_ID]?: AshwoodQuestProgress;
@@ -214,6 +227,7 @@ export type QuestLog = {
   [SPINE_QUEST_ID]?: SpineQuestProgress;
   [PALE_QUEST_ID]?: PaleQuestProgress;
   [ASHEN_QUEST_ID]?: AshenQuestProgress;
+  [EMBERCOIL_QUEST_ID]?: EmbercoilQuestProgress;
 };
 
 export const TEETH_RATS_NEEDED = 3;
@@ -233,6 +247,7 @@ export const GREEN_GATE_QUEST_TITLE = "The Green Gate Keeps";
 export const SPINE_QUEST_TITLE = "The Spine Remembers";
 export const PALE_QUEST_TITLE = "The Pale Gate Opens";
 export const ASHEN_QUEST_TITLE = "The Ashen Gate Opens";
+export const EMBERCOIL_QUEST_TITLE = "The Embercoil Gate Opens";
 
 export const TEETH_START_TOAST =
   "Rook: Ashwood edge has wrong prey - Identify first.";
@@ -311,6 +326,12 @@ export const ASHEN_START_TOAST =
 
 export const ASHEN_COMPLETE_LINE =
   "Rook: The ashen gate opened, and the cinder steppe knows your footing. Survive. Learn. Progress — the far road runs gray now.";
+
+export const EMBERCOIL_START_TOAST =
+  "Rook: The ashen gate opened, and the cinder steppe knows your footing. Walk the embercoil gate beyond the marches — name the needle-rat that skitters the slag ridges, quiet one bark-hound packing the heat, and bring the ember measure home. Survive. Learn. Progress.";
+
+export const EMBERCOIL_COMPLETE_LINE =
+  "Rook: The embercoil gate opened, and the slag ridges know your footing. Survive. Learn. Progress — the far road runs hot now.";
 
 export const TEETH_REWARDS = {
   gold: 28,
@@ -401,6 +422,13 @@ export const ASHEN_REWARDS = {
   combatXp: 180,
   skill: "shielding" as SkillId,
   skillXp: 52,
+};
+
+export const EMBERCOIL_REWARDS = {
+  gold: 95,
+  combatXp: 190,
+  skill: "magic" as SkillId,
+  skillXp: 55,
 };
 
 export function loadQuestLog(): QuestLog {
@@ -558,6 +586,16 @@ export function emptyAshenQuest(): AshenQuestProgress {
     talkedAshPilgrim: false,
     identifiedHound: false,
     ratDone: false,
+  };
+}
+
+export function emptyEmbercoilQuest(): EmbercoilQuestProgress {
+  return {
+    id: EMBERCOIL_QUEST_ID,
+    status: "active",
+    reachedEmbercoil: false,
+    identifiedRat: false,
+    houndDone: false,
   };
 }
 
@@ -767,6 +805,20 @@ export function sanitizeQuestLog(raw: unknown): QuestLog {
     };
   }
 
+  const embercoil = obj[EMBERCOIL_QUEST_ID];
+  if (embercoil && typeof embercoil === "object") {
+    const e = embercoil as Record<string, unknown>;
+    const status: QuestStatus =
+      e.status === "complete" ? "complete" : "active";
+    log[EMBERCOIL_QUEST_ID] = {
+      id: EMBERCOIL_QUEST_ID,
+      status,
+      reachedEmbercoil: Boolean(e.reachedEmbercoil),
+      identifiedRat: Boolean(e.identifiedRat),
+      houndDone: Boolean(e.houndDone),
+    };
+  }
+
   return log;
 }
 
@@ -846,6 +898,12 @@ export function getAshenQuest(
   return log?.[ASHEN_QUEST_ID] ?? null;
 }
 
+export function getEmbercoilQuest(
+  log: QuestLog | undefined,
+): EmbercoilQuestProgress | null {
+  return log?.[EMBERCOIL_QUEST_ID] ?? null;
+}
+
 export function isTeethActive(log: QuestLog | undefined): boolean {
   const q = getTeethQuest(log);
   return Boolean(q && q.status === "active");
@@ -908,6 +966,11 @@ export function isPaleActive(log: QuestLog | undefined): boolean {
 
 export function isAshenActive(log: QuestLog | undefined): boolean {
   const q = getAshenQuest(log);
+  return Boolean(q && q.status === "active");
+}
+
+export function isEmbercoilActive(log: QuestLog | undefined): boolean {
+  const q = getEmbercoilQuest(log);
   return Boolean(q && q.status === "active");
 }
 
@@ -978,6 +1041,10 @@ export function ashenObjectivesMet(q: AshenQuestProgress): boolean {
   return (
     q.reachedAshen && q.talkedAshPilgrim && q.identifiedHound && q.ratDone
   );
+}
+
+export function embercoilObjectivesMet(q: EmbercoilQuestProgress): boolean {
+  return q.reachedEmbercoil && q.identifiedRat && q.houndDone;
 }
 
 /** HUD lines for Teeth sticky panel. */
@@ -1238,6 +1305,27 @@ export function ashenHudLines(q: AshenQuestProgress): string[] {
   ];
 }
 
+/** HUD lines for The Embercoil Gate Opens. */
+export function embercoilHudLines(q: EmbercoilQuestProgress): string[] {
+  if (q.status === "complete") {
+    return ["Complete - The embercoil gate opened"];
+  }
+  return [
+    q.reachedEmbercoil
+      ? "[done] Reach Embercoil"
+      : "[ ] Reach Embercoil (Ashen Marches gate)",
+    q.identifiedRat
+      ? "[done] Identify Needle Rat"
+      : "[ ] Identify a Needle Rat (near look)",
+    q.houndDone
+      ? "[done] Defeat Bark Hound 1/1"
+      : "[ ] Defeat Bark Hound 0/1 (Embercoil)",
+    q.reachedEmbercoil && q.identifiedRat && q.houndDone
+      ? "[ ] Return to Rook (the ember measure)"
+      : "[ ] Return to Rook with the ember measure",
+  ];
+}
+
 
 export type QuestEventResult = {
   log: QuestLog;
@@ -1268,6 +1356,8 @@ export type QuestEventResult = {
   startedPale?: boolean;
   /** The Ashen Gate Opens auto-started after The Pale Gate Opens. */
   startedAshen?: boolean;
+  /** The Embercoil Gate Opens auto-started after The Ashen Gate Opens. */
+  startedEmbercoil?: boolean;
 };
 
 /** If Teeth is complete and Ashwood missing, start Ashwood Watch. */
@@ -1486,6 +1576,24 @@ export function ensureAshenAfterPale(log: QuestLog): {
   };
 }
 
+/** If The Ashen Gate Opens is complete and The Embercoil Gate Opens missing, start it. */
+export function ensureEmbercoilAfterAshen(log: QuestLog): {
+  log: QuestLog;
+  started: boolean;
+} {
+  const ashen = getAshenQuest(log);
+  if (!ashen || ashen.status !== "complete") {
+    return { log, started: false };
+  }
+  if (getEmbercoilQuest(log)) {
+    return { log, started: false };
+  }
+  return {
+    log: withEmbercoilQuest(log, emptyEmbercoilQuest()),
+    started: true,
+  };
+}
+
 export function withTeethQuest(
   log: QuestLog | undefined,
   quest: TeethQuestProgress,
@@ -1577,6 +1685,13 @@ export function withAshenQuest(
   return { ...(log ?? {}), [ASHEN_QUEST_ID]: quest };
 }
 
+export function withEmbercoilQuest(
+  log: QuestLog | undefined,
+  quest: EmbercoilQuestProgress,
+): QuestLog {
+  return { ...(log ?? {}), [EMBERCOIL_QUEST_ID]: quest };
+}
+
 function finishTeethIfReady(
   log: QuestLog,
   next: TeethQuestProgress,
@@ -1640,6 +1755,24 @@ export function applyIdentify(
   kindId: EnemyKindId,
   continentId?: ContinentId,
 ): QuestEventResult | null {
+  const embercoil = getEmbercoilQuest(log);
+  if (
+    embercoil &&
+    embercoil.status === "active" &&
+    !embercoil.identifiedRat &&
+    kindId === "needle-rat" &&
+    continentId === "embercoil"
+  ) {
+    return {
+      log: withEmbercoilQuest(log, {
+        ...embercoil,
+        reachedEmbercoil: true,
+        identifiedRat: true,
+      }),
+      toast: "Identified: Needle Rat / F",
+    };
+  }
+
   const ashen = getAshenQuest(log);
   if (
     ashen &&
@@ -1797,6 +1930,26 @@ export function applyEnemyKill(
   kindId: EnemyKindId,
   continentId?: ContinentId,
 ): QuestEventResult | null {
+  const embercoil = getEmbercoilQuest(log);
+  if (
+    embercoil &&
+    embercoil.status === "active" &&
+    kindId === "bark-hound" &&
+    continentId === "embercoil" &&
+    !embercoil.houndDone
+  ) {
+    return {
+      log: withEmbercoilQuest(log, {
+        ...embercoil,
+        reachedEmbercoil: true,
+        houndDone: true,
+      }),
+      toast: embercoil.identifiedRat
+        ? "Bark Hound 1/1 — Return to Rook"
+        : "Bark Hound 1/1 — Name the Needle Rat",
+    };
+  }
+
   const ashen = getAshenQuest(log);
   if (
     ashen &&
@@ -2410,10 +2563,43 @@ export function applyAshenRookTalk(log: QuestLog): QuestEventResult | null {
   const q = getAshenQuest(log);
   if (!q || q.status !== "active") return null;
   if (!ashenObjectivesMet(q)) return null;
+  let out = withAshenQuest(log, { ...q, status: "complete" });
+  const ensured = ensureEmbercoilAfterAshen(out);
+  out = ensured.log;
   return {
-    log: withAshenQuest(log, { ...q, status: "complete" }),
-    toast: ASHEN_COMPLETE_LINE,
+    log: out,
+    toast: ensured.started ? EMBERCOIL_START_TOAST : ASHEN_COMPLETE_LINE,
     completedId: ASHEN_QUEST_ID,
+    startedEmbercoil: ensured.started,
+  };
+}
+
+/** Mark Embercoil reached for The Embercoil Gate Opens (travel, stand, or arrival). */
+export function applyEmbercoilReached(log: QuestLog): QuestEventResult | null {
+  const q = getEmbercoilQuest(log);
+  if (!q || q.status !== "active" || q.reachedEmbercoil) {
+    return null;
+  }
+  return {
+    log: withEmbercoilQuest(log, { ...q, reachedEmbercoil: true }),
+    toast:
+      q.identifiedRat && q.houndDone
+        ? "Embercoil marked — Return to Rook with the ember measure"
+        : q.identifiedRat
+          ? "Embercoil marked — Quiet one bark-hound packing the heat"
+          : "Embercoil marked — Name the needle-rat that skitters the slag ridges",
+  };
+}
+
+/** Complete The Embercoil Gate Opens when talking to Rook after the slag ridges are measured. */
+export function applyEmbercoilRookTalk(log: QuestLog): QuestEventResult | null {
+  const q = getEmbercoilQuest(log);
+  if (!q || q.status !== "active") return null;
+  if (!embercoilObjectivesMet(q)) return null;
+  return {
+    log: withEmbercoilQuest(log, { ...q, status: "complete" }),
+    toast: EMBERCOIL_COMPLETE_LINE,
+    completedId: EMBERCOIL_QUEST_ID,
   };
 }
 
@@ -2463,6 +2649,23 @@ export function applyCairnInspect(
 
 /** Rook line while sticky quests are active / complete. */
 export function rookQuestLine(log: QuestLog | undefined): string | null {
+  const embercoil = getEmbercoilQuest(log);
+  if (embercoil) {
+    if (embercoil.status === "complete") {
+      return EMBERCOIL_COMPLETE_LINE.replace(/^Rook:\s*/, "");
+    }
+    if (!embercoil.reachedEmbercoil) {
+      return "The ashen gate opened, and the cinder steppe knows your footing. Walk the embercoil gate beyond the marches — name the needle-rat that skitters the slag ridges, quiet one bark-hound packing the heat, and bring the ember measure home.";
+    }
+    if (!embercoil.identifiedRat) {
+      return "The embercoil gate is underfoot. Identify a Needle Rat on Embercoil — Name and Rank — then quiet one bark-hound packing the heat.";
+    }
+    if (!embercoil.houndDone) {
+      return "The rat is named. Quiet one Bark Hound on Embercoil, then bring the ember measure home.";
+    }
+    return "The embercoil gate opened. Survive. Learn. Progress — the far road runs hot when you tell me.";
+  }
+
   const ashen = getAshenQuest(log);
   if (ashen) {
     if (ashen.status === "complete") {
