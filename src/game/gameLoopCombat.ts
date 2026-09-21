@@ -10,6 +10,7 @@ import {
   nearestEnemyInRange,
   enemyAtCursor,
   type Enemy,
+  type EnemyKindId,
   type FloatText,
   type Projectile,
 } from "@/game/enemies";
@@ -27,6 +28,7 @@ export function createPlayerAttack(opts: {
     skillXp: number,
     gold: number,
   ) => void>;
+  onEnemyKill: MutableRefObject<(kindId: EnemyKindId) => void>;
   onVitals: MutableRefObject<(hp: number, mana: number) => void>;
   player: { x: number; y: number };
   enemies: Enemy[];
@@ -100,6 +102,7 @@ export function createPlayerAttack(opts: {
         Math.max(4, Math.floor(target.kind.xpBase * 0.35)),
         goldGain,
       );
+      opts.onEnemyKill.current(target.kind.id);
       if (profile.healOnKill > 0) {
         const heal = Math.max(1, Math.floor(dmg * profile.healOnKill));
         snap.hp = Math.min(maxHpFor(snap), snap.hp + heal);

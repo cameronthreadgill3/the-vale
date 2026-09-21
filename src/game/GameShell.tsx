@@ -11,6 +11,8 @@ import { VoyagePanel } from "@/game/ui/VoyagePanel";
 import { useGameCanvas } from "@/game/useGameCanvas";
 import { MobileControls, useShowMobileChrome } from "@/game/ui/MobileControls";
 import { GameShellHud } from "@/game/ui/GameShellHud";
+import type { EnemyKindId } from "@/game/enemies";
+import type { TeethQuestProgress } from "@/game/quests";
 
 export function GameShell({
   character,
@@ -46,8 +48,11 @@ export function GameShell({
   onSell,
   onSail,
   onCombatReward,
+  onEnemyKill,
+  onIdentify,
   onVitals,
   onPlayerDeath,
+  teethQuest,
 }: {
   character: ValeCharacter;
   cls: ValeClass;
@@ -87,8 +92,11 @@ export function GameShell({
     skillXp: number,
     gold: number,
   ) => void;
+  onEnemyKill: (kindId: EnemyKindId) => void;
+  onIdentify: (kindId: EnemyKindId) => void;
   onVitals: (hp: number, mana: number) => void;
   onPlayerDeath: () => void;
+  teethQuest: TeethQuestProgress | null;
 }) {
   const overlayOpen = Boolean(dialogue || shop || voyageDock);
   const showMobile = useShowMobileChrome();
@@ -109,6 +117,8 @@ export function GameShell({
     onOpenShop,
     onOpenShip,
     onCombatReward,
+    onEnemyKill,
+    onIdentify,
     onVitals,
     onPlayerDeath,
   });
@@ -125,7 +135,7 @@ export function GameShell({
         tabIndex={0}
       />
       <div className="pointer-events-none absolute inset-x-0 top-0 flex flex-col gap-2 p-4 sm:p-5">
-        <GameShellHud cls={cls} character={character} hud={hud} locationLabel={locationLabel} />
+        <GameShellHud cls={cls} character={character} hud={hud} locationLabel={locationLabel} teethQuest={teethQuest} />
         <div className="flex flex-wrap gap-2">
           {!showMobile && (
           <div className="w-fit rounded border border-[#2a2e24] bg-[#161812]/80 px-3 py-1.5 text-xs text-[#a8b09a] backdrop-blur-sm">

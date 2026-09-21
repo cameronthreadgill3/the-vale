@@ -59,6 +59,17 @@ Tibia-flavored, scoped tight:
 - Floating damage numbers; death respawns at continent spawn / hollow exit with HP restored and a mild gold loss
 - Class flavor: Warden/Thornblade melee, Pathfinder bolts, Hearthmage/Verdant magic (Verdant soft heal-on-kill), Hollowborn short-range hybrid
 
+
+### First sticky quest — Teeth in the Grass
+
+After class select on Thornreach, Rook flags the ashwood edge: wrong prey. A minimal HUD tracks:
+
+1. **Identify** a Needle Rat (near-field look / Name · Rank pane)
+2. Defeat **3 Needle Rats** near Thornhearth / ashwood edge
+3. Survive or drive off **1 Bark Hound**
+
+Rewards: modest gold + combat XP + shielding skill XP, with a short Survive · Learn · Progress line. Progress persists in `vale-character-v1`. Early Thornreach fauna is briefly denser while the hunt is active.
+
 ### Classes
 
 Warden, Thornblade, Pathfinder, Hearthmage, Verdant, Hollowborn — each with accent color, starting skill biases, and a primary skill that gains tiny XP while moving.
