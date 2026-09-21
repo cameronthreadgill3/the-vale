@@ -1,7 +1,7 @@
 /**
  * Procedural 4×4 class walk sheets — chunky outlined pixel figures
  * (original Vale art, Tibia-adjacent proportions — NOT CipSoft sprites).
- * Soft-depth pass: painted NW/SE volume, facing mass, clearer idle vs stride.
+ * Pass 4: faces and gear that read at play scale on top of painted volume.
  */
 import type { ClassId } from "@/game/classes";
 import { makeCanvas, ctx2d, px, shadeHex, paintVolume, addPixelVolume } from "@/game/gfx/canvasUtil";
@@ -25,17 +25,26 @@ const P: Record<ClassId, { a: string; b: string; c: string; hair: string }> = {
 
 const SKIN = "#d4a574";
 const SKIN_D = "#b07a50";
+const SKIN_H = "#c4b8c8";
+const SKIN_H_D = "#8a7a90";
 const BOOT = "#2a2218";
 const OUT = "#0e0c0a";
 const STEEL = "#8a929a";
 const STEEL_D = "#5a6268";
+const STEEL_L = "#c4ccd0";
 const WOOD = "#6b4423";
+const EYE = "#1a1410";
+const EYE_W = "#f4eee4";
+
+function skinOf(id: ClassId): { lite: string; dark: string } {
+  return id === "hollowborn" ? { lite: SKIN_H, dark: SKIN_H_D } : { lite: SKIN, dark: SKIN_D };
+}
 
 function bob(frame: number): number {
   return frame === 1 || frame === 3 ? -1 : 0;
 }
 function spread(frame: number): number {
-  return frame === 1 ? 3 : frame === 3 ? -3 : frame === 2 ? 1 : 0;
+  return frame === 1 ? 4 : frame === 3 ? -4 : frame === 2 ? 1 : 0;
 }
 function armSwing(frame: number): number {
   return frame === 1 ? 3 : frame === 3 ? -3 : frame === 2 ? 1 : 0;
@@ -71,41 +80,67 @@ function outlinedVolume(
   paintVolume(ctx, x, y, w, h, fill, highlight, shade);
 }
 
+function drawFace(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  facing: Facing,
+  skin: { lite: string; dark: string },
+): void {
+  if (facing === "north") return;
+  if (facing === "south") {
+    px(ctx, cx - 3, cy - 3, "#2a2018", 2, 1);
+    px(ctx, cx + 1, cy - 3, "#2a2018", 2, 1);
+    px(ctx, cx - 3, cy - 2, EYE, 2, 2);
+    px(ctx, cx + 1, cy - 2, EYE, 2, 2);
+    px(ctx, cx - 3, cy - 2, EYE_W, 1, 1);
+    px(ctx, cx + 1, cy - 2, EYE_W, 1, 1);
+    px(ctx, cx - 1, cy, skin.dark, 2, 1);
+    px(ctx, cx - 1, cy + 2, "#8a5a40", 2, 1);
+    return;
+  }
+  const s = facing === "west" ? -1 : 1;
+  px(ctx, cx + s * 4, cy - 2, skin.lite, 2, 3);
+  px(ctx, cx + s * 5, cy - 1, skin.dark, 1, 2);
+  px(ctx, cx + s, cy - 2, EYE, 2, 2);
+  px(ctx, cx + s, cy - 2, EYE_W, 1, 1);
+  px(ctx, cx + s * 2, cy + 2, "#8a5a40", 2, 1);
+}
+
 function drawHead(
   ctx: CanvasRenderingContext2D,
   cx: number,
   cy: number,
   facing: Facing,
   hair: string,
+  skin: { lite: string; dark: string } = { lite: SKIN, dark: SKIN_D },
 ): void {
-  outlinedVolume(ctx, cx - 4, cy - 5, 8, 8, SKIN, 1.16, 0.78);
+  outlinedVolume(ctx, cx - 4, cy - 5, 8, 8, skin.lite, 1.16, 0.78);
+  if (facing === "south" || facing === "north") {
+    px(ctx, cx - 6, cy - 3, skin.lite, 2, 3);
+    px(ctx, cx + 4, cy - 3, skin.lite, 2, 3);
+  }
   if (facing === "north") {
     px(ctx, cx - 4, cy - 6, hair, 8, 7);
     px(ctx, cx - 3, cy - 1, hair, 6, 2);
     paintVolume(ctx, cx - 4, cy - 6, 8, 7, hair, 1.18, 0.7);
     px(ctx, cx - 3, cy - 5, shadeHex(hair, 1.25), 3, 2);
+    px(ctx, cx - 5, cy - 3, hair, 2, 3);
+    px(ctx, cx + 3, cy - 3, hair, 2, 3);
   } else if (facing === "south") {
     px(ctx, cx - 3, cy - 6, hair, 6, 3);
-    px(ctx, cx - 4, cy - 5, hair, 2, 3);
-    px(ctx, cx + 2, cy - 5, hair, 2, 2);
+    px(ctx, cx - 5, cy - 5, hair, 2, 3);
+    px(ctx, cx + 3, cy - 5, hair, 2, 2);
     px(ctx, cx - 3, cy - 6, shadeHex(hair, 1.22), 3, 2);
-    px(ctx, cx + 2, cy - 4, shadeHex(hair, 0.7), 2, 2);
-    px(ctx, cx - 2, cy - 1, SKIN_D, 1, 1);
-    px(ctx, cx + 1, cy - 1, SKIN_D, 1, 1);
-    px(ctx, cx - 1, cy + 1, SKIN_D, 2, 1);
-    px(ctx, cx - 2, cy, "#3a2418", 1, 1);
-    px(ctx, cx + 1, cy, "#3a2418", 1, 1);
+    px(ctx, cx + 3, cy - 4, shadeHex(hair, 0.7), 2, 2);
   } else {
     const s = facing === "west" ? -1 : 1;
     px(ctx, cx - 3, cy - 6, hair, 6, 3);
-    px(ctx, cx - s * 3, cy - 5, hair, 3, 5);
-    px(ctx, cx - s * 3, cy - 5, shadeHex(hair, 1.2), 2, 2);
-    px(ctx, cx + s * 4, cy - 2, SKIN, 2, 2);
-    px(ctx, cx + s * 5, cy - 1, SKIN_D, 1, 1);
-    px(ctx, cx + s * 2, cy - 1, SKIN_D, 1, 1);
-    px(ctx, cx + s * 2, cy, "#3a2418", 1, 1);
-    px(ctx, cx - s * 4, cy - 3, hair, 2, 3);
+    px(ctx, cx - s * 4, cy - 5, hair, 3, 5);
+    px(ctx, cx - s * 4, cy - 5, shadeHex(hair, 1.2), 2, 2);
+    px(ctx, cx - s * 5, cy - 3, hair, 2, 3);
   }
+  drawFace(ctx, cx, cy, facing, skin);
 }
 
 function drawLegs(
@@ -183,24 +218,25 @@ function drawNearArms(
   facing: Facing,
   frame: number,
   sleeve: string,
+  skin = SKIN,
 ): void {
   const b = bob(frame);
   const sw = armSwing(frame);
   if (facing === "south") {
     outlinedVolume(ctx, cx - 8, cy - 2 + b + sw, 3, 7, sleeve);
-    outlined(ctx, cx - 8, cy + 4 + b + sw, 3, 3, SKIN);
-    paintVolume(ctx, cx - 8, cy + 4 + b + sw, 3, 3, SKIN, 1.12, 0.8);
+    outlined(ctx, cx - 8, cy + 4 + b + sw, 3, 3, skin);
+    paintVolume(ctx, cx - 8, cy + 4 + b + sw, 3, 3, skin, 1.12, 0.8);
     outlinedVolume(ctx, cx + 5, cy - 2 + b - sw, 3, 7, shadeHex(sleeve, 0.88), 1.12, 0.7);
-    outlined(ctx, cx + 5, cy + 4 + b - sw, 3, 3, SKIN);
-    paintVolume(ctx, cx + 5, cy + 4 + b - sw, 3, 3, SKIN, 1.08, 0.78);
+    outlined(ctx, cx + 5, cy + 4 + b - sw, 3, 3, skin);
+    paintVolume(ctx, cx + 5, cy + 4 + b - sw, 3, 3, skin, 1.08, 0.78);
   } else if (facing === "north") {
     outlinedVolume(ctx, cx - 8, cy - 2 + b - sw, 3, 7, shadeHex(sleeve, 0.8), 1.1, 0.7);
     outlinedVolume(ctx, cx + 5, cy - 2 + b + sw, 3, 7, sleeve);
   } else {
     const near = facing === "east" ? 1 : -1;
     outlinedVolume(ctx, cx + near * 6, cy - 1 + b + sw, 3, 7, sleeve);
-    outlined(ctx, cx + near * 6, cy + 5 + b + sw, 3, 3, SKIN);
-    paintVolume(ctx, cx + near * 6, cy + 5 + b + sw, 3, 3, SKIN, 1.12, 0.8);
+    outlined(ctx, cx + near * 6, cy + 5 + b + sw, 3, 3, skin);
+    paintVolume(ctx, cx + near * 6, cy + 5 + b + sw, 3, 3, skin, 1.12, 0.8);
   }
 }
 
@@ -217,6 +253,7 @@ function drawClass(
   const side = facing === "west" ? -1 : facing === "east" ? 1 : 0;
   const sw = armSwing(frame);
   const wide = id === "thornblade" || id === "warden" || id === "hollowborn";
+  const skin = skinOf(id);
 
   if (id === "hollowborn") {
     drawFarArm(ctx, cx, cy, facing, frame, p.b);
@@ -224,15 +261,17 @@ function drawClass(
     drawTorso(ctx, cx, cy, facing, frame, p.a, true);
     px(ctx, cx - 6, cy + 4 + b, p.b, 12, 3);
     paintVolume(ctx, cx - 6, cy + 4 + b, 12, 3, p.b, 1.16, 0.7);
-    drawNearArms(ctx, cx, cy, facing, frame, p.b);
-    drawHead(ctx, cx, cy - 8 + b, facing, p.hair);
+    drawNearArms(ctx, cx, cy, facing, frame, p.b, skin.lite);
+    drawHead(ctx, cx, cy - 8 + b, facing, p.hair, skin);
     outlinedVolume(ctx, cx - 5, cy - 13 + b, 10, 6, p.b, 1.18, 0.68);
     px(ctx, cx - 6, cy - 11 + b, p.b, 2, 6);
     px(ctx, cx + 4, cy - 11 + b, shadeHex(p.b, 0.7), 2, 6);
-    if (facing === "south") px(ctx, cx - 3, cy - 9 + b, SKIN, 6, 2);
+    if (facing === "south") px(ctx, cx - 3, cy - 9 + b, skin.lite, 6, 3);
+    drawFace(ctx, cx, cy - 8 + b, facing, skin);
     if (frame === 1 || frame === 3) {
       const fx = facing === "west" ? cx - 11 : cx + 7;
       outlinedVolume(ctx, fx, cy + 2 + b, 4, 4, p.c, 1.22, 0.8);
+      px(ctx, fx + 1, cy + 3 + b, "#e8e0f0", 2, 2);
     }
     return;
   }
@@ -241,47 +280,59 @@ function drawClass(
   const drawWeapon = () => {
     if (id === "pathfinder") {
       const bx = facing === "west" ? cx - 10 : facing === "east" ? cx + 10 : facing === "north" ? cx - 8 : cx + 8;
-      outlined(ctx, bx, cy - 4 + b, 2, 12, WOOD);
-      paintVolume(ctx, bx, cy - 4 + b, 2, 12, WOOD, 1.18, 0.7);
-      px(ctx, bx - 3, cy - 5 + b, WOOD, 8, 2);
-      px(ctx, bx - 2, cy + 7 + b, WOOD, 6, 2);
+      outlined(ctx, bx, cy - 5 + b, 2, 14, WOOD);
+      paintVolume(ctx, bx, cy - 5 + b, 2, 14, WOOD, 1.18, 0.7);
+      px(ctx, bx - 3, cy - 6 + b, WOOD, 8, 2);
+      px(ctx, bx - 2, cy - 7 + b, WOOD, 6, 2);
+      px(ctx, bx - 2, cy + 8 + b, WOOD, 6, 2);
+      px(ctx, bx + 1, cy - 4 + b, "#d8c090", 1, 12);
       if (facing === "south" || facing === "east") {
         px(ctx, cx - 4, cy - 2 + b, p.b, 3, 5);
       }
     } else if (id === "thornblade") {
       const hx = facing === "north" || facing === "south" ? cx + 9 : cx + (side || 1) * 10;
       outlinedVolume(ctx, hx - 1, cy - 12 + b + sw, 3, 18, STEEL, 1.22, 0.68);
-      px(ctx, hx - 3, cy - 12 + b + sw, STEEL_D, 7, 5);
+      px(ctx, hx + 1, cy - 10 + b + sw, STEEL_D, 2, 2);
+      px(ctx, hx + 1, cy - 6 + b + sw, STEEL_D, 2, 2);
+      px(ctx, hx + 1, cy - 2 + b + sw, STEEL_D, 2, 2);
+      px(ctx, hx - 3, cy - 12 + b + sw, STEEL_L, 7, 4);
       px(ctx, hx - 2, cy - 14 + b + sw, p.a, 5, 3);
       paintVolume(ctx, hx - 2, cy - 14 + b + sw, 5, 3, p.a, 1.2, 0.75);
       if (facing !== "north") {
         const sx = facing === "west" ? cx + 5 : facing === "east" ? cx - 10 : cx - 10;
         outlinedVolume(ctx, sx - 3, cy - 1 + b, 7, 7, STEEL, 1.18, 0.7);
+        px(ctx, sx - 2, cy, STEEL_L, 5, 2);
         px(ctx, sx - 1, cy + 1 + b, p.b, 3, 3);
+        px(ctx, sx, cy + 2 + b, p.a, 1, 1);
       }
     } else if (id === "hearthmage") {
       const stx = facing === "north" ? cx - 8 : facing === "south" ? cx + 8 : cx + (side || 1) * 9;
       outlinedVolume(ctx, stx - 1, cy - 14 + b, 3, 24, WOOD, 1.16, 0.7);
-      outlinedVolume(ctx, stx - 3, cy - 16 + b, 7, 5, "#e07030", 1.25, 0.75);
-      px(ctx, stx - 1, cy - 15 + b, "#f0d060", 3, 3);
+      outlinedVolume(ctx, stx - 3, cy - 17 + b, 7, 6, "#e07030", 1.25, 0.75);
+      px(ctx, stx - 2, cy - 16 + b, "#f0d060", 5, 4);
+      px(ctx, stx, cy - 15 + b, "#fff4c8", 2, 2);
     } else if (id === "verdant") {
       const ox = facing === "west" ? -9 : facing === "east" ? 9 : 8;
       outlinedVolume(ctx, cx + ox - 1, cy - 10 + b, 3, 18, WOOD, 1.16, 0.7);
-      outlinedVolume(ctx, cx + ox - 3, cy - 12 + b, 7, 5, p.c, 1.2, 0.78);
-      px(ctx, cx + ox - 1, cy - 14 + b, "#6ab84a", 3, 3);
+      outlinedVolume(ctx, cx + ox - 3, cy - 13 + b, 7, 6, p.c, 1.2, 0.78);
+      px(ctx, cx + ox - 1, cy - 15 + b, "#6ab84a", 3, 3);
+      px(ctx, cx + ox, cy - 16 + b, "#e8f0c8", 1, 2);
     } else if (id === "warden") {
       const hx = facing === "north" || facing === "south" ? cx + 9 : cx + (side || 1) * 10;
       outlinedVolume(ctx, hx - 1, cy - 10 + b + sw, 3, 16, STEEL, 1.22, 0.68);
+      px(ctx, hx - 3, cy - 4 + b + sw, STEEL_L, 7, 2);
+      px(ctx, hx - 1, cy + 5 + b + sw, WOOD, 3, 3);
       const sx = facing === "west" ? cx + 6 : facing === "east" ? cx - 12 : cx - 11;
       if (facing !== "north") {
         const sideView = facing === "west" || facing === "east";
         const swd = sideView ? 8 : 10;
-        const shd = sideView ? 10 : 11;
-        outlinedVolume(ctx, sx - 5, cy - 4 + b, swd, shd, p.c, 1.16, 0.72);
-        px(ctx, sx - 4, cy - 3 + b, STEEL, swd - 2, shd - 2);
-        paintVolume(ctx, sx - 4, cy - 3 + b, swd - 2, shd - 2, STEEL, 1.18, 0.7);
+        const shd = sideView ? 10 : 12;
+        outlinedVolume(ctx, sx - 5, cy - 5 + b, swd, shd, p.c, 1.16, 0.72);
+        px(ctx, sx - 4, cy - 4 + b, STEEL, swd - 2, shd - 2);
+        paintVolume(ctx, sx - 4, cy - 4 + b, swd - 2, shd - 2, STEEL, 1.18, 0.7);
         px(ctx, sx - 1, cy - 1 + b, p.b, 3, 7);
         px(ctx, sx - 3, cy + 1 + b, p.b, 7, 3);
+        px(ctx, sx, cy + 2 + b, STEEL_L, 2, 2);
       }
     }
   };
@@ -290,20 +341,27 @@ function drawClass(
   drawFarArm(ctx, cx, cy, facing, frame, p.b);
   drawLegs(ctx, cx, cy, facing, frame, shadeHex(p.a, 0.55));
   drawTorso(ctx, cx, cy, facing, frame, p.a, wide);
-  drawNearArms(ctx, cx, cy, facing, frame, p.b);
-  drawHead(ctx, cx, cy - 8 + b, facing, p.hair);
+  drawNearArms(ctx, cx, cy, facing, frame, p.b, skin.lite);
+  drawHead(ctx, cx, cy - 8 + b, facing, p.hair, skin);
 
   if (id === "pathfinder") {
-    outlinedVolume(ctx, cx - 6, cy - 13 + b, 12, 6, p.b, 1.18, 0.7);
-    if (facing !== "north") px(ctx, cx - 5, cy - 10 + b, p.b, 10, 4);
-    if (facing === "south") px(ctx, cx - 3, cy - 8 + b, SKIN, 6, 2);
+    outlinedVolume(ctx, cx - 6, cy - 14 + b, 12, 5, p.b, 1.18, 0.7);
+    if (facing !== "north") {
+      px(ctx, cx - 5, cy - 11 + b, p.b, 10, 3);
+      px(ctx, cx - 7, cy - 11 + b, p.b, 2, 2);
+      px(ctx, cx + 5, cy - 11 + b, p.b, 2, 2);
+    }
     outlinedVolume(ctx, cx + (facing === "west" ? -8 : 5), cy - 2 + b, 4, 8, WOOD, 1.16, 0.7);
-    px(ctx, cx + (facing === "west" ? -7 : 6), cy - 4 + b, p.c, 2, 3);
+    px(ctx, cx + (facing === "west" ? -7 : 6), cy - 5 + b, p.c, 2, 4);
+    px(ctx, cx + (facing === "west" ? -7 : 6), cy - 6 + b, "#e8e6d9", 1, 2);
   } else if (id === "thornblade") {
     px(ctx, cx - 6, cy + 2 + b, p.b, 12, 4);
     paintVolume(ctx, cx - 6, cy + 2 + b, 12, 4, p.b, 1.16, 0.7);
     outlinedVolume(ctx, cx - 5, cy - 14 + b, 10, 4, "#2a2218", 1.2, 0.65);
-    if (facing === "south") px(ctx, cx - 2, cy - 9 + b, SKIN, 4, 2);
+    if (facing === "south") {
+      px(ctx, cx - 6, cy - 12 + b, "#2a2218", 2, 4);
+      px(ctx, cx + 4, cy - 12 + b, "#2a2218", 2, 4);
+    }
   } else if (id === "hearthmage") {
     px(ctx, cx - 5, cy + 4 + b, p.b, 10, 5);
     paintVolume(ctx, cx - 5, cy + 4 + b, 10, 5, p.b, 1.16, 0.7);
@@ -312,21 +370,29 @@ function drawClass(
     paintVolume(ctx, cx - 5, cy - 18 + b, 10, 8, p.a, 1.2, 0.72);
     px(ctx, cx - 4, cy - 17 + b, p.b, 8, 5);
     px(ctx, cx - 1, cy - 20 + b, p.c, 2, 3);
+    px(ctx, cx - 1, cy - 1 + b, p.c, 2, 3);
   } else if (id === "verdant") {
     px(ctx, cx - 5, cy + b, p.c, 10, 3);
     paintVolume(ctx, cx - 5, cy + b, 10, 3, p.c, 1.18, 0.78);
-    outlinedVolume(ctx, cx - 5, cy - 13 + b, 10, 5, "#c8a060", 1.18, 0.72);
-    px(ctx, cx - 6, cy - 12 + b, p.c, 2, 3);
-    px(ctx, cx + 4, cy - 12 + b, p.c, 2, 3);
-    px(ctx, cx - 6, cy - 13 + b, shadeHex(p.c, 1.2), 2, 2);
+    outlinedVolume(ctx, cx - 5, cy - 14 + b, 10, 5, "#c8a060", 1.18, 0.72);
+    px(ctx, cx - 7, cy - 13 + b, p.c, 3, 4);
+    px(ctx, cx + 4, cy - 13 + b, p.c, 3, 4);
+    px(ctx, cx - 2, cy - 16 + b, "#6ab84a", 4, 3);
+    px(ctx, cx - 7, cy - 14 + b, shadeHex(p.c, 1.2), 2, 2);
   } else if (id === "warden") {
     px(ctx, cx - 1, cy - 2 + b, p.b, 3, 8);
     px(ctx, cx - 4, cy + 1 + b, p.b, 8, 3);
-    outlinedVolume(ctx, cx - 6, cy - 13 + b, 12, 6, STEEL, 1.2, 0.68);
-    if (facing === "south") px(ctx, cx - 3, cy - 10 + b, OUT, 6, 2);
+    outlinedVolume(ctx, cx - 6, cy - 14 + b, 12, 5, STEEL, 1.2, 0.68);
+    px(ctx, cx - 5, cy - 13 + b, STEEL_L, 5, 2);
+    if (facing === "south") {
+      px(ctx, cx - 1, cy - 10 + b, STEEL_D, 2, 4);
+      px(ctx, cx - 6, cy - 11 + b, STEEL, 2, 4);
+      px(ctx, cx + 4, cy - 11 + b, STEEL, 2, 4);
+    }
   }
 
   if (!weaponFirst) drawWeapon();
+  drawFace(ctx, cx, cy - 8 + b, facing, skin);
 }
 
 export function paintClassSheet(classId: ClassId): HTMLCanvasElement | OffscreenCanvas {
