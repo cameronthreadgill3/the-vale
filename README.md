@@ -83,7 +83,7 @@ Rewards: modest gold + combat XP + shielding skill XP, with a short Survive · L
 
 ### Hunting grounds (Thornreach)
 
-Four cairn-marked hunt zones around Thornhearth plaza. Walk within ~8 tiles for wayfinding labels (`Ashwood Edge · Rec. 2–4`); closer still shows the spawn table. The HUD location line picks up the Rec. band while you stand inside a zone. Radar paints cairns in the zone color.
+Four cairn-marked hunt zones around Thornhearth plaza. Walk within ~12 tiles for wayfinding labels (`Ashwood Edge · Rec. 2–4`); closer still shows the spawn table. Cairns carry a short rec-level post (`2–4`) so they read from the plaza approach. The HUD location line picks up the Rec. band while you stand inside a zone. Radar paints cairns in the zone color.
 
 | Zone | Cairn | Rec. | Spawn table |
 | --- | --- | --- | --- |

@@ -38,6 +38,8 @@ export type RadarDot = {
 };
 
 export const WAYFIND_LABEL_RANGE = 8;
+/** Hunt cairns read from farther than folk/gates so Rec. bands are wayfindable. */
+export const HUNT_CAIRN_LABEL_RANGE = 12;
 export const WAYFIND_RADAR_RANGE = 14;
 
 export function resolveQuestObjective(

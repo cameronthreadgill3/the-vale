@@ -1,6 +1,7 @@
 /** Wayfinding barrel — quest pointer, compass, radar, labels, starter tip. */
 export {
   WAYFIND_LABEL_RANGE,
+  HUNT_CAIRN_LABEL_RANGE,
   WAYFIND_RADAR_RANGE,
   resolveQuestObjective,
   objectiveForTeeth,

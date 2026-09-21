@@ -3,7 +3,7 @@ import { TILE, type WorldMap } from "@/game/world";
 import { getContinent } from "@/game/continents";
 import type { ShipDock } from "@/game/folk";
 import { drawFloatingLabel } from "@/game/folkCanvas";
-import { WAYFIND_LABEL_RANGE } from "@/game/wayfindingObjectives";
+import { WAYFIND_LABEL_RANGE, HUNT_CAIRN_LABEL_RANGE } from "@/game/wayfindingObjectives";
 import {
   huntZoneAt,
   huntZonesFor,
@@ -27,7 +27,7 @@ export function drawWorldWayfindLabels(
   if (map.kind === "overworld") {
     for (const z of huntZonesFor(map.continentId)) {
       const d = Math.hypot(ptx - (z.cairn.x + 0.5), pty - (z.cairn.y + 0.5));
-      if (d > range) continue;
+      if (d > HUNT_CAIRN_LABEL_RANGE) continue;
       const cx = Math.floor((z.cairn.x + 0.5) * TILE - originX);
       const cy = Math.floor((z.cairn.y + 0.5) * TILE - originY);
       drawFloatingLabel(ctx, cx, cy - 14, huntZoneWayfindLabel(z), z.labelColor);

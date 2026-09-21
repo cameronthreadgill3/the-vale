@@ -211,7 +211,20 @@ export function drawHuntCairns(
     ctx.beginPath();
     ctx.ellipse(sx + 1, sy - 6, 4, 3.5, 0.1, 0, Math.PI * 2);
     ctx.fill();
-    // Pale chalk mark — rec-level "bone" on the top stone.
+    // Tall hunt-post so the cairn reads from the plaza approach.
+    ctx.fillStyle = "#4a3a28";
+    ctx.fillRect(sx - 1, sy - 22, 3, 16);
+    ctx.fillStyle = z.labelColor;
+    ctx.fillRect(sx - 5, sy - 24, 11, 5);
+    ctx.strokeStyle = "#0c0d0b";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(sx - 5, sy - 24, 11, 5);
+    ctx.fillStyle = "#0c0d0b";
+    ctx.font = "700 7px \"IBM Plex Mono\", ui-monospace, monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(`${z.recMin}–${z.recMax}`, sx, sy - 21);
+    // Pale chalk mark on the top stone.
     ctx.strokeStyle = z.labelColor;
     ctx.lineWidth = 1.5;
     ctx.beginPath();
