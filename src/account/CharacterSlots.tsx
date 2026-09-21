@@ -1,4 +1,5 @@
 import { getClass } from "@/game/classes";
+import { slotShownLevel } from "@/account/slots";
 import type { CharacterSlot, SlotArray, ValeAccountUser } from "@/account/types";
 import { SLOT_COUNT } from "@/account/types";
 
@@ -68,6 +69,7 @@ export function CharacterSlots({
           {Array.from({ length: SLOT_COUNT }, (_, i) => (
             <SlotCard
               key={i}
+              userId={user.id}
               index={i}
               slot={slots[i]}
               onCreate={() => onCreate(i)}
@@ -94,12 +96,14 @@ export function CharacterSlots({
 }
 
 function SlotCard({
+  userId,
   index,
   slot,
   onCreate,
   onPlay,
   onDelete,
 }: {
+  userId: string;
   index: number;
   slot: CharacterSlot;
   onCreate: () => void;
@@ -128,6 +132,7 @@ function SlotCard({
 
   const cls = getClass(slot.classId);
   const updated = formatUpdated(slot.updatedAt);
+  const level = slotShownLevel(userId, index, slot);
 
   return (
     <div
@@ -142,7 +147,7 @@ function SlotCard({
           {slot.name}
         </div>
         <p className="mt-1 text-sm" style={{ color: cls.accent }}>
-          {cls.name} · Lv {slot.level}
+          {cls.name} · Lv {level}
         </p>
         <p className="mt-1 text-[10px] text-[#6a7260]">Updated {updated}</p>
       </div>
