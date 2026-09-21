@@ -199,7 +199,7 @@ export function AccountGate({
             onClick={onContinueOffline}
             className="text-xs text-[#6a7260] underline-offset-2 hover:text-[#a8b09a] hover:underline"
           >
-            Continue offline (local)
+            Continue offline (local) — character slots
           </button>
         </p>
       </div>
