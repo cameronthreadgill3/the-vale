@@ -17,17 +17,18 @@ export function CreateInSlot({
   if (!readyForClass) {
     return (
       <div
-        className="flex h-full w-full items-center justify-center overflow-auto bg-[#0c0d0b] p-4 sm:p-8"
+        className="vale-gate-stage flex h-full w-full items-center justify-center overflow-auto p-4 sm:p-8"
         style={{ WebkitOverflowScrolling: "touch" }}
       >
         <div className="vale-text-screen w-full max-w-md p-5">
-          <h2 className="vale-screen-title vale-screen-title-lg">
-            New character · Slot {slotIndex + 1}
+          <div className="vale-screen-kicker">Slot {slotIndex + 1}</div>
+          <h2 className="vale-screen-title vale-screen-title-lg mt-1">
+            New character
           </h2>
-          <label className="mt-4 block text-xs text-[#a8b09a]">
+          <label className="vale-gate-label mt-4">
             Character name
             <input
-              className="mt-1 w-full rounded border border-[#2a2e24] bg-[#0c0d0b] px-3 py-2 text-sm text-[#e8e6d9] outline-none focus:border-[#c9a227]/60"
+              className="vale-gate-field"
               value={name}
               onChange={(e) => setName(e.target.value)}
               maxLength={32}
@@ -62,7 +63,7 @@ export function CreateInSlot({
       <button
         type="button"
         onClick={() => setReadyForClass(false)}
-        className="absolute left-4 top-4 z-20 rounded border border-[#2a2e24] bg-[#161812]/90 px-3 py-1.5 text-xs text-[#a8b09a] backdrop-blur-sm"
+        className="vale-ghost-btn absolute left-4 top-4 z-20 px-3 py-1.5 text-xs text-[#a8b09a]"
       >
         ← Name
       </button>
