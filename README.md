@@ -56,7 +56,7 @@ Tibia-flavored, scoped tight:
 - Attack uses the class’s combat skill (sword / axe / distance / magic / fist); damage scales with that skill + worn weapon attack + a small roll
 - **Shielding** plus worn armor / shield reduces damage taken
 - Killing foes grants **combat XP**, **skill XP** on the skill used, a little **gold**, and a **loot roll** from that fauna's table (Needle Tooth, Bark Hide, Ashwood Blade, …)
-- Hostiles: **Needle Rat** (Beast Lv.2 F) and **Bark Hound** (Beast Lv.4 F) from Accession texture, plus **Ash-vole** (Lv.1 F) and **Gorse Fox** (Lv.3 F) on Thornreach hunting grounds; shade wisps in deeper hollows; sparse briar mites — seeded; never on NPCs/gates. Thornreach overworld uses per-area spawn tables (cairn-marked hunt zones) instead of a single sparse pack.
+- Hostiles: **Needle Rat** (Beast Lv.2 F) and **Bark Hound** (Beast Lv.4 F) from Accession texture, plus **Ash-vole** (Lv.1 F) and **Gorse Fox** (Lv.3 F) on Thornreach hunting grounds; denser **Shade Wisps** deeper in hollows and **Ashveil Ember** (E-rank hollow boss stub) in the deepest Thornreach chamber; sparse briar mites — seeded; never on NPCs/gates. Thornreach overworld uses per-area spawn tables (cairn-marked hunt zones) instead of a single sparse pack.
 - Simple AI: wander → aggro → chase → melee hit on cooldown
 - Floating damage numbers; death respawns at continent spawn (hollows eject) with HP restored
 - **Death losses:** about **5% of carried gold** (at least 1g if you hold any) and **10% of carried item quantity** (rounded down). **Banked gold and items never drop.** A toast lists what was lost.
@@ -113,6 +113,14 @@ After *Ashwood Watch* completes, Rook starts **Hollow Watch**: something wrong u
 4. Return to Rook when the flicker is cleared (complete toast + rewards)
 
 Rewards: ~40g + ~80 combat XP + magic skill XP. Yellow arrow points at the hollow entrance, then wisps, then Rook. First Story Accession texture only — Survive · Learn · Progress.
+
+### Thornreach hollows (mini-dungeon + boss stub)
+
+Thornreach hollows read as a short dungeon: rooms and corridors, a single lit **↑ Surface** exit at the entrance (the deep room is no longer a second door), denser Shade Wisps the farther you walk, and a marked **Ashveil chamber** in the deepest room.
+
+**Ashveil Ember** (E-rank) waits in that chamber — a larger shade-wisp silhouette, tougher than a flicker, not a raid. Defeat it for two loot rolls (Ashveil Cinder, Hollow Spark, lantern oil, …) and the toast *Ashveil Ember flickers out — the hollow remembers.* First Story / Accession texture only.
+
+How to find it: enter any Thornreach hollow (dark circle on the overworld), follow the corridors away from the gold **↑ Surface** tile, and look for the violet chamber mark.
 
 ### Wayfinding (where to go)
 

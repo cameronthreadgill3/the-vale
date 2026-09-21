@@ -39,10 +39,12 @@ export function generateHollow(
   }
 
   const rooms: { x: number; y: number; rw: number; rh: number }[] = [];
-  const roomCount = 4 + randInt(rng, 0, 2);
+  // Extra room so the last one can read as a chamber, not a second exit.
+  const roomCount = 5 + randInt(rng, 0, 2);
   for (let i = 0; i < roomCount; i++) {
-    const rw = randInt(rng, 4, 7);
-    const rh = randInt(rng, 3, 6);
+    const deep = i === roomCount - 1;
+    const rw = randInt(rng, deep ? 6 : 4, deep ? 8 : 7);
+    const rh = randInt(rng, deep ? 5 : 3, deep ? 7 : 6);
     const rx = randInt(rng, 2, w - rw - 2);
     const ry = randInt(rng, 2, h - rh - 2);
     rooms.push({ x: rx, y: ry, rw, rh });
@@ -80,17 +82,27 @@ export function generateHollow(
   const spawnX = first.x + Math.floor(first.rw / 2);
   const spawnY = first.y + Math.floor(first.rh / 2);
   clearArea(tiles, spawnX, spawnY, 1, "path", w, h);
-  // Entrance doubles as exit so E / Interact works from spawn without hunting.
+  // Single exit at the entrance — the deep room is a chamber, not a second door.
   tiles[spawnY]![spawnX] = "exit";
 
-  const last = rooms[rooms.length - 1]!;
-  const deepX = last.x + Math.floor(last.rw / 2);
-  const deepY = last.y + Math.floor(last.rh / 2);
+  let chamberRoom = rooms[rooms.length - 1]!;
+  if (
+    chamberRoom.x === first.x &&
+    chamberRoom.y === first.y &&
+    rooms.length > 1
+  ) {
+    chamberRoom = rooms[rooms.length - 2]!;
+  }
+  const deepX = chamberRoom.x + Math.floor(chamberRoom.rw / 2);
+  const deepY = chamberRoom.y + Math.floor(chamberRoom.rh / 2);
   if (deepX !== spawnX || deepY !== spawnY) {
-    tiles[deepY]![deepX] = "exit";
+    clearArea(tiles, deepX, deepY, 2, "path", w, h);
+    tiles[deepY]![deepX] = "dirt";
   }
   const exitX = spawnX;
   const exitY = spawnY;
+  const bossChamber =
+    deepX !== spawnX || deepY !== spawnY ? { x: deepX, y: deepY } : null;
 
   for (let i = 0; i < 5; i++) {
     const tx = randInt(rng, 2, w - 3);
@@ -124,11 +136,12 @@ export function generateHollow(
     height: h,
     tiles,
     palette,
-    darkness: 0.14,
+    darkness: 0.2,
     gates: [],
     hollows: [],
     exit: { x: exitX, y: exitY },
     spawn: { x: spawnX, y: spawnY },
     returnTile,
+    bossChamber,
   };
 }

@@ -1,9 +1,20 @@
 /** Creature sprite drawing (keeps enemies.ts AI untouched). Original Vale art. */
 import type { Enemy } from "@/game/enemies";
-import { drawCreatureSprite, creatureWalkFrame } from "@/game/gfx/creatures";
+import { isHollowBoss } from "@/game/enemies";
+import {
+  drawCreatureSprite,
+  creatureWalkFrame,
+  type CreatureKindId,
+} from "@/game/gfx/creatures";
 import { drawSoftShadow } from "@/game/gfx/canvasUtil";
 import type { DepthItem } from "@/game/gfx/depth";
 import { flushDepth } from "@/game/gfx/depth";
+
+/** Reuse the shade-wisp silhouette for the hollow boss stub — no new art files. */
+function creatureSpriteId(id: string): CreatureKindId {
+  if (id === "ashveil-ember") return "shade-wisp";
+  return id as CreatureKindId;
+}
 
 let _animT = 0;
 
@@ -45,7 +56,7 @@ export function collectEnemyDepthItems(
         const frame = creatureWalkFrame(_animT + hashId(e.id) * 4, moving);
         drawCreatureSprite(
           ctx,
-          e.kind.id,
+          creatureSpriteId(e.kind.id),
           e.kind.color,
           e.kind.colorDark,
           sx,
@@ -72,13 +83,15 @@ export function drawEnemyChrome(
     if (e.ai === "dead") continue;
     const sx = Math.floor(e.x - originX);
     const sy = Math.floor(e.y - originY);
-    ctx.fillStyle = "#c9c4a8";
+    const boss = isHollowBoss(e.kind.id);
+    ctx.fillStyle = boss ? "#e8c878" : "#c9c4a8";
     ctx.fillText(`${e.kind.name} · ${e.kind.rank}`, sx, sy - e.kind.radius - 12);
     const ratio = e.hp / e.kind.maxHp;
+    const barW = boss ? 22 : 16;
     ctx.fillStyle = "#1a1c16";
-    ctx.fillRect(sx - 8, sy - e.kind.radius - 8, 16, 3);
+    ctx.fillRect(sx - barW / 2, sy - e.kind.radius - 8, barW, 3);
     ctx.fillStyle = ratio > 0.35 ? "#c45c3e" : "#a03030";
-    ctx.fillRect(sx - 8, sy - e.kind.radius - 8, 16 * ratio, 3);
+    ctx.fillRect(sx - barW / 2, sy - e.kind.radius - 8, barW * ratio, 3);
   }
 }
 

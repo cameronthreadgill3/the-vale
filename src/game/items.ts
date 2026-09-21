@@ -39,6 +39,7 @@ export type ItemId =
   | "thorn-fang"
   | "mistveil-thread"
   | "hollow-spark"
+  | "ashveil-cinder"
   | "choir-shard"
   | "fledgling-knife"
   | "fledgling-sword"
@@ -212,6 +213,14 @@ export const ITEMS: ItemDef[] = [
     name: "Hollow Spark",
     blurb: "A wisp-ember that never quite goes out.",
     value: 18,
+    weight: 1,
+    kind: "goods",
+  },
+  {
+    id: "ashveil-cinder",
+    name: "Ashveil Cinder",
+    blurb: "A hollow-heart that still remembers the first flicker.",
+    value: 36,
     weight: 1,
     kind: "goods",
   },

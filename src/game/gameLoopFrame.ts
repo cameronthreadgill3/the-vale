@@ -107,7 +107,7 @@ export function computePrompt(
       }
     }
   } else {
-    // Any exit tile nearby (spawn entrance + deep exit).
+    // Exit tile nearby (single surface door at the hollow entrance).
     const ty0 = Math.max(0, Math.floor(py) - 2);
     const ty1 = Math.min(map.height - 1, Math.ceil(py) + 2);
     const tx0 = Math.max(0, Math.floor(px) - 2);

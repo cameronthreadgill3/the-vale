@@ -34,6 +34,12 @@ function pack(prefix, srcRel, chunkSize) {
 if (process.argv.includes("--pack-enemies")) {
   pack("en\\.b64", "src/game/enemies.ts", 800);
 }
+if (process.argv.includes("--pack-readme")) {
+  pack("rd\\.b64", "README.md", 800);
+}
+if (process.argv.includes("--pack-gameapp")) {
+  pack("ga\\.b64", "src/game/GameApp.tsx", 800);
+}
 assemble("gl\\.b64", "src/game/gameLoop.ts");
 assemble("aa\\.b64", "src/account/AccountApp.tsx");
 assemble("qq\\.b64", "src/game/quests.ts");
