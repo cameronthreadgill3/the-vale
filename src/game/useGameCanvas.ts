@@ -33,6 +33,7 @@ export function useGameCanvas(opts: {
   ) => void;
   onEnemyKill: (kindId: EnemyKindId) => void;
   onIdentify: (kindId: EnemyKindId) => void;
+  onIdentifyCairn: (cairnId: string) => void;
   onVitals: (hp: number, mana: number) => void;
   onPlayerDeath: () => void;
 }) {
@@ -55,6 +56,7 @@ export function useGameCanvas(opts: {
     onCombatReward,
     onEnemyKill,
     onIdentify,
+    onIdentifyCairn,
     onVitals,
     onPlayerDeath,
   } = opts;
@@ -82,6 +84,7 @@ export function useGameCanvas(opts: {
   const onCombatRewardRef = useRef(onCombatReward);
   const onEnemyKillRef = useRef(onEnemyKill);
   const onIdentifyRef = useRef(onIdentify);
+  const onIdentifyCairnRef = useRef(onIdentifyCairn);
   const onVitalsRef = useRef(onVitals);
   const onPlayerDeathRef = useRef(onPlayerDeath);
   const overlayOpenRef = useRef(overlayOpen);
@@ -101,6 +104,7 @@ export function useGameCanvas(opts: {
   onCombatRewardRef.current = onCombatReward;
   onEnemyKillRef.current = onEnemyKill;
   onIdentifyRef.current = onIdentify;
+  onIdentifyCairnRef.current = onIdentifyCairn;
   onVitalsRef.current = onVitals;
   onPlayerDeathRef.current = onPlayerDeath;
   overlayOpenRef.current = overlayOpen;
@@ -167,6 +171,7 @@ export function useGameCanvas(opts: {
     onCombatReward: onCombatRewardRef,
     onEnemyKill: onEnemyKillRef,
     onIdentify: onIdentifyRef,
+    onIdentifyCairn: onIdentifyCairnRef,
     onVitals: onVitalsRef,
     onPlayerDeath: onPlayerDeathRef,
     overlayOpenRef,

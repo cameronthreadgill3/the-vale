@@ -33,6 +33,8 @@ import {
   collectRadarDots,
   drawWorldWayfindLabels,
 } from "@/game/wayfinding";
+import { getAshwoodQuest, loadQuestLog } from "@/game/quests";
+import { cairnsForContinent, drawQuestCairns } from "@/game/questMarkers";
 
 /** Position-delta walk state (avoids patching assembled gameLoop). */
 let _lastPx = 0;
@@ -106,6 +108,19 @@ export function advanceCameraAndRender(args: {
     ctx.fillRect(0, 0, viewW, viewH);
   }
   drawShipDocks(ctx, docks, originX, originY);
+  if (map.kind === "overworld") {
+    const ash = getAshwoodQuest(loadQuestLog());
+    if (ash) {
+      drawQuestCairns(
+        ctx,
+        cairnsForContinent(map.continentId),
+        new Set(ash.cairnsIdentified),
+        originX,
+        originY,
+        player,
+      );
+    }
+  }
   drawShopMarkers(ctx, shops, folk, originX, originY);
   drawNamedFolk(ctx, folk, originX, originY, player);
   drawWorldWayfindLabels(ctx, map, docks, player, originX, originY);

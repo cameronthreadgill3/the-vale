@@ -70,12 +70,23 @@ After class select on Thornreach, Rook flags the ashwood edge: wrong prey. A min
 
 Rewards: modest gold + combat XP + shielding skill XP, with a short Survive · Learn · Progress line. Progress persists in `vale-character-v1`. Early Thornreach fauna is briefly denser while the hunt is active.
 
+### Second sticky quest — Ashwood Watch
+
+Unlocks when **Teeth in the Grass** is complete (First Story canon - Rook's watch, not a Hollow Reach transplant). Yellow quest arrow + HUD continue:
+
+1. **Talk to Rook** to take the watch
+2. **Identify** two ashwood-edge **cairns** (west and north of Thornhearth; near-field look)
+3. Clear **wrong prey** — drive off **1 Bark Hound** packing the marks
+4. **Return to Rook** for the payoff (Survive · Learn · Progress)
+
+Rewards: modest gold + combat XP + distance skill XP. Cairn progress and the quest log persist with the character (`vale-quests-v1` / slot snapshots).
+
 
 ### Wayfinding (where to go)
 
 New cues so you are never lost on Thornreach:
 
-1. **Quest arrow + HUD line** — Active *Teeth in the Grass* shows a yellow edge/on-screen arrow toward the current objective (nearest Needle Rat, Bark Hound, or Rook) plus a HUD line like `→ Identify Needle Rat · 12 tiles`.
+1. **Quest arrow + HUD line** — Active *Teeth in the Grass* or *Ashwood Watch* shows a yellow edge/on-screen arrow toward the current objective (nearest Needle Rat, Bark Hound, cairn, or Rook) plus a HUD line like `→ Identify Needle Rat · 12 tiles`.
 2. **Labeled landmarks + compass** — Larger high-contrast markers; names for folk, **Gate → Continent**, hollow entrance/exit, ship docks, and the plaza **Fountain** within ~8 tiles. Top-center compass (N/E/S/W) with a tiny radar of nearby interactables (gold) and the quest target (bright).
 3. **Starter tip + clear prompts** — First 60s on load: soft tip *Talk to Rook (watch) · Ashwood edge for the hunt · Fountain heals*. Nearest interactable prompts read as actions: `Talk · Rook`, `Enter hollow`, `Use gate → …`, `Board ship · …`.
 

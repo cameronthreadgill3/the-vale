@@ -61,7 +61,7 @@ export function CharacterSlots({
             : user.demo
               ? "local demo storage"
               : "Clerk user metadata (compact snapshots — migrate to Postgres for production)"}
-          . New characters begin on Thornreach with Teeth in the Grass.
+          . New characters begin on Thornreach with Teeth in the Grass, then Ashwood Watch.
         </p>
 
         <div className="mt-6 grid gap-3 sm:grid-cols-2">

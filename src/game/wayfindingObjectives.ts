@@ -4,11 +4,16 @@ import type { FolkDef } from "@/game/folk";
 import type { Enemy } from "@/game/enemies";
 import {
   TEETH_RATS_NEEDED,
+  ASHWOOD_CAIRNS_NEEDED,
   getTeethQuest,
+  getAshwoodQuest,
   isTeethActive,
+  isAshwoodActive,
   loadQuestLog,
   type TeethQuestProgress,
+  type AshwoodQuestProgress,
 } from "@/game/quests";
+import { ASHWOOD_EDGE_CAIRNS, nearestUnidentifiedCairn } from "@/game/questMarkers";
 
 export type WayfindObjective = {
   label: string;
@@ -34,10 +39,15 @@ export function resolveQuestObjective(
   _map: WorldMap,
 ): WayfindObjective | null {
   const log = loadQuestLog();
-  if (!isTeethActive(log)) return null;
-  const q = getTeethQuest(log);
-  if (!q) return null;
-  return objectiveForTeeth(q, player, enemies, folk);
+  if (isTeethActive(log)) {
+    const q = getTeethQuest(log);
+    if (q) return objectiveForTeeth(q, player, enemies, folk);
+  }
+  if (isAshwoodActive(log)) {
+    const q = getAshwoodQuest(log);
+    if (q) return objectiveForAshwood(q, player, enemies, folk);
+  }
+  return null;
 }
 
 export function objectiveForTeeth(
@@ -90,6 +100,56 @@ export function objectiveForTeeth(
   if (rook) {
     return {
       label: "Return to Rook",
+      x: (rook.x + 0.5) * TILE,
+      y: (rook.y + 0.5) * TILE,
+      kind: "folk",
+    };
+  }
+  return null;
+}
+
+export function objectiveForAshwood(
+  q: AshwoodQuestProgress,
+  player: { x: number; y: number },
+  enemies: Enemy[],
+  folk: FolkDef[],
+): WayfindObjective | null {
+  if (q.status !== "active") return null;
+  const rook = folk.find((f) => f.id === "rook");
+  if (!q.accepted) {
+    if (rook) {
+      return {
+        label: "Talk to Rook - Ashwood Watch",
+        x: (rook.x + 0.5) * TILE,
+        y: (rook.y + 0.5) * TILE,
+        kind: "folk",
+      };
+    }
+  }
+  if (q.cairnsIdentified.length < ASHWOOD_CAIRNS_NEEDED) {
+    const next = nearestUnidentifiedCairn(player, ASHWOOD_EDGE_CAIRNS, q.cairnsIdentified);
+    if (next) {
+      return {
+        label: `Identify cairn (${q.cairnsIdentified.length}/${ASHWOOD_CAIRNS_NEEDED})`,
+        x: (next.x + 0.5) * TILE,
+        y: (next.y + 0.5) * TILE,
+        kind: "landmark",
+      };
+    }
+  }
+  if (!q.houndDone) {
+    const hound = nearestEnemy(player, enemies, "bark-hound");
+    if (hound) return { label: "Clear wrong prey / Bark Hound", x: hound.x, y: hound.y, kind: "enemy" };
+    return {
+      label: "Wrong prey near ashwood cairns",
+      x: (14 + 0.5) * TILE,
+      y: (16 + 0.5) * TILE,
+      kind: "landmark",
+    };
+  }
+  if (!q.turnedIn && rook) {
+    return {
+      label: "Return to Rook (payoff)",
       x: (rook.x + 0.5) * TILE,
       y: (rook.y + 0.5) * TILE,
       kind: "folk",

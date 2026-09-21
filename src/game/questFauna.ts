@@ -1,4 +1,4 @@
-/** Extra early fauna while Teeth in the Grass is sticky. */
+/** Extra early fauna while Teeth / Ashwood Watch is sticky. */
 import {
   ENEMY_KINDS,
   spawnEnemies,
@@ -8,7 +8,7 @@ import {
 import { WORLD_SEED, type ContinentId } from "@/game/continents";
 import { rngFrom, randInt } from "@/game/rng";
 import { TILE, isSolid, type WorldMap } from "@/game/world";
-import { isTeethActive, loadQuestLog } from "@/game/quests";
+import { isAshwoodActive, isTeethActive, loadQuestLog } from "@/game/quests";
 
 export function spawnEnemiesForQuest(
   map: WorldMap,
@@ -16,17 +16,19 @@ export function spawnEnemiesForQuest(
   blockedTiles: { x: number; y: number }[],
 ): Enemy[] {
   const enemies = spawnEnemies(map, continentId, blockedTiles);
+  const log = loadQuestLog();
+  const teeth = isTeethActive(log);
+  const ashwood = isAshwoodActive(log);
   const boost =
     map.kind === "overworld" &&
     continentId === "thornreach" &&
-    isTeethActive(loadQuestLog());
+    (teeth || ashwood);
   if (!boost) return enemies;
 
   // Softer plaza pack: fewer sticky fauna near Thornhearth.
-  const needRats = Math.max(
-    0,
-    3 - enemies.filter((e) => e.kind.id === "needle-rat").length,
-  );
+  const needRats = teeth
+    ? Math.max(0, 3 - enemies.filter((e) => e.kind.id === "needle-rat").length)
+    : 0;
   const needHounds = Math.max(
     0,
     1 - enemies.filter((e) => e.kind.id === "bark-hound").length,
