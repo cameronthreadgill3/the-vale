@@ -41,6 +41,27 @@ export const TEETH_REWARDS = {
   skillXp: 22,
 };
 
+
+export const QUEST_STORAGE_KEY = "vale-quests-v1";
+
+export function loadQuestLog(): QuestLog {
+  try {
+    const raw = localStorage.getItem(QUEST_STORAGE_KEY);
+    if (!raw) return {};
+    return sanitizeQuestLog(JSON.parse(raw));
+  } catch {
+    return {};
+  }
+}
+
+export function saveQuestLog(log: QuestLog): void {
+  localStorage.setItem(QUEST_STORAGE_KEY, JSON.stringify(log));
+}
+
+export function clearQuestLog(): void {
+  localStorage.removeItem(QUEST_STORAGE_KEY);
+}
+
 export function emptyTeethQuest(): TeethQuestProgress {
   return {
     id: TEETH_QUEST_ID,
