@@ -1,6 +1,7 @@
 import { TILE, isSolid, type WorldMap } from "@/game/world";
 import type { FolkDef, ShopDef, ShipDock } from "@/game/folk";
 import { drawFolkSprite } from "@/game/gfx/folkSprites";
+import type { DepthItem } from "@/game/gfx/depth";
 
 export function softClearTile(
   map: { width: number; height: number; tiles: string[][] },
@@ -143,7 +144,25 @@ function drawFloatingLabel(
   ctx.fillText(label, x, y - 5);
 }
 
-export function drawNamedFolk(
+export function collectFolkDepthItems(
+  folk: FolkDef[],
+  originX: number,
+  originY: number,
+): DepthItem[] {
+  return folk.map((f) => {
+    const fsx = Math.floor((f.x + 0.5) * TILE - originX);
+    const fsy = Math.floor((f.y + 0.5) * TILE - originY);
+    return {
+      y: (f.y + 0.5) * TILE,
+      x: (f.x + 0.5) * TILE,
+      draw: (ctx: CanvasRenderingContext2D) => {
+        drawFolkSprite(ctx, f.color, fsx, fsy, f.id);
+      },
+    };
+  });
+}
+
+export function drawFolkNameLabels(
   ctx: CanvasRenderingContext2D,
   folk: FolkDef[],
   originX: number,
@@ -153,19 +172,30 @@ export function drawNamedFolk(
   const px = player ? player.x / TILE : 0;
   const py = player ? player.y / TILE : 0;
   for (const f of folk) {
+    if (!player || Math.hypot(px - (f.x + 0.5), py - (f.y + 0.5)) > 8) continue;
     const fsx = Math.floor((f.x + 0.5) * TILE - originX);
     const fsy = Math.floor((f.y + 0.5) * TILE - originY);
-    drawFolkSprite(ctx, f.color, fsx, fsy);
-    if (player && Math.hypot(px - (f.x + 0.5), py - (f.y + 0.5)) <= 8) {
-      drawFloatingLabel(
-        ctx,
-        fsx,
-        fsy - 14,
-        f.bankId ? `${f.name} · Bank` : f.name,
-        "#f0d060",
-      );
-    }
+    drawFloatingLabel(
+      ctx,
+      fsx,
+      fsy - 14,
+      f.bankId ? `${f.name} · Bank` : f.name,
+      "#f0d060",
+    );
   }
+}
+
+export function drawNamedFolk(
+  ctx: CanvasRenderingContext2D,
+  folk: FolkDef[],
+  originX: number,
+  originY: number,
+  player?: { x: number; y: number },
+): void {
+  for (const item of collectFolkDepthItems(folk, originX, originY)) {
+    item.draw(ctx);
+  }
+  drawFolkNameLabels(ctx, folk, originX, originY, player);
 }
 
 export { drawFloatingLabel };

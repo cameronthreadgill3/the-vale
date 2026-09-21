@@ -92,6 +92,8 @@ export function generateOverworld(continentId: ContinentId): WorldMap {
   for (let x = sx - 2; x <= sx + 2; x++) {
     if (x > 0 && x < w - 1) tiles[sy]![x] = "path";
   }
+  // Plaza fountain (heal tile) — animated flower/fountain sheet
+  tiles[sy]![sx] = "flower";
 
   for (let i = 0; i < 10; i++) {
     const tx = randInt(rng, 2, w - 3);
@@ -132,6 +134,25 @@ export function generateOverworld(continentId: ContinentId): WorldMap {
     );
     const pos = placeWalkable(tiles, hx, hy, "hollow", w, h);
     hollows.push({ x: pos.x, y: pos.y, index: i });
+  }
+
+  // Extra ashwood groves after markers so spawn/gates/hollows stay walkable.
+  for (let g = 0; g < 8; g++) {
+    const gx = randInt(rng, 4, w - 5);
+    const gy = randInt(rng, 4, h - 5);
+    if (Math.hypot(gx - sx, gy - sy) < 7) continue;
+    if (gates.some((gt) => Math.hypot(gt.x - gx, gt.y - gy) < 4)) continue;
+    if (hollows.some((h0) => Math.hypot(h0.x - gx, h0.y - gy) < 4)) continue;
+    const count = 4 + randInt(rng, 0, 5);
+    for (let i = 0; i < count; i++) {
+      const tx = gx + randInt(rng, -2, 2);
+      const ty = gy + randInt(rng, -2, 2);
+      if (tx <= 0 || ty <= 0 || tx >= w - 1 || ty >= h - 1) continue;
+      const t = tiles[ty]![tx];
+      if (t === "grass" || t === "grassAlt" || t === "dirt") {
+        tiles[ty]![tx] = "stone";
+      }
+    }
   }
 
   return {

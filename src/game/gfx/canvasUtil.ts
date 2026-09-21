@@ -52,7 +52,10 @@ export function mixHex(a: string, b: string, t: number): string {
   return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${bl.toString(16).padStart(2, "0")}`;
 }
 
-/** Soft elliptical drop shadow under sprites (cheap, no blur filter). */
+/**
+ * Two-layer elliptical drop shadow (outer wash + darker contact).
+ * Cheap, no blur filter — reads as ground contact for depth sorting.
+ */
 export function drawSoftShadow(
   ctx: CanvasRenderingContext2D,
   cx: number,
@@ -61,10 +64,16 @@ export function drawSoftShadow(
   ry: number,
   alpha = 0.32,
 ): void {
+  const x = Math.floor(cx);
+  const y = Math.floor(cy) + 1;
   ctx.save();
-  ctx.fillStyle = `rgba(0,0,0,${alpha})`;
+  ctx.fillStyle = `rgba(0, 0, 0, ${alpha * 0.42})`;
   ctx.beginPath();
-  ctx.ellipse(Math.floor(cx), Math.floor(cy), Math.max(2, rx), Math.max(1, ry), 0, 0, Math.PI * 2);
+  ctx.ellipse(x, y, Math.max(2, rx), Math.max(1, ry), 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = `rgba(0, 0, 0, ${alpha * 0.75})`;
+  ctx.beginPath();
+  ctx.ellipse(x, y, Math.max(1, rx * 0.5), Math.max(1, ry * 0.48), 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
 }
