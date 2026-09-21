@@ -14,6 +14,7 @@ import {
   watchOverlayToasts,
 } from "@/game/audio";
 import { LOW_HP_RATIO } from "@/game/combat";
+import { SAFE_ZONE_LABEL } from "@/game/safeZone";
 import {
   TEETH_QUEST_TITLE,
   ASHWOOD_QUEST_TITLE,
@@ -252,7 +253,7 @@ export function GameShellHud({
           <span className="vale-hud-extra">
             {" "}
             · Tile {hud.x}, {hud.y}
-            {character.bankGold > 0 ? ` · Vault ${character.bankGold}g` : ""}
+            {character.bankGold > 0 ? ` · Bank ${character.bankGold}g` : ""}
           </span>
         </div>
         <button
@@ -280,7 +281,7 @@ export function GameShellHud({
         </div>
         {hud.inSafeZone && (
           <div className="mt-1 text-[10px] uppercase tracking-wider text-[#7ab8c9]">
-            Safe — no beasts here
+            {SAFE_ZONE_LABEL} — beasts will not hunt here
           </div>
         )}
         <button

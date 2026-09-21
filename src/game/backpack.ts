@@ -84,6 +84,20 @@ export function toastForCarryFail(reason: "weight" | "slots"): string {
   return reason === "slots" ? TOAST_PACK_FULL : TOAST_OVERWEIGHT;
 }
 
+/** Short bank transfer line: gold and/or item name × qty. Feel only — no rule changes. */
+export function formatBankToast(
+  verb: "Deposited" | "Withdrew",
+  gold: number,
+  itemId?: ItemId,
+  qty = 1,
+): string | null {
+  const parts: string[] = [];
+  if (gold > 0) parts.push(`${gold}g`);
+  if (itemId && qty > 0) parts.push(`${getItem(itemId).name} ×${qty}`);
+  if (parts.length === 0) return null;
+  return `${verb} ${parts.join(" · ")}`;
+}
+
 /** Randomly remove ~10% of carried item units. Bank is not touched. */
 export function applyEquipmentLoss(
   inventory: ItemStack[],

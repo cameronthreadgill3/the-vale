@@ -179,7 +179,7 @@ export function drawFolkNameLabels(
       ctx,
       fsx,
       fsy - 14,
-      f.bankId ? `${f.name} · Bank` : f.name,
+      f.bankId ? `${f.name} · Bank vault` : f.name,
       "#f0d060",
     );
   }

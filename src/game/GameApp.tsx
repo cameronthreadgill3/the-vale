@@ -151,7 +151,13 @@ import {
   quoteShipFare,
 } from "@/game/travelFares";
 import { maxHpFor, LOW_HP_RATIO, LOW_HP_TOAST } from "@/game/combat";
-import { canCarry, formatDeathToast, toastForCarryFail, DEATH_TOAST_MS } from "@/game/backpack";
+import {
+  canCarry,
+  formatBankToast,
+  formatDeathToast,
+  toastForCarryFail,
+  DEATH_TOAST_MS,
+} from "@/game/backpack";
 import { formatPickupToast } from "@/game/loot";
 import { clearBodyMarker } from "@/game/bodyMarker";
 import {
@@ -670,10 +676,14 @@ export function GameApp() {
       if (!isItemId(itemId)) return;
       setCharacter((prev) => {
         if (!prev) return prev;
-        return depositItem(prev, itemId, 1) ?? prev;
+        const next = depositItem(prev, itemId, 1);
+        if (!next) return prev;
+        const line = formatBankToast("Deposited", 0, itemId, 1);
+        if (line) queueMicrotask(() => showToast(line));
+        return next;
       });
     },
-    [],
+    [showToast],
   );
 
   const handleWithdrawItem = useCallback(
@@ -688,19 +698,41 @@ export function GameApp() {
           }
           return prev;
         }
+        const line = formatBankToast("Withdrew", 0, itemId, 1);
+        if (line) queueMicrotask(() => showToast(line));
         return result.character;
       });
     },
     [showToast],
   );
 
-  const handleDepositGold = useCallback((amount: number) => {
-    setCharacter((prev) => (prev ? depositGold(prev, amount) : prev));
-  }, []);
+  const handleDepositGold = useCallback(
+    (amount: number) => {
+      setCharacter((prev) => {
+        if (!prev) return prev;
+        const next = depositGold(prev, amount);
+        const amt = next.bankGold - prev.bankGold;
+        const line = amt > 0 ? formatBankToast("Deposited", amt) : null;
+        if (line) queueMicrotask(() => showToast(line));
+        return next;
+      });
+    },
+    [showToast],
+  );
 
-  const handleWithdrawGold = useCallback((amount: number) => {
-    setCharacter((prev) => (prev ? withdrawGold(prev, amount) : prev));
-  }, []);
+  const handleWithdrawGold = useCallback(
+    (amount: number) => {
+      setCharacter((prev) => {
+        if (!prev) return prev;
+        const next = withdrawGold(prev, amount);
+        const amt = prev.bankGold - next.bankGold;
+        const line = amt > 0 ? formatBankToast("Withdrew", amt) : null;
+        if (line) queueMicrotask(() => showToast(line));
+        return next;
+      });
+    },
+    [showToast],
+  );
 
   const grantPremium = useCallback(
     (msg: string) => {
