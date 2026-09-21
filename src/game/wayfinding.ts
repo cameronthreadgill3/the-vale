@@ -15,6 +15,7 @@ export {
   objectiveForWharf,
   objectiveForGreenGate,
   objectiveForSpine,
+  objectiveForPale,
   tilesAway,
   type WayfindObjective,
   type RadarDot,

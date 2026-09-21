@@ -259,3 +259,61 @@ export function ensureSpineHounds(
   }
   return enemies;
 }
+
+/** Guarantee Briar Mites on Pale Wastes while The Pale Gate Opens is sticky. */
+export function ensureBriarMites(
+  enemies: Enemy[],
+  map: WorldMap,
+  continentId: ContinentId,
+  blockedTiles: { x: number; y: number }[],
+  need: number,
+): Enemy[] {
+  if (map.kind !== "overworld" || continentId !== "pale-wastes") return enemies;
+  const have = enemies.filter((e) => e.kind.id === "briar-mite" && e.hp > 0).length;
+  const extra = Math.max(0, need - have);
+  if (extra === 0) return enemies;
+
+  const rng = rngFrom(`${WORLD_SEED}|foes|hunt|pale-gate|pale-wastes`);
+  const blocked = new Set(blockedTiles.map((t) => `${t.x},${t.y}`));
+  for (const e of enemies) {
+    blocked.add(`${Math.floor(e.x / TILE)},${Math.floor(e.y / TILE)}`);
+  }
+  let serial = enemies.length;
+  for (let i = 0; i < extra; i++) {
+    const pos = tryPlaceOpen(rng, map, blocked, 6);
+    if (!pos) continue;
+    enemies.push(
+      makeEnemy("briar-mite", pos.x, pos.y, `pad-briar-mite-${serial++}`, rng() * 2),
+    );
+  }
+  return enemies;
+}
+
+/** Light Needle Rat pad on Pale Wastes while The Pale Gate Opens is sticky. */
+export function ensurePaleRats(
+  enemies: Enemy[],
+  map: WorldMap,
+  continentId: ContinentId,
+  blockedTiles: { x: number; y: number }[],
+  need: number,
+): Enemy[] {
+  if (map.kind !== "overworld" || continentId !== "pale-wastes") return enemies;
+  const have = enemies.filter((e) => e.kind.id === "needle-rat" && e.hp > 0).length;
+  const extra = Math.max(0, need - have);
+  if (extra === 0) return enemies;
+
+  const rng = rngFrom(`${WORLD_SEED}|foes|hunt|pale-rat|pale-wastes`);
+  const blocked = new Set(blockedTiles.map((t) => `${t.x},${t.y}`));
+  for (const e of enemies) {
+    blocked.add(`${Math.floor(e.x / TILE)},${Math.floor(e.y / TILE)}`);
+  }
+  let serial = enemies.length;
+  for (let i = 0; i < extra; i++) {
+    const pos = tryPlaceOpen(rng, map, blocked, 6);
+    if (!pos) continue;
+    enemies.push(
+      makeEnemy("needle-rat", pos.x, pos.y, `pad-needle-rat-${serial++}`, rng() * 2),
+    );
+  }
+  return enemies;
+}

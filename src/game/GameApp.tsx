@@ -62,6 +62,9 @@ import {
   SPINE_START_TOAST,
   SPINE_REWARDS,
   SPINE_COMPLETE_LINE,
+  PALE_START_TOAST,
+  PALE_REWARDS,
+  PALE_COMPLETE_LINE,
   TEETH_QUEST_ID,
   ASHWOOD_QUEST_ID,
   HOLLOW_QUEST_ID,
@@ -73,6 +76,7 @@ import {
   WHARF_QUEST_ID,
   GREEN_GATE_QUEST_ID,
   SPINE_QUEST_ID,
+  PALE_QUEST_ID,
   CRESS_FOLK_ID,
   OLD_REED_FOLK_ID,
   CHOIR_KEEPER_FOLK_ID,
@@ -89,6 +93,7 @@ import {
   getWharfQuest,
   getGreenGateQuest,
   getSpineQuest,
+  getPaleQuest,
   applyIdentify,
   applyEnemyKill,
   applyCairnInspect,
@@ -114,6 +119,8 @@ import {
   applyGreenGateRookTalk,
   applySpineReached,
   applySpineRookTalk,
+  applyPaleReached,
+  applyPaleRookTalk,
   withTeethQuest,
   ensureAshwoodAfterTeeth,
   ensureHollowAfterAshwood,
@@ -125,6 +132,7 @@ import {
   ensureNightglassAfterChoir,
   ensureGreenGateAfterWharf,
   ensureSpineAfterGreenGate,
+  ensurePaleAfterSpine,
   rookQuestLine,
   loadQuestLog,
   saveQuestLog,
@@ -465,6 +473,20 @@ export function GameApp() {
           }
         }
       }
+      if (target === "pale-wastes") {
+        const pale = applyPaleReached(loadQuestLog());
+        if (pale) {
+          saveQuestLog(pale.log);
+          if (pale.toast) {
+            showToast(pale.toast);
+            window.setTimeout(
+              () => setToast((t) => (t === pale.toast ? null : t)),
+              2800,
+            );
+            return true;
+          }
+        }
+      }
       const dest = getContinent(target);
       if (paid > 0 || firstCrossing) {
         showToast(farePaidToast("gate", dest.name, paid));
@@ -561,6 +583,7 @@ export function GameApp() {
     }
     if (folkId === "rook" && character) {
       const turnIn =
+        applyPaleRookTalk(loadQuestLog()) ??
         applySpineRookTalk(loadQuestLog()) ??
         applyGreenGateRookTalk(loadQuestLog()) ??
         applyWharfRookTalk(loadQuestLog()) ??
@@ -577,14 +600,26 @@ export function GameApp() {
             ...prev,
             skillXp: { ...prev.skillXp },
           };
-          if (turnIn.completedId === SPINE_QUEST_ID) {
+          if (turnIn.completedId === PALE_QUEST_ID) {
+            next = awardCombatXp(next, PALE_REWARDS.combatXp);
+            next = { ...next, skillXp: { ...next.skillXp } };
+            awardSkillXp(next, PALE_REWARDS.skill, PALE_REWARDS.skillXp);
+            next = setGold(next, next.gold + PALE_REWARDS.gold);
+            next = { ...next, skillXp: { ...next.skillXp } };
+            queueMicrotask(() => {
+              showToast(PALE_COMPLETE_LINE);
+              setSkillTick((t) => t + 1);
+            });
+          } else if (turnIn.completedId === SPINE_QUEST_ID) {
             next = awardCombatXp(next, SPINE_REWARDS.combatXp);
             next = { ...next, skillXp: { ...next.skillXp } };
             awardSkillXp(next, SPINE_REWARDS.skill, SPINE_REWARDS.skillXp);
             next = setGold(next, next.gold + SPINE_REWARDS.gold);
             next = { ...next, skillXp: { ...next.skillXp } };
             queueMicrotask(() => {
-              showToast(SPINE_COMPLETE_LINE);
+              showToast(
+                turnIn.startedPale ? PALE_START_TOAST : SPINE_COMPLETE_LINE,
+              );
               setSkillTick((t) => t + 1);
             });
           } else if (turnIn.completedId === GREEN_GATE_QUEST_ID) {
@@ -990,6 +1025,16 @@ export function GameApp() {
           }
         }
       }
+      if (dest === "pale-wastes") {
+        const pale = applyPaleReached(loadQuestLog());
+        if (pale) {
+          saveQuestLog(pale.log);
+          if (pale.toast) {
+            showToast(pale.toast);
+            return;
+          }
+        }
+      }
       const c = getContinent(dest);
       if (paid > 0 || firstCrossing) {
         showToast(farePaidToast("ship", c.name, paid));
@@ -1131,6 +1176,19 @@ export function GameApp() {
     );
   }, [character]);
 
+  // Quest 12: auto-start The Pale Gate Opens once The Spine Remembers is complete.
+  useEffect(() => {
+    if (!character) return;
+    const ensured = ensurePaleAfterSpine(loadQuestLog());
+    if (!ensured.started) return;
+    saveQuestLog(ensured.log);
+    setToast(PALE_START_TOAST);
+    window.setTimeout(
+      () => setToast((t) => (t === PALE_START_TOAST ? null : t)),
+      3600,
+    );
+  }, [character]);
+
   // Mistmere Crossing: mark arrival whenever the walker stands on Mistmere.
   useEffect(() => {
     if (!character) return;
@@ -1202,6 +1260,19 @@ export function GameApp() {
     if (spine.toast) {
       setToast(spine.toast);
       window.setTimeout(() => setToast((t) => (t === spine.toast ? null : t)), 2800);
+    }
+  }, [character]);
+
+  // The Pale Gate Opens: mark Pale Wastes arrival.
+  useEffect(() => {
+    if (!character) return;
+    if (character.continentId !== "pale-wastes") return;
+    const pale = applyPaleReached(loadQuestLog());
+    if (!pale) return;
+    saveQuestLog(pale.log);
+    if (pale.toast) {
+      setToast(pale.toast);
+      window.setTimeout(() => setToast((t) => (t === pale.toast ? null : t)), 2800);
     }
   }, [character]);
 
@@ -1358,7 +1429,19 @@ export function GameApp() {
         next = setGold(next, next.gold + SPINE_REWARDS.gold);
         next = { ...next, skillXp: { ...next.skillXp } };
         queueMicrotask(() => {
-          showToast(SPINE_COMPLETE_LINE);
+          showToast(
+            result.startedPale ? PALE_START_TOAST : SPINE_COMPLETE_LINE,
+          );
+          setSkillTick((t) => t + 1);
+        });
+      } else if (result.completedId === PALE_QUEST_ID) {
+        next = awardCombatXp(next, PALE_REWARDS.combatXp);
+        next = { ...next, skillXp: { ...next.skillXp } };
+        awardSkillXp(next, PALE_REWARDS.skill, PALE_REWARDS.skillXp);
+        next = setGold(next, next.gold + PALE_REWARDS.gold);
+        next = { ...next, skillXp: { ...next.skillXp } };
+        queueMicrotask(() => {
+          showToast(PALE_COMPLETE_LINE);
           setSkillTick((t) => t + 1);
         });
       } else if (result.toast) {
@@ -1689,6 +1772,7 @@ export function GameApp() {
       wharfQuest={getWharfQuest(loadQuestLog())}
       greenGateQuest={getGreenGateQuest(loadQuestLog())}
       spineQuest={getSpineQuest(loadQuestLog())}
+      paleQuest={getPaleQuest(loadQuestLog())}
       onVitals={handleVitals}
       onPlayerDeath={handlePlayerDeath}
       onPassivePrimary={(amount) => {

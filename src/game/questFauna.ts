@@ -1,6 +1,6 @@
 /** Extra early fauna while Teeth in the Grass is sticky. */
-import { spawnHuntEcology, ensureTeethPrey, ensureGorseFoxes, ensureAshVoles, ensureSpineHounds } from "@/game/spawnEcology";
-import { isTeethActive, isGreenGateActive, isSpineActive, loadQuestLog } from "@/game/quests";
+import { spawnHuntEcology, ensureTeethPrey, ensureGorseFoxes, ensureAshVoles, ensureSpineHounds, ensureBriarMites, ensurePaleRats } from "@/game/spawnEcology";
+import { isTeethActive, isGreenGateActive, isSpineActive, isPaleActive, loadQuestLog } from "@/game/quests";
 import type { Enemy } from "@/game/enemies";
 import type { ContinentId } from "@/game/continents";
 import { townBlockedTiles, type WorldMap } from "@/game/world";
@@ -26,6 +26,14 @@ export function spawnEnemiesForQuest(
   ) {
     ensureAshVoles(enemies, map, continentId, blocked, 2);
     ensureSpineHounds(enemies, map, continentId, blocked, 1);
+  }
+  if (
+    map.kind === "overworld" &&
+    continentId === "pale-wastes" &&
+    isPaleActive(loadQuestLog())
+  ) {
+    ensureBriarMites(enemies, map, continentId, blocked, 2);
+    ensurePaleRats(enemies, map, continentId, blocked, 1);
   }
   const boost =
     map.kind === "overworld" &&

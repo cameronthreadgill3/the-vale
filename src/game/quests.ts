@@ -20,6 +20,7 @@ export const CHOIR_COUNTS_QUEST_ID = "the-choir-counts" as const;
 export const WHARF_QUEST_ID = "the-wharf-answers" as const;
 export const GREEN_GATE_QUEST_ID = "the-green-gate-keeps" as const;
 export const SPINE_QUEST_ID = "the-spine-remembers" as const;
+export const PALE_QUEST_ID = "the-pale-gate-opens" as const;
 
 /** Depot clerk — Cress Ledger in folk.ts. */
 export const CRESS_FOLK_ID = "cress-ledger" as const;
@@ -49,7 +50,8 @@ export type QuestId =
   | typeof CHOIR_COUNTS_QUEST_ID
   | typeof WHARF_QUEST_ID
   | typeof GREEN_GATE_QUEST_ID
-  | typeof SPINE_QUEST_ID;
+  | typeof SPINE_QUEST_ID
+  | typeof PALE_QUEST_ID;
 
 export type QuestStatus = "active" | "complete";
 
@@ -170,6 +172,17 @@ export interface SpineQuestProgress {
   houndDone: boolean;
 }
 
+export interface PaleQuestProgress {
+  id: typeof PALE_QUEST_ID;
+  status: QuestStatus;
+  /** Reached Pale Wastes overworld (travel, stand, or arrive via Verdant Spine gate). */
+  reachedPale: boolean;
+  /** First successful Identify of a Briar Mite on Pale Wastes. */
+  identifiedMite: boolean;
+  /** Needle Rat defeated on Pale Wastes (target 1; continent-scoped). */
+  ratDone: boolean;
+}
+
 export type QuestLog = {
   [TEETH_QUEST_ID]?: TeethQuestProgress;
   [ASHWOOD_QUEST_ID]?: AshwoodQuestProgress;
@@ -182,6 +195,7 @@ export type QuestLog = {
   [WHARF_QUEST_ID]?: WharfQuestProgress;
   [GREEN_GATE_QUEST_ID]?: GreenGateQuestProgress;
   [SPINE_QUEST_ID]?: SpineQuestProgress;
+  [PALE_QUEST_ID]?: PaleQuestProgress;
 };
 
 export const TEETH_RATS_NEEDED = 3;
@@ -199,6 +213,7 @@ export const CHOIR_COUNTS_QUEST_TITLE = "The Choir Counts";
 export const WHARF_QUEST_TITLE = "The Wharf Answers";
 export const GREEN_GATE_QUEST_TITLE = "The Green Gate Keeps";
 export const SPINE_QUEST_TITLE = "The Spine Remembers";
+export const PALE_QUEST_TITLE = "The Pale Gate Opens";
 
 export const TEETH_START_TOAST =
   "Rook: Ashwood edge has wrong prey - Identify first.";
@@ -265,6 +280,12 @@ export const SPINE_START_TOAST =
 
 export const SPINE_COMPLETE_LINE =
   "Rook: The spine remembers your footing. Soft prey named, the ridge pack quieted. Survive. Learn. Progress — the far road holds.";
+
+export const PALE_START_TOAST =
+  "Rook: The spine remembers your footing. Walk the pale gate on the ridge — name the briar-mite that skitters the bone flats, quiet one needle-rat beyond it, and bring the pale measure home. Survive. Learn. Progress.";
+
+export const PALE_COMPLETE_LINE =
+  "Rook: The pale gate opened, and the bone flats keep your footing. Survive. Learn. Progress — the far road runs white now.";
 
 export const TEETH_REWARDS = {
   gold: 28,
@@ -341,6 +362,13 @@ export const SPINE_REWARDS = {
   combatXp: 160,
   skill: "magic" as SkillId,
   skillXp: 48,
+};
+
+export const PALE_REWARDS = {
+  gold: 85,
+  combatXp: 170,
+  skill: "distance" as SkillId,
+  skillXp: 50,
 };
 
 export function loadQuestLog(): QuestLog {
@@ -477,6 +505,16 @@ export function emptySpineQuest(): SpineQuestProgress {
     reachedSpine: false,
     identifiedVole: false,
     houndDone: false,
+  };
+}
+
+export function emptyPaleQuest(): PaleQuestProgress {
+  return {
+    id: PALE_QUEST_ID,
+    status: "active",
+    reachedPale: false,
+    identifiedMite: false,
+    ratDone: false,
   };
 }
 
@@ -657,6 +695,20 @@ export function sanitizeQuestLog(raw: unknown): QuestLog {
     };
   }
 
+  const pale = obj[PALE_QUEST_ID];
+  if (pale && typeof pale === "object") {
+    const p = pale as Record<string, unknown>;
+    const status: QuestStatus =
+      p.status === "complete" ? "complete" : "active";
+    log[PALE_QUEST_ID] = {
+      id: PALE_QUEST_ID,
+      status,
+      reachedPale: Boolean(p.reachedPale),
+      identifiedMite: Boolean(p.identifiedMite),
+      ratDone: Boolean(p.ratDone),
+    };
+  }
+
   return log;
 }
 
@@ -724,6 +776,12 @@ export function getSpineQuest(
   return log?.[SPINE_QUEST_ID] ?? null;
 }
 
+export function getPaleQuest(
+  log: QuestLog | undefined,
+): PaleQuestProgress | null {
+  return log?.[PALE_QUEST_ID] ?? null;
+}
+
 export function isTeethActive(log: QuestLog | undefined): boolean {
   const q = getTeethQuest(log);
   return Boolean(q && q.status === "active");
@@ -776,6 +834,11 @@ export function isGreenGateActive(log: QuestLog | undefined): boolean {
 
 export function isSpineActive(log: QuestLog | undefined): boolean {
   const q = getSpineQuest(log);
+  return Boolean(q && q.status === "active");
+}
+
+export function isPaleActive(log: QuestLog | undefined): boolean {
+  const q = getPaleQuest(log);
   return Boolean(q && q.status === "active");
 }
 
@@ -836,6 +899,10 @@ export function greenGateObjectivesMet(q: GreenGateQuestProgress): boolean {
 
 export function spineObjectivesMet(q: SpineQuestProgress): boolean {
   return q.reachedSpine && q.identifiedVole && q.houndDone;
+}
+
+export function paleObjectivesMet(q: PaleQuestProgress): boolean {
+  return q.reachedPale && q.identifiedMite && q.ratDone;
 }
 
 /** HUD lines for Teeth sticky panel. */
@@ -1051,6 +1118,27 @@ export function spineHudLines(q: SpineQuestProgress): string[] {
   ];
 }
 
+/** HUD lines for The Pale Gate Opens. */
+export function paleHudLines(q: PaleQuestProgress): string[] {
+  if (q.status === "complete") {
+    return ["Complete - The pale gate opened"];
+  }
+  return [
+    q.reachedPale
+      ? "[done] Reach Pale Wastes"
+      : "[ ] Reach Pale Wastes (Verdant Spine gate)",
+    q.identifiedMite
+      ? "[done] Identify Briar Mite"
+      : "[ ] Identify a Briar Mite (near look)",
+    q.ratDone
+      ? "[done] Defeat Needle Rat 1/1"
+      : "[ ] Defeat Needle Rat 0/1 (Pale Wastes)",
+    q.reachedPale && q.identifiedMite && q.ratDone
+      ? "[ ] Return to Rook (the pale measure)"
+      : "[ ] Return to Rook with the pale measure",
+  ];
+}
+
 
 export type QuestEventResult = {
   log: QuestLog;
@@ -1077,6 +1165,8 @@ export type QuestEventResult = {
   startedGreenGate?: boolean;
   /** The Spine Remembers auto-started after The Green Gate Keeps. */
   startedSpine?: boolean;
+  /** The Pale Gate Opens auto-started after The Spine Remembers. */
+  startedPale?: boolean;
 };
 
 /** If Teeth is complete and Ashwood missing, start Ashwood Watch. */
@@ -1259,6 +1349,24 @@ export function ensureSpineAfterGreenGate(log: QuestLog): {
   };
 }
 
+/** If The Spine Remembers is complete and The Pale Gate Opens missing, start it. */
+export function ensurePaleAfterSpine(log: QuestLog): {
+  log: QuestLog;
+  started: boolean;
+} {
+  const spine = getSpineQuest(log);
+  if (!spine || spine.status !== "complete") {
+    return { log, started: false };
+  }
+  if (getPaleQuest(log)) {
+    return { log, started: false };
+  }
+  return {
+    log: withPaleQuest(log, emptyPaleQuest()),
+    started: true,
+  };
+}
+
 export function withTeethQuest(
   log: QuestLog | undefined,
   quest: TeethQuestProgress,
@@ -1336,6 +1444,13 @@ export function withSpineQuest(
   return { ...(log ?? {}), [SPINE_QUEST_ID]: quest };
 }
 
+export function withPaleQuest(
+  log: QuestLog | undefined,
+  quest: PaleQuestProgress,
+): QuestLog {
+  return { ...(log ?? {}), [PALE_QUEST_ID]: quest };
+}
+
 function finishTeethIfReady(
   log: QuestLog,
   next: TeethQuestProgress,
@@ -1399,6 +1514,24 @@ export function applyIdentify(
   kindId: EnemyKindId,
   continentId?: ContinentId,
 ): QuestEventResult | null {
+  const pale = getPaleQuest(log);
+  if (
+    pale &&
+    pale.status === "active" &&
+    !pale.identifiedMite &&
+    kindId === "briar-mite" &&
+    continentId === "pale-wastes"
+  ) {
+    return {
+      log: withPaleQuest(log, {
+        ...pale,
+        reachedPale: true,
+        identifiedMite: true,
+      }),
+      toast: "Identified: Briar Mite / F",
+    };
+  }
+
   const spine = getSpineQuest(log);
   if (
     spine &&
@@ -1520,6 +1653,26 @@ export function applyEnemyKill(
   kindId: EnemyKindId,
   continentId?: ContinentId,
 ): QuestEventResult | null {
+  const pale = getPaleQuest(log);
+  if (
+    pale &&
+    pale.status === "active" &&
+    kindId === "needle-rat" &&
+    continentId === "pale-wastes" &&
+    !pale.ratDone
+  ) {
+    return {
+      log: withPaleQuest(log, {
+        ...pale,
+        reachedPale: true,
+        ratDone: true,
+      }),
+      toast: pale.identifiedMite
+        ? "Needle Rat 1/1 — Return to Rook"
+        : "Needle Rat 1/1 — Name the Briar Mite",
+    };
+  }
+
   const spine = getSpineQuest(log);
   if (
     spine &&
@@ -2007,10 +2160,43 @@ export function applySpineRookTalk(log: QuestLog): QuestEventResult | null {
   const q = getSpineQuest(log);
   if (!q || q.status !== "active") return null;
   if (!spineObjectivesMet(q)) return null;
+  let out = withSpineQuest(log, { ...q, status: "complete" });
+  const ensured = ensurePaleAfterSpine(out);
+  out = ensured.log;
   return {
-    log: withSpineQuest(log, { ...q, status: "complete" }),
-    toast: SPINE_COMPLETE_LINE,
+    log: out,
+    toast: ensured.started ? PALE_START_TOAST : SPINE_COMPLETE_LINE,
     completedId: SPINE_QUEST_ID,
+    startedPale: ensured.started,
+  };
+}
+
+/** Mark Pale Wastes reached for The Pale Gate Opens (travel, stand, or arrival). */
+export function applyPaleReached(log: QuestLog): QuestEventResult | null {
+  const q = getPaleQuest(log);
+  if (!q || q.status !== "active" || q.reachedPale) {
+    return null;
+  }
+  return {
+    log: withPaleQuest(log, { ...q, reachedPale: true }),
+    toast:
+      q.identifiedMite && q.ratDone
+        ? "Pale Wastes marked — Return to Rook with the pale measure"
+        : q.identifiedMite
+          ? "Pale Wastes marked — Quiet one needle-rat beyond the gate"
+          : "Pale Wastes marked — Name the briar-mite that skitters the bone flats",
+  };
+}
+
+/** Complete The Pale Gate Opens when talking to Rook after the bone flats are measured. */
+export function applyPaleRookTalk(log: QuestLog): QuestEventResult | null {
+  const q = getPaleQuest(log);
+  if (!q || q.status !== "active") return null;
+  if (!paleObjectivesMet(q)) return null;
+  return {
+    log: withPaleQuest(log, { ...q, status: "complete" }),
+    toast: PALE_COMPLETE_LINE,
+    completedId: PALE_QUEST_ID,
   };
 }
 
@@ -2060,6 +2246,23 @@ export function applyCairnInspect(
 
 /** Rook line while sticky quests are active / complete. */
 export function rookQuestLine(log: QuestLog | undefined): string | null {
+  const pale = getPaleQuest(log);
+  if (pale) {
+    if (pale.status === "complete") {
+      return PALE_COMPLETE_LINE.replace(/^Rook:\s*/, "");
+    }
+    if (!pale.reachedPale) {
+      return "The spine remembers your footing. Walk the pale gate on the ridge — name the briar-mite that skitters the bone flats, quiet one needle-rat beyond it, and bring the pale measure home.";
+    }
+    if (!pale.identifiedMite) {
+      return "The pale gate is underfoot. Identify a Briar Mite on Pale Wastes — Name and Rank — then quiet one needle-rat beyond it.";
+    }
+    if (!pale.ratDone) {
+      return "The mite is named. Quiet one Needle Rat on the Pale Wastes, then bring the pale measure home.";
+    }
+    return "The pale gate opened. Survive. Learn. Progress — the far road runs white when you tell me.";
+  }
+
   const spine = getSpineQuest(log);
   if (spine) {
     if (spine.status === "complete") {
