@@ -54,6 +54,11 @@ import { createPlayerAttack } from "@/game/gameLoopCombat";
 import { loadQuestLog } from "@/game/quests";
 import { DEATH_KICK_DELAY_MS, placeBodyMarker } from "@/game/bodyMarker";
 import { hitStopScale, noteConnectedHit, resetCombatJuice } from "@/game/combatJuice";
+import {
+  beginDeathHold,
+  endDeathCameraLoop,
+  noteDeathCameraLoopStart,
+} from "@/game/deathCamera";
 
 export function useGameLoopEffect(d: {
   canvasRef: RefObject<HTMLCanvasElement | null>;
@@ -109,6 +114,7 @@ export function useGameLoopEffect(d: {
 
   useEffect(() => {
     resetCombatJuice();
+    noteDeathCameraLoopStart();
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -436,6 +442,7 @@ export function useGameLoopEffect(d: {
           onCombatReward.current(0, "shielding", Math.max(1, Math.floor(taken * 0.4)), 0);
           if (snap.hp <= 0 && !deadLock) {
             deadLock = true;
+            beginDeathHold();
             pushFloat(player.x, player.y - 24, "You fall...", "#a8b09a");
             placeBodyMarker({
               continentId: map.continentId,
@@ -571,7 +578,11 @@ export function useGameLoopEffect(d: {
     return () => {
       running = false;
       resetCombatJuice();
+      const deathAborted = deathKick != null;
       if (deathKick != null) clearTimeout(deathKick);
+      // A finished fall hands the next shell a soft plaza arrival.
+      // Strict remount of that shell must not drop it before the first frame.
+      endDeathCameraLoop(deadLock && !deathAborted, deathAborted);
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", resize);
       window.removeEventListener("keydown", onKeyDown);
