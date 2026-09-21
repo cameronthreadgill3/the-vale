@@ -223,7 +223,8 @@ export const CRAFT_RECIPES: CraftRecipe[] = [
     ],
     resultId: "ash-salve",
     resultQty: 1,
-    xp: 28,
+    /** Crafting beat vs gather 22 / fish 20 — kettle is the skill bump, not the mats. */
+    xp: 36,
   },
 ];
 

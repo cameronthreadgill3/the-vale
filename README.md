@@ -41,11 +41,11 @@ Open the URL Vite prints (usually http://localhost:5173).
 - Overlays (class select, shop, dialogue, skills, map) use larger tap targets and scroll on small screens
 - Page scroll/bounce is disabled while playing (`100dvh`, safe-area insets, `touch-action: none`)
 - Camera follows the player on a seeded continent map
-- Walk onto a **gold gate** tile to travel, or press **E** nearby. The Thornreach ↔ Mistmere watch takes a small fare after the first crossing (prompt shows `Use gate → Mistmere — 5g`). Other gates stay free.
+- Walk onto a **gold gate** tile to travel, or press **E** nearby. The Thornreach ↔ Mistmere watch takes a small fare after the first crossing (prompt shows `Use gate → Mistmere — 4g`). Other gates stay free.
 - Walk onto a **hollow** (dark circle) to descend, or press **E** nearby
 - Inside a hollow, walk onto the **exit** tile (or **E**) to return
 - Approach **named folk** (colored sprites) and press **E** to talk; shopkeepers also open a store
-- Approach a **ship dock** (sail marker) on Mistmere, Sunken Choir, or Nightglass Coast and press **E** to voyage (pier fares 6–8g after the first sail; toast if the purse is short)
+- Approach a **ship dock** (sail marker) on Mistmere, Sunken Choir, or Nightglass Coast and press **E** to voyage (pier fares 5–7g after the first sail; toast if the purse is short)
 - First visit: **Choose your path** (six Vale classes). Choice, skills, gold, inventory, HP/mana, and world location persist in `localStorage` (`vale-character-v1`).
 
 ### Combat
@@ -169,7 +169,7 @@ New cues so you are never lost on Thornreach:
 
 1. **Quest arrow + HUD line** — Active sticky quests show a yellow edge/on-screen arrow toward the current objective (cairns, hollow entrance, Ashveil chamber, Ashveil Ember, Shade Wisp, Needle Rat, Bark Hound, Mistmere gate, Old Reed, Cress, or Rook) plus a HUD line like `→ Identify Needle Rat · 12 tiles`.
 2. **Labeled landmarks + compass** — Larger high-contrast markers; names for folk, **Gate → Continent**, hollow entrance/exit, ship docks, and the plaza **Fountain** within ~8 tiles; **hunt-ground cairns** (`Name · Rec. 2–4`, plus spawn table when close) from ~12 tiles. Top-center compass (N/E/S/W) with a tiny radar of nearby interactables (gold), cairns, and the quest target (bright).
-3. **Starter tip + clear prompts** — First 60s on load: soft tip *Talk to Rook (watch) · Cairns mark hunt grounds (Rec. levels) · Bank with Cress · Fountain square is safe*. Nearest interactable prompts read as actions: `Talk · Rook`, `Talk / Bank · Cress Vault`, `Enter hollow`, `Use gate → Mistmere — 5g`, `Board ship · Mistmere Pier — 6–8g`.
+3. **Starter tip + clear prompts** — First 60s on load: soft tip *Talk to Rook (watch) · Cairns mark hunt grounds (Rec. levels) · Bank with Cress · Fountain square is safe*. Nearest interactable prompts read as actions: `Talk · Rook`, `Talk / Bank · Cress Vault`, `Enter hollow`, `Use gate → Mistmere — 4g`, `Board ship · Mistmere Pier — 5–7g`.
 
 
 ### Classes
@@ -187,7 +187,7 @@ Thornreach (starter), Mistmere, Ashen Marches, Sunken Choir, Embercoil, Pale Was
 - Thornreach vault: deposit/withdraw items and gold with Cress
 - **Backpack (B / I)** — worn slots plus pack stacks. Default **20 slots / 80 wt** (Premium 32 / +50%). Corpse loot that will not fit is left behind.
 - Ships link Mistmere ↔ Sunken Choir ↔ Nightglass Coast with short voyage flavor
-- **Travel fares (lite):** Thornreach ↔ Mistmere gates cost **5g** after the first crossing; coastal ships scale lightly (Mistmere↔Choir **6g**, Choir↔Nightglass **7g**, Mistmere↔Nightglass **8g**). First visit to an undiscovered land is free so Quest 5 cannot soft-lock. Short purse → fail toast; hunt, gather, or sell, then try again. Gold spend only — existing `vale-character-v1` saves stay compatible.
+- **Travel fares (lite):** Thornreach ↔ Mistmere gates cost **4g** after the first crossing; coastal ships scale lightly (Mistmere↔Choir **5g**, Choir↔Nightglass **6g**, Mistmere↔Nightglass **7g**). First visit to an undiscovered land is free so Quest 5 cannot soft-lock. Short purse → fail toast; hunt, gather, or sell, then try again. Gold spend only — existing `vale-character-v1` saves stay compatible.
 
 ### Professions lite (Thornreach)
 
@@ -195,9 +195,13 @@ A one-session Tibia-adjacent loop on the starter continent — not a full crafti
 
 1. **Gathering** — press **E** on briar-herb tufts (north rim of the square / north of the store) or ashwood scrap piles (west of the cobbles, south of the square).
 2. **Fishing** — press **E** on the reed pond banks east of the square (basin minnows). Nodes regrow after ~40s.
-3. **Crafting** — talk to **Sera Kettle** on the plaza (south-east of the fountain) and bind 1 briar-herb + 1 ashwood scrap into **Ash-Salve**. Sell the salve, scraps, or minnows at Mara.
+3. **Crafting** — talk to **Sera Kettle** on the plaza (south-east of the fountain) and bind 1 briar-herb + 1 ashwood scrap into **Ash-Salve**. Mara pays **9g** for a salve (raw mats **2g+2g**), so the kettle walk is the gold bump.
 
 Levels show in **Skills (K)** and a short strip in **Pack (B)**. First Story / Accession texture only.
+
+### Early economy (Thornreach)
+
+Starting purse **45g**. First hunt (Needle Rat **3–5g** / **18 XP**, Bark Hound **5–8g** / **38 XP**, plus ash-vole and gorse fox) plus a Sera kettle loop should cover a return watch fare without grind or flooding the purse. Fares and item values live as constants in `travelFares.ts`, `enemies.ts`, `items.ts`, and `professions.ts`.
 
 ### Builds
 

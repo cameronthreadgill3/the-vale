@@ -7,6 +7,7 @@ import { levelFromXp } from "@/game/xp";
 import { emptyEquipment, equipmentAttack, equipmentDefense } from "@/game/equipment";
 
 /** --- Combat-feel tunables (first hunt polish) --- */
+/** Hunt XP/gold: EnemyKind.xpBase / goldMin / goldMax in enemies.ts (scripts/en.b64.*). */
 /** Plaza fountain heal radius from spawn tile center (tiles). */
 export const FOUNTAIN_HEAL_RADIUS_TILES = 1.4;
 /** HP restored per second while standing on the fountain. */
