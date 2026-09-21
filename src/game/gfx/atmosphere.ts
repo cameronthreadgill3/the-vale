@@ -163,20 +163,31 @@ export function drawHollowDungeonMarkers(
   if (map.bossChamber) {
     const bx = Math.floor((map.bossChamber.x + 0.5) * TILE - originX);
     const by = Math.floor((map.bossChamber.y + 0.5) * TILE - originY);
-    ctx.strokeStyle = "rgba(170, 120, 220, 0.7)";
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    const glow = ctx.createRadialGradient(bx, by + 6, 2, bx, by + 6, 38);
+    glow.addColorStop(0, "rgba(255,140,50,0.22)");
+    glow.addColorStop(0.45, "rgba(150,70,180,0.10)");
+    glow.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(bx, by + 6, 38, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    ctx.strokeStyle = "rgba(224, 112, 48, 0.72)";
     ctx.lineWidth = 2;
     ctx.setLineDash([4, 3]);
     ctx.beginPath();
     ctx.arc(bx, by, 22, 0, Math.PI * 2);
     ctx.stroke();
     ctx.setLineDash([]);
-    ctx.strokeStyle = "rgba(170, 120, 220, 0.28)";
+    ctx.strokeStyle = "rgba(170, 120, 220, 0.42)";
     ctx.beginPath();
     ctx.arc(bx, by, 28, 0, Math.PI * 2);
     ctx.stroke();
     ctx.font = '9px "IBM Plex Mono", ui-monospace, monospace';
     ctx.textAlign = "center";
-    ctx.fillStyle = "#d4b8f0";
+    ctx.fillStyle = "#e8c8a0";
     ctx.fillText("Ashveil chamber", bx, by - 30);
   }
   ctx.restore();

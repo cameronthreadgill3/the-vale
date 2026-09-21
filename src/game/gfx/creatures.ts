@@ -1,7 +1,7 @@
 /**
  * Original creature pixel sprites for The Vale (gfx pass 3).
- * Needle Rat, Bark Hound, Ash-vole, Gorse Fox, Briar Mite, Shade Wisp —
- * 4 walk/bob frames with pose changes. Cached sheets, not CipSoft.
+ * Needle Rat, Bark Hound, Ash-vole, Gorse Fox, Briar Mite, Shade Wisp,
+ * Ashveil Ember — 4 walk/bob frames with pose changes. Cached sheets, not CipSoft.
  */
 import { makeCanvas, ctx2d, px, shadeHex, drawSoftShadow } from "@/game/gfx/canvasUtil";
 
@@ -11,7 +11,8 @@ export type CreatureKindId =
   | "bark-hound"
   | "shade-wisp"
   | "ash-vole"
-  | "gorse-fox";
+  | "gorse-fox"
+  | "ashveil-ember";
 
 export const CREATURE_FRAME = 32;
 export const CREATURE_WALK_FRAMES = 4;
@@ -219,6 +220,111 @@ function paintShadeWisp(ctx: CanvasRenderingContext2D, flash: boolean, frame: nu
   px(ctx, mx + sway, my + by, hot, 2, 2);
 }
 
+/**
+ * Hollow boss — jagged coal-and-veil, not a scaled Shade Wisp diamond.
+ * Paint order: smoke → hull → face/core/cracks → crown last so flames sit on top.
+ */
+function paintAshveilEmber(ctx: CanvasRenderingContext2D, flash: boolean, frame: number): void {
+  const ashD = flash ? "#b0a088" : "#1a1218";
+  const ash = flash ? "#d0c4a8" : "#3a3238";
+  const ashL = flash ? "#e8dcc8" : "#6a5e68";
+  const violet = flash ? "#ead8f4" : "#6a4a88";
+  const violetH = flash ? "#f6ecff" : "#a078c8";
+  const ember = flash ? "#ffe8c0" : "#e07030";
+  const emberH = flash ? "#fff4d4" : "#f8a848";
+  const heart = flash ? "#fffef6" : "#fff0c0";
+  const crack = flash ? "#ffd090" : "#c04820";
+  const spark = flash ? "#fff8e0" : "#ffd070";
+  const rim = flash ? "#6a5840" : "#0c0a0c";
+  const by = bobY(frame);
+  const sway = frame === 1 ? 1 : frame === 3 ? -1 : 0;
+  const pulse = frame === 1 || frame === 3 ? 1 : 0;
+  const lick = frame === 2 ? 2 : pulse ? 1 : 0;
+
+  // Rising ash columns (behind the body).
+  px(ctx, 5 + sway, 11 + by, ash, 2, 5);
+  px(ctx, 4 + sway, 7 + by - pulse, ashL, 2, 5);
+  px(ctx, 3 + sway, 4 + by - pulse, ash, 1, 4);
+  px(ctx, 26 + sway, 13 + by, ash, 2, 5);
+  px(ctx, 27 + sway, 9 + by + pulse, ashL, 2, 4);
+  px(ctx, 28 + sway, 6 + by, ash, 1, 3);
+
+  // Irregular coal hull — offset chunks, not a smooth oval.
+  px(ctx, 8 + sway, 12 + by, ashD, 16, 12);
+  px(ctx, 7 + sway, 15 + by, ashD, 18, 8);
+  px(ctx, 6 + sway, 17 + by, ashD, 3, 5);
+  px(ctx, 5 + sway, 18 + by, ash, 2, 3);
+  px(ctx, 23 + sway, 13 + by, ashD, 4, 8);
+  px(ctx, 24 + sway, 12 + by, ash, 3, 4);
+  px(ctx, 9 + sway, 13 + by, ash, 14, 10);
+  px(ctx, 10 + sway, 14 + by, ashL, 5, 3);
+  px(ctx, 16 + sway, 15 + by, ashL, 4, 2);
+  px(ctx, 7 + sway, 15 + by, rim, 1, 8);
+  px(ctx, 24 + sway, 13 + by, rim, 1, 8);
+
+  // Hood / brow so it reads as a held spirit, not a lantern.
+  px(ctx, 10 + sway, 10 + by, ashD, 12, 4);
+  px(ctx, 11 + sway, 9 + by, ash, 10, 3);
+  px(ctx, 12 + sway, 10 + by, ashL, 8, 2);
+  px(ctx, 12 + sway, 11 + by, rim, 3, 1);
+  px(ctx, 17 + sway, 11 + by, rim, 3, 1);
+  px(ctx, 12 + sway, 12 + by, emberH, 2, 2);
+  px(ctx, 18 + sway, 12 + by, emberH, 2, 2);
+  px(ctx, 13 + sway, 12 + by, heart, 1, 1);
+  px(ctx, 19 + sway, 12 + by, heart, 1, 1);
+
+  // Thin violet halo around the held core (family flicker, not a wisp body).
+  px(ctx, 11 + sway, 16 + by, violet, 10, 6);
+  px(ctx, 12 + sway, 15 + by, violetH, 8, 2);
+  if (pulse) {
+    px(ctx, 8 + sway, 16 + by, violetH, 2, 2);
+    px(ctx, 22 + sway, 17 + by, violet, 2, 2);
+  }
+
+  // Concentric ember heart.
+  px(ctx, 13 + sway, 17 + by, ember, 6, 6);
+  px(ctx, 14 + sway, 18 + by, emberH, 4, 4 + pulse);
+  px(ctx, 15 + sway, 19 + by, heart, 2, 2 + pulse);
+
+  // 1px coal fissures radiating from the heart.
+  px(ctx, 11 + sway, 18 + by, crack, 2, 1);
+  px(ctx, 10 + sway, 19 + by, crack, 1, 3);
+  px(ctx, 19 + sway, 17 + by, crack, 2, 1);
+  px(ctx, 21 + sway, 16 + by, ember, 1, 3);
+  px(ctx, 15 + sway, 23 + by, crack, 2, 2);
+
+  // Dripping ash skirt (grounded vs floating wisp).
+  px(ctx, 9 + sway, 24 + by, ashD, 14, 2);
+  px(ctx, 11 + sway, 26 + by, ash, 4, 2);
+  px(ctx, 17 + sway, 26 + by, ash, 3, 3);
+  px(ctx, 13 + sway, 27 + by, ashL, 2, 2);
+
+  // Jagged flame crown LAST so the hood cannot bury it.
+  px(ctx, 14 + sway, 6 + by - lick, ember, 4, 4);
+  px(ctx, 15 + sway, 4 + by - lick, emberH, 2, 3);
+  px(ctx, 15 + sway, 3 + by - lick, heart, 1, 2);
+  px(ctx, 11 + sway, 7 + by, ember, 3, 3);
+  px(ctx, 11 + sway, 6 + by, emberH, 2, 2);
+  px(ctx, 19 + sway, 6 + by, ember, 3, 4);
+  px(ctx, 20 + sway, 5 + by, emberH, 2, 2);
+  if (pulse || lick) {
+    px(ctx, 16 + sway, 2 + by - lick, spark, 1, 2);
+    px(ctx, 10 + sway, 5 + by, spark, 1, 2);
+    px(ctx, 22 + sway, 4 + by, spark, 1, 2);
+  }
+
+  // Orbiting sparks + cooler ash motes (wider path than the wisp).
+  const mx = [4, 26, 6, 25][frame]!;
+  const my = [20, 8, 6, 22][frame]!;
+  px(ctx, mx, my + by, spark, 2, 2);
+  const ax = [25, 5, 27, 4][frame]!;
+  const ay = [11, 21, 17, 9][frame]!;
+  px(ctx, ax, ay + by, ashL, 2, 2);
+  if (frame === 1) px(ctx, 23 + sway, 20 + by, emberH, 2, 2);
+  if (frame === 2) px(ctx, 16 + sway, 1 + by, emberH, 2, 2);
+  if (frame === 3) px(ctx, 7 + sway, 20 + by, ember, 2, 2);
+}
+
 function paintAshVole(ctx: CanvasRenderingContext2D, flash: boolean, frame: number): void {
   const fur = flash ? "#d8d0c0" : "#6a6050";
   const dark = flash ? "#a89880" : "#2e2a22";
@@ -309,6 +415,9 @@ function paintCreature(
     case "gorse-fox":
       paintGorseFox(ctx, flash, f);
       break;
+    case "ashveil-ember":
+      paintAshveilEmber(ctx, flash, f);
+      break;
     default:
       px(ctx, 10, 14, colorDark, 12, 10);
       px(ctx, 11, 13, color, 10, 10);
@@ -346,8 +455,32 @@ export function drawCreatureSprite(
   frame = 0,
 ): void {
   const sheet = getCreatureSheet(id, color, colorDark, flash, frame);
-  const size = Math.max(28, Math.min(56, Math.round(radius * 3.1)));
-  drawSoftShadow(ctx, sx, sy + size * 0.28, size * 0.34, size * 0.13, flash ? 0.2 : 0.38);
+  const ember = id === "ashveil-ember";
+  const size = ember
+    ? Math.max(40, Math.min(64, Math.round(radius * 3.4)))
+    : Math.max(28, Math.min(56, Math.round(radius * 3.1)));
+  drawSoftShadow(
+    ctx,
+    sx,
+    sy + size * 0.28,
+    size * (ember ? 0.4 : 0.34),
+    size * (ember ? 0.16 : 0.13),
+    flash ? 0.2 : ember ? 0.46 : 0.38,
+  );
+  if (ember) {
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    const glowR = size * 0.55;
+    const g = ctx.createRadialGradient(sx, sy + 3, 2, sx, sy + 3, glowR);
+    g.addColorStop(0, flash ? "rgba(255,230,170,0.38)" : "rgba(255,140,50,0.24)");
+    g.addColorStop(0.45, flash ? "rgba(210,90,170,0.14)" : "rgba(140,60,180,0.11)");
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.arc(sx, sy + 2, glowR, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(
     sheet as CanvasImageSource,
@@ -365,6 +498,7 @@ const CREATURE_IDS: CreatureKindId[] = [
   "shade-wisp",
   "ash-vole",
   "gorse-fox",
+  "ashveil-ember",
 ];
 
 export function warmCreatureSheets(): void {
