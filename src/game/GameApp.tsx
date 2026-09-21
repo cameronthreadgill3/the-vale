@@ -47,12 +47,16 @@ import {
   WATCHLINE_START_TOAST,
   WATCHLINE_REWARDS,
   WATCHLINE_COMPLETE_LINE,
+  ASHVEIL_START_TOAST,
+  ASHVEIL_REWARDS,
+  ASHVEIL_COMPLETE_LINE,
   TEETH_QUEST_ID,
   ASHWOOD_QUEST_ID,
   HOLLOW_QUEST_ID,
   GATE_QUEST_ID,
   MISTMERE_QUEST_ID,
   WATCHLINE_QUEST_ID,
+  ASHVEIL_QUEST_ID,
   CRESS_FOLK_ID,
   emptyTeethQuest,
   getTeethQuest,
@@ -61,6 +65,7 @@ import {
   getGateWatchQuest,
   getMistmereQuest,
   getWatchlineQuest,
+  getAshveilQuest,
   applyIdentify,
   applyEnemyKill,
   applyCairnInspect,
@@ -72,16 +77,19 @@ import {
   applyMistmereRookTalk,
   applyWatchlineCressTalk,
   applyWatchlineRookTalk,
+  applyAshveilRookTalk,
   withTeethQuest,
   ensureAshwoodAfterTeeth,
   ensureHollowAfterAshwood,
   ensureGateWatchAfterHollow,
   ensureMistmereAfterGate,
   ensureWatchlineAfterMistmere,
+  ensureAshveilAfterWatchline,
   rookQuestLine,
   loadQuestLog,
   saveQuestLog,
   clearQuestLog,
+  setQuestUiHandler,
 } from "@/game/quests";
 import {
   ASHVEIL_EMBER_DEFEAT_TOAST,
@@ -226,6 +234,14 @@ export function GameApp() {
     setToast(msg);
     window.setTimeout(() => setToast((t) => (t === msg ? null : t)), ms);
   }, []);
+
+  useEffect(() => {
+    setQuestUiHandler((toast) => {
+      if (toast) showToast(toast, 2800);
+      else setSkillTick((t) => t + 1);
+    });
+    return () => setQuestUiHandler(null);
+  }, [showToast]);
 
   const trainSkill = useCallback((skill: SkillId) => {
     setCharacter((prev) => {
@@ -387,6 +403,7 @@ export function GameApp() {
     }
     if (folkId === "rook" && character) {
       const turnIn =
+        applyAshveilRookTalk(loadQuestLog()) ??
         applyWatchlineRookTalk(loadQuestLog()) ??
         applyMistmereRookTalk(loadQuestLog()) ??
         applyGateWatchRookTalk(loadQuestLog());
@@ -398,14 +415,28 @@ export function GameApp() {
             ...prev,
             skillXp: { ...prev.skillXp },
           };
-          if (turnIn.completedId === WATCHLINE_QUEST_ID) {
+          if (turnIn.completedId === ASHVEIL_QUEST_ID) {
+            next = awardCombatXp(next, ASHVEIL_REWARDS.combatXp);
+            next = { ...next, skillXp: { ...next.skillXp } };
+            awardSkillXp(next, ASHVEIL_REWARDS.skill, ASHVEIL_REWARDS.skillXp);
+            next = setGold(next, next.gold + ASHVEIL_REWARDS.gold);
+            next = { ...next, skillXp: { ...next.skillXp } };
+            queueMicrotask(() => {
+              showToast(ASHVEIL_COMPLETE_LINE);
+              setSkillTick((t) => t + 1);
+            });
+          } else if (turnIn.completedId === WATCHLINE_QUEST_ID) {
             next = awardCombatXp(next, WATCHLINE_REWARDS.combatXp);
             next = { ...next, skillXp: { ...next.skillXp } };
             awardSkillXp(next, WATCHLINE_REWARDS.skill, WATCHLINE_REWARDS.skillXp);
             next = setGold(next, next.gold + WATCHLINE_REWARDS.gold);
             next = { ...next, skillXp: { ...next.skillXp } };
             queueMicrotask(() => {
-              showToast(WATCHLINE_COMPLETE_LINE);
+              showToast(
+                turnIn.startedAshveil
+                  ? ASHVEIL_START_TOAST
+                  : WATCHLINE_COMPLETE_LINE,
+              );
               setSkillTick((t) => t + 1);
             });
           } else if (turnIn.completedId === MISTMERE_QUEST_ID) {
@@ -744,6 +775,16 @@ export function GameApp() {
     window.setTimeout(() => setToast((t) => (t === WATCHLINE_START_TOAST ? null : t)), 3600);
   }, [character]);
 
+  // Quest 7: auto-start Ashveil Under the Watchline once Watchline Holds is complete.
+  useEffect(() => {
+    if (!character) return;
+    const ensured = ensureAshveilAfterWatchline(loadQuestLog());
+    if (!ensured.started) return;
+    saveQuestLog(ensured.log);
+    setToast(ASHVEIL_START_TOAST);
+    window.setTimeout(() => setToast((t) => (t === ASHVEIL_START_TOAST ? null : t)), 3600);
+  }, [character]);
+
   // Mistmere Crossing: mark arrival whenever the walker stands on Mistmere.
   useEffect(() => {
     if (!character) return;
@@ -842,7 +883,19 @@ export function GameApp() {
         next = setGold(next, next.gold + WATCHLINE_REWARDS.gold);
         next = { ...next, skillXp: { ...next.skillXp } };
         queueMicrotask(() => {
-          showToast(WATCHLINE_COMPLETE_LINE);
+          showToast(
+            result.startedAshveil ? ASHVEIL_START_TOAST : WATCHLINE_COMPLETE_LINE,
+          );
+          setSkillTick((t) => t + 1);
+        });
+      } else if (result.completedId === ASHVEIL_QUEST_ID) {
+        next = awardCombatXp(next, ASHVEIL_REWARDS.combatXp);
+        next = { ...next, skillXp: { ...next.skillXp } };
+        awardSkillXp(next, ASHVEIL_REWARDS.skill, ASHVEIL_REWARDS.skillXp);
+        next = setGold(next, next.gold + ASHVEIL_REWARDS.gold);
+        next = { ...next, skillXp: { ...next.skillXp } };
+        queueMicrotask(() => {
+          showToast(ASHVEIL_COMPLETE_LINE);
           setSkillTick((t) => t + 1);
         });
       } else if (result.toast) {
@@ -1164,6 +1217,7 @@ export function GameApp() {
       gateWatchQuest={getGateWatchQuest(loadQuestLog())}
       mistmereQuest={getMistmereQuest(loadQuestLog())}
       watchlineQuest={getWatchlineQuest(loadQuestLog())}
+      ashveilQuest={getAshveilQuest(loadQuestLog())}
       onVitals={handleVitals}
       onPlayerDeath={handlePlayerDeath}
       onPassivePrimary={(amount) => {

@@ -14,6 +14,7 @@ export const HOLLOW_QUEST_ID = "hollow-watch" as const;
 export const GATE_QUEST_ID = "gate-watch" as const;
 export const MISTMERE_QUEST_ID = "mistmere-crossing" as const;
 export const WATCHLINE_QUEST_ID = "the-watchline-holds" as const;
+export const ASHVEIL_QUEST_ID = "ashveil-under-the-watchline" as const;
 
 /** Depot clerk — Cress Ledger in folk.ts. */
 export const CRESS_FOLK_ID = "cress-ledger" as const;
@@ -26,7 +27,8 @@ export type QuestId =
   | typeof HOLLOW_QUEST_ID
   | typeof GATE_QUEST_ID
   | typeof MISTMERE_QUEST_ID
-  | typeof WATCHLINE_QUEST_ID;
+  | typeof WATCHLINE_QUEST_ID
+  | typeof ASHVEIL_QUEST_ID;
 
 export type QuestStatus = "active" | "complete";
 
@@ -88,6 +90,17 @@ export interface WatchlineQuestProgress {
   houndDone: boolean;
 }
 
+export interface AshveilQuestProgress {
+  id: typeof ASHVEIL_QUEST_ID;
+  status: QuestStatus;
+  /** Reached the marked Ashveil chamber in a Thornreach hollow. */
+  reachedChamber: boolean;
+  /** First successful Identify of the Ashveil Ember. */
+  identifiedEmber: boolean;
+  /** Ashveil Ember defeated (target 1). */
+  emberKilled: boolean;
+}
+
 export type QuestLog = {
   [TEETH_QUEST_ID]?: TeethQuestProgress;
   [ASHWOOD_QUEST_ID]?: AshwoodQuestProgress;
@@ -95,6 +108,7 @@ export type QuestLog = {
   [GATE_QUEST_ID]?: GateWatchQuestProgress;
   [MISTMERE_QUEST_ID]?: MistmereQuestProgress;
   [WATCHLINE_QUEST_ID]?: WatchlineQuestProgress;
+  [ASHVEIL_QUEST_ID]?: AshveilQuestProgress;
 };
 
 export const TEETH_RATS_NEEDED = 3;
@@ -107,6 +121,7 @@ export const HOLLOW_QUEST_TITLE = "Hollow Watch";
 export const GATE_QUEST_TITLE = "Gate Watch";
 export const MISTMERE_QUEST_TITLE = "Mistmere Crossing";
 export const WATCHLINE_QUEST_TITLE = "The Watchline Holds";
+export const ASHVEIL_QUEST_TITLE = "Ashveil Under the Watchline";
 
 export const TEETH_START_TOAST =
   "Rook: Ashwood edge has wrong prey - Identify first.";
@@ -143,6 +158,12 @@ export const WATCHLINE_START_TOAST =
 
 export const WATCHLINE_COMPLETE_LINE =
   "Rook: The line holds. Survive. Learn. Progress — now the road has a memory.";
+
+export const ASHVEIL_START_TOAST =
+  "Rook: The line holds above. Now follow its memory below—Ashveil waits in the deep chamber. Name the Ember before you strike, then bring me its quiet.";
+
+export const ASHVEIL_COMPLETE_LINE =
+  "Rook: The Ember is quiet. The road's memory runs under stone now. Survive. Learn. Progress.";
 
 export const TEETH_REWARDS = {
   gold: 28,
@@ -186,6 +207,13 @@ export const WATCHLINE_REWARDS = {
   skillXp: 32,
 };
 
+export const ASHVEIL_REWARDS = {
+  gold: 60,
+  combatXp: 120,
+  skill: "magic" as SkillId,
+  skillXp: 36,
+};
+
 export function loadQuestLog(): QuestLog {
   try {
     const raw = localStorage.getItem(getActiveQuestKey());
@@ -198,6 +226,17 @@ export function loadQuestLog(): QuestLog {
 
 export function saveQuestLog(log: QuestLog): void {
   localStorage.setItem(getActiveQuestKey(), JSON.stringify(log));
+}
+
+/** GameApp binds this so field ticks (chamber / Identify) can toast + refresh HUD. */
+let questUiHandler: ((toast?: string) => void) | null = null;
+
+export function setQuestUiHandler(handler: ((toast?: string) => void) | null): void {
+  questUiHandler = handler;
+}
+
+export function notifyQuestUi(toast?: string): void {
+  questUiHandler?.(toast);
 }
 
 export function clearQuestLog(): void {
@@ -257,6 +296,16 @@ export function emptyWatchlineQuest(): WatchlineQuestProgress {
     talkedCress: false,
     cairnInspected: false,
     houndDone: false,
+  };
+}
+
+export function emptyAshveilQuest(): AshveilQuestProgress {
+  return {
+    id: ASHVEIL_QUEST_ID,
+    status: "active",
+    reachedChamber: false,
+    identifiedEmber: false,
+    emberKilled: false,
   };
 }
 
@@ -365,6 +414,20 @@ export function sanitizeQuestLog(raw: unknown): QuestLog {
     };
   }
 
+  const ashveil = obj[ASHVEIL_QUEST_ID];
+  if (ashveil && typeof ashveil === "object") {
+    const a = ashveil as Record<string, unknown>;
+    const status: QuestStatus =
+      a.status === "complete" ? "complete" : "active";
+    log[ASHVEIL_QUEST_ID] = {
+      id: ASHVEIL_QUEST_ID,
+      status,
+      reachedChamber: Boolean(a.reachedChamber),
+      identifiedEmber: Boolean(a.identifiedEmber),
+      emberKilled: Boolean(a.emberKilled),
+    };
+  }
+
   return log;
 }
 
@@ -402,6 +465,12 @@ export function getWatchlineQuest(
   return log?.[WATCHLINE_QUEST_ID] ?? null;
 }
 
+export function getAshveilQuest(
+  log: QuestLog | undefined,
+): AshveilQuestProgress | null {
+  return log?.[ASHVEIL_QUEST_ID] ?? null;
+}
+
 export function isTeethActive(log: QuestLog | undefined): boolean {
   const q = getTeethQuest(log);
   return Boolean(q && q.status === "active");
@@ -429,6 +498,11 @@ export function isMistmereActive(log: QuestLog | undefined): boolean {
 
 export function isWatchlineActive(log: QuestLog | undefined): boolean {
   const q = getWatchlineQuest(log);
+  return Boolean(q && q.status === "active");
+}
+
+export function isAshveilActive(log: QuestLog | undefined): boolean {
+  const q = getAshveilQuest(log);
   return Boolean(q && q.status === "active");
 }
 
@@ -464,6 +538,10 @@ export function mistmereObjectivesMet(q: MistmereQuestProgress): boolean {
 
 export function watchlineObjectivesMet(q: WatchlineQuestProgress): boolean {
   return q.talkedCress && q.cairnInspected && q.houndDone;
+}
+
+export function ashveilObjectivesMet(q: AshveilQuestProgress): boolean {
+  return q.reachedChamber && q.identifiedEmber && q.emberKilled;
 }
 
 /** HUD lines for Teeth sticky panel. */
@@ -565,6 +643,27 @@ export function watchlineHudLines(q: WatchlineQuestProgress): string[] {
   ];
 }
 
+/** HUD lines for Ashveil Under the Watchline. */
+export function ashveilHudLines(q: AshveilQuestProgress): string[] {
+  if (q.status === "complete") {
+    return ["Complete - The Ember is quiet"];
+  }
+  return [
+    q.reachedChamber
+      ? "[done] Reach Ashveil chamber"
+      : "[ ] Reach the Ashveil chamber (Thornreach hollow)",
+    q.identifiedEmber
+      ? "[done] Identify Ashveil Ember"
+      : "[ ] Identify the Ashveil Ember (near look)",
+    q.emberKilled
+      ? "[done] Defeat Ashveil Ember 1/1"
+      : "[ ] Defeat Ashveil Ember 0/1",
+    q.reachedChamber && q.identifiedEmber && q.emberKilled
+      ? "[ ] Return to Rook (its quiet)"
+      : "[ ] Return to Rook with the Ember's quiet",
+  ];
+}
+
 
 export type QuestEventResult = {
   log: QuestLog;
@@ -581,6 +680,8 @@ export type QuestEventResult = {
   startedMistmere?: boolean;
   /** The Watchline Holds auto-started after Mistmere Crossing. */
   startedWatchline?: boolean;
+  /** Ashveil Under the Watchline auto-started after Watchline Holds. */
+  startedAshveil?: boolean;
 };
 
 /** If Teeth is complete and Ashwood missing, start Ashwood Watch. */
@@ -673,6 +774,24 @@ export function ensureWatchlineAfterMistmere(log: QuestLog): {
   };
 }
 
+/** If Watchline Holds is complete and Ashveil quest missing, start it. */
+export function ensureAshveilAfterWatchline(log: QuestLog): {
+  log: QuestLog;
+  started: boolean;
+} {
+  const watch = getWatchlineQuest(log);
+  if (!watch || watch.status !== "complete") {
+    return { log, started: false };
+  }
+  if (getAshveilQuest(log)) {
+    return { log, started: false };
+  }
+  return {
+    log: withAshveilQuest(log, emptyAshveilQuest()),
+    started: true,
+  };
+}
+
 export function withTeethQuest(
   log: QuestLog | undefined,
   quest: TeethQuestProgress,
@@ -713,6 +832,13 @@ export function withWatchlineQuest(
   quest: WatchlineQuestProgress,
 ): QuestLog {
   return { ...(log ?? {}), [WATCHLINE_QUEST_ID]: quest };
+}
+
+export function withAshveilQuest(
+  log: QuestLog | undefined,
+  quest: AshveilQuestProgress,
+): QuestLog {
+  return { ...(log ?? {}), [ASHVEIL_QUEST_ID]: quest };
 }
 
 function finishTeethIfReady(
@@ -777,6 +903,23 @@ export function applyIdentify(
   log: QuestLog,
   kindId: EnemyKindId,
 ): QuestEventResult | null {
+  const ashveil = getAshveilQuest(log);
+  if (
+    ashveil &&
+    ashveil.status === "active" &&
+    !ashveil.identifiedEmber &&
+    kindId === "ashveil-ember"
+  ) {
+    return {
+      log: withAshveilQuest(log, {
+        ...ashveil,
+        reachedChamber: true,
+        identifiedEmber: true,
+      }),
+      toast: "Identified: Ashveil Ember / E",
+    };
+  }
+
   const watch = getWatchlineQuest(log);
   if (
     watch &&
@@ -844,6 +987,24 @@ export function applyEnemyKill(
   log: QuestLog,
   kindId: EnemyKindId,
 ): QuestEventResult | null {
+  const ashveil = getAshveilQuest(log);
+  if (
+    ashveil &&
+    ashveil.status === "active" &&
+    kindId === "ashveil-ember" &&
+    !ashveil.emberKilled
+  ) {
+    return {
+      log: withAshveilQuest(log, {
+        ...ashveil,
+        reachedChamber: true,
+        identifiedEmber: true,
+        emberKilled: true,
+      }),
+      toast: "Ashveil Ember 1/1 — Return to Rook",
+    };
+  }
+
   const watch = getWatchlineQuest(log);
   if (
     watch &&
@@ -1018,10 +1179,38 @@ export function applyWatchlineRookTalk(log: QuestLog): QuestEventResult | null {
   const watch = getWatchlineQuest(log);
   if (!watch || watch.status !== "active") return null;
   if (!watchlineObjectivesMet(watch)) return null;
+  let out = withWatchlineQuest(log, { ...watch, status: "complete" });
+  const ensured = ensureAshveilAfterWatchline(out);
+  out = ensured.log;
   return {
-    log: withWatchlineQuest(log, { ...watch, status: "complete" }),
-    toast: WATCHLINE_COMPLETE_LINE,
+    log: out,
+    toast: ensured.started ? ASHVEIL_START_TOAST : WATCHLINE_COMPLETE_LINE,
     completedId: WATCHLINE_QUEST_ID,
+    startedAshveil: ensured.started,
+  };
+}
+
+/** Mark Ashveil chamber reached (stand the violet-marked deep room). */
+export function applyAshveilChamberReach(log: QuestLog): QuestEventResult | null {
+  const q = getAshveilQuest(log);
+  if (!q || q.status !== "active" || q.reachedChamber) {
+    return null;
+  }
+  return {
+    log: withAshveilQuest(log, { ...q, reachedChamber: true }),
+    toast: "Ashveil chamber — Name the Ember before you strike",
+  };
+}
+
+/** Complete Ashveil Under the Watchline when talking to Rook after the Ember falls. */
+export function applyAshveilRookTalk(log: QuestLog): QuestEventResult | null {
+  const q = getAshveilQuest(log);
+  if (!q || q.status !== "active") return null;
+  if (!ashveilObjectivesMet(q)) return null;
+  return {
+    log: withAshveilQuest(log, { ...q, status: "complete" }),
+    toast: ASHVEIL_COMPLETE_LINE,
+    completedId: ASHVEIL_QUEST_ID,
   };
 }
 
@@ -1071,6 +1260,23 @@ export function applyCairnInspect(
 
 /** Rook line while sticky quests are active / complete. */
 export function rookQuestLine(log: QuestLog | undefined): string | null {
+  const ashveil = getAshveilQuest(log);
+  if (ashveil) {
+    if (ashveil.status === "complete") {
+      return ASHVEIL_COMPLETE_LINE.replace(/^Rook:\s*/, "");
+    }
+    if (!ashveil.reachedChamber) {
+      return "The line holds above. Follow its memory below — the Ashveil chamber waits in the nearest Thornreach hollow. Name the Ember before you strike.";
+    }
+    if (!ashveil.identifiedEmber) {
+      return "You found the deep chamber. Identify the Ashveil Ember — Name and Rank — before you swing wild.";
+    }
+    if (!ashveil.emberKilled) {
+      return "The Ember is named. Quiet it, then bring me its quiet.";
+    }
+    return "The Ember is quiet. Survive. Learn. Progress — the road's memory ends when you tell me.";
+  }
+
   const watch = getWatchlineQuest(log);
   if (watch) {
     if (watch.status === "complete") {

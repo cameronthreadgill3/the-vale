@@ -58,6 +58,15 @@ import {
   huntZoneLabelForPlayer,
 } from "@/game/wayfinding";
 import { playFootstep, playHit } from "@/game/audio";
+import {
+  applyAshveilChamberReach,
+  applyIdentify,
+  getAshveilQuest,
+  isAshveilActive,
+  loadQuestLog,
+  notifyQuestUi,
+  saveQuestLog,
+} from "@/game/quests";
 
 /** Position-delta walk state (avoids patching assembled gameLoop). */
 let _lastPx = 0;
@@ -69,6 +78,57 @@ let _lastPlayerFlash = 0;
 let _walkSampled = false;
 let _atmosT = 0;
 let _gfxWarmed = false;
+
+const ASHVEIL_CHAMBER_REACH_TILES = 2.4;
+const ASHVEIL_IDENTIFY_TILES = 3.6;
+
+/** Chamber reach + Ember Identify without patching assembled gameLoop. */
+function tickAshveilField(
+  player: { x: number; y: number },
+  map: WorldMap,
+  enemies: Enemy[],
+): void {
+  if (!isAshveilActive(loadQuestLog())) return;
+  const log = loadQuestLog();
+  const q = getAshveilQuest(log);
+  if (!q || q.status !== "active") return;
+
+  if (
+    !q.reachedChamber &&
+    map.kind === "hollow" &&
+    map.continentId === "thornreach" &&
+    map.bossChamber
+  ) {
+    const dist = Math.hypot(
+      player.x / TILE - (map.bossChamber.x + 0.5),
+      player.y / TILE - (map.bossChamber.y + 0.5),
+    );
+    if (dist <= ASHVEIL_CHAMBER_REACH_TILES) {
+      const result = applyAshveilChamberReach(log);
+      if (result) {
+        saveQuestLog(result.log);
+        notifyQuestUi(result.toast);
+        return;
+      }
+    }
+  }
+
+  if (!q.identifiedEmber) {
+    for (const e of enemies) {
+      if (e.ai === "dead" || e.hp <= 0) continue;
+      if (e.kind.id !== "ashveil-ember") continue;
+      const dist = Math.hypot(e.x - player.x, e.y - player.y) / TILE;
+      if (dist <= ASHVEIL_IDENTIFY_TILES) {
+        const result = applyIdentify(loadQuestLog(), "ashveil-ember");
+        if (result) {
+          saveQuestLog(result.log);
+          notifyQuestUi(result.toast);
+        }
+        break;
+      }
+    }
+  }
+}
 
 export function advanceCameraAndRender(args: {
   ctx: CanvasRenderingContext2D;
@@ -243,6 +303,7 @@ export function advanceCameraAndRender(args: {
   drawWorldWayfindLabels(ctx, map, docks, player, originX, originY);
 
 
+  tickAshveilField(player, map, enemies);
   const objective = resolveQuestObjective(player, enemies, folk, map);
   const radarDots = collectRadarDots(player, enemies, folk, docks, map, objective);
   drawCompass(ctx, viewW);

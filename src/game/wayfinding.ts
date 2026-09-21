@@ -10,6 +10,7 @@ export {
   objectiveForGateWatch,
   objectiveForMistmere,
   objectiveForWatchline,
+  objectiveForAshveil,
   tilesAway,
   type WayfindObjective,
   type RadarDot,
