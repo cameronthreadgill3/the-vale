@@ -1,5 +1,6 @@
 /** Ashwood Watch trail cairns on Thornreach. */
 import type { ContinentId } from "@/game/continents";
+import { drawWatchCairnSprite } from "@/game/gfx/cairn";
 
 export interface CairnDef {
   id: string;
@@ -26,7 +27,7 @@ export function getCairn(id: string): CairnDef | undefined {
   return ASHWOOD_CAIRNS.find((c) => c.id === id);
 }
 
-/** Draw stacked-stone cairn markers. */
+/** Draw stacked-stone cairn markers (same sheet family as hunt cairns). */
 export function drawCairns(
   ctx: CanvasRenderingContext2D,
   cairns: CairnDef[],
@@ -35,17 +36,8 @@ export function drawCairns(
   TILE: number,
 ): void {
   for (const c of cairns) {
-    const sx = Math.floor(c.x * TILE - originX);
-    const sy = Math.floor(c.y * TILE - originY);
-    ctx.fillStyle = "#5a5648";
-    ctx.fillRect(sx + 6, sy + 14, TILE - 12, 8);
-    ctx.fillStyle = "#7a7668";
-    ctx.fillRect(sx + 8, sy + 8, TILE - 16, 8);
-    ctx.fillStyle = "#9a9688";
-    ctx.fillRect(sx + 10, sy + 3, TILE - 20, 7);
-    ctx.fillStyle = "#c9a227";
-    ctx.beginPath();
-    ctx.arc(sx + TILE / 2, sy + 2, 2.5, 0, Math.PI * 2);
-    ctx.fill();
+    const sx = Math.floor(c.x * TILE - originX + TILE / 2);
+    const sy = Math.floor(c.y * TILE - originY + TILE / 2);
+    drawWatchCairnSprite(ctx, sx, sy);
   }
 }

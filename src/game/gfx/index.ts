@@ -12,6 +12,14 @@ export {
   warmTileSheets,
 } from "@/game/gfx/tiles";
 export { getPropSheet } from "@/game/gfx/props";
+export {
+  getCairnSheet,
+  drawHuntCairnSprite,
+  drawWatchCairnSprite,
+  warmCairnSheets,
+  CAIRN_FRAME_W,
+  CAIRN_FRAME_H,
+} from "@/game/gfx/cairn";
 export { drawTownOverlays } from "@/game/gfx/townDraw";
 export {
   drawCreatureSprite,
