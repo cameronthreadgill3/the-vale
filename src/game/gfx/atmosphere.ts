@@ -2,10 +2,11 @@
  * Lightweight atmosphere overlays — vignette, ashwood umbra/silver, hollow torch spots,
  * plus a premium depth/motion/light layer (parallax haze, motes, warm/cool zones).
  * Plaza lanterns and ashwood path lamps share one warm pulse, kept under labels.
+ * Thornreach cobble and the path stones at the square carry a slow wet sheen.
  */
 import { TILE, type WorldMap } from "@/game/world";
 import { propsOnContinent } from "@/game/world/town";
-import { fountainFrameAt, tileVariantAt } from "@/game/gfx/tiles";
+import { fountainFrameAt, tileVariantAt, wetPuddleGlint, wetStoneCatches } from "@/game/gfx/tiles";
 import { drawSoftShadow } from "@/game/gfx/canvasUtil";
 import { drawPathLampGlow, warmFlamePulse } from "@/game/gfx/lampFlicker";
 import type { DepthItem } from "@/game/gfx/depth";
@@ -370,9 +371,66 @@ function drawFountainBasinShimmer(
   }
 }
 
+/** Shared slow breath for the square. One cadence, not a per-pixel strobe. */
+function wetBreath(timeSec: number): number {
+  return 0.78 + 0.16 * Math.sin(timeSec * 1.15) + 0.06 * Math.sin(timeSec * 0.41);
+}
+
+/** Path sheen stays on the stones that meet the fountain, not the ashwood road. */
+const PLAZA_WET_RADIUS_SQ = 81;
+
+/**
+ * After-rain sheen on plaza cobble and the path pavers at the square.
+ * Two steady lip catches, one soft wink, and a rare 3px mortar glint.
+ * A handful of fillRects — no particle pool. Original Vale pixels, not CipSoft.
+ * The fountain keeps its own shimmer.
+ */
+function drawPlazaWetStone(
+  ctx: CanvasRenderingContext2D,
+  map: WorldMap,
+  sx: number,
+  sy: number,
+  tx: number,
+  ty: number,
+  kind: "path" | "cobble",
+  timeSec: number,
+  breath: number,
+): void {
+  if (kind === "path") {
+    const dx = tx - map.spawn.x;
+    const dy = ty - map.spawn.y;
+    if (dx * dx + dy * dy > PLAZA_WET_RADIUS_SQ) return;
+  }
+  const variant = tileVariantAt(tx, ty);
+  const seed = (tx * 13 + ty * 17) & 7;
+  const catches = wetStoneCatches(kind, variant);
+  const lip = (kind === "path" ? 0.3 : 0.18) * breath;
+  ctx.fillStyle = `rgba(198, 222, 228, ${lip})`;
+  const wink = seed % catches.length;
+  for (let i = 0; i < catches.length; i++) {
+    const spot = catches[i]!;
+    if (i === wink) {
+      const tw = 0.5 + 0.5 * Math.sin(timeSec * 2.4 + seed);
+      ctx.fillStyle = `rgba(232, 244, 248, ${0.12 + 0.26 * tw})`;
+      ctx.fillRect(sx + spot[0], sy + spot[1], 1, 1);
+      ctx.fillStyle = `rgba(198, 222, 228, ${lip})`;
+    } else {
+      ctx.fillRect(sx + spot[0], sy + spot[1], 2, 1);
+    }
+  }
+  if (((tx * 3 + ty * 5) & 7) !== 0) return;
+  const puddle = wetPuddleGlint(kind, variant);
+  const fade = 0.4 + 0.6 * (0.5 + 0.5 * Math.sin(timeSec * 0.85 + seed * 1.3));
+  ctx.fillStyle = `rgba(150, 186, 198, ${0.18 * fade * breath})`;
+  ctx.fillRect(sx + puddle[0], sy + puddle[1], 3, 1);
+  ctx.fillStyle = `rgba(236, 246, 250, ${0.32 * fade})`;
+  ctx.fillRect(sx + puddle[0] + 1, sy + puddle[1], 1, 1);
+}
+
 /**
  * Cool water, a warm fountain pool, lantern glow, and continuous shimmer
  * on top of the baked water/fountain frames.
+ * Plaza stone gets a wet specular in the same pass, under the lanterns.
  */
 export function drawSurfaceLight(
   ctx: CanvasRenderingContext2D,
@@ -387,6 +445,8 @@ export function drawSurfaceLight(
   const startTY = Math.max(0, Math.floor(originY / TILE) - 1);
   const endTX = Math.min(map.width - 1, Math.ceil((originX + viewW) / TILE) + 1);
   const endTY = Math.min(map.height - 1, Math.ceil((originY + viewH) / TILE) + 1);
+  const wet =
+    map.kind === "overworld" && map.continentId === "thornreach" ? wetBreath(timeSec) : 0;
   ctx.save();
   for (let ty = startTY; ty <= endTY; ty++) {
     for (let tx = startTX; tx <= endTX; tx++) {
@@ -417,6 +477,8 @@ export function drawSurfaceLight(
           ctx.fillStyle = `rgba(255, 220, 150, ${tw})`;
           ctx.fillRect(sx + 6 + (tx % 6), sy + 8 + (ty % 5), 2, 2);
         }
+      } else if (wet > 0 && (kind === "cobble" || kind === "path")) {
+        drawPlazaWetStone(ctx, map, sx, sy, tx, ty, kind, timeSec, wet);
       }
     }
   }
