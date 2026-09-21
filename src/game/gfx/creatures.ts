@@ -629,6 +629,8 @@ export function drawCreatureSprite(
   frame = 0,
   /** 0–1. Callers fade this with distance so only nearby bodies pay for a rim. */
   rim = 1,
+  /** Idle inhale, in pixels. The contact oval and ember pool stay put. */
+  lift = 0,
 ): void {
   const sheet = getCreatureSheet(id, color, colorDark, flash, frame);
   const ember = id === "ashveil-ember";
@@ -659,7 +661,7 @@ export function drawCreatureSprite(
   }
   ctx.imageSmoothingEnabled = false;
   const dx = Math.floor(sx - size / 2);
-  const dy = Math.floor(sy - size / 2 - 2);
+  const dy = Math.floor(sy - size / 2 - 2 + lift);
   ctx.drawImage(sheet as CanvasImageSource, dx, dy, size, size);
   if (rim > 0.02) {
     drawDirectionalRim(
