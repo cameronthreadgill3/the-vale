@@ -3,6 +3,8 @@
  * More variants, shoreline/grass transitions, animated water + fountain,
  * ashwood trunk vs dense canopy overlay, hollow cave walls with torch flicker.
  * Ground-depth overlays: grass lips, walkway recess, tree duff, inner corners.
+ * Path-edge depth: inward turf contact and corner recess on walkways.
+ * Ashwood canopy: leaf layers, south umbra, trunk–crown contact.
  * Structure-depth: wall under-eave / sill, recessed doorframes, gate arches.
  * Cached OffscreenCanvas / canvas sheets — not redrawn every frame.
  * NOT CipSoft / Tibia assets — handcrafted pixel patterns only.
@@ -653,6 +655,14 @@ function paintGrassEdge(base: string, dir: EdgeDir, variant: number): Sheet {
       else if (dir === "w") px(ctx, Math.max(0, d - 1), i, tip, 1, 1);
       else px(ctx, TILE_PX - d, i, tip, 1, 1);
     }
+    // soil shoulder just inside the lip — bank has thickness past the crack
+    if ((i + variant) % 6 === 2) {
+      const soil = shadeHex(base, 0.5);
+      if (dir === "n") px(ctx, i, Math.min(TILE_PX - 2, d + 1), soil, 2, 2);
+      else if (dir === "s") px(ctx, i, Math.max(0, TILE_PX - d - 3), soil, 2, 2);
+      else if (dir === "w") px(ctx, Math.min(TILE_PX - 2, d + 1), i, soil, 2, 2);
+      else px(ctx, Math.max(0, TILE_PX - d - 3), i, soil, 2, 2);
+    }
   }
   return c;
 }
@@ -714,8 +724,10 @@ export function getGrassSpillSheet(color: string, dir: EdgeDir, variant: number)
 }
 
 const lipCache = new Map<string, Sheet>();
+const contactCache = new Map<string, Sheet>();
 const duffCache = new Map<string, Sheet>();
 const cornerCache = new Map<string, Sheet>();
+const hardCornerCache = new Map<string, Sheet>();
 
 /** Recessed mortar/dirt lip on a walkway facing turf — path sits below grass. */
 function paintHardLip(base: string, dir: EdgeDir, variant: number): Sheet {
@@ -748,6 +760,46 @@ export function getHardLipSheet(color: string, dir: EdgeDir, variant: number): S
   if (!sheet) {
     sheet = paintHardLip(color, dir, v);
     lipCache.set(key, sheet);
+  }
+  return sheet;
+}
+
+/**
+ * Inward shade on a walkway past the hard lip.
+ * Denser against the turf, sparse toward the tile center — the step stays crisp.
+ */
+function paintPathContact(base: string, dir: EdgeDir, variant: number): Sheet {
+  const c = makeCanvas(TILE_PX, TILE_PX);
+  const ctx = ctx2d(c);
+  const deep = shadeHex(base, 0.58);
+  const mid = shadeHex(base, 0.74);
+  const moss = mixHex(base, "#2c4028", 0.4);
+  for (let i = 0; i < TILE_PX; i++) {
+    const jag = (i * 3 + variant * 5) & 3;
+    const reach = 5 + (jag % 2);
+    for (let k = 0; k < reach; k++) {
+      const inset = 2 + k;
+      if (inset >= TILE_PX) continue;
+      const skip = (i * 5 + k * 3 + variant * 7) & 7;
+      if (k >= 2 && skip > 6 - k) continue;
+      if (k >= 4 && skip > 2) continue;
+      const tone = k < 2 ? deep : k < 4 ? mid : moss;
+      if (dir === "n") px(ctx, i, inset, tone);
+      else if (dir === "s") px(ctx, i, TILE_PX - 1 - inset, tone);
+      else if (dir === "w") px(ctx, inset, i, tone);
+      else px(ctx, TILE_PX - 1 - inset, i, tone);
+    }
+  }
+  return c;
+}
+
+export function getPathContactSheet(color: string, dir: EdgeDir, variant: number): Sheet {
+  const v = ((variant % TILE_VARIANTS) + TILE_VARIANTS) % TILE_VARIANTS;
+  const key = `${color}|${dir}|${v}`;
+  let sheet = contactCache.get(key);
+  if (!sheet) {
+    sheet = paintPathContact(color, dir, v);
+    contactCache.set(key, sheet);
   }
   return sheet;
 }
@@ -831,6 +883,41 @@ export function getGrassCornerSheet(color: string, corner: CornerDir, variant: n
   return sheet;
 }
 
+/** Recessed inner corner where only the diagonal neighbor is turf. */
+function paintHardCorner(base: string, corner: CornerDir, variant: number): Sheet {
+  const c = makeCanvas(TILE_PX, TILE_PX);
+  const ctx = ctx2d(c);
+  const undercut = shadeHex(base, 0.32);
+  const shade = shadeHex(base, 0.5);
+  const moss = mixHex(base, "#3a5a30", 0.34);
+  const east = corner === "ne" || corner === "se";
+  const south = corner === "sw" || corner === "se";
+  const size = 7 + (variant & 1);
+  for (let i = 0; i < size; i++) {
+    const d = 4 - ((i + variant) & 1);
+    for (let k = 0; k < d; k++) {
+      if (i + k >= size) continue;
+      if (k > 2 && ((i + k + variant) & 1) === 0) continue;
+      const tone = k === 0 ? undercut : k < 3 ? shade : moss;
+      const col = east ? TILE_PX - 1 - k : k;
+      const row = south ? TILE_PX - 1 - i : i;
+      px(ctx, col, row, tone);
+    }
+  }
+  return c;
+}
+
+export function getHardCornerSheet(color: string, corner: CornerDir, variant: number): Sheet {
+  const v = ((variant % TILE_VARIANTS) + TILE_VARIANTS) % TILE_VARIANTS;
+  const key = `${color}|${corner}|${v}`;
+  let sheet = hardCornerCache.get(key);
+  if (!sheet) {
+    sheet = paintHardCorner(color, corner, v);
+    hardCornerCache.set(key, sheet);
+  }
+  return sheet;
+}
+
 function paintWaterShore(
   base: string,
   dir: EdgeDir,
@@ -895,40 +982,94 @@ function blob(
 function paintAshwoodCanopy(base: string, variant: number): Sheet {
   const c = makeCanvas(CANOPY_PX, CANOPY_PX);
   const ctx = ctx2d(c);
-  const canopy = mixHex(base, "#244828", 0.5);
-  const dark = shadeHex(canopy, 0.55);
-  const umbra = shadeHex(canopy, 0.38);
-  const mid = mixHex(canopy, "#3a6040", 0.25);
-  const lite = mixHex(canopy, "#c8dcc8", 0.38);
-  const silver = "#c4d4c4";
+  // Body stays a readable ash-green; shade is the south rim and the pockets, not the whole crown.
+  const canopy = mixHex(base, "#3d7044", 0.72);
+  const dark = shadeHex(canopy, 0.62);
+  const umbra = shadeHex(canopy, 0.4);
+  const deep = shadeHex(canopy, 0.28);
+  const mid = mixHex(canopy, "#7aaa68", 0.28);
+  const lite = mixHex(canopy, "#e4f2dc", 0.55);
+  const silver = "#d5e6d4";
+  const lit = mixHex(canopy, "#e4f2dc", 0.38);
+  const bark = mixHex(base, "#3a3834", 0.25);
+  const barkDark = shadeHex(bark, 0.55);
+  const barkLite = mixHex(bark, "#c8c0a8", 0.55);
   const ox = (variant % 5) - 2;
   const oy = ((variant * 3) % 5) - 2;
-  // south umbra first so the mass reads above the grass
-  blob(ctx, 6 + ox, 28 + oy, 52, 26, umbra);
-  blob(ctx, 10 + ox, 34 + oy, 44, 16, shadeHex(umbra, 0.7));
-  blob(ctx, 6 + ox, 10 + oy, 52, 36, dark);
-  blob(ctx, 2 + ox, 14 + oy, 28, 26, mid);
-  blob(ctx, 24 + ox, 6 + oy, 34, 30, canopy);
-  blob(ctx, 12 + ox, 2 + oy, 30, 22, mid);
-  blob(ctx, 16 + ox, 16 + oy, 26, 20, canopy);
-  blob(ctx, 8 + ox, 20 + oy, 22, 18, dark);
-  blob(ctx, 30 + ox, 18 + oy, 20, 16, mid);
-  blob(ctx, 20 + ox, 8 + oy, 18, 16, canopy);
-  blob(ctx, 14 + ox, 0 + oy, 22, 12, mixHex(canopy, "#d0e4d0", 0.22));
-  // silver-edged leaves — denser on the north rim
-  const sparks = [
+
+  // Layer 1 — leaf body. Separate clumps so the crown is not one oval stamp.
+  blob(ctx, 6 + ox, 10 + oy, 50, 34, dark);
+  blob(ctx, 4 + ox, 16 + oy, 22, 22, mid);
+  blob(ctx, 28 + ox, 8 + oy, 28, 26, canopy);
+  blob(ctx, 16 + ox, 18 + oy, 20, 16, mid);
+  blob(ctx, 10 + ox, 24 + oy, 16, 14, canopy);
+  blob(ctx, 34 + ox, 22 + oy, 16, 14, shadeHex(canopy, 0.86));
+  blob(ctx, 8 + ox, 8 + oy, 14, 12, mid);
+  blob(ctx, 42 + ox, 14 + oy, 14, 12, canopy);
+
+  // Layer 2 — south underside and interior pockets. The body still shows above them.
+  blob(ctx, 8 + ox, 36 + oy, 48, 14, umbra);
+  blob(ctx, 14 + ox, 42 + oy, 36, 10, deep);
+  px(ctx, 22 + ox, 16 + oy, deep, 2, 16);
+  px(ctx, 34 + ox, 14 + oy, umbra, 2, 14);
+  px(ctx, 14 + ox, 30 + oy, deep, 12, 2);
+  px(ctx, 34 + ox, 32 + oy, umbra, 10, 2);
+
+  // Layer 3 — lit north leaves, silver-edged, not a solid cap.
+  blob(ctx, 14 + ox, 4 + oy, 28, 16, canopy);
+  blob(ctx, 22 + ox, 8 + oy, 14, 12, mid);
+  blob(ctx, 16 + ox, 2 + oy, 18, 8, lit);
+  blob(ctx, 6 + ox, 8 + oy, 12, 10, mid);
+  blob(ctx, 44 + ox, 12 + oy, 12, 10, canopy);
+  px(ctx, 18 + ox, 3 + oy, lite, 14, 2);
+  px(ctx, 16 + ox, 4 + oy, lite, 2, 7);
+  px(ctx, 8 + ox, 9 + oy, silver, 8, 2);
+  px(ctx, 44 + ox, 13 + oy, silver, 8, 2);
+
+  // South fringe — broken hem so the crown doesn't end in one curve.
+  const fringe: [number, number][] = [
+    [8, 50], [14, 46], [20, 52], [44, 48], [50, 52], [40, 44],
+  ];
+  for (const [fx, fy] of fringe) {
+    const len = 3 + ((fx + variant) % 3);
+    px(ctx, fx + ox, fy + oy, dark, 2, len);
+    px(ctx, fx + ox, fy + oy, mid, 2, 1);
+    if ((fx + variant) % 2 === 0) px(ctx, fx + ox + 1, fy + oy + len - 1, umbra, 1, 2);
+  }
+
+  // Trunk–canopy contact. Collar sits where paintAshwoodBase's trunk enters the crown
+  // (canopy local ≈ tile + 16 x, tile + 38 y). Leaves tuck the shoulders.
+  const collarX = 29 + ox;
+  const collarY = 36 + oy;
+  px(ctx, collarX - 2, collarY, deep, 12, 14);
+  px(ctx, collarX, collarY + 2, barkDark, 8, 26);
+  px(ctx, collarX + 1, collarY + 3, bark, 6, 24);
+  px(ctx, collarX + 2, collarY + 4, barkLite, 2, 14);
+  px(ctx, collarX + 5, collarY + 6, barkDark, 1, 12);
+  px(ctx, collarX - 3, collarY + 4, dark, 3, 6);
+  px(ctx, collarX + 8, collarY + 5, dark, 3, 6);
+  px(ctx, collarX - 1, collarY + 2, mid, 2, 3);
+  px(ctx, collarX + 7, collarY + 3, canopy, 2, 3);
+  // branch nubs rising into the leaves (same offsets as the trunk sheet)
+  px(ctx, 27 + ox, 50 + oy, barkDark, 4, 2);
+  px(ctx, 35 + ox, 51 + oy, bark, 4, 2);
+
+  // silver-edged leaves — dense on the north rim, sparse in the umbra
+  const sparks: [number, number][] = [
     [8 + ox, 16], [12 + ox, 8], [24 + ox, 6], [36 + ox, 12],
     [40 + ox, 20], [30 + ox, 8], [16 + ox, 22], [22 + ox, 4],
-    [6 + ox, 24], [34 + ox, 28], [18 + ox, 12], [42 + ox, 16],
-    [50 + ox, 18], [28 + ox, 32], [10 + ox, 30], [48 + ox, 10],
-    [14 + ox, 14], [38 + ox, 22], [20 + ox, 26], [44 + ox, 30],
-    [18 + ox, 2], [28 + ox, 0], [38 + ox, 4], [10 + ox, 6],
+    [6 + ox, 24], [18 + ox, 12], [42 + ox, 16], [50 + ox, 18],
+    [48 + ox, 10], [14 + ox, 14], [10 + ox, 6],
+    [18 + ox, 2], [28 + ox, 0], [38 + ox, 4], [26 + ox, 10],
+    [34 + ox, 18], [8 + ox, 20],
   ];
   for (let i = 0; i < sparks.length; i++) {
     const [sx, sy] = sparks[i]!;
-    px(ctx, sx, sy + oy, i % 3 === 0 ? silver : lite, 2, 1);
+    const py = sy + oy;
+    if (sx >= collarX - 1 && sx <= collarX + 8 && py >= collarY && py <= collarY + 16) continue;
+    px(ctx, sx, py, i % 3 === 0 ? silver : lite, 2, 1);
   }
-  addPixelVolume(ctx, CANOPY_PX, CANOPY_PX, 0.1, 0.2);
+  addPixelVolume(ctx, CANOPY_PX, CANOPY_PX, 0.12, 0.14);
   return c;
 }
 
@@ -998,6 +1139,10 @@ export function warmTileSheets(pal: BiomePalette): void {
         if (kind === "path" || kind === "cobble" || kind === "dirt") {
           for (const dir of ["n", "s", "e", "w"] as const) {
             getHardLipSheet(color, dir, v);
+            getPathContactSheet(color, dir, v);
+          }
+          for (const corner of ["nw", "ne", "sw", "se"] as const) {
+            getHardCornerSheet(color, corner, v);
           }
         }
         if (kind === "water") {
