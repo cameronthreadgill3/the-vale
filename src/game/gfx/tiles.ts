@@ -30,7 +30,6 @@ function paintGrass(ctx: CanvasRenderingContext2D, base: string, variant: number
       px(ctx, x, y, n < 2 ? dark : n < 5 ? base : n === 5 ? mid : lite);
     }
   }
-  // blade tufts
   for (let i = 0; i < 10; i++) {
     const x = (i * 7 + variant * 3) % 28 + 2;
     const y = (i * 11 + variant * 5) % 26 + 3;
@@ -53,7 +52,6 @@ function paintDirt(ctx: CanvasRenderingContext2D, base: string, variant: number)
 }
 
 function paintPath(ctx: CanvasRenderingContext2D, base: string, variant: number): void {
-  // cobble
   const dark = shadeHex(base, 0.65);
   const lite = shadeHex(base, 1.25);
   const mortar = shadeHex(base, 0.45);
@@ -76,74 +74,65 @@ function paintPath(ctx: CanvasRenderingContext2D, base: string, variant: number)
   }
 }
 
-function paintWater(ctx: CanvasRenderingContext2D, base: string, variant: number): void {
+function paintWater(ctx: CanvasRenderingContext2D, base: string, variant: number, anim = 0): void {
   const deep = shadeHex(base, 0.7);
   const foam = mixHex(base, "#a8c8d8", 0.45);
   const mid = shadeHex(base, 1.1);
+  const shift = anim * 3;
   for (let y = 0; y < TILE_PX; y++) {
     for (let x = 0; x < TILE_PX; x++) {
-      const wave = Math.sin((x + variant * 4) * 0.4 + y * 0.25) > 0.3;
+      const wave = Math.sin((x + variant * 4 + shift) * 0.4 + y * 0.25) > 0.3;
       px(ctx, x, y, wave ? mid : deep);
     }
   }
   for (let i = 0; i < 4; i++) {
     const y = 6 + i * 7 + (variant % 2);
-    px(ctx, 2 + i * 2, y, foam, 10, 1);
+    px(ctx, 2 + i * 2 + (anim % 3), y, foam, 10, 1);
     px(ctx, 14 + i, y + 3, foam, 8, 1);
   }
 }
 
 function paintStoneAshwood(ctx: CanvasRenderingContext2D, base: string, variant: number): void {
-  // ashwood trunk + silver-edged canopy (within 32×32)
   const bark = shadeHex(base, 0.85);
   const barkDark = shadeHex(base, 0.55);
   const barkLite = mixHex(base, "#6a7068", 0.35);
   const canopy = mixHex(base, "#2a5030", 0.55);
   const canopyLite = mixHex(canopy, "#c8d8c0", 0.35);
   const canopyDark = shadeHex(canopy, 0.7);
-  // ground under tree
   ctx.fillStyle = shadeHex(base, 1.1);
   ctx.fillRect(0, 24, TILE_PX, 8);
-  // trunk
   px(ctx, 13, 14, barkDark, 6, 14);
   px(ctx, 14, 12, bark, 4, 16);
   px(ctx, 15, 13, barkLite, 1, 12);
-  // roots
   px(ctx, 11, 26, barkDark, 3, 2);
   px(ctx, 18, 26, barkDark, 3, 2);
-  // canopy blobs
   const ox = (variant % 3) - 1;
   px(ctx, 6 + ox, 4, canopyDark, 20, 12);
   px(ctx, 8 + ox, 2, canopy, 16, 14);
   px(ctx, 10 + ox, 3, canopyLite, 4, 3);
   px(ctx, 18 + ox, 5, canopyLite, 3, 2);
-  // silver edge leaves
   px(ctx, 7 + ox, 6, "#a8b8a0", 2, 1);
   px(ctx, 22 + ox, 8, "#a8b8a0", 2, 1);
   px(ctx, 14 + ox, 2, "#c8d8c0", 2, 1);
 }
 
-function paintFlowerFountain(ctx: CanvasRenderingContext2D, base: string, variant: number): void {
-  // small plaza fountain / well (flower tiles near clearings)
+function paintFlowerFountain(ctx: CanvasRenderingContext2D, base: string, variant: number, anim = 0): void {
   const stone = mixHex(base, "#5a5850", 0.5);
   const stoneDark = shadeHex(stone, 0.65);
   const water = mixHex(base, "#3a6a88", 0.55);
   const waterLite = mixHex(water, "#90c0d8", 0.4);
-  // grass surround
   for (let y = 0; y < TILE_PX; y++) {
     for (let x = 0; x < TILE_PX; x++) {
       px(ctx, x, y, shadeHex(base, 0.9 + ((x + y + variant) & 1) * 0.08));
     }
   }
-  // basin ring
   px(ctx, 6, 10, stoneDark, 20, 16);
   px(ctx, 7, 11, stone, 18, 14);
   px(ctx, 9, 13, water, 14, 10);
-  px(ctx, 11, 15, waterLite, 10, 2);
-  // center spout
+  px(ctx, 11, 15 + (anim % 2), waterLite, 10, 2);
   px(ctx, 14, 8, stone, 4, 8);
-  px(ctx, 15, 6, waterLite, 2, 4);
-  if (variant % 2 === 0) {
+  px(ctx, 15, 6 - (anim % 2), waterLite, 2, 4);
+  if ((variant + anim) % 2 === 0) {
     px(ctx, 12, 7, waterLite, 1, 1);
     px(ctx, 19, 8, waterLite, 1, 1);
   }
@@ -159,7 +148,6 @@ function paintGate(ctx: CanvasRenderingContext2D, base: string, _variant: number
   px(ctx, 6, 6, lite, 20, 20);
   px(ctx, 14, 4, dark, 4, 24);
   px(ctx, 8, 14, dark, 16, 4);
-  // gold studs
   px(ctx, 8, 8, base, 2, 2);
   px(ctx, 22, 8, base, 2, 2);
   px(ctx, 8, 22, base, 2, 2);
@@ -167,7 +155,6 @@ function paintGate(ctx: CanvasRenderingContext2D, base: string, _variant: number
 }
 
 function paintHollow(ctx: CanvasRenderingContext2D, base: string, variant: number): void {
-  // dark stone portal
   const stone = mixHex(base, "#1a1814", 0.4);
   const stoneLite = shadeHex(stone, 1.35);
   const voidC = "#08060a";
@@ -177,12 +164,10 @@ function paintHollow(ctx: CanvasRenderingContext2D, base: string, variant: numbe
       px(ctx, x, y, (x + y + variant) & 1 ? stone : shadeHex(stone, 0.85));
     }
   }
-  // arch
   px(ctx, 6, 8, stoneLite, 20, 20);
   px(ctx, 8, 10, voidC, 16, 16);
   px(ctx, 10, 12, shadeHex(base, 0.5), 12, 12);
   px(ctx, 12, 14, voidC, 8, 10);
-  // rune rim
   px(ctx, 8, 8, rim, 16, 1);
   px(ctx, 8, 8, rim, 1, 16);
   px(ctx, 23, 8, rim, 1, 16);
@@ -201,7 +186,7 @@ function paintExit(ctx: CanvasRenderingContext2D, base: string, _variant: number
   px(ctx, 14, 12, lite, 4, 10);
 }
 
-function paintTile(kind: GroundTile, color: string, variant: number): Sheet {
+function paintTile(kind: GroundTile, color: string, variant: number, anim = 0): Sheet {
   const c = makeCanvas(TILE_PX, TILE_PX);
   const ctx = ctx2d(c);
   switch (kind) {
@@ -216,13 +201,13 @@ function paintTile(kind: GroundTile, color: string, variant: number): Sheet {
       paintPath(ctx, color, variant);
       break;
     case "water":
-      paintWater(ctx, color, variant);
+      paintWater(ctx, color, variant, anim);
       break;
     case "stone":
       paintStoneAshwood(ctx, color, variant);
       break;
     case "flower":
-      paintFlowerFountain(ctx, color, variant);
+      paintFlowerFountain(ctx, color, variant, anim);
       break;
     case "gate":
       paintGate(ctx, color, variant);
@@ -240,12 +225,76 @@ function paintTile(kind: GroundTile, color: string, variant: number): Sheet {
   return c;
 }
 
-export function getTileSheet(kind: GroundTile, color: string, variant: number): Sheet {
+export const FOUNTAIN_FRAMES = 4;
+
+export function fountainFrameAt(timeSec: number): number {
+  if (!Number.isFinite(timeSec) || timeSec < 0) return 0;
+  return Math.floor(timeSec * 3) % FOUNTAIN_FRAMES;
+}
+
+export function getTileSheet(
+  kind: GroundTile,
+  color: string,
+  variant: number,
+  anim = 0,
+): Sheet {
   const v = ((variant % TILE_VARIANTS) + TILE_VARIANTS) % TILE_VARIANTS;
-  const key = `${kind}|${color}|${v}`;
+  const a = ((anim % FOUNTAIN_FRAMES) + FOUNTAIN_FRAMES) % FOUNTAIN_FRAMES;
+  const key = `${kind}|${color}|${v}|a${a}`;
   let sheet = sheetCache.get(key);
   if (!sheet) {
-    sheet = paintTile(kind, color, v);
+    sheet = paintTile(kind, color, v, a);
+    sheetCache.set(key, sheet);
+  }
+  return sheet;
+}
+
+export type GrassEdgeDir = "n" | "s" | "e" | "w";
+
+function paintGrassEdge(
+  ctx: CanvasRenderingContext2D,
+  color: string,
+  dir: GrassEdgeDir,
+  variant: number,
+): void {
+  const dark = shadeHex(color, 0.55);
+  const lite = shadeHex(color, 1.12);
+  const along = (i: number) => ((i * 5 + variant * 3) % 7) < 4;
+  if (dir === "n") {
+    for (let x = 0; x < TILE_PX; x++) {
+      px(ctx, x, 0, dark, 1, along(x) ? 3 : 2);
+      if (along(x + 1)) px(ctx, x, 1, lite);
+    }
+  } else if (dir === "s") {
+    for (let x = 0; x < TILE_PX; x++) {
+      px(ctx, x, TILE_PX - (along(x) ? 3 : 2), dark, 1, along(x) ? 3 : 2);
+      if (along(x + 2)) px(ctx, x, TILE_PX - 2, lite);
+    }
+  } else if (dir === "w") {
+    for (let y = 0; y < TILE_PX; y++) {
+      px(ctx, 0, y, dark, along(y) ? 3 : 2, 1);
+      if (along(y + 1)) px(ctx, 1, y, lite);
+    }
+  } else {
+    for (let y = 0; y < TILE_PX; y++) {
+      px(ctx, TILE_PX - (along(y) ? 3 : 2), y, dark, along(y) ? 3 : 2, 1);
+      if (along(y + 2)) px(ctx, TILE_PX - 2, y, lite);
+    }
+  }
+}
+
+export function getGrassEdgeSheet(
+  color: string,
+  dir: GrassEdgeDir,
+  variant: number,
+): Sheet {
+  const v = ((variant % TILE_VARIANTS) + TILE_VARIANTS) % TILE_VARIANTS;
+  const key = `edge|${dir}|${color}|${v}`;
+  let sheet = sheetCache.get(key);
+  if (!sheet) {
+    const c = makeCanvas(TILE_PX, TILE_PX);
+    paintGrassEdge(ctx2d(c), color, dir, v);
+    sheet = c;
     sheetCache.set(key, sheet);
   }
   return sheet;
