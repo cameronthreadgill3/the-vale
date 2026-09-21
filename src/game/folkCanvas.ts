@@ -157,7 +157,13 @@ export function drawNamedFolk(
     const fsy = Math.floor((f.y + 0.5) * TILE - originY);
     drawFolkSprite(ctx, f.color, fsx, fsy);
     if (player && Math.hypot(px - (f.x + 0.5), py - (f.y + 0.5)) <= 8) {
-      drawFloatingLabel(ctx, fsx, fsy - 14, f.name, "#f0d060");
+      drawFloatingLabel(
+        ctx,
+        fsx,
+        fsy - 14,
+        f.bankId ? `${f.name} · Bank` : f.name,
+        "#f0d060",
+      );
     }
   }
 }

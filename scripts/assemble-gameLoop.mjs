@@ -1,5 +1,9 @@
 #!/usr/bin/env node
-import { readFileSync, writeFileSync, readdirSync } from "fs";
+/**
+ * Assemble opaque b64 sources used by a few large modules.
+ * GameApp.tsx and character.ts are first-class sources (not assembled).
+ */
+import { readFileSync, writeFileSync, readdirSync, unlinkSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
@@ -12,11 +16,27 @@ function assemble(prefix, outRel) {
   writeFileSync(join(root, outRel), buf);
   console.log("assembled", outRel, buf.length, "from", files.length, "b64 parts");
 }
+function pack(prefix, srcRel, chunkSize) {
+  const src = readFileSync(join(root, srcRel));
+  const b64 = src.toString("base64");
+  const old = readdirSync(dir).filter((f) => new RegExp("^" + prefix + "\\.\\d+$").test(f));
+  for (const f of old) unlinkSync(join(dir, f));
+  const name = prefix.replace(/\\/g, "");
+  let n = 0;
+  for (let i = 0; i < b64.length; i += chunkSize, n++) {
+    writeFileSync(
+      join(dir, `${name}.${String(n).padStart(2, "0")}`),
+      b64.slice(i, i + chunkSize),
+    );
+  }
+  console.log("packed", srcRel, "→", n, name, "parts");
+}
+if (process.argv.includes("--pack-enemies")) {
+  pack("en\\.b64", "src/game/enemies.ts", 800);
+}
 assemble("gl\\.b64", "src/game/gameLoop.ts");
-assemble("ga\\.b64", "src/game/GameApp.tsx");
 assemble("aa\\.b64", "src/account/AccountApp.tsx");
 assemble("qq\\.b64", "src/game/quests.ts");
-assemble("ch\\.b64", "src/game/character.ts");
 assemble("en\\.b64", "src/game/enemies.ts");
 assemble("gs\\.b64", "src/game/GameShell.tsx");
 assemble("rd\\.b64", "README.md");

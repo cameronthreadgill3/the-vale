@@ -1,14 +1,21 @@
-# Future character API (not wired yet)
+# API routes
 
-The Vite SPA currently stores the four character slots in **Clerk `unsafeMetadata.valeCharacterSlots`** (or local demo storage when Clerk keys are absent).
+## Character slots (future)
 
-When you are ready for a real DB:
+The Vite SPA currently stores the four character slots in **Clerk `unsafeMetadata.valeCharacterSlots`** (or local demo storage when Clerk keys are absent). Neon/KV wiring can land later.
 
-1. Add Neon (or Vercel KV) via the Vercel marketplace.
-2. Install `@clerk/backend` and a DB client.
-3. Add serverless routes here, e.g. `api/characters.ts`, that:
-   - verify the Clerk session with `CLERK_SECRET_KEY`
-   - CRUD four slots per `userId` in Postgres
-4. Point the client `AccountApp` persist/load helpers at these routes instead of Clerk metadata.
+## Premium Backpack (Stripe)
 
-Keep `vercel.json` rewrites excluding `/api/*` once routes exist.
+Real-money IAP for **Premium Backpack** (+32 slots, +50% weight). Gold-shop **Woven Backpack** (+12) is separate.
+
+| Route | Purpose |
+|-------|---------|
+| `POST /api/create-checkout-session` | Start Stripe Checkout (or demo grant if no `STRIPE_SECRET_KEY` + demo flag) |
+| `GET /api/verify-checkout-session` | Verify `session_id` on success redirect **before** granting |
+| `POST /api/stripe-webhook` | Stub for signed webhooks / future account sync |
+
+### Env
+
+See root `.env.example`: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PREMIUM_BACKPACK_PRICE_ID`, `VITE_STRIPE_PUBLISHABLE_KEY`, `VITE_PREMIUM_BACKPACK_PRICE_ID`, `PREMIUM_CHECKOUT_DEMO` / `VITE_PREMIUM_CHECKOUT_DEMO`.
+
+**Production rule:** do not grant Premium without a verified Checkout session (or webhook). Demo unlock only when the secret is missing and demo flags allow it.

@@ -9,7 +9,7 @@ export type PromptState =
   | { kind: "gate"; target: ContinentId; name: string }
   | { kind: "hollow"; index: number }
   | { kind: "exit" }
-  | { kind: "folk"; folkId: string; name: string; hasShop: boolean }
+  | { kind: "folk"; folkId: string; name: string; hasShop: boolean; hasBank: boolean }
   | { kind: "shop"; shopId: string; name: string }
   | { kind: "ship"; dockId: string; name: string }
   | { kind: "cairn"; cairnId: string; name: string }
@@ -26,6 +26,13 @@ export type HudState = {
   maxHp: number;
   mana: number;
   maxMana: number;
+  /** Carried pack weight. */
+  weight: number;
+  maxWeight: number;
+  slots: number;
+  maxSlots: number;
+  /** Thornreach plaza / fountain — no PvE. */
+  inSafeZone: boolean;
   /** Active quest objective line (wayfinding). */
   objectiveLabel?: string | null;
   /** Distance to objective in tiles. */

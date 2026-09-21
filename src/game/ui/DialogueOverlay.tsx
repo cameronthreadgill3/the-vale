@@ -2,14 +2,18 @@ export function DialogueOverlay({
   name,
   line,
   hasShop,
+  hasBank,
   onTalkClose,
   onOpenShop,
+  onOpenBank,
 }: {
   name: string;
   line: string;
   hasShop: boolean;
+  hasBank?: boolean;
   onTalkClose: () => void;
   onOpenShop?: () => void;
+  onOpenBank?: () => void;
 }) {
   return (
     <div className="vale-panel pointer-events-auto absolute bottom-24 left-1/2 z-30 w-[min(100%-2rem,26rem)] -translate-x-1/2 rounded border border-[#c9a227]/40 bg-[#161812]/96 p-4 shadow-xl backdrop-blur-md max-md:bottom-8">
@@ -18,6 +22,15 @@ export function DialogueOverlay({
       </div>
       <p className="mt-2 text-sm leading-relaxed text-[#e8e6d9]">{line}</p>
       <div className="mt-3 flex flex-wrap justify-end gap-2">
+        {hasBank && onOpenBank && (
+          <button
+            type="button"
+            onClick={onOpenBank}
+            className="vale-tap rounded border border-[#2a2e24] bg-[#1c1f16] px-4 py-2.5 text-sm text-[#c9a227] hover:border-[#c9a227]/50"
+          >
+            Bank
+          </button>
+        )}
         {hasShop && onOpenShop && (
           <button
             type="button"

@@ -3,6 +3,8 @@ import { TILE, type WorldMap } from "@/game/world";
 import { type HudState, type PromptState } from "@/game/canvasConstants";
 import { levelFromXp, progressInLevel, xpToNext } from "@/game/xp";
 import { maxHpFor, maxManaFor } from "@/game/combat";
+import { carriedWeight, maxSlotsFor, maxWeightFor } from "@/game/backpack";
+import { isInSafeZone, isSafeContinent, SAFE_ZONE_RADIUS_TILES } from "@/game/safeZone";
 import { getClass } from "@/game/classes";
 import {
   drawShipDocks,
@@ -103,6 +105,18 @@ export function advanceCameraAndRender(args: {
     }
   }
   drawAshwoodTint(ctx, map, originX, originY, viewW, viewH);
+  if (map.kind === "overworld" && isSafeContinent(map.continentId)) {
+    const fx = Math.floor((map.spawn.x + 0.5) * TILE - originX);
+    const fy = Math.floor((map.spawn.y + 0.5) * TILE - originY);
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(fx, fy, SAFE_ZONE_RADIUS_TILES * TILE, 0, Math.PI * 2);
+    ctx.strokeStyle = "rgba(122, 184, 201, 0.28)";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 5]);
+    ctx.stroke();
+    ctx.restore();
+  }
   if (map.darkness > 0) {
     const pxLight = Math.floor(player.x - originX);
     const pyLight = Math.floor(player.y - originY);
@@ -176,6 +190,11 @@ export function advanceCameraAndRender(args: {
       maxHp: maxHpFor(character),
       mana: character.mana,
       maxMana: maxManaFor(character, cls),
+      weight: carriedWeight(character.inventory),
+      maxWeight: maxWeightFor(character.premiumBackpack),
+      slots: character.inventory.length,
+      maxSlots: maxSlotsFor(character.premiumBackpack),
+      inSafeZone: isInSafeZone(character.continentId, map, player.x, player.y),
       objectiveLabel: objective ? objective.label : null,
       objectiveDist: objective ? tilesAway(player, objective) : null,
     });

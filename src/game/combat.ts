@@ -161,7 +161,11 @@ export function enemyAttackDamage(enemyLevel: number, atk: number, rng: () => nu
   return Math.max(1, Math.floor((atk + enemyLevel * 0.8) * roll));
 }
 
+/** Carried gold lost on death: ~5%, at least 1g if the purse is not empty. Banked gold is never lost. */
+export const GOLD_LOSS_RATE_ON_DEATH = 0.05;
+
 /** Mild gold loss on death (Tibia-like, soft). */
 export function goldLostOnDeath(gold: number): number {
-  return Math.min(gold, Math.max(1, Math.floor(gold * 0.05)));
+  if (gold <= 0) return 0;
+  return Math.min(gold, Math.max(1, Math.floor(gold * GOLD_LOSS_RATE_ON_DEATH)));
 }

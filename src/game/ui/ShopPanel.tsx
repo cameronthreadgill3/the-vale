@@ -1,7 +1,13 @@
 import type { ValeCharacter } from "@/game/character";
-import { getItem } from "@/game/items";
+import { getItem, type ItemId } from "@/game/items";
 import type { ShopDef } from "@/game/folk";
 import { sellPrice } from "@/game/folk";
+import {
+  canCarry,
+  carriedWeight,
+  maxWeightFor,
+  maxSlotsFor,
+} from "@/game/backpack";
 
 export function ShopPanel({
   shop,
@@ -24,7 +30,9 @@ export function ShopPanel({
             {shop.name}
           </div>
           <div className="text-[10px] uppercase tracking-wider text-[#6a7260]">
-            Gold {character.gold}
+            Gold {character.gold} · {carriedWeight(character.inventory)}/
+            {maxWeightFor(character.premiumBackpack)} wt ·{" "}
+            {character.inventory.length}/{maxSlotsFor(character.premiumBackpack)}
           </div>
         </div>
         <button
@@ -42,7 +50,13 @@ export function ShopPanel({
       <ul className="mb-3 flex max-h-40 flex-col gap-1 overflow-y-auto">
         {shop.stock.map((row) => {
           const item = getItem(row.itemId);
-          const canBuy = character.gold >= row.price;
+          const carry = canCarry(
+            character.inventory,
+            character.premiumBackpack,
+            row.itemId as ItemId,
+            1,
+          );
+          const canBuy = character.gold >= row.price && carry.ok;
           return (
             <li
               key={row.itemId}
@@ -51,7 +65,12 @@ export function ShopPanel({
               <div className="min-w-0 flex-1">
                 <div className="truncate text-xs text-[#e8e6d9]">{item.name}</div>
                 <div className="truncate text-[10px] text-[#6a7260]">
-                  {item.blurb}
+                  {item.blurb} · {item.weight} wt
+                  {!carry.ok
+                    ? carry.reason === "weight"
+                      ? " · too heavy"
+                      : " · pack full"
+                    : ""}
                 </div>
               </div>
               <button

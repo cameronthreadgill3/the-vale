@@ -16,7 +16,13 @@ import {
   xpForStartingLevel,
 } from "@/game/skills";
 import { isItemId, type ItemId } from "@/game/items";
-import { maxHpFor, maxManaFor, usesMana, goldLostOnDeath } from "@/game/combat";
+import { maxHpFor, maxManaFor, usesMana } from "@/game/combat";
+import {
+  canCarry,
+  moveStack,
+  summarizeDeathLoss,
+  type ItemStack,
+} from "@/game/backpack";
 
 import { getActiveCharacterKey, GUEST_CHARACTER_KEY } from "@/account/storageScope";
 
@@ -53,6 +59,12 @@ export interface ValeCharacter {
   mana: number;
   /** Simple item stacks. */
   inventory: InventoryStack[];
+  /** Vault stacks — persist with the character; never drop on death. */
+  bank: InventoryStack[];
+  /** Gold stored in the vault. */
+  bankGold: number;
+  /** Premium Backpack: 32 slots and +50% carry weight. */
+  premiumBackpack: boolean;
   /** Folk ids the player has spoken with (optional flavor). */
   metFolk: string[];
   /** Three assignable hotbar skills (keys 1–3). */
@@ -178,6 +190,12 @@ export function loadCharacter(): ValeCharacter | null {
           ? Math.max(0, Math.floor(rec.mana))
           : 0,
       inventory: sanitizeInventory(rec.inventory),
+      bank: sanitizeInventory(rec.bank),
+      bankGold:
+        typeof rec.bankGold === "number" && Number.isFinite(rec.bankGold)
+          ? Math.max(0, Math.floor(rec.bankGold))
+          : 0,
+      premiumBackpack: rec.premiumBackpack === true,
       metFolk: sanitizeMetFolk(rec.metFolk),
       quickSlots: sanitizeQuickSlots(rec.quickSlots, rec.classId),
     };
@@ -214,6 +232,9 @@ export function createCharacter(classId: ClassId): ValeCharacter {
     hp: 0,
     mana: 0,
     inventory: [{ id: "trail-rations", qty: 2 }],
+    bank: [],
+    bankGold: 0,
+    premiumBackpack: false,
     metFolk: [],
     quickSlots: defaultQuickSlots(classId),
   };
@@ -318,6 +339,25 @@ export function addInventoryItem(
   return next;
 }
 
+export type CarryFail = { ok: false; reason: "weight" | "slots" };
+export type CarryOk = { ok: true; character: ValeCharacter };
+
+/** Player-facing pickup / buy — blocked when overweight or out of slots. */
+export function tryAddInventoryItem(
+  character: ValeCharacter,
+  itemId: ItemId,
+  qty = 1,
+): CarryOk | CarryFail {
+  const check = canCarry(
+    character.inventory,
+    character.premiumBackpack,
+    itemId,
+    qty,
+  );
+  if (!check.ok) return check;
+  return { ok: true, character: addInventoryItem(character, itemId, qty) };
+}
+
 export function removeInventoryItem(
   character: ValeCharacter,
   itemId: ItemId,
@@ -418,18 +458,100 @@ export function awardCombatXp(character: ValeCharacter, amount: number): ValeCha
   return synced;
 }
 
-/** Death: leave hollow if inside, restore vitals, mild gold loss. */
-export function applyDeath(character: ValeCharacter): ValeCharacter {
-  const loss = goldLostOnDeath(character.gold);
+export interface DeathResult {
+  character: ValeCharacter;
+  goldLost: number;
+  itemsLost: ItemStack[];
+}
+
+/** Death: leave hollow if inside, restore vitals, gold + 10% carried-item loss. Bank is untouched. */
+export function applyDeath(
+  character: ValeCharacter,
+  rng: () => number = Math.random,
+): DeathResult {
+  const { goldLost, itemsLost, inventory } = summarizeDeathLoss(
+    character.gold,
+    character.inventory,
+    rng,
+  );
   let next: ValeCharacter = {
     ...character,
-    gold: Math.max(0, character.gold - loss),
+    gold: Math.max(0, character.gold - goldLost),
+    inventory,
     skillXp: { ...character.skillXp },
     // Force overworld respawn at continent spawn (cleared by shell remount).
     hollowIndex: null,
     hollowReturn: null,
   };
   next = syncVitals(next, true);
+  saveCharacter(next);
+  return { character: next, goldLost, itemsLost };
+}
+
+export function unlockPremiumBackpack(character: ValeCharacter): ValeCharacter {
+  if (character.premiumBackpack) return character;
+  const next = { ...character, premiumBackpack: true };
+  saveCharacter(next);
+  return next;
+}
+
+export function depositItem(
+  character: ValeCharacter,
+  itemId: ItemId,
+  qty = 1,
+): ValeCharacter | null {
+  const moved = moveStack(character.inventory, character.bank, itemId, qty);
+  if (!moved) return null;
+  const next = { ...character, inventory: moved.from, bank: moved.to };
+  saveCharacter(next);
+  return next;
+}
+
+export function withdrawItem(
+  character: ValeCharacter,
+  itemId: ItemId,
+  qty = 1,
+): CarryOk | CarryFail | { ok: false; reason: "missing" } {
+  const probe = moveStack(character.bank, character.inventory, itemId, qty);
+  if (!probe) return { ok: false, reason: "missing" };
+  const check = canCarry(
+    character.inventory,
+    character.premiumBackpack,
+    itemId,
+    qty,
+  );
+  if (!check.ok) return check;
+  const next = { ...character, bank: probe.from, inventory: probe.to };
+  saveCharacter(next);
+  return { ok: true, character: next };
+}
+
+export function depositGold(
+  character: ValeCharacter,
+  amount: number,
+): ValeCharacter {
+  const amt = Math.max(0, Math.min(character.gold, Math.floor(amount)));
+  if (amt <= 0) return character;
+  const next = {
+    ...character,
+    gold: character.gold - amt,
+    bankGold: character.bankGold + amt,
+  };
+  saveCharacter(next);
+  return next;
+}
+
+export function withdrawGold(
+  character: ValeCharacter,
+  amount: number,
+): ValeCharacter {
+  const amt = Math.max(0, Math.min(character.bankGold, Math.floor(amount)));
+  if (amt <= 0) return character;
+  const next = {
+    ...character,
+    gold: character.gold + amt,
+    bankGold: character.bankGold - amt,
+  };
   saveCharacter(next);
   return next;
 }
