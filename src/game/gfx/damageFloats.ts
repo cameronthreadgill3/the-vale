@@ -1,7 +1,8 @@
 /**
  * Presentation pass for combat float texts.
- * Numbers, gold, and heals stay as spawned; this only changes rise, hold, fade, and contrast.
- * Spawn vy must stay -28 — that is the fresh-float mark from gameLoop / gameLoopCombat.
+ * Damage, gold, item names, combat XP, and heals stay as spawned; this only
+ * changes rise, hold, fade, and contrast. Spawn vy must stay -28 — that is
+ * the fresh-float mark from gameLoop / gameLoopCombat.
  */
 
 import type { FloatText } from "@/game/enemies";
@@ -43,6 +44,12 @@ function isCompactFigure(text: string): boolean {
   return /^[+-]?\d+g?$/.test(text);
 }
 
+/** Item pickup names and combat XP share the damage-figure halo. */
+function sharesFigureHalo(text: string): boolean {
+  if (isCompactFigure(text)) return true;
+  return /^\+\d+ XP$/.test(text) || /^\+[A-Za-z]/.test(text);
+}
+
 /**
  * Dark halo + hold-then-fade. Drawn above bloom so the glyphs stay sharp.
  */
@@ -63,12 +70,12 @@ export function drawCombatFloats(
     if (alpha <= 0.01) continue;
     const x = Math.floor(t.x - originX);
     const y = Math.floor(t.y - originY);
-    const figure = isCompactFigure(t.text);
-    ctx.font = figure
-      ? 'bold 14px Figtree, system-ui, sans-serif'
-      : 'bold 12px Figtree, system-ui, sans-serif';
+    const halo = sharesFigureHalo(t.text);
+    ctx.font = halo
+      ? "bold 14px Figtree, system-ui, sans-serif"
+      : "bold 12px Figtree, system-ui, sans-serif";
     ctx.globalAlpha = alpha;
-    ctx.lineWidth = figure ? 3 : 2.5;
+    ctx.lineWidth = halo ? 3 : 2.5;
     ctx.strokeStyle = "#14110e";
     ctx.strokeText(t.text, x, y);
     ctx.fillStyle = t.color;

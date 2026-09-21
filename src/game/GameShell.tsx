@@ -439,8 +439,9 @@ export function GameShell({
 
       {lootToast && (
         <div
+          key={lootToast}
           role="status"
-          className="vale-toast pointer-events-none absolute left-1/2 top-1/3 z-20 w-[min(92vw,20rem)] -translate-x-1/2 px-4 py-2 text-center text-sm leading-relaxed tracking-wide text-[#e8d090] sm:px-5"
+          className="vale-toast vale-loot-toast pointer-events-none absolute left-1/2 top-1/3 z-20 w-[min(92vw,20rem)] px-4 py-2 text-center text-sm leading-relaxed tracking-wide text-[#e8d090] sm:px-5"
         >
           {lootToast}
         </div>

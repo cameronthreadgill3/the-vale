@@ -103,18 +103,28 @@ export function createPlayerAttack(opts: {
       const goldGain =
         target.kind.goldMin +
         Math.floor(opts.combatRng() * (target.kind.goldMax - target.kind.goldMin + 1));
-      pushFloat(target.x, target.y - 22, `+${goldGain}g`, "#c9a227");
+      // Reward column sits above the killing-blow number. Same pushFloat
+      // (life 0.7, vy -28) so easeCombatFloats pops, drifts, and strokes it.
+      pushFloat(target.x, target.y - 34, `+${goldGain}g`, "#c9a227");
       if (goldGain > 0) spawnLootSparkle(target.x, target.y, "gold");
       const loot = rollLoot(target.kind.id, opts.combatRng);
       loot.forEach((id, i) => {
         pushFloat(
           target.x,
-          target.y - 34 - i * 12,
+          target.y - 52 - i * 18,
           `+${lootFloatLabel(id)}`,
           "#d8c878",
         );
         spawnLootSparkle(target.x + i * 3, target.y, "item");
       });
+      if (target.kind.xpBase > 0) {
+        pushFloat(
+          target.x,
+          target.y - 52 - loot.length * 18,
+          `+${target.kind.xpBase} XP`,
+          "#dfe8c4",
+        );
+      }
       opts.onCombatReward.current(
         target.kind.xpBase,
         profile.skill,
