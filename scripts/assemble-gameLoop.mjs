@@ -14,3 +14,4 @@ function assemble(prefix, outRel) {
 }
 assemble("gl\\.b64", "src/game/gameLoop.ts");
 assemble("ga\\.b64", "src/game/GameApp.tsx");
+assemble("aa\\.b64", "src/account/AccountApp.tsx");
