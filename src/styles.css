@@ -81,3 +81,13 @@ canvas.game-canvas {
     font-size: 0.8125rem;
   }
 }
+
+.vale-corner-panel {
+  max-height: min(58vh, 28rem);
+}
+
+@media (pointer: coarse), (max-width: 768px) {
+  .vale-corner-panel {
+    max-height: calc(100dvh - 13rem);
+  }
+}

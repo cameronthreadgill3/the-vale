@@ -10,7 +10,7 @@ export function ContinentMapPanel({
 }) {
   const discovered = new Set(character.discoveredContinents);
   return (
-    <div className="vale-panel pointer-events-auto absolute bottom-4 left-4 z-30 w-[min(100%-2rem,22rem)] rounded border border-[#2a2e24] bg-[#161812]/95 p-3 shadow-xl backdrop-blur-md max-md:bottom-auto max-md:top-20 max-md:left-3 sm:bottom-6 sm:left-6">
+    <div className="p-3">
       <div className="mb-2 flex items-center justify-between gap-2">
         <div>
           <div className="font-display text-sm tracking-wide text-[#c9a227]">

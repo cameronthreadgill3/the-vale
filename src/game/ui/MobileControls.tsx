@@ -56,22 +56,16 @@ export function useShowMobileChrome(): boolean {
   return show;
 }
 
+/** Virtual joystick (bottom-left). Attack / skills live in QuickSkillCluster. */
 export function MobileControls({
   keysRef,
-  interactRequestRef,
-  onToggleSkills,
-  onToggleMap,
 }: {
   keysRef: MutableRefObject<Record<string, boolean>>;
-  interactRequestRef: MutableRefObject<boolean>;
-  onToggleSkills: () => void;
-  onToggleMap: () => void;
 }) {
   const stickRef = useRef<HTMLDivElement>(null);
   const originRef = useRef({ x: 0, y: 0 });
   const activePointerRef = useRef<number | null>(null);
   const [knob, setKnob] = useState({ x: 0, y: 0 });
-  const [attackHeld, setAttackHeld] = useState(false);
 
   const endJoystick = useCallback(() => {
     activePointerRef.current = null;
@@ -134,32 +128,11 @@ export function MobileControls({
     };
   }, [keysRef]);
 
-  const attackDown = (e: ReactPointerEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-    keysRef.current.Space = true;
-    setAttackHeld(true);
-  };
-  const attackUp = (e: ReactPointerEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    keysRef.current.Space = false;
-    setAttackHeld(false);
-  };
-
-  const tapInteract = (e: ReactPointerEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    interactRequestRef.current = true;
-  };
-
   return (
     <div
       className="mobile-chrome pointer-events-none absolute inset-0 z-40"
       aria-hidden={false}
     >
-      {/* Virtual joystick — bottom-left */}
       <div
         className="pointer-events-auto absolute"
         style={{
@@ -187,81 +160,6 @@ export function MobileControls({
           </span>
         </div>
       </div>
-
-      {/* Action cluster — bottom-right */}
-      <div
-        className="pointer-events-auto absolute flex flex-col items-end gap-2"
-        style={{
-          right: "max(0.75rem, env(safe-area-inset-right))",
-          bottom: "max(0.75rem, env(safe-area-inset-bottom))",
-        }}
-      >
-        <div className="flex gap-2">
-          <ActionBtn label="Skills" sub="K" onPointerDown={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onToggleSkills();
-          }} />
-          <ActionBtn label="Map" sub="M" onPointerDown={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onToggleMap();
-          }} />
-        </div>
-        <div className="flex items-end gap-2">
-          <ActionBtn
-            label="Interact"
-            sub="E"
-            size="md"
-            onPointerDown={tapInteract}
-          />
-          <button
-            type="button"
-            className={`flex h-[4.5rem] w-[4.5rem] touch-none flex-col items-center justify-center rounded-full border text-xs font-medium shadow-lg backdrop-blur-sm transition ${
-              attackHeld
-                ? "border-[#c45c3e] bg-[#c45c3e]/45 text-[#e8e6d9]"
-                : "border-[#c45c3e]/55 bg-[#161812]/60 text-[#e8e6d9]"
-            }`}
-            onPointerDown={attackDown}
-            onPointerUp={attackUp}
-            onPointerCancel={attackUp}
-          >
-            <span className="font-display text-sm tracking-wide">Attack</span>
-            <span className="mt-0.5 text-[9px] uppercase tracking-wider text-[#a8b09a]">
-              Hold
-            </span>
-          </button>
-        </div>
-      </div>
     </div>
-  );
-}
-
-function ActionBtn({
-  label,
-  sub,
-  size = "sm",
-  onPointerDown,
-}: {
-  label: string;
-  sub: string;
-  size?: "sm" | "md";
-  onPointerDown: (e: ReactPointerEvent) => void;
-}) {
-  const dim =
-    size === "md"
-      ? "h-14 w-14 text-[11px]"
-      : "h-12 w-12 text-[10px]";
-  return (
-    <button
-      type="button"
-      className={`flex ${dim} touch-none flex-col items-center justify-center rounded-full border border-[#2a2e24] bg-[#161812]/60 text-[#e8e6d9] shadow-md backdrop-blur-sm active:border-[#c9a227]/60`}
-      onPointerDown={onPointerDown}
-    >
-      <span className="leading-tight">{label}</span>
-      <span className="text-[9px] uppercase tracking-wider text-[#6a7260]">
-        {sub}
-      </span>
-    </button>
   );
 }
