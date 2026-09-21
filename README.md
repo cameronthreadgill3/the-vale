@@ -122,7 +122,7 @@ Copy `.env.example` → `.env.local` for local dev. On Vercel: Project → Setti
 
 **If keys are missing**, the app does **not** crash: it shows a setup banner and runs **demo mode** (accounts + slots stored in `localStorage` only).
 
-**Offline playtests:** use **Continue offline (local)** on the account screen — same `vale-character-v1` guest save as before. After signing in you can **Import offline local save into first empty slot**.
+**Offline playtests:** **Continue offline (local)** opens **character slots** (local browser storage under the synthetic `offline` account) — it no longer auto-loads a guest save. Create a new path to start on **Thornreach** with **Teeth in the Grass** (Rook toast + quest arrow). An old `vale-character-v1` guest save is migrated into an empty slot; if it was stuck off Thornreach mid-Teeth, it is reset to Thornreach. While playing, **Characters** returns to slots and **Account** returns to the gate. After signing in you can still **Import offline local save into first empty slot**.
 
 ### Character storage (pragmatic MVP)
 
