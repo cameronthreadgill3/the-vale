@@ -9,13 +9,19 @@ import { getClass, type ClassId } from "@/game/classes";
 import {
   emptySkillXp,
   SKILL_IDS,
+  sanitizeQuickSlots,
+  defaultQuickSlots,
+  type QuickSlots,
   type SkillId,
   xpForStartingLevel,
 } from "@/game/skills";
 import { isItemId, type ItemId } from "@/game/items";
 import { maxHpFor, maxManaFor, usesMana, goldLostOnDeath } from "@/game/combat";
 
-export const CHARACTER_STORAGE_KEY = "vale-character-v1";
+import { getActiveCharacterKey, GUEST_CHARACTER_KEY } from "@/account/storageScope";
+
+/** Guest key (offline). Active play uses getActiveCharacterKey(). */
+export const CHARACTER_STORAGE_KEY = GUEST_CHARACTER_KEY;
 
 /** Starting gold for a new path. */
 export const STARTING_GOLD = 45;
@@ -49,6 +55,8 @@ export interface ValeCharacter {
   inventory: InventoryStack[];
   /** Folk ids the player has spoken with (optional flavor). */
   metFolk: string[];
+  /** Three assignable hotbar skills (keys 1–3). */
+  quickSlots: QuickSlots;
 }
 
 function isClassId(v: unknown): v is ClassId {
@@ -127,7 +135,7 @@ function sanitizeMetFolk(raw: unknown): string[] {
 
 export function loadCharacter(): ValeCharacter | null {
   try {
-    const raw = localStorage.getItem(CHARACTER_STORAGE_KEY);
+    const raw = localStorage.getItem(getActiveCharacterKey());
     if (!raw) return null;
     const data = JSON.parse(raw) as unknown;
     if (!data || typeof data !== "object") return null;
@@ -171,15 +179,20 @@ export function loadCharacter(): ValeCharacter | null {
           : 0,
       inventory: sanitizeInventory(rec.inventory),
       metFolk: sanitizeMetFolk(rec.metFolk),
+      quickSlots: sanitizeQuickSlots(rec.quickSlots, rec.classId),
     };
-    return syncVitals(loaded, loaded.hp <= 0);
+    const synced = syncVitals(loaded, loaded.hp <= 0);
+    if (!Array.isArray(rec.quickSlots) || rec.quickSlots.length < 3) {
+      saveCharacter(synced);
+    }
+    return synced;
   } catch {
     return null;
   }
 }
 
 export function saveCharacter(character: ValeCharacter): void {
-  localStorage.setItem(CHARACTER_STORAGE_KEY, JSON.stringify(character));
+  localStorage.setItem(getActiveCharacterKey(), JSON.stringify(character));
 }
 
 export function createCharacter(classId: ClassId): ValeCharacter {
@@ -202,13 +215,14 @@ export function createCharacter(classId: ClassId): ValeCharacter {
     mana: 0,
     inventory: [{ id: "trail-rations", qty: 2 }],
     metFolk: [],
+    quickSlots: defaultQuickSlots(classId),
   };
   saveCharacter(character);
   return syncVitals(character, true);
 }
 
 export function clearCharacter(): void {
-  localStorage.removeItem(CHARACTER_STORAGE_KEY);
+  localStorage.removeItem(getActiveCharacterKey());
 }
 
 /** Award skill XP with class gain multiplier. Returns new total XP. */
@@ -317,6 +331,25 @@ export function removeInventoryItem(
   stack.qty -= qty;
   if (stack.qty <= 0) inventory.splice(idx, 1);
   const next = { ...character, inventory };
+  saveCharacter(next);
+  return next;
+}
+
+/** Assign a skill to hotbar slot 0–2 and persist. */
+export function setQuickSlot(
+  character: ValeCharacter,
+  index: number,
+  skill: SkillId,
+): ValeCharacter {
+  const i = Math.max(0, Math.min(2, Math.floor(index)));
+  if (character.quickSlots[i] === skill) return character;
+  const quickSlots: QuickSlots = [
+    character.quickSlots[0],
+    character.quickSlots[1],
+    character.quickSlots[2],
+  ];
+  quickSlots[i] = skill;
+  const next = { ...character, quickSlots };
   saveCharacter(next);
   return next;
 }
