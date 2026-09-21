@@ -18,6 +18,7 @@ export {
   objectiveForPale,
   objectiveForAshen,
   objectiveForEmbercoil,
+  objectiveForCoil,
   tilesAway,
   type WayfindObjective,
   type RadarDot,

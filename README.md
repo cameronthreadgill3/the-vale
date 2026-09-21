@@ -233,6 +233,17 @@ After *The Ashen Gate Opens* completes, Rook starts **The Embercoil Gate Opens**
 
 Rewards: ~95g + ~190 combat XP + magic skill XP. Yellow arrow: Ashen Marches embercoil gate (or Pale Wastes embercoil gate if not on ashen) → nearest Needle Rat on Embercoil → nearest Bark Hound on Embercoil → return gate(s) → Rook. Reuses existing gates and fauna (needle-rat / bark-hound pads while sticky) — no new geometry. First Story Accession texture only — Survive · Learn · Progress. No Lucas transplant.
 
+### Fifteenth sticky quest — The Coil Remembers
+
+After *The Embercoil Gate Opens* completes, Rook starts **The Coil Remembers** (`ensureCoilAfterEmbercoil`): the embercoil gate opened — walk the slag ridges themselves, name the soft ash-vole that shares the heat with the coil pack, quiet one gorse-fox hunting the glow skirts, and bring the coil's measure home.
+
+1. **Reach** Embercoil overworld via the Ashen Marches → **Embercoil** gate (Pale Wastes → Embercoil also accepted)
+2. **Identify** 1 **Ash-vole** (`ash-vole`) on Embercoil (near-field look / Name · Rank)
+3. **Defeat** 1 **Gorse Fox** (`gorse-fox`) on Embercoil
+4. Return through the gate(s) and report to **Rook**
+
+Rewards: ~100g + ~200 combat XP + distance skill XP. Yellow arrow: Embercoil underfoot (or Ashen/Pale → Embercoil gate if not there) → nearest Ash-vole on Embercoil → nearest Gorse Fox on Embercoil → return gate(s) → Rook. Reuses existing gates and fauna (ash-vole / gorse-fox pads while sticky) — no new geometry. First Story Accession texture only — Survive · Learn · Progress. No Lucas transplant.
+
 ### Thornreach hollows (mini-dungeon + boss stub)
 
 Thornreach hollows read as a short dungeon: rooms and corridors, a single lit **↑ Surface** exit at the entrance (the deep room is no longer a second door), denser Shade Wisps the farther you walk, and a marked **Ashveil chamber** in the deepest room.
