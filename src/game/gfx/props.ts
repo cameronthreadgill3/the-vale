@@ -13,6 +13,24 @@ const cache = new Map<string, Sheet>();
 
 /** Matches hollow-torch / fountain step so plaza flames share that cadence. */
 export const PROP_FLAME_FRAMES = 4;
+
+const GLASS_GOLD = "#c9a227";
+
+/** Flame cores. Same four steps the hollow sconces already use. */
+export const LANTERN_FLAME = ["#f0d060", "#e8a040", "#f8e080", "#d07020"] as const;
+export const LANTERN_INNER = ["#fff4c8", "#f0d060", "#fff8e0", "#e8a040"] as const;
+/**
+ * Glass warms and dips with the flame.
+ * Frame 0 is the old steady gold so the housing still reads at rest.
+ */
+export const LANTERN_GLASS = [
+  mixHex(GLASS_GOLD, "#f0e8a0", 0.4),
+  mixHex(GLASS_GOLD, "#e8a040", 0.48),
+  mixHex(GLASS_GOLD, "#fff6d0", 0.72),
+  mixHex(GLASS_GOLD, "#8a4010", 0.55),
+] as const;
+/** One-pixel pane catch. Slides with the flame, stays inside the glass. */
+export const LANTERN_GLASS_CATCH = ["#f8e8b0", "#e8c060", "#fff8e0", "#c08030"] as const;
 /** Slow cloth cycle — one pixel of lean, then back through center. */
 export const PROP_SWAY_FRAMES = 4;
 
@@ -70,16 +88,19 @@ function paintBench(ctx: CanvasRenderingContext2D): void {
 
 function paintLantern(ctx: CanvasRenderingContext2D, frame: number): void {
   const post = "#3a3020";
-  const glass = mixHex("#c9a227", "#f0e8a0", 0.4);
-  const flames = ["#f0d060", "#e8a040", "#f8e080", "#d07020"] as const;
-  const inners = ["#fff4c8", "#f0d060", "#fff8e0", "#e8a040"] as const;
   const i = frame % PROP_FLAME_FRAMES;
-  const flame = flames[i]!;
-  const inner = inners[i]!;
+  const flame = LANTERN_FLAME[i]!;
+  const inner = LANTERN_INNER[i]!;
+  const glass = LANTERN_GLASS[i]!;
   const flick = i % 2;
   px(ctx, 15, 14, post, 2, 14);
   px(ctx, 12, 8, post, 8, 7);
   px(ctx, 13, 9, glass, 6, 5);
+  // Pane glint on one edge, a dimmer pane on the other — glass, not a bigger flame.
+  const catchX = flick === 0 ? 13 : 17;
+  const dimX = flick === 0 ? 17 : 13;
+  px(ctx, catchX, 9, LANTERN_GLASS_CATCH[i]!, 1, 2);
+  px(ctx, dimX, 12, shadeHex(glass, 0.72), 1, 1);
   px(ctx, 15, 10 - flick, flame, 2, 3 + flick);
   px(ctx, 15, 11, inner, 2, 2);
   if (i === 1) px(ctx, 14, 10, flame, 1, 1);

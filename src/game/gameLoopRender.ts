@@ -45,6 +45,7 @@ import type { Facing } from "@/game/playerSprites";
 import { WALK_FPS } from "@/game/playerSprites";
 import { drawTile } from "@/game/gfx/drawTile";
 import { drawTownOverlays } from "@/game/gfx/townDraw";
+import { collectPathLampDepthItems } from "@/game/gfx/lampFlicker";
 import {
   getAshwoodCanopySheet,
   paletteColor,
@@ -703,6 +704,7 @@ export function advanceCameraAndRender(args: {
     ...collectEnemyDepthItems(enemies, originX, originY, groundShift, player),
     ...collectMoteDepthItems(originX, originY, _atmosT),
     ...collectAshDriftDepthItems(originX, originY, _atmosT),
+    ...collectPathLampDepthItems(map, originX, originY, viewW, viewH, _atmosT),
     {
       y: player.y,
       x: player.x,
