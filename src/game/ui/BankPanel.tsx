@@ -4,6 +4,8 @@ import {
   carriedWeight,
   maxWeightFor,
   maxSlotsFor,
+  formatWeightChrome,
+  formatSlotsChrome,
 } from "@/game/backpack";
 
 export function BankPanel({
@@ -47,9 +49,8 @@ export function BankPanel({
       </div>
 
       <div className="mb-2 flex flex-wrap gap-x-3 gap-y-1 text-[10px] uppercase tracking-wider text-[#6a7260]">
-        <span>
-          Pack {weight}/{maxW} wt · {slots}/{maxS} slots
-        </span>
+        <span>{formatWeightChrome(weight, maxW)}</span>
+        <span>{formatSlotsChrome(slots, maxS)}</span>
         <span>Carried gold {character.gold}g</span>
         <span>Bank gold {character.bankGold}g</span>
       </div>

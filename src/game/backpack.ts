@@ -98,6 +98,27 @@ export function formatBankToast(
   return `${verb} ${parts.join(" · ")}`;
 }
 
+/** Pack chrome — feel only. Capacities and carry rules stay with maxWeightFor / maxSlotsFor. */
+export function formatWeightChrome(weight: number, maxWeight: number): string {
+  return `Weight ${weight} / ${maxWeight}`;
+}
+
+export function formatSlotsChrome(slots: number, maxSlots: number): string {
+  return `Slots ${slots} / ${maxSlots}`;
+}
+
+/** Compact load line, e.g. `Weight 12 / 80 · Slots 3 / 20 · Premium`. */
+export function formatPackLoadChrome(
+  weight: number,
+  maxWeight: number,
+  slots: number,
+  maxSlots: number,
+  premium = false,
+): string {
+  const load = `${formatWeightChrome(weight, maxWeight)} · ${formatSlotsChrome(slots, maxSlots)}`;
+  return premium ? `${load} · Premium` : load;
+}
+
 /** Randomly remove ~10% of carried item units. Bank is not touched. */
 export function applyEquipmentLoss(
   inventory: ItemStack[],

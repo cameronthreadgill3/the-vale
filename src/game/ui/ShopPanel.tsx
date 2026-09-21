@@ -7,6 +7,7 @@ import {
   carriedWeight,
   maxWeightFor,
   maxSlotsFor,
+  formatPackLoadChrome,
 } from "@/game/backpack";
 
 function StockRow({
@@ -75,9 +76,13 @@ export function ShopPanel({
             {shop.name}
           </div>
           <div className="text-[10px] uppercase tracking-wider text-[#6a7260]">
-            Gold {character.gold} · {carriedWeight(character.inventory)}/
-            {maxWeightFor(character.premiumBackpack)} wt ·{" "}
-            {character.inventory.length}/{maxSlotsFor(character.premiumBackpack)}
+            Gold {character.gold}g ·{" "}
+            {formatPackLoadChrome(
+              carriedWeight(character.inventory),
+              maxWeightFor(character.premiumBackpack),
+              character.inventory.length,
+              maxSlotsFor(character.premiumBackpack),
+            )}
           </div>
         </div>
         <button
