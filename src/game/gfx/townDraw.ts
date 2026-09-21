@@ -8,7 +8,6 @@ import {
 import { getPropSheet } from "@/game/gfx/props";
 import { TILE_PX } from "@/game/gfx/tiles";
 import { drawFloatingLabel } from "@/game/folkCanvas";
-import { WAYFIND_LABEL_RANGE } from "@/game/wayfindingObjectives";
 
 function drawRoofCap(
   ctx: CanvasRenderingContext2D,
@@ -70,7 +69,7 @@ export function drawTownOverlays(
   for (const b of buildings) {
     const dx = b.door.x + 0.5;
     const dy = b.door.y + 0.5;
-    if (Math.hypot(ptx - dx, pty - dy) > WAYFIND_LABEL_RANGE) continue;
+    if (Math.hypot(ptx - dx, pty - dy) > 3.25) continue;
     const sx = Math.floor(dx * TILE - originX);
     const sy = Math.floor(dy * TILE - originY);
     drawFloatingLabel(ctx, sx, sy - 10, "Enter · " + b.name, b.signColor);
