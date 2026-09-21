@@ -406,7 +406,7 @@ export function GameShell({
       {lootToast && (
         <div
           role="status"
-          className="pointer-events-none absolute left-1/2 top-1/3 z-20 w-[min(92vw,20rem)] -translate-x-1/2 rounded border border-[#2a2e24] bg-[#0c0d0b]/90 px-3 py-1.5 text-center font-display text-xs tracking-wide text-[#d8c878] shadow-xl backdrop-blur-md sm:text-sm"
+          className="pointer-events-none absolute left-1/2 top-1/3 z-20 w-[min(92vw,20rem)] -translate-x-1/2 rounded border border-[#c9a227]/50 bg-[#0c0d0b]/92 px-3 py-1.5 text-center font-display text-xs tracking-wide text-[#d8c878] shadow-xl backdrop-blur-md sm:px-4 sm:text-sm"
         >
           {lootToast}
         </div>

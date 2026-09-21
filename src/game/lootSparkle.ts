@@ -102,27 +102,27 @@ export function drawLootSparkles(
     const mid = s.kind === "gold" ? GOLD : ITEM;
     const sx = s.x - originX;
     const gy = s.groundY - originY;
-    const rise = s.y - originY - u * 9;
+    const rise = s.y - originY - u * 10;
 
-    // Ground drop glint — two cream pixels at the corpse feet.
-    px(ctx, sx, gy, mid, a * 0.85, 2, 1);
-    px(ctx, sx + 1, gy - 1, lite, a * (near ? 0.95 : 0.55));
+    // Ground drop glint at the corpse feet (chunky 2px, still cheap).
+    px(ctx, sx - 1, gy, mid, a * 0.9, 3, 2);
+    px(ctx, sx, gy - 1, lite, a * (near ? 1 : 0.65), 2, 1);
     if (near) {
-      px(ctx, sx - 1, gy, lite, a * 0.45);
-      px(ctx, sx + 2, gy, mid, a * 0.4);
+      px(ctx, sx - 2, gy + 1, lite, a * 0.5);
+      px(ctx, sx + 3, gy, mid, a * 0.45);
     }
 
-    const n = near ? 4 : 3;
+    const n = near ? 5 : 3;
     for (let i = 0; i < n; i++) {
       const ang = s.seed + i * 2.05 + u * 3.4;
-      const rad = 2.5 + i * 1.6 + (near ? 1.2 : 0);
+      const rad = 3 + i * 1.8 + (near ? 1.4 : 0);
       star(
         ctx,
         sx + Math.cos(ang) * rad,
         rise + Math.sin(ang) * rad * 0.55,
         i === 0 ? lite : mid,
-        a * (i === 0 ? 1 : 0.72),
-        near && i === 0 ? 1 : 0,
+        a * (i === 0 ? 1 : 0.78),
+        near || i === 0 ? 1 : 0,
       );
     }
   }

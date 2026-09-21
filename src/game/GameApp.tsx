@@ -254,7 +254,7 @@ export function GameApp() {
     window.setTimeout(() => setToast((t) => (t === msg ? null : t)), ms);
   }, []);
 
-  const showLootToast = useCallback((msg: string, ms = 1800) => {
+  const showLootToast = useCallback((msg: string, ms = 2400) => {
     lootToastGen.current += 1;
     const gen = lootToastGen.current;
     setLootToast(msg);
@@ -1219,18 +1219,15 @@ export function GameApp() {
           }
         }
         const pickupLine = formatPickupToast(goldGain, taken);
-        if (pickupLine) {
-          queueMicrotask(() => showLootToast(pickupLine));
-        }
-        if (leftover) {
-          queueMicrotask(() =>
-            showToast(
-              leftoverReason
-                ? toastForCarryFail(leftoverReason)
-                : "Pack too heavy — loot left behind",
-            ),
-          );
-        }
+        const leftoverMsg = leftover
+          ? leftoverReason
+            ? toastForCarryFail(leftoverReason)
+            : "Pack too heavy — loot left behind"
+          : null;
+        queueMicrotask(() => {
+          if (pickupLine) showLootToast(pickupLine);
+          if (leftoverMsg) showToast(leftoverMsg);
+        });
         return { ...next, skillXp: { ...next.skillXp } };
       });
       setSkillTick((t) => t + 1);

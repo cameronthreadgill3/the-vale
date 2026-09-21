@@ -306,9 +306,9 @@ export function advanceCameraAndRender(args: {
   drawProjectiles(ctx, projectiles, originX, originY);
   drawFloatTexts(ctx, floatTexts, originX, originY);
   tickLootSparkles(dt);
-  drawLootSparkles(ctx, originX, originY, player);
   drawHollowTorchSpots(ctx, map, originX, originY, viewW, viewH, player, _atmosT);
   drawVignette(ctx, viewW, viewH);
+  drawLootSparkles(ctx, originX, originY, player);
   drawEnemyChrome(ctx, enemies, originX, originY);
   drawFolkNameLabels(ctx, folk, originX, originY, player);
   drawWorldWayfindLabels(ctx, map, docks, player, originX, originY);
