@@ -30,44 +30,54 @@ const SLOTS: readonly [number, number][] = [
 
 const LIGHT_SHAPES: readonly (readonly Speck[])[] = [
   [
-    [0, 0, 2, 1],
-    [2, 1, 1, 1],
+    [0, 0, 3, 1],
+    [1, 1, 2, 1],
     [-1, 1, 2, 1],
+    [2, -1, 1, 1],
+    [6, 1, 2, 1],
   ],
   [
-    [0, 0, 1, 2],
-    [1, 1, 2, 1],
-    [0, 2, 1, 1],
+    [0, 0, 2, 2],
+    [2, 1, 2, 1],
+    [-1, 1, 1, 1],
+    [1, 2, 2, 1],
+    [5, -1, 1, 2],
   ],
   [
     [0, 0, 3, 1],
     [1, -1, 1, 1],
-    [2, 1, 1, 1],
+    [-1, 1, 3, 1],
+    [4, 1, 2, 1],
+    [2, 2, 1, 1],
   ],
   [
     [-1, 0, 2, 1],
-    [1, 1, 2, 1],
-    [0, 2, 1, 1],
+    [1, 1, 3, 1],
+    [0, 2, 2, 1],
+    [5, 0, 2, 1],
+    [6, 1, 1, 1],
   ],
 ];
 
 const SHADE_SHAPES: readonly (readonly Speck[])[] = [
   [
-    [0, 0, 2, 2],
-    [2, 1, 1, 1],
-  ],
-  [
-    [0, 0, 3, 1],
-    [1, 1, 2, 1],
-  ],
-  [
-    [0, 1, 2, 1],
-    [1, 0, 1, 2],
-    [-1, 2, 2, 1],
+    [0, 0, 3, 2],
+    [3, 1, 1, 1],
+    [1, 2, 2, 1],
   ],
   [
     [0, 0, 2, 1],
-    [1, 1, 2, 2],
+    [1, 1, 3, 1],
+    [0, 2, 2, 1],
+  ],
+  [
+    [0, 1, 3, 1],
+    [1, 0, 2, 1],
+    [-1, 2, 2, 1],
+  ],
+  [
+    [0, 0, 2, 2],
+    [2, 1, 2, 2],
   ],
 ];
 
@@ -114,8 +124,8 @@ function isFloor(kind: string | null): boolean {
  * (sin 1.25 / 0.85) so a patch ticks with its leaves.
  */
 function driftOf(timeSec: number, tx: number, ty: number, seed: number): { x: number; y: number } {
-  const along = Math.sin(timeSec * 0.29 + seed) * 4.2 + Math.sin(timeSec * 0.07) * 2;
-  const across = Math.sin(timeSec * 0.11 + seed * 1.3) * 1.8;
+  const along = Math.sin(timeSec * 0.29 + seed) * 6 + Math.sin(timeSec * 0.07) * 2.5;
+  const across = Math.sin(timeSec * 0.11 + seed * 1.3) * 2.2;
   const sway = Math.sin(timeSec * 1.25 + tx * 1.7 + ty * 0.55) * 2;
   const bob = Math.sin(timeSec * 0.85 + ty * 1.4 + tx * 0.3);
   return { x: Math.round(along + sway), y: Math.round(across + bob) };
@@ -198,15 +208,15 @@ function paintPair(
   const seed = ((hash2(tx, ty) % 628) + slotIndex * 17) / 100;
   const drift = driftOf(timeSec, tx, ty, seed);
   const breath = 0.9 + 0.1 * Math.sin(timeSec * 0.23 + seed);
-  const crowd = grove >= 4 ? 0.72 : grove >= 2 ? 0.86 : 1;
-  const shadeBoost = grove >= 3 ? 1.15 : 1;
-  const pulse = Math.sin(timeSec * 0.23 + seed) > 0.55 ? 1 : 0;
+  const crowd = grove >= 4 ? 0.78 : grove >= 2 ? 0.9 : 1;
+  const shadeBoost = grove >= 3 ? 1.12 : 1;
+  const pulse = Math.sin(timeSec * 0.23 + seed) > 0.55 ? 2 : 0;
   const wx = tx * TILE + slot[0] + drift.x;
   const wy = ty * TILE + slot[1] + drift.y;
-  const lightR = (grove === 0 ? 13 : 11) + (slotIndex % 3) + pulse;
-  const shadeR = 9 + (slotIndex % 3) + (grove >= 3 ? 2 : 0);
-  const lightA = 0.2 * crowd * breath;
-  const shadeA = Math.min(0.32, 0.22 * shadeBoost * breath);
+  const lightR = (grove === 0 ? 18 : 16) + (slotIndex % 3) + pulse;
+  const shadeR = 13 + (slotIndex % 3) + (grove >= 3 ? 2 : 0);
+  const lightA = 0.34 * crowd * breath;
+  const shadeA = Math.min(0.4, 0.3 * shadeBoost * breath);
   const specksL = LIGHT_SHAPES[shape % LIGHT_SHAPES.length]!;
   const specksS = SHADE_SHAPES[shape % SHADE_SHAPES.length]!;
 
@@ -217,13 +227,13 @@ function paintPair(
     originY,
     viewW,
     viewH,
-    wx + 6,
-    wy + 4,
+    wx + 8,
+    wy + 5,
     shadeR,
     `rgba(${SHADE}, ${shadeA})`,
     `rgba(${SHADE}, ${shadeA * 0.42})`,
     specksS,
-    `rgba(${SHADE}, ${Math.min(0.62, 0.5 * shadeBoost * breath)})`,
+    `rgba(${SHADE}, ${Math.min(0.72, 0.6 * shadeBoost * breath)})`,
   );
   paintSpot(
     ctx,
@@ -238,7 +248,7 @@ function paintPair(
     `rgba(${LIGHT_SOFT}, ${lightA})`,
     `rgba(${LIGHT_SOFT}, ${lightA * 0.4})`,
     specksL,
-    `rgba(${LIGHT_PIX}, ${0.66 * crowd * breath})`,
+    `rgba(${LIGHT_PIX}, ${0.82 * crowd * breath})`,
   );
 }
 
