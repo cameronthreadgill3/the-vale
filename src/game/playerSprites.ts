@@ -21,7 +21,7 @@ const FACING_ROW: Record<Facing, number> = {
 };
 
 /** On-screen draw size (world pixels). */
-export const PLAYER_SPRITE_SIZE = 44;
+export const PLAYER_SPRITE_SIZE = 52;
 /** Walk cycle advance rate (frames per second while moving). */
 export const WALK_FPS = 8;
 

@@ -244,7 +244,7 @@ export function drawFolkSprite(
   folkId?: string,
 ): void {
   const sheet = getFolkSheet(color, folkId);
-  const size = 38;
+  const size = 44;
   drawSoftShadow(ctx, sx, sy + size * 0.24, size * 0.3, size * 0.11, 0.36);
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(

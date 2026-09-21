@@ -12,7 +12,7 @@ import { makeCanvas, ctx2d, px, shadeHex, mixHex } from "@/game/gfx/canvasUtil";
 export const TILE_PX = 32;
 export const TILE_VARIANTS = 8;
 export const FOUNTAIN_FRAMES = 4;
-export const CANOPY_PX = 56;
+export const CANOPY_PX = 64;
 
 export type TileMode = "overworld" | "hollow";
 export type EdgeDir = "n" | "s" | "e" | "w";
@@ -225,24 +225,25 @@ function paintFlowerFountain(
   const stone = mixHex(base, "#6a6860", 0.55);
   const stoneDark = shadeHex(stone, 0.6);
   const stoneLite = shadeHex(stone, 1.25);
-  const water = mixHex(base, "#2a5880", 0.55);
-  const waterLite = mixHex(water, "#a0d0e8", 0.5);
-  const foam = "#d8eef8";
-  // basin
-  px(ctx, 5, 12, stoneDark, 22, 16);
-  px(ctx, 6, 13, stone, 20, 14);
-  px(ctx, 7, 14, stoneLite, 18, 1);
-  px(ctx, 8, 15, water, 16, 10);
-  const rippleY = 17 + (anim % 3);
-  px(ctx, 10, rippleY, waterLite, 12, 2);
-  px(ctx, 12, rippleY + 3, shadeHex(waterLite, 0.85), 8, 1);
+  const water = mixHex(base, "#2a70a0", 0.45);
+  const waterLite = mixHex(water, "#c0e8f8", 0.55);
+  const foam = "#e8f6ff";
+  // basin — fill most of the tile so the plaza fountain reads at distance
+  px(ctx, 3, 10, stoneDark, 26, 20);
+  px(ctx, 4, 11, stone, 24, 18);
+  px(ctx, 5, 12, stoneLite, 22, 2);
+  px(ctx, 6, 14, water, 20, 13);
+  px(ctx, 7, 15, shadeHex(water, 1.15), 18, 4);
+  const rippleY = 16 + (anim % 3);
+  px(ctx, 8, rippleY, waterLite, 16, 2);
+  px(ctx, 10, rippleY + 3, foam, 12, 1);
   // pedestal + spout
-  px(ctx, 14, 8, stoneDark, 4, 10);
-  px(ctx, 15, 7, stone, 2, 10);
-  px(ctx, 15, 5, waterLite, 2, 4);
+  px(ctx, 13, 7, stoneDark, 6, 12);
+  px(ctx, 14, 6, stone, 4, 12);
+  px(ctx, 15, 4, waterLite, 2, 6);
   // animated jet + droplets
-  const jet = 4 + anim;
-  px(ctx, 15, 5 - Math.min(3, anim), foam, 2, jet);
+  const jet = 5 + anim;
+  px(ctx, 15, 2, foam, 2, jet);
   const drops: [number, number][] = [
     [12 - anim, 7 + anim],
     [19 + (anim % 2), 8 + (anim % 3)],
@@ -481,18 +482,21 @@ function paintAshwoodCanopy(base: string, variant: number): Sheet {
   const silver = "#b8c8b0";
   const ox = (variant % 5) - 2;
   const oy = ((variant * 3) % 5) - 2;
-  blob(ctx, 8 + ox, 10 + oy, 40, 28, dark);
-  blob(ctx, 4 + ox, 14 + oy, 22, 20, mid);
-  blob(ctx, 22 + ox, 8 + oy, 26, 24, canopy);
-  blob(ctx, 14 + ox, 4 + oy, 24, 18, mid);
-  blob(ctx, 18 + ox, 16 + oy, 20, 16, canopy);
-  blob(ctx, 10 + ox, 18 + oy, 16, 14, dark);
-  blob(ctx, 28 + ox, 18 + oy, 14, 12, mid);
+  blob(ctx, 6 + ox, 10 + oy, 52, 36, dark);
+  blob(ctx, 2 + ox, 14 + oy, 28, 26, mid);
+  blob(ctx, 24 + ox, 6 + oy, 34, 30, canopy);
+  blob(ctx, 12 + ox, 2 + oy, 30, 22, mid);
+  blob(ctx, 16 + ox, 16 + oy, 26, 20, canopy);
+  blob(ctx, 8 + ox, 20 + oy, 22, 18, dark);
+  blob(ctx, 30 + ox, 18 + oy, 20, 16, mid);
+  blob(ctx, 20 + ox, 8 + oy, 18, 16, canopy);
   // silver-edged leaves
   const sparks = [
     [8 + ox, 16], [12 + ox, 8], [24 + ox, 6], [36 + ox, 12],
     [40 + ox, 20], [30 + ox, 8], [16 + ox, 22], [22 + ox, 4],
     [6 + ox, 24], [34 + ox, 28], [18 + ox, 12], [42 + ox, 16],
+    [50 + ox, 18], [28 + ox, 32], [10 + ox, 30], [48 + ox, 10],
+    [14 + ox, 14], [38 + ox, 22], [20 + ox, 26], [44 + ox, 30],
   ];
   for (let i = 0; i < sparks.length; i++) {
     const [sx, sy] = sparks[i]!;

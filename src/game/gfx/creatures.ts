@@ -277,7 +277,7 @@ export function drawCreatureSprite(
   frame = 0,
 ): void {
   const sheet = getCreatureSheet(id, color, colorDark, flash, frame);
-  const size = Math.max(24, Math.min(48, Math.round(radius * 2.6)));
+  const size = Math.max(28, Math.min(56, Math.round(radius * 3.1)));
   drawSoftShadow(ctx, sx, sy + size * 0.28, size * 0.34, size * 0.13, flash ? 0.2 : 0.38);
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(
