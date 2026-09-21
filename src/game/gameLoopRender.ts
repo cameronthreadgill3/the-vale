@@ -1,6 +1,6 @@
 /** Camera advance + world/player/HUD render for the game loop. */
 import { TILE, type WorldMap } from "@/game/world";
-import { PLAYER_RADIUS, type HudState, type PromptState } from "@/game/canvasConstants";
+import { type HudState, type PromptState } from "@/game/canvasConstants";
 import { levelFromXp, progressInLevel, xpToNext } from "@/game/xp";
 import { maxHpFor, maxManaFor } from "@/game/combat";
 import { getClass } from "@/game/classes";
@@ -22,6 +22,8 @@ import {
 import type { ValeCharacter } from "@/game/character";
 import type { FolkDef, ShopDef, ShipDock } from "@/game/folk";
 import { computePrompt } from "@/game/gameLoopFrame";
+import { drawPlayer } from "@/game/renderPlayer";
+import type { Facing } from "@/game/playerSprites";
 
 export function advanceCameraAndRender(args: {
   ctx: CanvasRenderingContext2D;
@@ -42,6 +44,8 @@ export function advanceCameraAndRender(args: {
   accent: { accent: string; accentLite: string; accentDark: string };
   character: ValeCharacter;
   paused: boolean;
+  facing?: Facing;
+  walkFrame?: number;
   setHud: (h: HudState) => void;
   setPrompt: (p: PromptState) => void;
   promptRef: { current: PromptState };
@@ -52,7 +56,7 @@ export function advanceCameraAndRender(args: {
   const {
     ctx, canvas, map, player, dt, enemies, floatTexts, projectiles,
     docks, folk, shops, mouse, playerFlash, accent, character, paused,
-    setHud, setPrompt, promptRef,
+    facing = "south", walkFrame = 0, setHud, setPrompt, promptRef,
   } = args;
 
   camX += (player.x - camX) * Math.min(1, 8 * dt);
@@ -118,9 +122,9 @@ export function advanceCameraAndRender(args: {
     const pxLight = Math.floor(player.x - originX);
     const pyLight = Math.floor(player.y - originY);
     const g = ctx.createRadialGradient(pxLight, pyLight, 28, pxLight, pyLight, 220);
-    g.addColorStop(0, `rgba(0,0,0,${Math.max(0, map.darkness * 0.15)})`);
-    g.addColorStop(0.45, `rgba(0,0,0,${map.darkness * 0.55})`);
-    g.addColorStop(1, `rgba(0,0,0,${Math.min(0.55, map.darkness + 0.22)})`);
+    g.addColorStop(0, `rgba(0,0,0,${Math.max(0, map.darkness * 0.15)}`);
+    g.addColorStop(0.45, `rgba(0,0,0,${map.darkness * 0.55)}`);
+    g.addColorStop(1, `rgba(0,0,0,${Math.min(0.55, map.darkness + 0.22)}`);
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, viewW, viewH);
   }
@@ -162,27 +166,7 @@ export function advanceCameraAndRender(args: {
   drawProjectiles(ctx, projectiles, originX, originY);
   const px = Math.floor(player.x - originX);
   const py = Math.floor(player.y - originY);
-  ctx.fillStyle = "rgba(0,0,0,0.35)";
-  ctx.beginPath();
-  ctx.ellipse(px, py + 6, PLAYER_RADIUS * 0.9, PLAYER_RADIUS * 0.45, 0, 0, Math.PI * 2);
-  ctx.fill();
-  const grad = ctx.createRadialGradient(px - 3, py - 4, 2, px, py, PLAYER_RADIUS + 2);
-  grad.addColorStop(0, accent.accentLite);
-  grad.addColorStop(0.6, accent.accent);
-  grad.addColorStop(1, accent.accentDark);
-  ctx.fillStyle = grad;
-  ctx.beginPath();
-  ctx.arc(px, py, PLAYER_RADIUS, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = "#0c0d0b";
-  ctx.lineWidth = 2;
-  ctx.stroke();
-  if (playerFlash > 0) {
-    ctx.fillStyle = `rgba(255,80,60,${Math.min(0.45, playerFlash * 2)})`;
-    ctx.beginPath();
-    ctx.arc(px, py, PLAYER_RADIUS, 0, Math.PI * 2);
-    ctx.fill();
-  }
+  drawPlayer(ctx, character, px, py, facing, walkFrame, playerFlash, accent);
   drawFloatTexts(ctx, floatTexts, originX, originY);
 
   hudAccum += dt;
