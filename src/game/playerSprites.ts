@@ -1,5 +1,6 @@
-/** Class walk sprites — generated stand-in sheets (no binary PNG assets). */
+/** Class walk sprites — Imagine 4×4 PNG sheets, procedural fallback. */
 
+import { asset } from "@/game/assets";
 import type { ClassId } from "@/game/classes";
 import { drawDirectionalRim } from "@/game/gfx/directionalRim";
 import { drawSilhouetteFlash } from "@/game/gfx/hitFlash";
@@ -11,6 +12,15 @@ import {
   paintSouthPreview,
   sheetToPngDataUrl,
 } from "@/game/playerSpriteSheets";
+
+const CLASS_SHEET_PNG: Record<ClassId, string> = {
+  warden: "sprites/classes/warden.png",
+  thornblade: "sprites/classes/thornblade.png",
+  pathfinder: "sprites/classes/pathfinder.png",
+  hearthmage: "sprites/classes/hearthmage.png",
+  verdant: "sprites/classes/verdant.png",
+  hollowborn: "sprites/classes/hollowborn.png",
+};
 
 /** Facing rows in each sheet. */
 export type Facing = "south" | "west" | "east" | "north";
@@ -32,6 +42,29 @@ const sheetLoading = new Map<ClassId, Promise<HTMLImageElement | null>>();
 const previewUrlCache = new Map<ClassId, string>();
 const previewLoading = new Map<ClassId, Promise<string>>();
 
+function loadPngSheet(classId: ClassId): Promise<HTMLImageElement | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.decoding = "async";
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = asset(CLASS_SHEET_PNG[classId]);
+  });
+}
+
+function southPreviewFromSheet(img: HTMLImageElement): string {
+  const fw = img.naturalWidth / COLS || FRAME;
+  const fh = img.naturalHeight / ROWS || FRAME;
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(fw));
+  canvas.height = Math.max(1, Math.round(fh));
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return "";
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(img, 0, 0, fw, fh, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL("image/png");
+}
+
 async function canvasToImage(
   canvas: HTMLCanvasElement | OffscreenCanvas,
 ): Promise<HTMLImageElement> {
@@ -51,6 +84,16 @@ export function preloadPlayerSprite(classId: ClassId): Promise<HTMLImageElement 
   if (existing) return existing;
   const p = (async () => {
     try {
+      const png = await loadPngSheet(classId);
+      if (png) {
+        sheetCache.set(classId, png);
+        try {
+          previewUrlCache.set(classId, southPreviewFromSheet(png));
+        } catch {
+          /* class select can wait */
+        }
+        return png;
+      }
       const sheet = paintClassSheet(classId);
       const img = await canvasToImage(sheet);
       sheetCache.set(classId, img);
