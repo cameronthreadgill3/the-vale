@@ -1,536 +1,281 @@
-/** Catalog of pack goods and equippable gear (First Story flavor, Tibia-lite stats). */
+import type { EnemyKind } from "./classes";
+import type { SkillId, SkillSet } from "./skills";
+import { GEAR_EXTRAS, LADDER, canWear as wearCheck } from "./gear";
 
-import type { SkillId } from "@/game/skills";
+export type Rarity = "common" | "uncommon" | "rare" | "epic" | "legendary" | "mythical" | "relic";
+export type EquipSlot = "weapon" | "offhand" | "helm" | "chest" | "legs" | "boots" | "amulet" | "ring";
+export type Loadout = Partial<Record<EquipSlot, ItemId>>;
+export type SkillNeed = { skill: SkillId; level: number };
 
-export type ItemKind = "goods" | "weapon" | "armor" | "shield";
-
-/** Equipment slots that can hold a worn piece. */
-export type EquipSlot = "weapon" | "armor" | "shield";
-
-/**
- * Gear tiers — ashwood basin → thorn → mistveil/choir.
- * 0 Fledgling · 1 Basin · 2 Ashwood · 3 Thorn · 4 Choir-mist
- */
-export type EquipTier = 0 | 1 | 2 | 3 | 4;
-
-export const TIER_NAMES: Record<EquipTier, string> = {
-  0: "Fledgling",
-  1: "Basin",
-  2: "Ashwood",
-  3: "Thorn",
-  4: "Choir-mist",
+export type ItemDef = {
+  id: string;
+  name: string;
+  value: number;
+  kind: "loot" | "supply" | "gear";
+  desc: string;
+  eatHp?: number;
+  eatMp?: number;
+  slot?: EquipSlot;
+  rarity?: Rarity;
+  levelReq?: number;
+  skillReq?: SkillNeed;
+  attack?: number;
+  distance?: number;
+  armor?: number;
+  hp?: number;
+  mp?: number;
 };
 
-export type ItemId =
-  | "healing-draught"
-  | "trail-rations"
-  | "hearth-bread"
-  | "thorn-charm"
-  | "lantern-oil"
-  | "rope-coil"
-  | "salted-fish"
-  | "mistveil-tonic"
-  | "obsidian-shard"
-  | "rat-tooth"
-  | "basin-leather"
-  | "ashwood-splinter"
-  | "mite-chitin"
-  | "bark-hide"
-  | "thorn-fang"
-  | "mistveil-thread"
-  | "hollow-spark"
-  | "ashveil-cinder"
-  | "choir-shard"
-  | "briar-herb"
-  | "ashwood-scrap"
-  | "basin-minnow"
-  | "ash-salve"
-  | "fledgling-knife"
-  | "fledgling-sword"
-  | "ashwood-hatchet"
-  | "ashwood-blade"
-  | "bark-club"
-  | "reed-bow"
-  | "cloth-wraps"
-  | "hearth-rod"
-  | "thornleaf-wand"
-  | "thorn-axe"
-  | "mistveil-rod"
-  | "choir-dirk"
-  | "fledgling-vest"
-  | "basin-leathers"
-  | "thorn-mail"
-  | "mistveil-wrap"
-  | "choir-hauberk"
-  | "basin-buckler"
-  | "bark-shield"
-  | "thorn-ward";
+const LOOT: Record<string, ItemDef> = {
+  gold: { id: "gold", name: "Gold", value: 1, kind: "supply", desc: "Old tongue for coin. The purse splits copper, silver, gold, and platinum." },
+  health_potion: { id: "health_potion", name: "Health draught", value: 28, kind: "supply", desc: "A red flask. Drink in the wild." },
+  mana_potion: { id: "mana_potion", name: "Mana draught", value: 32, kind: "supply", desc: "Blue glass. Restores the weave." },
+  bread: { id: "bread", name: "Hearth bread", value: 8, kind: "supply", desc: "Still warm if you ask.", eatHp: 22 },
+  stew: { id: "stew", name: "Vale stew", value: 16, kind: "supply", desc: "A bowl. Sit with it.", eatHp: 40, eatMp: 12 },
+  ale: { id: "ale", name: "Mill ale", value: 6, kind: "supply", desc: "Bitter. Kind.", eatMp: 14 },
+  vale_fish: { id: "vale_fish", name: "Vale fish", value: 9, kind: "supply", desc: "From the quay. Eat or sell.", eatHp: 18 },
+  copse_herb: { id: "copse_herb", name: "Copse herb", value: 5, kind: "supply", desc: "Green at the edge of town.", eatMp: 10 },
+  bait: { id: "bait", name: "Offal bait", value: 4, kind: "supply", desc: "The quay and the copse both notice." },
+  goblin_ear: { id: "goblin_ear", name: "Goblin ear", value: 6, kind: "loot", desc: "Proof of a small hunt." },
+  wolf_pelt: { id: "wolf_pelt", name: "Wolf pelt", value: 14, kind: "loot", desc: "Warm if you can stand the smell." },
+  wolf_fang: { id: "wolf_fang", name: "Wolf fang", value: 11, kind: "loot", desc: "Traders pay for the point." },
+  bone: { id: "bone", name: "Old bone", value: 5, kind: "loot", desc: "From something that should have stayed down." },
+  rusty_blade: { id: "rusty_blade", name: "Rusty blade", value: 18, kind: "loot", desc: "Not a weapon anymore. Scrap." },
+  orc_tusk: { id: "orc_tusk", name: "Orc tusk", value: 22, kind: "loot", desc: "Heavy. The shops in cities want these." },
+  orc_hide: { id: "orc_hide", name: "Orc hide", value: 20, kind: "loot", desc: "Thick as boot leather." },
+  drake_scale: { id: "drake_scale", name: "Drake scale", value: 40, kind: "loot", desc: "Still warm at the edges." },
+  fire_gland: { id: "fire_gland", name: "Fire gland", value: 55, kind: "loot", desc: "Mages buy these. Handle closed." },
+  wisp_silk: { id: "wisp_silk", name: "Wisp silk", value: 12, kind: "loot", desc: "Cool to the touch. Lights a room." },
+  wight_shroud: { id: "wight_shroud", name: "Barrow linen", value: 18, kind: "loot", desc: "A shroud that still knows a name." },
+  cinder_core: { id: "cinder_core", name: "Cinder core", value: 28, kind: "loot", desc: "A coal that will not go out." },
+  crab_shell: { id: "crab_shell", name: "Salt shell", value: 16, kind: "loot", desc: "Barnacled. The quay pays for these." },
+  shrike_glass: { id: "shrike_glass", name: "Shrike glass", value: 48, kind: "loot", desc: "A feather that cuts the palm." },
+  hag_eye: { id: "hag_eye", name: "Hag eye", value: 60, kind: "loot", desc: "It looks back. Traders still buy it." },
+  king_shard: { id: "king_shard", name: "Crown shard", value: 90, kind: "loot", desc: "A flake of the Hollow King's antler." },
+};
 
-export interface ItemDef {
-  id: ItemId;
-  name: string;
-  blurb: string;
-  /** Default buy / vendor value in gold. */
-  value: number;
-  /** Carry weight in oz. */
-  weight: number;
-  kind: ItemKind;
-  tier?: EquipTier;
-  slot?: EquipSlot;
-  attack?: number;
-  defense?: number;
-  weaponSkill?: SkillId;
-  twoHand?: boolean;
-}
+export const ITEMS: Record<string, ItemDef> = { ...LOOT };
+for (const g of LADDER) ITEMS[g.id] = g;
+for (const g of GEAR_EXTRAS) ITEMS[g.id] = g;
 
-export const ITEMS: ItemDef[] = [
-  {
-    id: "healing-draught",
-    name: "Healing Draught",
-    blurb: "A bitter vial that knits scrapes and bruises.",
-    value: 12,
-    weight: 2,
-    kind: "goods",
-  },
-  {
-    id: "trail-rations",
-    name: "Trail Rations",
-    blurb: "Dried meat and hard biscuit for the road.",
-    value: 5,
-    weight: 8,
-    kind: "goods",
-  },
-  {
-    id: "hearth-bread",
-    name: "Hearth Bread",
-    blurb: "Warm loaf wrapped in thornleaf cloth.",
-    value: 4,
-    weight: 6,
-    kind: "goods",
-  },
-  {
-    id: "thorn-charm",
-    name: "Thorn Charm",
-    blurb: "A briar token travelers rub for luck.",
-    value: 18,
-    weight: 1,
-    kind: "goods",
-  },
-  {
-    id: "lantern-oil",
-    name: "Lantern Oil",
-    blurb: "Smoky oil that burns steady in hollow dark.",
-    value: 8,
-    weight: 4,
-    kind: "goods",
-  },
-  {
-    id: "rope-coil",
-    name: "Rope Coil",
-    blurb: "Stout hemp for cliffs and choir vaults.",
-    value: 10,
-    weight: 18,
-    kind: "goods",
-  },
-  {
-    id: "salted-fish",
-    name: "Salted Fish",
-    blurb: "Mistmere catch, packed in brine.",
-    value: 6,
-    weight: 6,
-    kind: "goods",
-  },
-  {
-    id: "mistveil-tonic",
-    name: "Mistveil Tonic",
-    blurb: "Clears fog from the lungs — or so they say.",
-    value: 15,
-    weight: 2,
-    kind: "goods",
-  },
-  {
-    id: "obsidian-shard",
-    name: "Obsidian Shard",
-    blurb: "Nightglass coast glass, sharp and cold.",
-    value: 22,
-    weight: 3,
-    kind: "goods",
-  },
-  {
-    id: "rat-tooth",
-    name: "Needle Tooth",
-    blurb: "A curved needle-tooth, still faintly hooked.",
-    value: 3,
-    weight: 1,
-    kind: "goods",
-  },
-  {
-    id: "basin-leather",
-    name: "Basin Leather",
-    blurb: "Grass-scuffed hide from the Thornreach clearing.",
-    value: 8,
-    weight: 5,
-    kind: "goods",
-  },
-  {
-    id: "ashwood-splinter",
-    name: "Ashwood Splinter",
-    blurb: "Dark gray bark with a silver-edged grain.",
-    value: 6,
-    weight: 2,
-    kind: "goods",
-  },
-  {
-    id: "mite-chitin",
-    name: "Mite Chitin",
-    blurb: "Thorn-shelled plate from a basin pest.",
-    value: 4,
-    weight: 2,
-    kind: "goods",
-  },
-  {
-    id: "bark-hide",
-    name: "Bark Hide",
-    blurb: "Wolf-sized plates that still smell of ashwood.",
-    value: 14,
-    weight: 8,
-    kind: "goods",
-  },
-  {
-    id: "thorn-fang",
-    name: "Thorn Fang",
-    blurb: "A bark-hound hook, heavier than it looks.",
-    value: 11,
-    weight: 3,
-    kind: "goods",
-  },
-  {
-    id: "mistveil-thread",
-    name: "Mistveil Thread",
-    blurb: "Pale filament that beads with fog.",
-    value: 16,
-    weight: 1,
-    kind: "goods",
-  },
-  {
-    id: "hollow-spark",
-    name: "Hollow Spark",
-    blurb: "A wisp-ember that never quite goes out.",
-    value: 18,
-    weight: 1,
-    kind: "goods",
-  },
-  {
-    id: "ashveil-cinder",
-    name: "Ashveil Cinder",
-    blurb: "A hollow-heart that still remembers the first flicker.",
-    value: 36,
-    weight: 1,
-    kind: "goods",
-  },
-  {
-    id: "choir-shard",
-    name: "Choir Shard",
-    blurb: "Drowned hymn-glass, cold as the cloister floor.",
-    value: 24,
-    weight: 2,
-    kind: "goods",
-  },
-  {
-    id: "briar-herb",
-    name: "Briar Herb",
-    blurb: "Thornreach skirt-leaf, bitter and green.",
-    value: 4,
-    weight: 1,
-    kind: "goods",
-  },
-  {
-    id: "ashwood-scrap",
-    name: "Ashwood Scrap",
-    blurb: "A silver-edged splinter pulled from fallen ashwood.",
-    value: 5,
-    weight: 2,
-    kind: "goods",
-  },
-  {
-    id: "basin-minnow",
-    name: "Basin Minnow",
-    blurb: "Reed-pond catch from east of the square.",
-    value: 5,
-    weight: 2,
-    kind: "goods",
-  },
-  {
-    id: "ash-salve",
-    name: "Ash-Salve",
-    blurb: "Briar and ashwood, bound at Sera's kettle.",
-    /** Vendor 18g / Mara sell 9g — ahead of raw mats (2+2g) so the kettle walk pays. */
-    value: 18,
-    weight: 1,
-    kind: "goods",
-  },
-  {
-    id: "fledgling-knife",
-    name: "Fledgling Knife",
-    blurb: "A square-forged sticker for first blood.",
-    value: 10,
-    weight: 8,
-    kind: "weapon",
-    tier: 0,
-    slot: "weapon",
-    attack: 3,
-    weaponSkill: "sword",
-  },
-  {
-    id: "fledgling-sword",
-    name: "Fledgling Sword",
-    blurb: "Practice steel from the Thornhearth rack.",
-    value: 18,
-    weight: 22,
-    kind: "weapon",
-    tier: 0,
-    slot: "weapon",
-    attack: 4,
-    weaponSkill: "sword",
-  },
-  {
-    id: "ashwood-hatchet",
-    name: "Ashwood Hatchet",
-    blurb: "Silver-edged bit bound to dark gray haft.",
-    value: 26,
-    weight: 24,
-    kind: "weapon",
-    tier: 1,
-    slot: "weapon",
-    attack: 6,
-    weaponSkill: "axe",
-  },
-  {
-    id: "ashwood-blade",
-    name: "Ashwood Blade",
-    blurb: "Longer edge; grain runs like basin-river bands.",
-    value: 42,
-    weight: 28,
-    kind: "weapon",
-    tier: 2,
-    slot: "weapon",
-    attack: 8,
-    weaponSkill: "sword",
-  },
-  {
-    id: "bark-club",
-    name: "Bark Club",
-    blurb: "A hound-thick bough, still plated in hide.",
-    value: 34,
-    weight: 30,
-    kind: "weapon",
-    tier: 2,
-    slot: "weapon",
-    attack: 7,
-    weaponSkill: "club",
-  },
-  {
-    id: "reed-bow",
-    name: "Reed Bow",
-    blurb: "Mistmere reed, drawn quiet across the grass.",
-    value: 24,
-    weight: 18,
-    kind: "weapon",
-    tier: 1,
-    slot: "weapon",
-    attack: 6,
-    weaponSkill: "distance",
-    twoHand: true,
-  },
-  {
-    id: "cloth-wraps",
-    name: "Cloth Wraps",
-    blurb: "Square-knit strips. The Hollowborn's first hands.",
-    value: 8,
-    weight: 6,
-    kind: "weapon",
-    tier: 0,
-    slot: "weapon",
-    attack: 3,
-    weaponSkill: "fist",
-  },
-  {
-    id: "hearth-rod",
-    name: "Hearth Rod",
-    blurb: "A hearth-stone stave that remembers fire.",
-    value: 28,
-    weight: 16,
-    kind: "weapon",
-    tier: 1,
-    slot: "weapon",
-    attack: 7,
-    weaponSkill: "magic",
-    twoHand: true,
-  },
-  {
-    id: "thornleaf-wand",
-    name: "Thornleaf Wand",
-    blurb: "Green pith, soft light. Mends as it stings.",
-    value: 24,
-    weight: 12,
-    kind: "weapon",
-    tier: 1,
-    slot: "weapon",
-    attack: 6,
-    weaponSkill: "magic",
-  },
-  {
-    id: "thorn-axe",
-    name: "Thorn Axe",
-    blurb: "Briar-forged cheek; bites like the ashwood pack.",
-    value: 58,
-    weight: 32,
-    kind: "weapon",
-    tier: 3,
-    slot: "weapon",
-    attack: 10,
-    weaponSkill: "axe",
-  },
-  {
-    id: "mistveil-rod",
-    name: "Mistveil Rod",
-    blurb: "Fog-tempered. The hymn inside is not yours.",
-    value: 72,
-    weight: 18,
-    kind: "weapon",
-    tier: 4,
-    slot: "weapon",
-    attack: 11,
-    weaponSkill: "magic",
-    twoHand: true,
-  },
-  {
-    id: "choir-dirk",
-    name: "Choir Dirk",
-    blurb: "Drowned-hymn steel, thin as a cloister vow.",
-    value: 70,
-    weight: 20,
-    kind: "weapon",
-    tier: 4,
-    slot: "weapon",
-    attack: 11,
-    weaponSkill: "sword",
-  },
-  {
-    id: "fledgling-vest",
-    name: "Fledgling Vest",
-    blurb: "Quilted cloth from the square's spare chest.",
-    value: 14,
-    weight: 18,
-    kind: "armor",
-    tier: 0,
-    slot: "armor",
-    defense: 2,
-  },
-  {
-    id: "basin-leathers",
-    name: "Basin Leathers",
-    blurb: "Grass-scuffed hide, sewn with thorn-gut.",
-    value: 32,
-    weight: 28,
-    kind: "armor",
-    tier: 1,
-    slot: "armor",
-    defense: 4,
-  },
-  {
-    id: "thorn-mail",
-    name: "Thorn Mail",
-    blurb: "Briar rings over bark plates. Heavy mercy.",
-    value: 54,
-    weight: 42,
-    kind: "armor",
-    tier: 2,
-    slot: "armor",
-    defense: 7,
-  },
-  {
-    id: "mistveil-wrap",
-    name: "Mistveil Wrap",
-    blurb: "Fog-beaded cloth that turns a glancing bite.",
-    value: 48,
-    weight: 22,
-    kind: "armor",
-    tier: 3,
-    slot: "armor",
-    defense: 6,
-  },
-  {
-    id: "choir-hauberk",
-    name: "Choir Hauberk",
-    blurb: "Hymn-linked rings. Cold even in the sun.",
-    value: 80,
-    weight: 55,
-    kind: "armor",
-    tier: 4,
-    slot: "armor",
-    defense: 10,
-  },
-  {
-    id: "basin-buckler",
-    name: "Basin Buckler",
-    blurb: "A round of ashwood, silver-edged, small mercy.",
-    value: 16,
-    weight: 16,
-    kind: "shield",
-    tier: 1,
-    slot: "shield",
-    defense: 2,
-  },
-  {
-    id: "bark-shield",
-    name: "Bark Shield",
-    blurb: "Hound-hide across a basin plank.",
-    value: 36,
-    weight: 28,
-    kind: "shield",
-    tier: 2,
-    slot: "shield",
-    defense: 4,
-  },
-  {
-    id: "thorn-ward",
-    name: "Thorn Ward",
-    blurb: "Briar-rimmed face. The square's last lesson.",
-    value: 52,
-    weight: 32,
-    kind: "shield",
-    tier: 3,
-    slot: "shield",
-    defense: 6,
-  },
+export type ItemId = string;
+
+export type InvStack = { item: ItemId; qty: number };
+
+export const PACK_CAP = 24;
+export const BANK_SLOTS = 100;
+
+export const SLOT_ORDER: EquipSlot[] = ["weapon", "offhand", "helm", "chest", "legs", "boots", "amulet", "ring"];
+
+export const SLOT_LABEL: Record<EquipSlot, string> = {
+  weapon: "Weapon",
+  offhand: "Off-hand",
+  helm: "Helm",
+  chest: "Chest",
+  legs: "Legs",
+  boots: "Boots",
+  amulet: "Amulet",
+  ring: "Ring",
+};
+
+export const RARITY_LABEL: Record<Rarity, string> = {
+  common: "Common",
+  uncommon: "Uncommon",
+  rare: "Rare",
+  epic: "Epic",
+  legendary: "Legendary",
+  mythical: "Mythical",
+  relic: "Relic",
+};
+
+export const RARITY_CLASS: Record<Rarity, string> = {
+  common: "text-fg-subtle",
+  uncommon: "text-xp",
+  rare: "text-mp",
+  epic: "text-hp",
+  legendary: "text-fg",
+  mythical: "text-primary",
+  relic: "text-primary",
+};
+
+export const SHOP_STOCK: ItemId[] = [
+  "health_potion",
+  "mana_potion",
+  "bread",
+  "stew",
+  "ale",
+  "melee_splinter",
+  "ward_splinter",
+  "helm_splinter",
+  "chest_splinter",
+  "legs_splinter",
+  "boots_splinter",
+  "melee_thorn",
 ];
 
-export function getItem(id: ItemId): ItemDef {
-  const found = ITEMS.find((i) => i.id === id);
-  if (!found) throw new Error(`Unknown item: ${id}`);
-  return found;
+export function isGear(id: ItemId): boolean {
+  return ITEMS[id]?.kind === "gear";
 }
 
-export function isItemId(v: unknown): v is ItemId {
-  return typeof v === "string" && ITEMS.some((i) => i.id === v);
+export function emptyWorn(): Loadout {
+  return {};
 }
 
-export function isEquipSlot(v: unknown): v is EquipSlot {
-  return v === "weapon" || v === "armor" || v === "shield";
+export type Vault = (InvStack | null)[];
+
+export function emptyVault(): Vault {
+  return Array.from({ length: BANK_SLOTS }, () => null);
 }
 
-export function isEquippable(item: ItemDef): boolean {
-  return item.kind === "weapon" || item.kind === "armor" || item.kind === "shield";
+export function emptyPack(): InvStack[] {
+  return [];
 }
 
-/** Compact stat line for shops and the pack. */
-export function itemStatLine(item: ItemDef): string {
+export function sanitizeWorn(raw?: Loadout | null): Loadout {
+  const next: Loadout = {};
+  if (!raw || typeof raw !== "object") return next;
+  for (const slot of SLOT_ORDER) {
+    const id = raw[slot];
+    if (!id || !ITEMS[id] || ITEMS[id].kind !== "gear" || ITEMS[id].slot !== slot) continue;
+    next[slot] = id;
+  }
+  return next;
+}
+
+export function sanitizeVault(raw?: Vault | null): Vault {
+  const next = emptyVault();
+  if (!Array.isArray(raw)) return next;
+  for (let i = 0; i < BANK_SLOTS; i++) {
+    const s = raw[i];
+    if (!s || !ITEMS[s.item] || s.item === "gold") continue;
+    next[i] = { item: s.item, qty: Math.max(1, Math.floor(s.qty || 1)) };
+  }
+  return next;
+}
+
+export function wornBonuses(worn: Loadout, level = 999, skills?: SkillSet) {
+  let attack = 0;
+  let distance = 0;
+  let armor = 0;
+  let hp = 0;
+  let mp = 0;
+  for (const slot of SLOT_ORDER) {
+    const id = worn[slot];
+    if (!id) continue;
+    const d = ITEMS[id];
+    if (!d) continue;
+    if (skills ? wearCheck(d, level, skills) : (d.levelReq ?? 1) > level) continue;
+    attack += d.attack ?? 0;
+    distance += d.distance ?? 0;
+    armor += d.armor ?? 0;
+    hp += d.hp ?? 0;
+    mp += d.mp ?? 0;
+  }
+  return { attack, distance, armor, hp, mp };
+}
+
+export function canWear(d: ItemDef, level: number, skills: SkillSet) {
+  return wearCheck(d, level, skills);
+}
+
+export function sellPrice(id: ItemId) {
+  const d = ITEMS[id];
+  if (!d) return 1;
+  return Math.max(1, Math.floor(d.value * 0.45));
+}
+
+export function addToPack(pack: InvStack[], item: ItemId, qty: number): InvStack[] | null {
+  if (item === "gold" || qty <= 0 || !ITEMS[item]) return pack.map((s) => ({ ...s }));
+  const next = pack.map((s) => ({ ...s }));
+  const found = next.find((s) => s.item === item);
+  if (found) {
+    found.qty += qty;
+    return next;
+  }
+  if (next.length >= PACK_CAP) return null;
+  next.push({ item, qty });
+  return next;
+}
+
+export function takeFromPack(pack: InvStack[], item: ItemId, qty: number): InvStack[] | null {
+  const next = pack.map((s) => ({ ...s }));
+  const found = next.find((s) => s.item === item);
+  if (!found || found.qty < qty) return null;
+  found.qty -= qty;
+  return next.filter((s) => s.qty > 0);
+}
+
+export function stashInVault(vault: Vault, pack: InvStack[], item: ItemId): { vault: Vault; pack: InvStack[] } | null {
+  const taken = takeFromPack(pack, item, 1);
+  if (!taken) return null;
+  const nextVault = vault.map((s) => (s ? { ...s } : null));
+  const existing = nextVault.find((s) => s?.item === item);
+  if (existing) {
+    existing.qty += 1;
+    return { vault: nextVault, pack: taken };
+  }
+  const i = nextVault.findIndex((s) => !s);
+  if (i < 0) return null;
+  nextVault[i] = { item, qty: 1 };
+  return { vault: nextVault, pack: taken };
+}
+
+export function takeFromVault(vault: Vault, pack: InvStack[], slot: number): { vault: Vault; pack: InvStack[] } | null {
+  const i = Math.max(0, Math.min(BANK_SLOTS - 1, Math.floor(slot)));
+  const stack = vault[i];
+  if (!stack) return null;
+  const nextPack = addToPack(pack, stack.item, stack.qty);
+  if (!nextPack) return null;
+  const nextVault = vault.map((s) => (s ? { ...s } : null));
+  nextVault[i] = null;
+  return { vault: nextVault, pack: nextPack };
+}
+
+export function vaultUsed(vault: Vault) {
+  return vault.reduce((n, s) => n + (s ? 1 : 0), 0);
+}
+
+export function statLine(d: ItemDef): string {
   const bits: string[] = [];
-  if (item.tier !== undefined) bits.push(TIER_NAMES[item.tier]);
-  if (typeof item.attack === "number") bits.push(`Atk ${item.attack}`);
-  if (typeof item.defense === "number") bits.push(`Def ${item.defense}`);
-  if (item.twoHand) bits.push("2H");
-  bits.push(`${item.weight} oz`);
+  if (d.attack) bits.push(`+${d.attack} atk`);
+  if (d.distance) bits.push(`+${d.distance} dist`);
+  if (d.armor) bits.push(`+${d.armor} arm`);
+  if (d.hp) bits.push(`+${d.hp} hp`);
+  if (d.mp) bits.push(`+${d.mp} mp`);
+  if (d.levelReq) bits.push(`lv ${d.levelReq}`);
+  if (d.skillReq) bits.push(`${d.skillReq.skill} ${d.skillReq.level}`);
   return bits.join(" · ");
 }
+
+const KIND_LOOT: Record<EnemyKind, ItemId[]> = {
+  goblin: ["goblin_ear", "rusty_blade", "bone"],
+  wolf: ["wolf_pelt", "wolf_fang"],
+  skeleton: ["bone", "rusty_blade"],
+  orc: ["orc_tusk", "orc_hide"],
+  drake: ["drake_scale", "fire_gland"],
+  wisp: ["wisp_silk"],
+  wight: ["wight_shroud", "bone"],
+  cinder: ["cinder_core", "fire_gland"],
+  crab: ["crab_shell"],
+  shrike: ["shrike_glass"],
+  hag: ["hag_eye", "wisp_silk"],
+  hollowking: ["king_shard", "bone"],
+};
+
+export function rollLoot(kind: EnemyKind, level: number): { gold: number; drops: { item: ItemId; qty: number }[] } {
+  const gold = 2 + ((Math.random() * (4 + level * 1.4)) | 0);
+  const drops: { item: ItemId; qty: number }[] = [];
+  const table = KIND_LOOT[kind] ?? ["bone"];
+  if (Math.random() < 0.58) {
+    drops.push({ item: table[(Math.random() * table.length) | 0]!, qty: 1 });
+  }
+  if (Math.random() < 0.08) drops.push({ item: "health_potion", qty: 1 });
+  if (Math.random() < 0.07) {
+    const near = LADDER.filter((g) => Math.abs((g.levelReq ?? 1) - level) <= 12);
+    const pick = near[(Math.random() * near.length) | 0];
+    if (pick) drops.push({ item: pick.id, qty: 1 });
+  }
+  return { gold, drops };
+}
+
+export { LADDER };

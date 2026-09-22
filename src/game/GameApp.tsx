@@ -1,2539 +1,974 @@
-import { useCallback, useEffect, useState, useRef } from "react";
-import { getClass, type ClassId } from "@/game/classes";
-import { getContinent, type ContinentId } from "@/game/continents";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import {
-  awardSkillXp,
-  awardProfessionXp,
-  clearCharacter,
-  createCharacter,
-  clearHollowReturn,
-  enterHollow,
-  exitHollow,
-  loadCharacter,
-  travelToContinent,
-  markFolkMet,
-  removeInventoryItem,
-  setGold,
-  awardCombatXp,
-  setVitals,
-  applyDeath,
-  setQuickSlot,
-  tryAddInventoryItem,
-  equipItem,
-  unequipSlot,
-  unlockPremiumBackpack,
-  depositItem,
-  withdrawItem,
-  depositGold,
-  withdrawGold,
-  type ValeCharacter,
-} from "@/game/character";
+  Backpack,
+  Heart,
+  Map,
+  Pause,
+  Play,
+  ScrollText,
+  Trophy,
+  Users,
+  X,
+} from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Button } from "@/components/ui/button";
+import { SignInGate } from "@/lib/auth/gates";
 import {
-  TEETH_START_TOAST,
-  TEETH_REWARDS,
-  TEETH_COMPLETE_LINE,
-  ASHWOOD_START_TOAST,
-  ASHWOOD_REWARDS,
-  ASHWOOD_COMPLETE_LINE,
-  HOLLOW_START_TOAST,
-  HOLLOW_REWARDS,
-  HOLLOW_COMPLETE_LINE,
-  GATE_START_TOAST,
-  GATE_REWARDS,
-  GATE_COMPLETE_LINE,
-  MISTMERE_START_TOAST,
-  MISTMERE_REWARDS,
-  MISTMERE_COMPLETE_LINE,
-  WATCHLINE_START_TOAST,
-  WATCHLINE_REWARDS,
-  WATCHLINE_COMPLETE_LINE,
-  ASHVEIL_START_TOAST,
-  ASHVEIL_REWARDS,
-  ASHVEIL_COMPLETE_LINE,
-  CHOIR_COUNTS_START_TOAST,
-  CHOIR_COUNTS_REWARDS,
-  CHOIR_COUNTS_COMPLETE_LINE,
-  WHARF_START_TOAST,
-  WHARF_REWARDS,
-  WHARF_COMPLETE_LINE,
-  GREEN_GATE_START_TOAST,
-  GREEN_GATE_REWARDS,
-  GREEN_GATE_COMPLETE_LINE,
-  SPINE_START_TOAST,
-  SPINE_REWARDS,
-  SPINE_COMPLETE_LINE,
-  PALE_START_TOAST,
-  PALE_REWARDS,
-  PALE_COMPLETE_LINE,
-  ASHEN_START_TOAST,
-  ASHEN_REWARDS,
-  ASHEN_COMPLETE_LINE,
-  EMBERCOIL_START_TOAST,
-  EMBERCOIL_REWARDS,
-  EMBERCOIL_COMPLETE_LINE,
-  COIL_START_TOAST,
-  COIL_REWARDS,
-  COIL_COMPLETE_LINE,
-  CHOIR_REMEMBERS_START_TOAST,
-  CHOIR_REMEMBERS_REWARDS,
-  CHOIR_REMEMBERS_COMPLETE_LINE,
-  EDGE_REMEMBERS_START_TOAST,
-  EDGE_REMEMBERS_REWARDS,
-  EDGE_REMEMBERS_COMPLETE_LINE,
-  WHARF_REMEMBERS_START_TOAST,
-  WHARF_REMEMBERS_REWARDS,
-  WHARF_REMEMBERS_COMPLETE_LINE,
-  MERE_REMEMBERS_START_TOAST,
-  MERE_REMEMBERS_REWARDS,
-  MERE_REMEMBERS_COMPLETE_LINE,
-  PALE_REMEMBERS_START_TOAST,
-  PALE_REMEMBERS_REWARDS,
-  PALE_REMEMBERS_COMPLETE_LINE,
-  TEETH_QUEST_ID,
-  ASHWOOD_QUEST_ID,
-  HOLLOW_QUEST_ID,
-  GATE_QUEST_ID,
-  MISTMERE_QUEST_ID,
-  WATCHLINE_QUEST_ID,
-  ASHVEIL_QUEST_ID,
-  CHOIR_COUNTS_QUEST_ID,
-  WHARF_QUEST_ID,
-  GREEN_GATE_QUEST_ID,
-  SPINE_QUEST_ID,
-  PALE_QUEST_ID,
-  ASHEN_QUEST_ID,
-  EMBERCOIL_QUEST_ID,
-  COIL_QUEST_ID,
-  CHOIR_REMEMBERS_QUEST_ID,
-  EDGE_REMEMBERS_QUEST_ID,
-  WHARF_REMEMBERS_QUEST_ID,
-  MERE_REMEMBERS_QUEST_ID,
-  PALE_REMEMBERS_QUEST_ID,
-  CRESS_FOLK_ID,
-  OLD_REED_FOLK_ID,
-  CHOIR_KEEPER_FOLK_ID,
-  VESPER_FOLK_ID,
-  ASH_PILGRIM_FOLK_ID,
-  emptyTeethQuest,
-  getTeethQuest,
-  getAshwoodQuest,
-  getHollowQuest,
-  getGateWatchQuest,
-  getMistmereQuest,
-  getWatchlineQuest,
-  getAshveilQuest,
-  getChoirCountsQuest,
-  getWharfQuest,
-  getGreenGateQuest,
-  getSpineQuest,
-  getPaleQuest,
-  getAshenQuest,
-  getEmbercoilQuest,
-  getCoilQuest,
-  getChoirRemembersQuest,
-  getEdgeRemembersQuest,
-  getWharfRemembersQuest,
-  getMereRemembersQuest,
-  getPaleRemembersQuest,
-  applyIdentify,
-  applyEnemyKill,
-  applyCairnInspect,
-  applyHollowEnter,
-  applyGateReached,
-  applyGateWatchRookTalk,
-  applyMistmereReached,
-  applyMistmereOldReedTalk,
-  applyMistmereRookTalk,
-  applyWatchlineCressTalk,
-  applyWatchlineRookTalk,
-  applyAshveilRookTalk,
-  applyChoirCountsMistmereReached,
-  applyChoirCountsOldReedTalk,
-  applyChoirCountsChoirReached,
-  applyChoirCountsChoirKeeperTalk,
-  applyChoirCountsRookTalk,
-  applyWharfCressTalk,
-  applyWharfNightglassReached,
-  applyWharfVesperTalk,
-  applyWharfRookTalk,
-  applyGreenGateReached,
-  applyGreenGateRookTalk,
-  applySpineReached,
-  applySpineRookTalk,
-  applyPaleReached,
-  applyPaleRookTalk,
-  applyAshenReached,
-  applyAshPilgrimTalk,
-  applyAshenRookTalk,
-  applyEmbercoilReached,
-  applyEmbercoilRookTalk,
-  applyCoilReached,
-  applyCoilRookTalk,
-  applyChoirRemembersReached,
-  applyChoirRemembersRookTalk,
-  applyEdgeReached,
-  applyEdgeCressTalk,
-  applyEdgeRemembersRookTalk,
-  applyWharfRemembersReached,
-  applyWharfRemembersRookTalk,
-  applyMereRemembersReached,
-  applyMereRemembersRookTalk,
-  applyPaleRemembersReached,
-  applyPaleRemembersRookTalk,
-  withTeethQuest,
-  ensureAshwoodAfterTeeth,
-  ensureHollowAfterAshwood,
-  ensureGateWatchAfterHollow,
-  ensureMistmereAfterGate,
-  ensureWatchlineAfterMistmere,
-  ensureAshveilAfterWatchline,
-  ensureChoirCountsAfterAshveil,
-  ensureNightglassAfterChoir,
-  ensureGreenGateAfterWharf,
-  ensureSpineAfterGreenGate,
-  ensurePaleAfterSpine,
-  ensureAshenAfterPale,
-  ensureEmbercoilAfterAshen,
-  ensureCoilAfterEmbercoil,
-  ensureChoirRemembersAfterCoil,
-  ensureEdgeRemembersAfterChoir,
-  ensureWharfRemembersAfterEdge,
-  ensureMereRemembersAfterWharf,
-  ensurePaleRemembersAfterMere,
-  rookQuestLine,
-  loadQuestLog,
-  saveQuestLog,
-  clearQuestLog,
-  setQuestUiHandler,
-} from "@/game/quests";
-import {
-  ASHVEIL_EMBER_DEFEAT_TOAST,
-  isHollowBoss,
-  type EnemyKindId,
-} from "@/game/enemies";
-import {
-  SKILLS,
-  SKILL_IDS,
-  skillSnapshot,
-  type SkillId,
-} from "@/game/skills";
-import { getItem, isItemId, type EquipSlot, type ItemId } from "@/game/items";
-import {
-  PROFESSIONS,
-  getCraftRecipe,
-  getProfessionNode,
-  isNodeReady,
-  markNodeUsed,
-  professionName,
-  professionSnapshot,
-} from "@/game/professions";
-import {
-  getFolk,
-  getShop,
-  getDock,
-  dockSpawnForContinent,
-  folkOnContinent,
-} from "@/game/folk";
-import {
-  canAffordFare,
-  fareFailToast,
-  farePaidToast,
-  quoteGateFare,
-  quoteShipFare,
-} from "@/game/travelFares";
-import { maxHpFor, LOW_HP_RATIO, LOW_HP_TOAST } from "@/game/combat";
-import {
-  canCarry,
-  formatBankToast,
-  formatDeathToast,
-  toastForCarryFail,
-  DEATH_TOAST_MS,
-  type DeathToastCopy,
-} from "@/game/backpack";
-import { formatPickupToast } from "@/game/loot";
-import { clearBodyMarker } from "@/game/bodyMarker";
-import {
-  consumePremiumQuery,
-  isPremiumDemoAllowed,
-  startPremiumCheckout,
-  verifyPremiumSession,
-} from "@/game/premium";
-import { ClassSelectOverlay } from "@/game/ui/ClassSelectOverlay";
-import { GameShell } from "@/game/GameShell";
-
-const TRAIN_SKILL_XP = 18;
-
-function skillRowsFrom(character: ValeCharacter) {
-  return SKILL_IDS.map((id) => {
-    const def = SKILLS.find((s) => s.id === id)!;
-    const snap = skillSnapshot(character.skillXp[id]);
-    return { id, name: def.name, hotkey: def.hotkey, ...snap };
-  });
-}
-
-function professionRowsFrom(character: ValeCharacter) {
-  return PROFESSIONS.map((p) => {
-    const xp = character.professionXp?.[p.id] ?? 0;
-    return { id: p.id, name: p.name, blurb: p.blurb, ...professionSnapshot(xp) };
-  });
-}
+  CONTINENT_ORDER,
+  CONTINENTS,
+  listContinent,
+  otherEnd,
+  passagesFrom,
+  settlement,
+  type ContinentId,
+} from "./atlas";
+import { CLASSES, CLASS_ORDER, type ClassId } from "./classes";
+import { AccountForm } from "./AccountForm";
+import { BankRoom, HouseRoom, InnRoom, MillRoom, ShopRoom } from "./Interiors";
+import { ITEMS, RARITY_CLASS, RARITY_LABEL, SLOT_ORDER, type EquipSlot } from "./items";
+import { canWear, LADDER } from "./gear";
+import { formatCoins } from "./money";
+import { jobNeed, roleLabel, type Npc } from "./life";
+import { shopIdFromRole } from "./shops";
+import { createGame, type GameHandle } from "./engine";
+import { asset } from "./assets";
+import { useGameStore } from "./store";
+import { listWalkers } from "./walkers";
 
 export function GameApp() {
-  const [character, setCharacter] = useState<ValeCharacter | null>(() =>
-    loadCharacter(),
-  );
-  const [skillsOpen, setSkillsOpen] = useState(false);
-  const [mapOpen, setMapOpen] = useState(false);
-  const [skillTick, setSkillTick] = useState(0);
-  const [arrivedFrom, setArrivedFrom] = useState<ContinentId | null>(null);
-  const [shipSpawn, setShipSpawn] = useState<{ x: number; y: number } | null>(
-    null,
-  );
-  /** Bumps GameShell remount on death so deadLock / spawn reset even on same continent. */
-  const [worldEpoch, setWorldEpoch] = useState(0);
-  const [toast, setToast] = useState<string | null>(null);
-  const [deathToast, setDeathToast] = useState<DeathToastCopy | null>(null);
-  const [lootToast, setLootToast] = useState<string | null>(null);
-  const lootToastGen = useRef(0);
-  const lowHpWarnedRef = useRef(false);
-  const [dialogue, setDialogue] = useState<{
-    folkId: string;
-    name: string;
-    line: string;
-    hasShop: boolean;
-    hasBank?: boolean;
-    hasCraft?: boolean;
-    shopId?: string;
-    bankId?: string;
-    craftId?: string;
-  } | null>(null);
-  const dialogueRef = useRef(dialogue);
-  dialogueRef.current = dialogue;
-  const [bankFolkId, setBankFolkId] = useState<string | null>(null);
-  const [activeShopId, setActiveShopId] = useState<string | null>(null);
-  const [activeDockId, setActiveDockId] = useState<string | null>(null);
-  const [bankOpen, setBankOpen] = useState(false);
-  const [packOpen, setPackOpen] = useState(false);
-  const [premiumUnlocking, setPremiumUnlocking] = useState(false);
-  const [craftOpen, setCraftOpen] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const gameRef = useRef<GameHandle | null>(null);
+  const screen = useGameStore((s) => s.screen);
+  const overlay = useGameStore((s) => s.overlay);
+  const setScreen = useGameStore((s) => s.setScreen);
+  const hydrateRoster = useGameStore((s) => s.hydrateRoster);
 
-  const pickClass = useCallback((id: ClassId) => {
-    const created = createCharacter(id);
-    saveQuestLog(withTeethQuest(loadQuestLog(), emptyTeethQuest()));
-    setCharacter(created);
-    setArrivedFrom(null);
-    setShipSpawn(null);
-    setWorldEpoch(0);
-    clearBodyMarker();
-    setToast("First Story · Thornvale — Survive · Learn · Progress");
-    window.setTimeout(() => setToast((t) =>
-      t === "First Story · Thornvale — Survive · Learn · Progress" ? null : t
-    ), 2800);
-    window.setTimeout(() => {
-      setToast(TEETH_START_TOAST);
-      window.setTimeout(() => setToast((t) => (t === TEETH_START_TOAST ? null : t)), 3600);
-    }, 3000);
-  }, []);
-
-  const resetPath = useCallback(() => {
-    clearCharacter();
-    clearQuestLog();
-    setCharacter(null);
-    setSkillsOpen(false);
-    setMapOpen(false);
-    setArrivedFrom(null);
-    setShipSpawn(null);
-    setDialogue(null);
-    setActiveShopId(null);
-    setActiveDockId(null);
-    setBankOpen(false);
-    setPackOpen(false);
-    setCraftOpen(false);
-    setWorldEpoch(0);
-    clearBodyMarker();
-  }, []);
-
-  const toggleSkills = useCallback(() => {
-    setMapOpen(false);
-    setSkillsOpen((o) => !o);
-  }, []);
-
-  const toggleMap = useCallback(() => {
-    setSkillsOpen(false);
-    setMapOpen((o) => !o);
-  }, []);
-
-  const showToast = useCallback((msg: string, ms = 2200) => {
-    setDeathToast(null);
-    setToast(msg);
-    window.setTimeout(() => setToast((t) => (t === msg ? null : t)), ms);
-  }, []);
-
-  const showDeathToast = useCallback((copy: DeathToastCopy) => {
-    setToast(null);
-    setDeathToast(copy);
-    window.setTimeout(() => {
-      setDeathToast((current) => (current === copy ? null : current));
-    }, DEATH_TOAST_MS);
-  }, []);
-
-  const showLootToast = useCallback((msg: string, ms = 2400) => {
-    lootToastGen.current += 1;
-    const gen = lootToastGen.current;
-    setLootToast(msg);
-    window.setTimeout(() => {
-      if (lootToastGen.current === gen) setLootToast(null);
-    }, ms);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const g = createGame(canvas);
+    gameRef.current = g;
+    const qa = new URLSearchParams(window.location.search).has("qa");
+    if (qa) {
+      useGameStore.getState().setScreen("playing");
+      g.startRun("warrior", "Warden");
+    }
+    return () => {
+      g.destroy();
+      gameRef.current = null;
+    };
   }, []);
 
   useEffect(() => {
-    setQuestUiHandler((toast) => {
-      if (toast) showToast(toast, 2800);
-      else setSkillTick((t) => t + 1);
-    });
-    return () => setQuestUiHandler(null);
-  }, [showToast]);
-
-  const trainSkill = useCallback((skill: SkillId) => {
-    setCharacter((prev) => {
-      if (!prev) return prev;
-      const before = prev.skillXp[skill];
-      const next: ValeCharacter = {
-        ...prev,
-        skillXp: { ...prev.skillXp },
-      };
-      awardSkillXp(next, skill, TRAIN_SKILL_XP);
-      const gained = next.skillXp[skill] - before;
-      const beforeLvl = skillSnapshot(before).level;
-      const afterLvl = skillSnapshot(next.skillXp[skill]).level;
-      const label = SKILLS.find((s) => s.id === skill)?.name ?? skill;
-      queueMicrotask(() => {
-        if (afterLvl > beforeLvl) {
-          showToast(`${label} reached level ${afterLvl}`);
-        } else {
-          showToast(`${label} +${gained} XP`);
-        }
-      });
-      return { ...next, skillXp: { ...next.skillXp } };
-    });
-    setSkillTick((t) => t + 1);
-  }, [showToast]);
-
-  const assignQuickSlot = useCallback((index: number, skill: SkillId) => {
-    setCharacter((prev) => (prev ? setQuickSlot(prev, index, skill) : prev));
-    const label = SKILLS.find((s) => s.id === skill)?.name ?? skill;
-    showToast(`${label} → slot ${index + 1}`);
-  }, [showToast]);
-
-  const goContinent = useCallback(
-    (target: ContinentId, from: ContinentId): boolean => {
-      let blockedQuote: ReturnType<typeof quoteGateFare> | null = null;
-      let paid = 0;
-      let firstCrossing = false;
-      let travelled = false;
-      setCharacter((prev) => {
-        if (!prev) return prev;
-        const quote = quoteGateFare(
-          prev.continentId,
-          target,
-          prev.discoveredContinents,
-        );
-        if (!canAffordFare(prev.gold, quote)) {
-          blockedQuote = quote;
-          return prev;
-        }
-        paid = quote.gold;
-        firstCrossing = quote.firstCrossing;
-        let next = prev;
-        if (paid > 0) next = setGold(next, next.gold - paid);
-        travelled = true;
-        return travelToContinent(next, target);
-      });
-      if (blockedQuote) {
-        showToast(fareFailToast(blockedQuote));
-        return false;
-      }
-      if (!travelled) return false;
-      setArrivedFrom(from);
-      setShipSpawn(null);
-      setMapOpen(false);
-      setDialogue(null);
-      setActiveShopId(null);
-      setActiveDockId(null);
-      setBankOpen(false);
-      setPackOpen(false);
-      setCraftOpen(false);
-      if (target === "mistmere") {
-        const gateResult = applyGateReached(loadQuestLog());
-        if (gateResult) {
-          saveQuestLog(gateResult.log);
-          if (gateResult.toast) {
-            showToast(gateResult.toast);
-            window.setTimeout(
-              () => setToast((t) => (t === gateResult.toast ? null : t)),
-              2800,
-            );
-            return true;
-          }
-        }
-        const mistResult = applyMistmereReached(loadQuestLog());
-        if (mistResult) {
-          saveQuestLog(mistResult.log);
-          if (mistResult.toast) {
-            showToast(mistResult.toast);
-            window.setTimeout(
-              () => setToast((t) => (t === mistResult.toast ? null : t)),
-              2800,
-            );
-            return true;
-          }
-        }
-        const choirMist = applyChoirCountsMistmereReached(loadQuestLog());
-        if (choirMist) {
-          saveQuestLog(choirMist.log);
-          if (choirMist.toast) {
-            showToast(choirMist.toast);
-            window.setTimeout(
-              () => setToast((t) => (t === choirMist.toast ? null : t)),
-              2800,
-            );
-            return true;
-          }
-        }
-        const mereRemembers = applyMereRemembersReached(loadQuestLog());
-        if (mereRemembers) {
-          saveQuestLog(mereRemembers.log);
-          if (mereRemembers.toast) {
-            showToast(mereRemembers.toast);
-            window.setTimeout(
-              () => setToast((t) => (t === mereRemembers.toast ? null : t)),
-              2800,
-            );
-            return true;
-          }
-        }
-      }
-      if (target === "sunken-choir") {
-        const choirLand = applyChoirCountsChoirReached(loadQuestLog());
-        if (choirLand) {
-          saveQuestLog(choirLand.log);
-          if (choirLand.toast) {
-            showToast(choirLand.toast);
-            window.setTimeout(
-              () => setToast((t) => (t === choirLand.toast ? null : t)),
-              2800,
-            );
-            return true;
-          }
-        }
-        const choirRemembers = applyChoirRemembersReached(loadQuestLog());
-        if (choirRemembers) {
-          saveQuestLog(choirRemembers.log);
-          if (choirRemembers.toast) {
-            showToast(choirRemembers.toast);
-            window.setTimeout(
-              () => setToast((t) => (t === choirRemembers.toast ? null : t)),
-              2800,
-            );
-            return true;
-          }
-        }
-      }
-      if (target === "nightglass-coast") {
-        const night = applyWharfNightglassReached(loadQuestLog());
-        if (night) {
-          saveQuestLog(night.log);
-          if (night.toast) {
-            showToast(night.toast);
-            window.setTimeout(
-              () => setToast((t) => (t === night.toast ? null : t)),
-              2800,
-            );
-            return true;
-          }
-        }
-        const wharfRemembers = applyWharfRemembersReached(loadQuestLog());
-        if (wharfRemembers) {
-          saveQuestLog(wharfRemembers.log);
-          if (wharfRemembers.toast) {
-            showToast(wharfRemembers.toast);
-            window.setTimeout(
-              () => setToast((t) => (t === wharfRemembers.toast ? null : t)),
-              2800,
-            );
-            return true;
-          }
-        }
-      }
-      if (target === "verdant-spine") {
-        const green = applyGreenGateReached(loadQuestLog());
-        if (green) {
-          saveQuestLog(green.log);
-          if (green.toast) {
-            showToast(green.toast);
-            window.setTimeout(
-              () => setToast((t) => (t === green.toast ? null : t)),
-              2800,
-            );
-            return true;
-          }
-        }
-        const spine = applySpineReached(loadQuestLog());
-        if (spine) {
-          saveQuestLog(spine.log);
-          if (spine.toast) {
-            showToast(spine.toast);
-            window.setTimeout(
-              () => setToast((t) => (t === spine.toast ? null : t)),
-              2800,
-            );
-            return true;
-          }
-        }
-      }
-      if (target === "pale-wastes") {
-        const pale = applyPaleReached(loadQuestLog());
-        if (pale) {
-          saveQuestLog(pale.log);
-          if (pale.toast) {
-            showToast(pale.toast);
-            window.setTimeout(
-              () => setToast((t) => (t === pale.toast ? null : t)),
-              2800,
-            );
-            return true;
-          }
-        }
-        const paleRemembers = applyPaleRemembersReached(loadQuestLog());
-        if (paleRemembers) {
-          saveQuestLog(paleRemembers.log);
-          if (paleRemembers.toast) {
-            showToast(paleRemembers.toast);
-            window.setTimeout(
-              () => setToast((t) => (t === paleRemembers.toast ? null : t)),
-              2800,
-            );
-            return true;
-          }
-        }
-      }
-      if (target === "ashen-marches") {
-        const ashen = applyAshenReached(loadQuestLog());
-        if (ashen) {
-          saveQuestLog(ashen.log);
-          if (ashen.toast) {
-            showToast(ashen.toast);
-            window.setTimeout(
-              () => setToast((t) => (t === ashen.toast ? null : t)),
-              2800,
-            );
-            return true;
-          }
-        }
-      }
-      if (target === "embercoil") {
-        const embercoil = applyEmbercoilReached(loadQuestLog());
-        if (embercoil) {
-          saveQuestLog(embercoil.log);
-          if (embercoil.toast) {
-            showToast(embercoil.toast);
-            window.setTimeout(
-              () => setToast((t) => (t === embercoil.toast ? null : t)),
-              2800,
-            );
-            return true;
-          }
-        }
-        const coil = applyCoilReached(loadQuestLog());
-        if (coil) {
-          saveQuestLog(coil.log);
-          if (coil.toast) {
-            showToast(coil.toast);
-            window.setTimeout(
-              () => setToast((t) => (t === coil.toast ? null : t)),
-              2800,
-            );
-            return true;
-          }
-        }
-      }
-      if (target === "thornreach") {
-        const edge = applyEdgeReached(loadQuestLog());
-        if (edge) {
-          saveQuestLog(edge.log);
-          if (edge.toast) {
-            showToast(edge.toast);
-            window.setTimeout(
-              () => setToast((t) => (t === edge.toast ? null : t)),
-              2800,
-            );
-            return true;
-          }
-        }
-      }
-      const dest = getContinent(target);
-      if (paid > 0 || firstCrossing) {
-        showToast(farePaidToast("gate", dest.name, paid));
-      } else if (folkOnContinent(target).length === 0) {
-        showToast(`${dest.name} — ${dest.blurb}`);
-      } else {
-        showToast(`Gate opens onto ${dest.name}`);
-      }
-      return true;
-    },
-    [showToast],
-  );
-
-  const goHollow = useCallback(
-    (index: number, returnTile: { x: number; y: number }) => {
-      setCharacter((prev) =>
-        prev ? enterHollow(prev, index, returnTile) : prev,
-      );
-      setArrivedFrom(null);
-      setShipSpawn(null);
-      setDialogue(null);
-      setActiveShopId(null);
-      setActiveDockId(null);
-      showToast(`Descending into Hollow ${index + 1}`);
-    },
-    [showToast],
-  );
-
-  const leaveHollow = useCallback(() => {
-    setCharacter((prev) => (prev ? exitHollow(prev) : prev));
-    setArrivedFrom(null);
-    setShipSpawn(null);
-    showToast("Returning to the overworld");
-  }, [showToast]);
-
-  const openFolk = useCallback((folkId: string) => {
-    const folk = getFolk(folkId);
-    if (!folk) return;
-    setActiveShopId(null);
-    setActiveDockId(null);
-    setBankOpen(false);
-    setPackOpen(false);
-    let line = folk.line;
-    if (folkId === OLD_REED_FOLK_ID) {
-      const choirReed = applyChoirCountsOldReedTalk(loadQuestLog());
-      if (choirReed) {
-        saveQuestLog(choirReed.log);
-        if (choirReed.toast) {
-          line = choirReed.toast.replace(/^Old Reed:\s*/, "");
-          queueMicrotask(() => showToast(choirReed.toast!));
-        }
-      } else {
-        const reed = applyMistmereOldReedTalk(loadQuestLog());
-        if (reed) {
-          saveQuestLog(reed.log);
-          if (reed.toast) {
-            line = reed.toast.replace(/^Old Reed:\s*/, "");
-            queueMicrotask(() => showToast(reed.toast!));
-          }
-        }
-      }
-    }
-    if (folkId === CHOIR_KEEPER_FOLK_ID) {
-      const keeper = applyChoirCountsChoirKeeperTalk(loadQuestLog());
-      if (keeper) {
-        saveQuestLog(keeper.log);
-        if (keeper.toast) {
-          line = keeper.toast.replace(/^Choir Keeper:\s*/, "");
-          queueMicrotask(() => showToast(keeper.toast!));
-        }
-      }
-    }
-    if (folkId === VESPER_FOLK_ID) {
-      const vesper = applyWharfVesperTalk(loadQuestLog());
-      if (vesper) {
-        saveQuestLog(vesper.log);
-        if (vesper.toast) {
-          line = vesper.toast.replace(/^Captain Vesper:\s*/, "");
-          queueMicrotask(() => showToast(vesper.toast!));
-        }
-      }
-    }
-    if (folkId === ASH_PILGRIM_FOLK_ID) {
-      const pilgrim = applyAshPilgrimTalk(loadQuestLog());
-      if (pilgrim) {
-        saveQuestLog(pilgrim.log);
-        if (pilgrim.toast) {
-          line = pilgrim.toast.replace(/^Ash Pilgrim:\s*/, "");
-          queueMicrotask(() => showToast(pilgrim.toast!));
-        }
-      }
-    }
-    if (folkId === CRESS_FOLK_ID) {
-      const cress =
-        applyEdgeCressTalk(loadQuestLog()) ??
-        applyWatchlineCressTalk(loadQuestLog()) ??
-        applyWharfCressTalk(loadQuestLog());
-      if (cress) {
-        saveQuestLog(cress.log);
-        if (cress.toast) {
-          line = cress.toast.replace(/^Cress:\s*/, "");
-          queueMicrotask(() => showToast(cress.toast!));
-        }
-      }
-    }
-    if (folkId === "rook" && character) {
-      const turnIn =
-        applyPaleRemembersRookTalk(loadQuestLog()) ??
-        applyMereRemembersRookTalk(loadQuestLog()) ??
-        applyWharfRemembersRookTalk(loadQuestLog()) ??
-        applyEdgeRemembersRookTalk(loadQuestLog()) ??
-        applyChoirRemembersRookTalk(loadQuestLog()) ??
-        applyCoilRookTalk(loadQuestLog()) ??
-        applyEmbercoilRookTalk(loadQuestLog()) ??
-        applyAshenRookTalk(loadQuestLog()) ??
-        applyPaleRookTalk(loadQuestLog()) ??
-        applySpineRookTalk(loadQuestLog()) ??
-        applyGreenGateRookTalk(loadQuestLog()) ??
-        applyWharfRookTalk(loadQuestLog()) ??
-        applyChoirCountsRookTalk(loadQuestLog()) ??
-        applyAshveilRookTalk(loadQuestLog()) ??
-        applyWatchlineRookTalk(loadQuestLog()) ??
-        applyMistmereRookTalk(loadQuestLog()) ??
-        applyGateWatchRookTalk(loadQuestLog());
-      if (turnIn) {
-        saveQuestLog(turnIn.log);
-        setCharacter((prev) => {
-          if (!prev) return prev;
-          let next: ValeCharacter = {
-            ...prev,
-            skillXp: { ...prev.skillXp },
-          };
-          if (turnIn.completedId === PALE_REMEMBERS_QUEST_ID) {
-            next = awardCombatXp(next, PALE_REMEMBERS_REWARDS.combatXp);
-            next = { ...next, skillXp: { ...next.skillXp } };
-            awardSkillXp(
-              next,
-              PALE_REMEMBERS_REWARDS.skill,
-              PALE_REMEMBERS_REWARDS.skillXp,
-            );
-            next = setGold(next, next.gold + PALE_REMEMBERS_REWARDS.gold);
-            next = { ...next, skillXp: { ...next.skillXp } };
-            queueMicrotask(() => {
-              showToast(PALE_REMEMBERS_COMPLETE_LINE);
-              setSkillTick((t) => t + 1);
-            });
-          } else if (turnIn.completedId === MERE_REMEMBERS_QUEST_ID) {
-            next = awardCombatXp(next, MERE_REMEMBERS_REWARDS.combatXp);
-            next = { ...next, skillXp: { ...next.skillXp } };
-            awardSkillXp(
-              next,
-              MERE_REMEMBERS_REWARDS.skill,
-              MERE_REMEMBERS_REWARDS.skillXp,
-            );
-            next = setGold(next, next.gold + MERE_REMEMBERS_REWARDS.gold);
-            next = { ...next, skillXp: { ...next.skillXp } };
-            queueMicrotask(() => {
-              showToast(
-                turnIn.startedPaleRemembers
-                  ? PALE_REMEMBERS_START_TOAST
-                  : MERE_REMEMBERS_COMPLETE_LINE,
-              );
-              setSkillTick((t) => t + 1);
-            });
-          } else if (turnIn.completedId === WHARF_REMEMBERS_QUEST_ID) {
-            next = awardCombatXp(next, WHARF_REMEMBERS_REWARDS.combatXp);
-            next = { ...next, skillXp: { ...next.skillXp } };
-            awardSkillXp(
-              next,
-              WHARF_REMEMBERS_REWARDS.skill,
-              WHARF_REMEMBERS_REWARDS.skillXp,
-            );
-            next = setGold(next, next.gold + WHARF_REMEMBERS_REWARDS.gold);
-            next = { ...next, skillXp: { ...next.skillXp } };
-            queueMicrotask(() => {
-              showToast(
-                turnIn.startedMereRemembers
-                  ? MERE_REMEMBERS_START_TOAST
-                  : WHARF_REMEMBERS_COMPLETE_LINE,
-              );
-              setSkillTick((t) => t + 1);
-            });
-          } else if (turnIn.completedId === EDGE_REMEMBERS_QUEST_ID) {
-            next = awardCombatXp(next, EDGE_REMEMBERS_REWARDS.combatXp);
-            next = { ...next, skillXp: { ...next.skillXp } };
-            awardSkillXp(
-              next,
-              EDGE_REMEMBERS_REWARDS.skill,
-              EDGE_REMEMBERS_REWARDS.skillXp,
-            );
-            next = setGold(next, next.gold + EDGE_REMEMBERS_REWARDS.gold);
-            next = { ...next, skillXp: { ...next.skillXp } };
-            queueMicrotask(() => {
-              showToast(
-                turnIn.startedWharfRemembers
-                  ? WHARF_REMEMBERS_START_TOAST
-                  : EDGE_REMEMBERS_COMPLETE_LINE,
-              );
-              setSkillTick((t) => t + 1);
-            });
-          } else if (turnIn.completedId === CHOIR_REMEMBERS_QUEST_ID) {
-            next = awardCombatXp(next, CHOIR_REMEMBERS_REWARDS.combatXp);
-            next = { ...next, skillXp: { ...next.skillXp } };
-            awardSkillXp(
-              next,
-              CHOIR_REMEMBERS_REWARDS.skill,
-              CHOIR_REMEMBERS_REWARDS.skillXp,
-            );
-            next = setGold(next, next.gold + CHOIR_REMEMBERS_REWARDS.gold);
-            next = { ...next, skillXp: { ...next.skillXp } };
-            queueMicrotask(() => {
-              showToast(
-                turnIn.startedEdgeRemembers
-                  ? EDGE_REMEMBERS_START_TOAST
-                  : CHOIR_REMEMBERS_COMPLETE_LINE,
-              );
-              setSkillTick((t) => t + 1);
-            });
-          } else if (turnIn.completedId === COIL_QUEST_ID) {
-            next = awardCombatXp(next, COIL_REWARDS.combatXp);
-            next = { ...next, skillXp: { ...next.skillXp } };
-            awardSkillXp(next, COIL_REWARDS.skill, COIL_REWARDS.skillXp);
-            next = setGold(next, next.gold + COIL_REWARDS.gold);
-            next = { ...next, skillXp: { ...next.skillXp } };
-            queueMicrotask(() => {
-              showToast(
-                turnIn.startedChoirRemembers
-                  ? CHOIR_REMEMBERS_START_TOAST
-                  : COIL_COMPLETE_LINE,
-              );
-              setSkillTick((t) => t + 1);
-            });
-          } else if (turnIn.completedId === EMBERCOIL_QUEST_ID) {
-            next = awardCombatXp(next, EMBERCOIL_REWARDS.combatXp);
-            next = { ...next, skillXp: { ...next.skillXp } };
-            awardSkillXp(next, EMBERCOIL_REWARDS.skill, EMBERCOIL_REWARDS.skillXp);
-            next = setGold(next, next.gold + EMBERCOIL_REWARDS.gold);
-            next = { ...next, skillXp: { ...next.skillXp } };
-            queueMicrotask(() => {
-              showToast(
-                turnIn.startedCoil ? COIL_START_TOAST : EMBERCOIL_COMPLETE_LINE,
-              );
-              setSkillTick((t) => t + 1);
-            });
-          } else if (turnIn.completedId === ASHEN_QUEST_ID) {
-            next = awardCombatXp(next, ASHEN_REWARDS.combatXp);
-            next = { ...next, skillXp: { ...next.skillXp } };
-            awardSkillXp(next, ASHEN_REWARDS.skill, ASHEN_REWARDS.skillXp);
-            next = setGold(next, next.gold + ASHEN_REWARDS.gold);
-            next = { ...next, skillXp: { ...next.skillXp } };
-            queueMicrotask(() => {
-              showToast(
-                turnIn.startedEmbercoil
-                  ? EMBERCOIL_START_TOAST
-                  : ASHEN_COMPLETE_LINE,
-              );
-              setSkillTick((t) => t + 1);
-            });
-          } else if (turnIn.completedId === PALE_QUEST_ID) {
-            next = awardCombatXp(next, PALE_REWARDS.combatXp);
-            next = { ...next, skillXp: { ...next.skillXp } };
-            awardSkillXp(next, PALE_REWARDS.skill, PALE_REWARDS.skillXp);
-            next = setGold(next, next.gold + PALE_REWARDS.gold);
-            next = { ...next, skillXp: { ...next.skillXp } };
-            queueMicrotask(() => {
-              showToast(
-                turnIn.startedAshen ? ASHEN_START_TOAST : PALE_COMPLETE_LINE,
-              );
-              setSkillTick((t) => t + 1);
-            });
-          } else if (turnIn.completedId === SPINE_QUEST_ID) {
-            next = awardCombatXp(next, SPINE_REWARDS.combatXp);
-            next = { ...next, skillXp: { ...next.skillXp } };
-            awardSkillXp(next, SPINE_REWARDS.skill, SPINE_REWARDS.skillXp);
-            next = setGold(next, next.gold + SPINE_REWARDS.gold);
-            next = { ...next, skillXp: { ...next.skillXp } };
-            queueMicrotask(() => {
-              showToast(
-                turnIn.startedPale ? PALE_START_TOAST : SPINE_COMPLETE_LINE,
-              );
-              setSkillTick((t) => t + 1);
-            });
-          } else if (turnIn.completedId === GREEN_GATE_QUEST_ID) {
-            next = awardCombatXp(next, GREEN_GATE_REWARDS.combatXp);
-            next = { ...next, skillXp: { ...next.skillXp } };
-            awardSkillXp(next, GREEN_GATE_REWARDS.skill, GREEN_GATE_REWARDS.skillXp);
-            next = setGold(next, next.gold + GREEN_GATE_REWARDS.gold);
-            next = { ...next, skillXp: { ...next.skillXp } };
-            queueMicrotask(() => {
-              showToast(
-                turnIn.startedSpine
-                  ? SPINE_START_TOAST
-                  : GREEN_GATE_COMPLETE_LINE,
-              );
-              setSkillTick((t) => t + 1);
-            });
-          } else if (turnIn.completedId === WHARF_QUEST_ID) {
-            next = awardCombatXp(next, WHARF_REWARDS.combatXp);
-            next = { ...next, skillXp: { ...next.skillXp } };
-            awardSkillXp(next, WHARF_REWARDS.skill, WHARF_REWARDS.skillXp);
-            next = setGold(next, next.gold + WHARF_REWARDS.gold);
-            next = { ...next, skillXp: { ...next.skillXp } };
-            queueMicrotask(() => {
-              showToast(
-                turnIn.startedGreenGate
-                  ? GREEN_GATE_START_TOAST
-                  : WHARF_COMPLETE_LINE,
-              );
-              setSkillTick((t) => t + 1);
-            });
-          } else if (turnIn.completedId === CHOIR_COUNTS_QUEST_ID) {
-            next = awardCombatXp(next, CHOIR_COUNTS_REWARDS.combatXp);
-            next = { ...next, skillXp: { ...next.skillXp } };
-            awardSkillXp(
-              next,
-              CHOIR_COUNTS_REWARDS.skill,
-              CHOIR_COUNTS_REWARDS.skillXp,
-            );
-            next = setGold(next, next.gold + CHOIR_COUNTS_REWARDS.gold);
-            next = { ...next, skillXp: { ...next.skillXp } };
-            queueMicrotask(() => {
-              showToast(
-                turnIn.startedWharf
-                  ? WHARF_START_TOAST
-                  : CHOIR_COUNTS_COMPLETE_LINE,
-              );
-              setSkillTick((t) => t + 1);
-            });
-          } else if (turnIn.completedId === ASHVEIL_QUEST_ID) {
-            next = awardCombatXp(next, ASHVEIL_REWARDS.combatXp);
-            next = { ...next, skillXp: { ...next.skillXp } };
-            awardSkillXp(next, ASHVEIL_REWARDS.skill, ASHVEIL_REWARDS.skillXp);
-            next = setGold(next, next.gold + ASHVEIL_REWARDS.gold);
-            next = { ...next, skillXp: { ...next.skillXp } };
-            queueMicrotask(() => {
-              showToast(
-                turnIn.startedChoirCounts
-                  ? CHOIR_COUNTS_START_TOAST
-                  : ASHVEIL_COMPLETE_LINE,
-              );
-              setSkillTick((t) => t + 1);
-            });
-          } else if (turnIn.completedId === WATCHLINE_QUEST_ID) {
-            next = awardCombatXp(next, WATCHLINE_REWARDS.combatXp);
-            next = { ...next, skillXp: { ...next.skillXp } };
-            awardSkillXp(next, WATCHLINE_REWARDS.skill, WATCHLINE_REWARDS.skillXp);
-            next = setGold(next, next.gold + WATCHLINE_REWARDS.gold);
-            next = { ...next, skillXp: { ...next.skillXp } };
-            queueMicrotask(() => {
-              showToast(
-                turnIn.startedAshveil
-                  ? ASHVEIL_START_TOAST
-                  : WATCHLINE_COMPLETE_LINE,
-              );
-              setSkillTick((t) => t + 1);
-            });
-          } else if (turnIn.completedId === MISTMERE_QUEST_ID) {
-            next = awardCombatXp(next, MISTMERE_REWARDS.combatXp);
-            next = { ...next, skillXp: { ...next.skillXp } };
-            awardSkillXp(next, MISTMERE_REWARDS.skill, MISTMERE_REWARDS.skillXp);
-            next = setGold(next, next.gold + MISTMERE_REWARDS.gold);
-            next = { ...next, skillXp: { ...next.skillXp } };
-            queueMicrotask(() => {
-              showToast(
-                turnIn.startedWatchline
-                  ? WATCHLINE_START_TOAST
-                  : MISTMERE_COMPLETE_LINE,
-              );
-              setSkillTick((t) => t + 1);
-            });
-          } else if (turnIn.completedId === GATE_QUEST_ID) {
-            next = awardCombatXp(next, GATE_REWARDS.combatXp);
-            next = { ...next, skillXp: { ...next.skillXp } };
-            awardSkillXp(next, GATE_REWARDS.skill, GATE_REWARDS.skillXp);
-            next = setGold(next, next.gold + GATE_REWARDS.gold);
-            next = { ...next, skillXp: { ...next.skillXp } };
-            queueMicrotask(() => {
-              showToast(
-                turnIn.startedMistmere
-                  ? MISTMERE_START_TOAST
-                  : GATE_COMPLETE_LINE,
-              );
-              setSkillTick((t) => t + 1);
-            });
-          } else if (turnIn.toast) {
-            queueMicrotask(() => showToast(turnIn.toast!));
-          }
-          return next;
-        });
-      }
-      const hook = rookQuestLine(loadQuestLog());
-      if (hook) line = hook;
-    }
-    setDialogue({
-      folkId,
-      name: folk.name,
-      line,
-      hasShop: Boolean(folk.shopId),
-      hasBank: Boolean(folk.bankId),
-      hasCraft: Boolean(folk.craftId),
-      shopId: folk.shopId,
-      bankId: folk.bankId,
-      craftId: folk.craftId,
-    });
-    setCharacter((prev) => (prev ? markFolkMet(prev, folkId) : prev));
-  }, [character, showToast]);
-
-  const openShop = useCallback((shopId: string) => {
-    setDialogue(null);
-    setActiveDockId(null);
-    setBankOpen(false);
-    setCraftOpen(false);
-    setActiveShopId(shopId);
-  }, []);
-
-  const openCraft = useCallback(() => {
-    setDialogue(null);
-    setActiveShopId(null);
-    setActiveDockId(null);
-    setBankOpen(false);
-    setPackOpen(false);
-    setCraftOpen(true);
-  }, []);
-
-  const openShip = useCallback((dockId: string) => {
-    setDialogue(null);
-    setActiveShopId(null);
-    setBankOpen(false);
-    setActiveDockId(dockId);
-  }, []);
-
-  const openBank = useCallback(() => {
-    setBankFolkId(dialogueRef.current?.folkId ?? null);
-    setDialogue(null);
-    setActiveShopId(null);
-    setActiveDockId(null);
-    setPackOpen(false);
-    setBankOpen(true);
-  }, []);
-
-  const closeBank = useCallback(() => {
-    setBankOpen(false);
-    setBankFolkId(null);
-  }, []);
-
-  const handleDepositItem = useCallback(
-    (itemId: string) => {
-      if (!isItemId(itemId)) return;
-      setCharacter((prev) => {
-        if (!prev) return prev;
-        const next = depositItem(prev, itemId, 1);
-        if (!next) return prev;
-        const line = formatBankToast("Deposited", 0, itemId, 1);
-        if (line) queueMicrotask(() => showToast(line));
-        return next;
-      });
-    },
-    [showToast],
-  );
-
-  const handleWithdrawItem = useCallback(
-    (itemId: string) => {
-      if (!isItemId(itemId)) return;
-      setCharacter((prev) => {
-        if (!prev) return prev;
-        const result = withdrawItem(prev, itemId, 1);
-        if (!result.ok) {
-          if (result.reason !== "missing") {
-            queueMicrotask(() => showToast(toastForCarryFail(result.reason)));
-          }
-          return prev;
-        }
-        const line = formatBankToast("Withdrew", 0, itemId, 1);
-        if (line) queueMicrotask(() => showToast(line));
-        return result.character;
-      });
-    },
-    [showToast],
-  );
-
-  const handleDepositGold = useCallback(
-    (amount: number) => {
-      setCharacter((prev) => {
-        if (!prev) return prev;
-        const next = depositGold(prev, amount);
-        const amt = next.bankGold - prev.bankGold;
-        const line = amt > 0 ? formatBankToast("Deposited", amt) : null;
-        if (line) queueMicrotask(() => showToast(line));
-        return next;
-      });
-    },
-    [showToast],
-  );
-
-  const handleWithdrawGold = useCallback(
-    (amount: number) => {
-      setCharacter((prev) => {
-        if (!prev) return prev;
-        const next = withdrawGold(prev, amount);
-        const amt = prev.bankGold - next.bankGold;
-        const line = amt > 0 ? formatBankToast("Withdrew", amt) : null;
-        if (line) queueMicrotask(() => showToast(line));
-        return next;
-      });
-    },
-    [showToast],
-  );
-
-  const grantPremium = useCallback(
-    (msg: string) => {
-      setCharacter((prev) => (prev ? unlockPremiumBackpack(prev) : prev));
-      showToast(msg, 2800);
-    },
-    [showToast],
-  );
-
-  const handleUnlockDemo = useCallback(() => {
-    if (!isPremiumDemoAllowed()) {
-      showToast("Demo unlock is disabled when Stripe is configured.");
-      return;
-    }
-    grantPremium("Premium Backpack unlocked (demo).");
-  }, [grantPremium, showToast]);
-
-  const handleUnlockStripe = useCallback(() => {
-    setPremiumUnlocking(true);
-    void (async () => {
-      const result = await startPremiumCheckout();
-      setPremiumUnlocking(false);
-      if (!result.ok) {
-        showToast(result.error, 3200);
-        return;
-      }
-      if (result.demo) {
-        grantPremium("Premium Backpack unlocked (demo checkout).");
-        return;
-      }
-      window.location.assign(result.url);
-    })();
-  }, [grantPremium, showToast]);
-
-  useEffect(() => {
-    const q = consumePremiumQuery();
-    if (q.status === "cancel") {
-      showToast("Premium checkout canceled.");
-      return;
-    }
-    if (q.status !== "success") return;
-    void (async () => {
-      if (q.sessionId && (await verifyPremiumSession(q.sessionId))) {
-        grantPremium("Premium Backpack unlocked.");
-        return;
-      }
-      if (isPremiumDemoAllowed()) {
-        grantPremium("Premium Backpack unlocked (demo).");
-        return;
-      }
-      showToast("Could not verify Premium checkout.");
-    })();
-  }, [grantPremium, showToast]);
-
-  const buyItem = useCallback(
-    (itemId: string, price: number) => {
-      if (!isItemId(itemId)) return;
-      setCharacter((prev) => {
-        if (!prev || prev.gold < price) return prev;
-        const carry = canCarry(
-          prev.inventory,
-          prev.premiumBackpack,
-          itemId,
-          1,
-        );
-        if (!carry.ok) {
-          queueMicrotask(() => showToast(toastForCarryFail(carry.reason)));
-          return prev;
-        }
-        let next = setGold(prev, prev.gold - price);
-        const added = tryAddInventoryItem(next, itemId, 1);
-        if (!added.ok) {
-          queueMicrotask(() => showToast(toastForCarryFail(added.reason)));
-          return prev;
-        }
-        queueMicrotask(() => showToast(`Bought for ${price}g`));
-        return added.character;
-      });
-    },
-    [showToast],
-  );
-
-  const sellItem = useCallback(
-    (itemId: string, price: number) => {
-      if (!isItemId(itemId)) return;
-      setCharacter((prev) => {
-        if (!prev) return prev;
-        const removed = removeInventoryItem(prev, itemId, 1);
-        if (!removed) return prev;
-        return setGold(removed, removed.gold + price);
-      });
-      showToast(`Sold for ${price}g`);
-    },
-    [showToast],
-  );
-
-  const sailTo = useCallback(
-    (dest: ContinentId) => {
-      let blockedQuote: ReturnType<typeof quoteShipFare> | null = null;
-      let paid = 0;
-      let firstCrossing = false;
-      let travelled = false;
-      setCharacter((prev) => {
-        if (!prev) return prev;
-        const quote = quoteShipFare(
-          prev.continentId,
-          dest,
-          prev.discoveredContinents,
-        );
-        if (!canAffordFare(prev.gold, quote)) {
-          blockedQuote = quote;
-          return prev;
-        }
-        paid = quote.gold;
-        firstCrossing = quote.firstCrossing;
-        let next = prev;
-        if (paid > 0) next = setGold(next, next.gold - paid);
-        travelled = true;
-        return travelToContinent(next, dest);
-      });
-      if (blockedQuote) {
-        showToast(fareFailToast(blockedQuote));
-        return;
-      }
-      if (!travelled) return;
-      setArrivedFrom(null);
-      setShipSpawn(dockSpawnForContinent(dest));
-      setActiveDockId(null);
-      setMapOpen(false);
-      if (dest === "mistmere") {
-        const mistResult = applyMistmereReached(loadQuestLog());
-        if (mistResult) {
-          saveQuestLog(mistResult.log);
-          if (mistResult.toast) {
-            showToast(mistResult.toast);
-            return;
-          }
-        }
-        const choirMist = applyChoirCountsMistmereReached(loadQuestLog());
-        if (choirMist) {
-          saveQuestLog(choirMist.log);
-          if (choirMist.toast) {
-            showToast(choirMist.toast);
-            return;
-          }
-        }
-        const mereRemembers = applyMereRemembersReached(loadQuestLog());
-        if (mereRemembers) {
-          saveQuestLog(mereRemembers.log);
-          if (mereRemembers.toast) {
-            showToast(mereRemembers.toast);
-            return;
-          }
-        }
-      }
-      if (dest === "sunken-choir") {
-        const choirLand = applyChoirCountsChoirReached(loadQuestLog());
-        if (choirLand) {
-          saveQuestLog(choirLand.log);
-          if (choirLand.toast) {
-            showToast(choirLand.toast);
-            return;
-          }
-        }
-        const choirRemembers = applyChoirRemembersReached(loadQuestLog());
-        if (choirRemembers) {
-          saveQuestLog(choirRemembers.log);
-          if (choirRemembers.toast) {
-            showToast(choirRemembers.toast);
-            return;
-          }
-        }
-      }
-      if (dest === "nightglass-coast") {
-        const night = applyWharfNightglassReached(loadQuestLog());
-        if (night) {
-          saveQuestLog(night.log);
-          if (night.toast) {
-            showToast(night.toast);
-            return;
-          }
-        }
-        const wharfRemembers = applyWharfRemembersReached(loadQuestLog());
-        if (wharfRemembers) {
-          saveQuestLog(wharfRemembers.log);
-          if (wharfRemembers.toast) {
-            showToast(wharfRemembers.toast);
-            return;
-          }
-        }
-      }
-      if (dest === "verdant-spine") {
-        const green = applyGreenGateReached(loadQuestLog());
-        if (green) {
-          saveQuestLog(green.log);
-          if (green.toast) {
-            showToast(green.toast);
-            return;
-          }
-        }
-        const spine = applySpineReached(loadQuestLog());
-        if (spine) {
-          saveQuestLog(spine.log);
-          if (spine.toast) {
-            showToast(spine.toast);
-            return;
-          }
-        }
-      }
-      if (dest === "pale-wastes") {
-        const pale = applyPaleReached(loadQuestLog());
-        if (pale) {
-          saveQuestLog(pale.log);
-          if (pale.toast) {
-            showToast(pale.toast);
-            return;
-          }
-        }
-        const paleRemembers = applyPaleRemembersReached(loadQuestLog());
-        if (paleRemembers) {
-          saveQuestLog(paleRemembers.log);
-          if (paleRemembers.toast) {
-            showToast(paleRemembers.toast);
-            return;
-          }
-        }
-      }
-      if (dest === "ashen-marches") {
-        const ashen = applyAshenReached(loadQuestLog());
-        if (ashen) {
-          saveQuestLog(ashen.log);
-          if (ashen.toast) {
-            showToast(ashen.toast);
-            return;
-          }
-        }
-      }
-      if (dest === "embercoil") {
-        const embercoil = applyEmbercoilReached(loadQuestLog());
-        if (embercoil) {
-          saveQuestLog(embercoil.log);
-          if (embercoil.toast) {
-            showToast(embercoil.toast);
-            return;
-          }
-        }
-        const coil = applyCoilReached(loadQuestLog());
-        if (coil) {
-          saveQuestLog(coil.log);
-          if (coil.toast) {
-            showToast(coil.toast);
-            return;
-          }
-        }
-      }
-      if (dest === "thornreach") {
-        const edge = applyEdgeReached(loadQuestLog());
-        if (edge) {
-          saveQuestLog(edge.log);
-          if (edge.toast) {
-            showToast(edge.toast);
-            return;
-          }
-        }
-      }
-      const c = getContinent(dest);
-      if (paid > 0 || firstCrossing) {
-        showToast(farePaidToast("ship", c.name, paid));
-      } else if (folkOnContinent(dest).length === 0) {
-        showToast(`Sailing to ${c.name} — ${c.blurb}`);
-      } else {
-        showToast(`Sailing to ${c.name}`);
-      }
-    },
-    [showToast],
-  );
-
-  useEffect(() => {
-    if (!character) return;
-    if (character.hollowIndex === null && character.hollowReturn) {
-      setCharacter(clearHollowReturn(character));
-    }
-  }, [character]);
-
-  // Sticky starter hunt: attach if missing on an existing Thornreach save.
-  useEffect(() => {
-    if (!character) return;
-    if (getTeethQuest(loadQuestLog())) return;
-    if (character.continentId !== "thornreach") return;
-    saveQuestLog(withTeethQuest(loadQuestLog(), emptyTeethQuest()));
-    setToast(TEETH_START_TOAST);
-    window.setTimeout(() => setToast((t) => (t === TEETH_START_TOAST ? null : t)), 3600);
-  }, [character]);
-
-  // Quest 2: auto-start Ashwood Watch once Teeth is complete.
-  useEffect(() => {
-    if (!character) return;
-    const ensured = ensureAshwoodAfterTeeth(loadQuestLog());
-    if (!ensured.started) return;
-    saveQuestLog(ensured.log);
-    setToast(ASHWOOD_START_TOAST);
-    window.setTimeout(() => setToast((t) => (t === ASHWOOD_START_TOAST ? null : t)), 3600);
-  }, [character]);
-
-  // Quest 3: auto-start Hollow Watch once Ashwood Watch is complete.
-  useEffect(() => {
-    if (!character) return;
-    const ensured = ensureHollowAfterAshwood(loadQuestLog());
-    if (!ensured.started) return;
-    saveQuestLog(ensured.log);
-    setToast(HOLLOW_START_TOAST);
-    window.setTimeout(() => setToast((t) => (t === HOLLOW_START_TOAST ? null : t)), 3600);
-  }, [character]);
-
-  // Quest 4: auto-start Gate Watch once Hollow Watch is complete.
-  useEffect(() => {
-    if (!character) return;
-    const ensured = ensureGateWatchAfterHollow(loadQuestLog());
-    if (!ensured.started) return;
-    saveQuestLog(ensured.log);
-    setToast(GATE_START_TOAST);
-    window.setTimeout(() => setToast((t) => (t === GATE_START_TOAST ? null : t)), 3600);
-  }, [character]);
-
-  // Quest 5: auto-start Mistmere Crossing once Gate Watch is complete.
-  useEffect(() => {
-    if (!character) return;
-    const ensured = ensureMistmereAfterGate(loadQuestLog());
-    if (!ensured.started) return;
-    saveQuestLog(ensured.log);
-    setToast(MISTMERE_START_TOAST);
-    window.setTimeout(() => setToast((t) => (t === MISTMERE_START_TOAST ? null : t)), 3600);
-  }, [character]);
-
-  // Quest 6: auto-start The Watchline Holds once Mistmere Crossing is complete.
-  useEffect(() => {
-    if (!character) return;
-    const ensured = ensureWatchlineAfterMistmere(loadQuestLog());
-    if (!ensured.started) return;
-    saveQuestLog(ensured.log);
-    setToast(WATCHLINE_START_TOAST);
-    window.setTimeout(() => setToast((t) => (t === WATCHLINE_START_TOAST ? null : t)), 3600);
-  }, [character]);
-
-  // Quest 7: auto-start Ashveil Under the Watchline once Watchline Holds is complete.
-  useEffect(() => {
-    if (!character) return;
-    const ensured = ensureAshveilAfterWatchline(loadQuestLog());
-    if (!ensured.started) return;
-    saveQuestLog(ensured.log);
-    setToast(ASHVEIL_START_TOAST);
-    window.setTimeout(() => setToast((t) => (t === ASHVEIL_START_TOAST ? null : t)), 3600);
-  }, [character]);
-
-  // Quest 8: auto-start The Choir Counts once Ashveil Under the Watchline is complete.
-  useEffect(() => {
-    if (!character) return;
-    const ensured = ensureChoirCountsAfterAshveil(loadQuestLog());
-    if (!ensured.started) return;
-    saveQuestLog(ensured.log);
-    setToast(CHOIR_COUNTS_START_TOAST);
-    window.setTimeout(
-      () => setToast((t) => (t === CHOIR_COUNTS_START_TOAST ? null : t)),
-      3600,
-    );
-  }, [character]);
-
-  // Quest 9: auto-start The Wharf Answers once The Choir Counts is complete.
-  useEffect(() => {
-    if (!character) return;
-    const ensured = ensureNightglassAfterChoir(loadQuestLog());
-    if (!ensured.started) return;
-    saveQuestLog(ensured.log);
-    setToast(WHARF_START_TOAST);
-    window.setTimeout(
-      () => setToast((t) => (t === WHARF_START_TOAST ? null : t)),
-      3600,
-    );
-  }, [character]);
-
-  // Quest 10: auto-start The Green Gate Keeps once The Wharf Answers is complete.
-  useEffect(() => {
-    if (!character) return;
-    const ensured = ensureGreenGateAfterWharf(loadQuestLog());
-    if (!ensured.started) return;
-    saveQuestLog(ensured.log);
-    setToast(GREEN_GATE_START_TOAST);
-    window.setTimeout(
-      () => setToast((t) => (t === GREEN_GATE_START_TOAST ? null : t)),
-      3600,
-    );
-  }, [character]);
-
-  // Quest 11: auto-start The Spine Remembers once The Green Gate Keeps is complete.
-  useEffect(() => {
-    if (!character) return;
-    const ensured = ensureSpineAfterGreenGate(loadQuestLog());
-    if (!ensured.started) return;
-    saveQuestLog(ensured.log);
-    setToast(SPINE_START_TOAST);
-    window.setTimeout(
-      () => setToast((t) => (t === SPINE_START_TOAST ? null : t)),
-      3600,
-    );
-  }, [character]);
-
-  // Quest 12: auto-start The Pale Gate Opens once The Spine Remembers is complete.
-  useEffect(() => {
-    if (!character) return;
-    const ensured = ensurePaleAfterSpine(loadQuestLog());
-    if (!ensured.started) return;
-    saveQuestLog(ensured.log);
-    setToast(PALE_START_TOAST);
-    window.setTimeout(
-      () => setToast((t) => (t === PALE_START_TOAST ? null : t)),
-      3600,
-    );
-  }, [character]);
-
-  // Quest 13: auto-start The Ashen Gate Opens once The Pale Gate Opens is complete.
-  useEffect(() => {
-    if (!character) return;
-    const ensured = ensureAshenAfterPale(loadQuestLog());
-    if (!ensured.started) return;
-    saveQuestLog(ensured.log);
-    setToast(ASHEN_START_TOAST);
-    window.setTimeout(
-      () => setToast((t) => (t === ASHEN_START_TOAST ? null : t)),
-      3600,
-    );
-  }, [character]);
-
-  // Quest 14: auto-start The Embercoil Gate Opens once The Ashen Gate Opens is complete.
-  useEffect(() => {
-    if (!character) return;
-    const ensured = ensureEmbercoilAfterAshen(loadQuestLog());
-    if (!ensured.started) return;
-    saveQuestLog(ensured.log);
-    setToast(EMBERCOIL_START_TOAST);
-    window.setTimeout(
-      () => setToast((t) => (t === EMBERCOIL_START_TOAST ? null : t)),
-      3600,
-    );
-  }, [character]);
-
-  // Quest 15: auto-start The Coil Remembers once The Embercoil Gate Opens is complete.
-  useEffect(() => {
-    if (!character) return;
-    const ensured = ensureCoilAfterEmbercoil(loadQuestLog());
-    if (!ensured.started) return;
-    saveQuestLog(ensured.log);
-    setToast(COIL_START_TOAST);
-    window.setTimeout(
-      () => setToast((t) => (t === COIL_START_TOAST ? null : t)),
-      3600,
-    );
-  }, [character]);
-
-  // Quest 16: auto-start The Choir Remembers once The Coil Remembers is complete.
-  useEffect(() => {
-    if (!character) return;
-    const ensured = ensureChoirRemembersAfterCoil(loadQuestLog());
-    if (!ensured.started) return;
-    saveQuestLog(ensured.log);
-    setToast(CHOIR_REMEMBERS_START_TOAST);
-    window.setTimeout(
-      () => setToast((t) => (t === CHOIR_REMEMBERS_START_TOAST ? null : t)),
-      3600,
-    );
-  }, [character]);
-
-  // Quest 17: auto-start The Edge Remembers once The Choir Remembers is complete.
-  useEffect(() => {
-    if (!character) return;
-    const ensured = ensureEdgeRemembersAfterChoir(loadQuestLog());
-    if (ensured.started) {
-      saveQuestLog(ensured.log);
-      setToast(EDGE_REMEMBERS_START_TOAST);
-      window.setTimeout(
-        () => setToast((t) => (t === EDGE_REMEMBERS_START_TOAST ? null : t)),
-        3600,
-      );
-    }
-  }, [character]);
-
-  // Quest 18: auto-start The Wharf Remembers once The Edge Remembers is complete.
-  useEffect(() => {
-    if (!character) return;
-    const ensured = ensureWharfRemembersAfterEdge(loadQuestLog());
-    if (!ensured.started) return;
-    saveQuestLog(ensured.log);
-    setToast(WHARF_REMEMBERS_START_TOAST);
-    window.setTimeout(
-      () => setToast((t) => (t === WHARF_REMEMBERS_START_TOAST ? null : t)),
-      3600,
-    );
-  }, [character]);
-
-  // Quest 19: auto-start The Mere Remembers once The Wharf Remembers is complete.
-  useEffect(() => {
-    if (!character) return;
-    const ensured = ensureMereRemembersAfterWharf(loadQuestLog());
-    if (!ensured.started) return;
-    saveQuestLog(ensured.log);
-    setToast(MERE_REMEMBERS_START_TOAST);
-    window.setTimeout(
-      () => setToast((t) => (t === MERE_REMEMBERS_START_TOAST ? null : t)),
-      3600,
-    );
-  }, [character]);
-
-  // Quest 20: auto-start The Pale Remembers once The Mere Remembers is complete.
-  useEffect(() => {
-    if (!character) return;
-    const ensured = ensurePaleRemembersAfterMere(loadQuestLog());
-    if (!ensured.started) return;
-    saveQuestLog(ensured.log);
-    setToast(PALE_REMEMBERS_START_TOAST);
-    window.setTimeout(
-      () => setToast((t) => (t === PALE_REMEMBERS_START_TOAST ? null : t)),
-      3600,
-    );
-  }, [character]);
-
-  // The Edge Remembers: mark Thornreach overworld (usually already home after Rook).
-  useEffect(() => {
-    if (!character) return;
-    if (character.continentId !== "thornreach") return;
-    if (character.hollowIndex !== null) return;
-    const result = applyEdgeReached(loadQuestLog());
-    if (!result) return;
-    saveQuestLog(result.log);
-    if (result.toast) {
-      setToast(result.toast);
-      window.setTimeout(() => setToast((t) => (t === result.toast ? null : t)), 2800);
-    }
-  }, [character]);
-
-  // Mistmere Crossing: mark arrival whenever the walker stands on Mistmere.
-  useEffect(() => {
-    if (!character) return;
-    if (character.continentId !== "mistmere") return;
-    const result = applyMistmereReached(loadQuestLog());
-    if (!result) return;
-    saveQuestLog(result.log);
-    if (result.toast) {
-      setToast(result.toast);
-      window.setTimeout(() => setToast((t) => (t === result.toast ? null : t)), 2800);
-    }
-  }, [character]);
-
-  // The Choir Counts: mark Mistmere arrival.
-  useEffect(() => {
-    if (!character) return;
-    if (character.continentId !== "mistmere") return;
-    const result = applyChoirCountsMistmereReached(loadQuestLog());
-    if (!result) return;
-    saveQuestLog(result.log);
-    if (result.toast) {
-      setToast(result.toast);
-      window.setTimeout(() => setToast((t) => (t === result.toast ? null : t)), 2800);
-    }
-  }, [character]);
-
-  // The Mere Remembers: mark Mistmere arrival (gate / travel / stand).
-  useEffect(() => {
-    if (!character) return;
-    if (character.continentId !== "mistmere") return;
-    const result = applyMereRemembersReached(loadQuestLog());
-    if (!result) return;
-    saveQuestLog(result.log);
-    if (result.toast) {
-      setToast(result.toast);
-      window.setTimeout(() => setToast((t) => (t === result.toast ? null : t)), 2800);
-    }
-  }, [character]);
-
-  // The Choir Counts / The Choir Remembers: mark Sunken Choir / Choir Landing arrival.
-  useEffect(() => {
-    if (!character) return;
-    if (character.continentId !== "sunken-choir") return;
-    const choirCounts = applyChoirCountsChoirReached(loadQuestLog());
-    if (choirCounts) {
-      saveQuestLog(choirCounts.log);
-      if (choirCounts.toast) {
-        setToast(choirCounts.toast);
-        window.setTimeout(() => setToast((t) => (t === choirCounts.toast ? null : t)), 2800);
-      }
-      return;
-    }
-    const choirRemembers = applyChoirRemembersReached(loadQuestLog());
-    if (!choirRemembers) return;
-    saveQuestLog(choirRemembers.log);
-    if (choirRemembers.toast) {
-      setToast(choirRemembers.toast);
-      window.setTimeout(() => setToast((t) => (t === choirRemembers.toast ? null : t)), 2800);
-    }
-  }, [character]);
-
-  // The Wharf Answers / The Wharf Remembers: mark Nightglass Coast arrival.
-  useEffect(() => {
-    if (!character) return;
-    if (character.continentId !== "nightglass-coast") return;
-    const wharf = applyWharfNightglassReached(loadQuestLog());
-    if (wharf) {
-      saveQuestLog(wharf.log);
-      if (wharf.toast) {
-        setToast(wharf.toast);
-        window.setTimeout(() => setToast((t) => (t === wharf.toast ? null : t)), 2800);
-      }
-      return;
-    }
-    const wharfRemembers = applyWharfRemembersReached(loadQuestLog());
-    if (!wharfRemembers) return;
-    saveQuestLog(wharfRemembers.log);
-    if (wharfRemembers.toast) {
-      setToast(wharfRemembers.toast);
-      window.setTimeout(
-        () => setToast((t) => (t === wharfRemembers.toast ? null : t)),
-        2800,
-      );
-    }
-  }, [character]);
-
-  // The Green Gate Keeps / The Spine Remembers: mark Verdant Spine arrival / gate.
-  useEffect(() => {
-    if (!character) return;
-    if (character.continentId !== "verdant-spine") return;
-    const green = applyGreenGateReached(loadQuestLog());
-    if (green) {
-      saveQuestLog(green.log);
-      if (green.toast) {
-        setToast(green.toast);
-        window.setTimeout(() => setToast((t) => (t === green.toast ? null : t)), 2800);
-      }
-      return;
-    }
-    const spine = applySpineReached(loadQuestLog());
-    if (!spine) return;
-    saveQuestLog(spine.log);
-    if (spine.toast) {
-      setToast(spine.toast);
-      window.setTimeout(() => setToast((t) => (t === spine.toast ? null : t)), 2800);
-    }
-  }, [character]);
-
-  // The Pale Gate Opens: mark Pale Wastes arrival.
-  useEffect(() => {
-    if (!character) return;
-    if (character.continentId !== "pale-wastes") return;
-    const pale = applyPaleReached(loadQuestLog());
-    if (!pale) return;
-    saveQuestLog(pale.log);
-    if (pale.toast) {
-      setToast(pale.toast);
-      window.setTimeout(() => setToast((t) => (t === pale.toast ? null : t)), 2800);
-    }
-  }, [character]);
-
-  // The Pale Remembers: mark Pale Wastes arrival (gate / travel / stand).
-  useEffect(() => {
-    if (!character) return;
-    if (character.continentId !== "pale-wastes") return;
-    const result = applyPaleRemembersReached(loadQuestLog());
-    if (!result) return;
-    saveQuestLog(result.log);
-    if (result.toast) {
-      setToast(result.toast);
-      window.setTimeout(() => setToast((t) => (t === result.toast ? null : t)), 2800);
-    }
-  }, [character]);
-
-  // The Ashen Gate Opens: mark Ashen Marches arrival.
-  useEffect(() => {
-    if (!character) return;
-    if (character.continentId !== "ashen-marches") return;
-    const ashen = applyAshenReached(loadQuestLog());
-    if (!ashen) return;
-    saveQuestLog(ashen.log);
-    if (ashen.toast) {
-      setToast(ashen.toast);
-      window.setTimeout(() => setToast((t) => (t === ashen.toast ? null : t)), 2800);
-    }
-  }, [character]);
-
-  // The Embercoil Gate Opens / The Coil Remembers: mark Embercoil arrival.
-  useEffect(() => {
-    if (!character) return;
-    if (character.continentId !== "embercoil") return;
-    const embercoil = applyEmbercoilReached(loadQuestLog());
-    if (embercoil) {
-      saveQuestLog(embercoil.log);
-      if (embercoil.toast) {
-        setToast(embercoil.toast);
-        window.setTimeout(() => setToast((t) => (t === embercoil.toast ? null : t)), 2800);
-      }
-      return;
-    }
-    const coil = applyCoilReached(loadQuestLog());
-    if (!coil) return;
-    saveQuestLog(coil.log);
-    if (coil.toast) {
-      setToast(coil.toast);
-      window.setTimeout(() => setToast((t) => (t === coil.toast ? null : t)), 2800);
-    }
-  }, [character]);
-
-  // Hollow Watch: mark enter when hollowIndex is set on Thornreach.
-  useEffect(() => {
-    if (!character) return;
-    if (character.continentId !== "thornreach") return;
-    if (character.hollowIndex === null) return;
-    const result = applyHollowEnter(loadQuestLog());
-    if (!result) return;
-    saveQuestLog(result.log);
-    if (result.toast) {
-      setToast(result.toast);
-      window.setTimeout(() => setToast((t) => (t === result.toast ? null : t)), 2800);
-    }
-  }, [character]);
-
-  const persistQuestResult = useCallback(
-    (
-      prev: ValeCharacter,
-      result: NonNullable<ReturnType<typeof applyIdentify>>,
-    ): ValeCharacter => {
-      saveQuestLog(result.log);
-      let next: ValeCharacter = {
-        ...prev,
-        skillXp: { ...prev.skillXp },
-      };
-      if (result.completedId === TEETH_QUEST_ID) {
-        next = awardCombatXp(next, TEETH_REWARDS.combatXp);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        awardSkillXp(next, TEETH_REWARDS.skill, TEETH_REWARDS.skillXp);
-        next = setGold(next, next.gold + TEETH_REWARDS.gold);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        queueMicrotask(() => {
-          showToast(result.startedAshwood ? ASHWOOD_START_TOAST : TEETH_COMPLETE_LINE);
-          setSkillTick((t) => t + 1);
-        });
-      } else if (result.completedId === ASHWOOD_QUEST_ID) {
-        next = awardCombatXp(next, ASHWOOD_REWARDS.combatXp);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        awardSkillXp(next, ASHWOOD_REWARDS.skill, ASHWOOD_REWARDS.skillXp);
-        next = setGold(next, next.gold + ASHWOOD_REWARDS.gold);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        queueMicrotask(() => {
-          showToast(result.startedHollow ? HOLLOW_START_TOAST : ASHWOOD_COMPLETE_LINE);
-          setSkillTick((t) => t + 1);
-        });
-      } else if (result.completedId === HOLLOW_QUEST_ID) {
-        next = awardCombatXp(next, HOLLOW_REWARDS.combatXp);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        awardSkillXp(next, HOLLOW_REWARDS.skill, HOLLOW_REWARDS.skillXp);
-        next = setGold(next, next.gold + HOLLOW_REWARDS.gold);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        queueMicrotask(() => {
-          showToast(result.startedGateWatch ? GATE_START_TOAST : HOLLOW_COMPLETE_LINE);
-          setSkillTick((t) => t + 1);
-        });
-      } else if (result.completedId === GATE_QUEST_ID) {
-        next = awardCombatXp(next, GATE_REWARDS.combatXp);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        awardSkillXp(next, GATE_REWARDS.skill, GATE_REWARDS.skillXp);
-        next = setGold(next, next.gold + GATE_REWARDS.gold);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        queueMicrotask(() => {
-          showToast(
-            result.startedMistmere ? MISTMERE_START_TOAST : GATE_COMPLETE_LINE,
-          );
-          setSkillTick((t) => t + 1);
-        });
-      } else if (result.completedId === MISTMERE_QUEST_ID) {
-        next = awardCombatXp(next, MISTMERE_REWARDS.combatXp);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        awardSkillXp(next, MISTMERE_REWARDS.skill, MISTMERE_REWARDS.skillXp);
-        next = setGold(next, next.gold + MISTMERE_REWARDS.gold);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        queueMicrotask(() => {
-          showToast(
-            result.startedWatchline ? WATCHLINE_START_TOAST : MISTMERE_COMPLETE_LINE,
-          );
-          setSkillTick((t) => t + 1);
-        });
-      } else if (result.completedId === WATCHLINE_QUEST_ID) {
-        next = awardCombatXp(next, WATCHLINE_REWARDS.combatXp);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        awardSkillXp(next, WATCHLINE_REWARDS.skill, WATCHLINE_REWARDS.skillXp);
-        next = setGold(next, next.gold + WATCHLINE_REWARDS.gold);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        queueMicrotask(() => {
-          showToast(
-            result.startedAshveil ? ASHVEIL_START_TOAST : WATCHLINE_COMPLETE_LINE,
-          );
-          setSkillTick((t) => t + 1);
-        });
-      } else if (result.completedId === ASHVEIL_QUEST_ID) {
-        next = awardCombatXp(next, ASHVEIL_REWARDS.combatXp);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        awardSkillXp(next, ASHVEIL_REWARDS.skill, ASHVEIL_REWARDS.skillXp);
-        next = setGold(next, next.gold + ASHVEIL_REWARDS.gold);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        queueMicrotask(() => {
-          showToast(
-            result.startedChoirCounts
-              ? CHOIR_COUNTS_START_TOAST
-              : ASHVEIL_COMPLETE_LINE,
-          );
-          setSkillTick((t) => t + 1);
-        });
-      } else if (result.completedId === CHOIR_COUNTS_QUEST_ID) {
-        next = awardCombatXp(next, CHOIR_COUNTS_REWARDS.combatXp);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        awardSkillXp(
-          next,
-          CHOIR_COUNTS_REWARDS.skill,
-          CHOIR_COUNTS_REWARDS.skillXp,
-        );
-        next = setGold(next, next.gold + CHOIR_COUNTS_REWARDS.gold);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        queueMicrotask(() => {
-          showToast(
-            result.startedWharf ? WHARF_START_TOAST : CHOIR_COUNTS_COMPLETE_LINE,
-          );
-          setSkillTick((t) => t + 1);
-        });
-      } else if (result.completedId === WHARF_QUEST_ID) {
-        next = awardCombatXp(next, WHARF_REWARDS.combatXp);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        awardSkillXp(next, WHARF_REWARDS.skill, WHARF_REWARDS.skillXp);
-        next = setGold(next, next.gold + WHARF_REWARDS.gold);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        queueMicrotask(() => {
-          showToast(
-            result.startedGreenGate
-              ? GREEN_GATE_START_TOAST
-              : WHARF_COMPLETE_LINE,
-          );
-          setSkillTick((t) => t + 1);
-        });
-      } else if (result.completedId === GREEN_GATE_QUEST_ID) {
-        next = awardCombatXp(next, GREEN_GATE_REWARDS.combatXp);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        awardSkillXp(next, GREEN_GATE_REWARDS.skill, GREEN_GATE_REWARDS.skillXp);
-        next = setGold(next, next.gold + GREEN_GATE_REWARDS.gold);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        queueMicrotask(() => {
-          showToast(
-            result.startedSpine ? SPINE_START_TOAST : GREEN_GATE_COMPLETE_LINE,
-          );
-          setSkillTick((t) => t + 1);
-        });
-      } else if (result.completedId === SPINE_QUEST_ID) {
-        next = awardCombatXp(next, SPINE_REWARDS.combatXp);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        awardSkillXp(next, SPINE_REWARDS.skill, SPINE_REWARDS.skillXp);
-        next = setGold(next, next.gold + SPINE_REWARDS.gold);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        queueMicrotask(() => {
-          showToast(
-            result.startedPale ? PALE_START_TOAST : SPINE_COMPLETE_LINE,
-          );
-          setSkillTick((t) => t + 1);
-        });
-      } else if (result.completedId === PALE_QUEST_ID) {
-        next = awardCombatXp(next, PALE_REWARDS.combatXp);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        awardSkillXp(next, PALE_REWARDS.skill, PALE_REWARDS.skillXp);
-        next = setGold(next, next.gold + PALE_REWARDS.gold);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        queueMicrotask(() => {
-          showToast(
-            result.startedAshen ? ASHEN_START_TOAST : PALE_COMPLETE_LINE,
-          );
-          setSkillTick((t) => t + 1);
-        });
-      } else if (result.completedId === ASHEN_QUEST_ID) {
-        next = awardCombatXp(next, ASHEN_REWARDS.combatXp);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        awardSkillXp(next, ASHEN_REWARDS.skill, ASHEN_REWARDS.skillXp);
-        next = setGold(next, next.gold + ASHEN_REWARDS.gold);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        queueMicrotask(() => {
-          showToast(
-            result.startedEmbercoil
-              ? EMBERCOIL_START_TOAST
-              : ASHEN_COMPLETE_LINE,
-          );
-          setSkillTick((t) => t + 1);
-        });
-      } else if (result.completedId === EMBERCOIL_QUEST_ID) {
-        next = awardCombatXp(next, EMBERCOIL_REWARDS.combatXp);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        awardSkillXp(next, EMBERCOIL_REWARDS.skill, EMBERCOIL_REWARDS.skillXp);
-        next = setGold(next, next.gold + EMBERCOIL_REWARDS.gold);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        queueMicrotask(() => {
-          showToast(
-            result.startedCoil ? COIL_START_TOAST : EMBERCOIL_COMPLETE_LINE,
-          );
-          setSkillTick((t) => t + 1);
-        });
-      } else if (result.completedId === COIL_QUEST_ID) {
-        next = awardCombatXp(next, COIL_REWARDS.combatXp);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        awardSkillXp(next, COIL_REWARDS.skill, COIL_REWARDS.skillXp);
-        next = setGold(next, next.gold + COIL_REWARDS.gold);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        queueMicrotask(() => {
-          showToast(
-            result.startedChoirRemembers
-              ? CHOIR_REMEMBERS_START_TOAST
-              : COIL_COMPLETE_LINE,
-          );
-          setSkillTick((t) => t + 1);
-        });
-      } else if (result.completedId === CHOIR_REMEMBERS_QUEST_ID) {
-        next = awardCombatXp(next, CHOIR_REMEMBERS_REWARDS.combatXp);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        awardSkillXp(
-          next,
-          CHOIR_REMEMBERS_REWARDS.skill,
-          CHOIR_REMEMBERS_REWARDS.skillXp,
-        );
-        next = setGold(next, next.gold + CHOIR_REMEMBERS_REWARDS.gold);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        queueMicrotask(() => {
-          showToast(
-            result.startedEdgeRemembers
-              ? EDGE_REMEMBERS_START_TOAST
-              : CHOIR_REMEMBERS_COMPLETE_LINE,
-          );
-          setSkillTick((t) => t + 1);
-        });
-      } else if (result.completedId === EDGE_REMEMBERS_QUEST_ID) {
-        next = awardCombatXp(next, EDGE_REMEMBERS_REWARDS.combatXp);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        awardSkillXp(
-          next,
-          EDGE_REMEMBERS_REWARDS.skill,
-          EDGE_REMEMBERS_REWARDS.skillXp,
-        );
-        next = setGold(next, next.gold + EDGE_REMEMBERS_REWARDS.gold);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        queueMicrotask(() => {
-          showToast(
-            result.startedWharfRemembers
-              ? WHARF_REMEMBERS_START_TOAST
-              : EDGE_REMEMBERS_COMPLETE_LINE,
-          );
-          setSkillTick((t) => t + 1);
-        });
-      } else if (result.completedId === WHARF_REMEMBERS_QUEST_ID) {
-        next = awardCombatXp(next, WHARF_REMEMBERS_REWARDS.combatXp);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        awardSkillXp(
-          next,
-          WHARF_REMEMBERS_REWARDS.skill,
-          WHARF_REMEMBERS_REWARDS.skillXp,
-        );
-        next = setGold(next, next.gold + WHARF_REMEMBERS_REWARDS.gold);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        queueMicrotask(() => {
-          showToast(
-            result.startedMereRemembers
-              ? MERE_REMEMBERS_START_TOAST
-              : WHARF_REMEMBERS_COMPLETE_LINE,
-          );
-          setSkillTick((t) => t + 1);
-        });
-      } else if (result.completedId === MERE_REMEMBERS_QUEST_ID) {
-        next = awardCombatXp(next, MERE_REMEMBERS_REWARDS.combatXp);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        awardSkillXp(
-          next,
-          MERE_REMEMBERS_REWARDS.skill,
-          MERE_REMEMBERS_REWARDS.skillXp,
-        );
-        next = setGold(next, next.gold + MERE_REMEMBERS_REWARDS.gold);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        queueMicrotask(() => {
-          showToast(
-            result.startedPaleRemembers
-              ? PALE_REMEMBERS_START_TOAST
-              : MERE_REMEMBERS_COMPLETE_LINE,
-          );
-          setSkillTick((t) => t + 1);
-        });
-      } else if (result.completedId === PALE_REMEMBERS_QUEST_ID) {
-        next = awardCombatXp(next, PALE_REMEMBERS_REWARDS.combatXp);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        awardSkillXp(
-          next,
-          PALE_REMEMBERS_REWARDS.skill,
-          PALE_REMEMBERS_REWARDS.skillXp,
-        );
-        next = setGold(next, next.gold + PALE_REMEMBERS_REWARDS.gold);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        queueMicrotask(() => {
-          showToast(PALE_REMEMBERS_COMPLETE_LINE);
-          setSkillTick((t) => t + 1);
-        });
-      } else if (result.toast) {
-        queueMicrotask(() => showToast(result.toast!));
-      }
-      return next;
-    },
-    [showToast],
-  );
-
-  const handleIdentify = useCallback(
-    (kindId: EnemyKindId) => {
-      setCharacter((prev) => {
-        if (!prev) return prev;
-        const result = applyIdentify(loadQuestLog(), kindId, prev.continentId);
-        if (!result) return prev;
-        return persistQuestResult(prev, result);
-      });
-    },
-    [persistQuestResult],
-  );
-
-  const handleEnemyKill = useCallback(
-    (kindId: EnemyKindId) => {
-      if (isHollowBoss(kindId)) {
-        queueMicrotask(() => showToast(ASHVEIL_EMBER_DEFEAT_TOAST));
-      }
-      setCharacter((prev) => {
-        if (!prev) return prev;
-        const result = applyEnemyKill(loadQuestLog(), kindId, prev.continentId);
-        if (!result) return prev;
-        return persistQuestResult(prev, result);
-      });
-    },
-    [persistQuestResult, showToast],
-  );
-
-  const handleWorkNode = useCallback(
-    (nodeId: string) => {
-      const node = getProfessionNode(nodeId);
-      if (!node) return;
-      if (!isNodeReady(nodeId)) {
-        showToast(`${node.name} is still regrowing`);
-        return;
-      }
-      setCharacter((prev) => {
-        if (!prev) return prev;
-        const added = tryAddInventoryItem(prev, node.itemId, 1);
-        if (!added.ok) {
-          queueMicrotask(() => showToast(toastForCarryFail(added.reason)));
-          return prev;
-        }
-        markNodeUsed(nodeId);
-        const before = added.character.professionXp?.[node.professionId] ?? 0;
-        const next = awardProfessionXp(added.character, node.professionId, node.xp);
-        const after = next.professionXp[node.professionId];
-        const beforeLvl = professionSnapshot(before).level;
-        const afterLvl = professionSnapshot(after).level;
-        const item = getItem(node.itemId);
-        queueMicrotask(() => {
-          if (afterLvl > beforeLvl) {
-            showToast(
-              `${item.name} · ${professionName(node.professionId)} reached level ${afterLvl}`,
-            );
-          } else {
-            showToast(`${node.verb} ${item.name} · +${node.xp} ${professionName(node.professionId)} XP`);
-          }
-          setSkillTick((t) => t + 1);
-        });
-        return next;
-      });
-    },
-    [showToast],
-  );
-
-  const handleCraft = useCallback(
-    (recipeId: string) => {
-      const recipe = getCraftRecipe(recipeId);
-      if (!recipe) return;
-      setCharacter((prev) => {
-        if (!prev) return prev;
-        let working = prev;
-        for (const ing of recipe.ingredients) {
-          const removed = removeInventoryItem(working, ing.itemId, ing.qty);
-          if (!removed) {
-            queueMicrotask(() => showToast("Missing materials"));
-            return prev;
-          }
-          working = removed;
-        }
-        const added = tryAddInventoryItem(working, recipe.resultId, recipe.resultQty);
-        if (!added.ok) {
-          queueMicrotask(() => showToast(toastForCarryFail(added.reason)));
-          return prev;
-        }
-        const before = added.character.professionXp?.crafting ?? 0;
-        const next = awardProfessionXp(added.character, "crafting", recipe.xp);
-        const afterLvl = professionSnapshot(next.professionXp.crafting).level;
-        const beforeLvl = professionSnapshot(before).level;
-        const result = getItem(recipe.resultId);
-        queueMicrotask(() => {
-          if (afterLvl > beforeLvl) {
-            showToast(`Crafting reached level ${afterLvl}`);
-          } else {
-            showToast(`Crafted ${result.name} · +${recipe.xp} Crafting XP`);
-          }
-          setSkillTick((t) => t + 1);
-        });
-        return next;
-      });
-    },
-    [showToast],
-  );
-
-  const handleInspectCairn = useCallback(
-    (cairnId: string) => {
-      setCharacter((prev) => {
-        if (!prev) return prev;
-        const result = applyCairnInspect(loadQuestLog(), cairnId);
-        if (!result) return prev;
-        return persistQuestResult(prev, result);
-      });
-    },
-    [persistQuestResult],
-  );
-
-  const handleCombatReward = useCallback(
-    (
-      combatXpGain: number,
-      skill: SkillId,
-      skillXpGain: number,
-      goldGain: number,
-      loot?: ItemId[],
-    ) => {
-      setCharacter((prev) => {
-        if (!prev) return prev;
-        let next = awardCombatXp(prev, combatXpGain);
-        next = { ...next, skillXp: { ...next.skillXp } };
-        awardSkillXp(next, skill, skillXpGain);
-        next = setGold(next, next.gold + goldGain);
-        let leftover = false;
-        let leftoverReason: "weight" | "slots" | null = null;
-        const taken: ItemId[] = [];
-        if (loot && loot.length > 0) {
-          for (const id of loot) {
-            const added = tryAddInventoryItem(next, id, 1);
-            if (added.ok) {
-              next = added.character;
-              taken.push(id);
-            } else {
-              leftover = true;
-              leftoverReason = added.reason;
-            }
-          }
-        }
-        const pickupLine = formatPickupToast(goldGain, taken);
-        const leftoverMsg = leftover
-          ? leftoverReason
-            ? toastForCarryFail(leftoverReason)
-            : "Pack too heavy — loot left behind"
-          : null;
-        queueMicrotask(() => {
-          if (pickupLine) showLootToast(pickupLine);
-          if (leftoverMsg) showToast(leftoverMsg);
-        });
-        return { ...next, skillXp: { ...next.skillXp } };
-      });
-      setSkillTick((t) => t + 1);
-    },
-    [showLootToast, showToast],
-  );
-
-  const handleEquip = useCallback(
-    (itemId: string) => {
-      if (!isItemId(itemId)) return;
-      setCharacter((prev) => {
-        if (!prev) return prev;
-        const next = equipItem(prev, itemId);
-        if (!next) {
-          queueMicrotask(() => showToast("Cannot equip that"));
-          return prev;
-        }
-        return next;
-      });
-    },
-    [showToast],
-  );
-
-  const handleUnequip = useCallback(
-    (slot: EquipSlot) => {
-      setCharacter((prev) => {
-        if (!prev) return prev;
-        const next = unequipSlot(prev, slot);
-        if (!next) {
-          queueMicrotask(() => showToast(toastForCarryFail("slots")));
-          return prev;
-        }
-        return next;
-      });
-    },
-    [showToast],
-  );
-
-  const handleVitals = useCallback((hp: number, mana: number) => {
-    setCharacter((prev) => {
-      if (!prev) return prev;
-      const next = setVitals(prev, hp, mana);
-      const maxHp = maxHpFor(next);
-      if (maxHp > 0 && hp / maxHp <= LOW_HP_RATIO) {
-        if (!lowHpWarnedRef.current) {
-          lowHpWarnedRef.current = true;
-          queueMicrotask(() => showToast(LOW_HP_TOAST));
-        }
-      } else if (maxHp > 0 && hp / maxHp >= 0.5) {
-        lowHpWarnedRef.current = false;
-      }
-      return next;
-    });
-  }, [showToast]);
-
-  const handlePlayerDeath = useCallback(() => {
-    lowHpWarnedRef.current = false;
-    let toastCopy = formatDeathToast(0, []);
-    setCharacter((prev) => {
-      if (!prev) return prev;
-      const result = applyDeath(prev);
-      toastCopy = formatDeathToast(result.goldLost, result.itemsLost);
-      return result.character;
-    });
-    setArrivedFrom(null);
-    setShipSpawn(null);
-    setDialogue(null);
-    setActiveShopId(null);
-    setActiveDockId(null);
-    setBankOpen(false);
-    setPackOpen(false);
-    setCraftOpen(false);
-    setMapOpen(false);
-    setSkillsOpen(false);
-    setWorldEpoch((e) => e + 1);
-    showDeathToast(toastCopy);
-  }, [showDeathToast]);
-
-  if (!character) {
-    return <ClassSelectOverlay onPick={pickClass} />;
-  }
-
-  const cls = getClass(character.classId);
-  const skills = skillRowsFrom(character);
-  const professions = professionRowsFrom(character);
-  const continent = getContinent(character.continentId);
-  const inHollow = character.hollowIndex !== null;
-  const locationKey = `${character.continentId}:${character.hollowIndex ?? "over"}:${shipSpawn ? "ship" : "gate"}:${worldEpoch}`;
-  const shop = activeShopId ? (getShop(activeShopId) ?? null) : null;
-  const voyageDock = activeDockId ? (getDock(activeDockId) ?? null) : null;
+    void listWalkers()
+      .then((slots) => hydrateRoster(slots))
+      .catch(() => useGameStore.getState().pulse({ accountReady: true }));
+  }, [hydrateRoster]);
+
+  const playing = screen === "playing" || screen === "paused";
 
   return (
-    <GameShell
-      key={locationKey}
-      character={character}
-      cls={cls}
-      skills={skills}
-      professions={professions}
-      skillsOpen={skillsOpen}
-      mapOpen={mapOpen}
-      skillTick={skillTick}
-      arrivedFrom={arrivedFrom}
-      shipSpawn={shipSpawn}
-      toast={toast}
-      deathToast={deathToast}
-      lootToast={lootToast}
-      continentName={continent.name}
-      inHollow={inHollow}
-      hollowIndex={character.hollowIndex}
-      dialogue={dialogue}
-      shop={shop}
-      bankOpen={bankOpen}
-      bankFolkId={bankOpen ? bankFolkId : null}
-      packOpen={packOpen}
-      craftOpen={craftOpen}
-      premiumUnlocking={premiumUnlocking}
-      voyageDock={voyageDock}
-      onToggleSkills={toggleSkills}
-      onToggleMap={toggleMap}
-      onTrain={trainSkill}
-      onAssignQuickSlot={assignQuickSlot}
-      onResetPath={resetPath}
-      onTravel={goContinent}
-      onEnterHollow={goHollow}
-      onExitHollow={leaveHollow}
-      onOpenFolk={openFolk}
-      onOpenShop={openShop}
-      onOpenShip={openShip}
-      onCloseDialogue={() => setDialogue(null)}
-      onCloseShop={() => setActiveShopId(null)}
-      onOpenBank={openBank}
-      onCloseBank={closeBank}
-      onDepositItem={handleDepositItem}
-      onWithdrawItem={handleWithdrawItem}
-      onDepositGold={handleDepositGold}
-      onWithdrawGold={handleWithdrawGold}
-      onTogglePack={() => {
-        setBankOpen(false);
-        setPackOpen((o) => !o);
-      }}
-      onUnlockPremiumDemo={handleUnlockDemo}
-      onUnlockPremiumStripe={handleUnlockStripe}
-      onCloseVoyage={() => setActiveDockId(null)}
-      onBuy={buyItem}
-      onSell={sellItem}
-      onSail={sailTo}
-      onEquip={handleEquip}
-      onUnequip={handleUnequip}
-      onCombatReward={handleCombatReward}
-      onEnemyKill={handleEnemyKill}
-      onIdentify={handleIdentify}
-      onInspectCairn={handleInspectCairn}
-      onWorkNode={handleWorkNode}
-      onOpenCraft={openCraft}
-      onCloseCraft={() => setCraftOpen(false)}
-      onCraft={handleCraft}
-      teethQuest={getTeethQuest(loadQuestLog())}
-      ashwoodQuest={getAshwoodQuest(loadQuestLog())}
-      hollowQuest={getHollowQuest(loadQuestLog())}
-      gateWatchQuest={getGateWatchQuest(loadQuestLog())}
-      mistmereQuest={getMistmereQuest(loadQuestLog())}
-      watchlineQuest={getWatchlineQuest(loadQuestLog())}
-      ashveilQuest={getAshveilQuest(loadQuestLog())}
-      choirCountsQuest={getChoirCountsQuest(loadQuestLog())}
-      wharfQuest={getWharfQuest(loadQuestLog())}
-      greenGateQuest={getGreenGateQuest(loadQuestLog())}
-      spineQuest={getSpineQuest(loadQuestLog())}
-      paleQuest={getPaleQuest(loadQuestLog())}
-      ashenQuest={getAshenQuest(loadQuestLog())}
-      embercoilQuest={getEmbercoilQuest(loadQuestLog())}
-      coilQuest={getCoilQuest(loadQuestLog())}
-      choirRemembersQuest={getChoirRemembersQuest(loadQuestLog())}
-      edgeRemembersQuest={getEdgeRemembersQuest(loadQuestLog())}
-      wharfRemembersQuest={getWharfRemembersQuest(loadQuestLog())}
-      mereRemembersQuest={getMereRemembersQuest(loadQuestLog())}
-      paleRemembersQuest={getPaleRemembersQuest(loadQuestLog())}
-      onVitals={handleVitals}
-      onPlayerDeath={handlePlayerDeath}
-      onPassivePrimary={(amount) => {
-        setCharacter((prev) => {
-          if (!prev) return prev;
-          const next: ValeCharacter = {
-            ...prev,
-            skillXp: { ...prev.skillXp },
-          };
-          awardSkillXp(next, cls.primarySkill, amount);
-          return { ...next, skillXp: { ...next.skillXp } };
-        });
-        setSkillTick((t) => t + 1);
-      }}
-    />
+    <div className="relative size-full overflow-hidden bg-bg">
+      <canvas ref={canvasRef} className="absolute inset-0 size-full touch-none" />
+      {screen === "title" && <Title />}
+      {screen === "login" && <Slots game={gameRef} />}
+      {screen === "class" && <ClassSelect game={gameRef} />}
+      {playing && <Hud game={gameRef} onPause={() => gameRef.current?.togglePause()} />}
+      {screen === "paused" && <PauseMenu game={gameRef} />}
+      {screen === "gameover" && <GameOver game={gameRef} />}
+      {screen === "scores" && <Scores back="title" />}
+      {screen === "patches" && <PatchNotes back="title" />}
+      {screen === "how" && <HowTo />}
+      {playing && overlay === "playing" && <ChatDock game={gameRef} />}
+      {playing && overlay === "playing" && <CombatPad game={gameRef} />}
+      {overlay === "who" && <Who />}
+      {overlay === "talk" && <Talk game={gameRef} />}
+      {overlay === "bank" && <BankRoom game={gameRef} />}
+      {overlay === "shop" && <ShopRoom game={gameRef} />}
+      {overlay === "inn" && <InnRoom game={gameRef} />}
+      {overlay === "mill" && <MillRoom />}
+      {overlay === "house" && <HouseRoom />}
+      {overlay === "pack" && <Pack game={gameRef} />}
+      {overlay === "gear" && <GearCodex />}
+      {overlay === "atlas" && <Atlas game={gameRef} />}
+    </div>
+  );
+}
+
+function Title() {
+  const setScreen = useGameStore((s) => s.setScreen);
+  return (
+    <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-bg via-bg/70 to-transparent px-5 pb-10 safe-screen">
+      <p className="text-xs tracking-[0.22em] text-fg-muted uppercase">A frontier of the Vale</p>
+      <h1 className="mt-1 font-display text-4xl font-semibold leading-tight">A Story as Old as Time</h1>
+      <p className="mt-3 max-w-md text-sm text-fg-muted">
+        Thornvale. Six paths. Hold Strike. The square finds the nearest foe.
+      </p>
+      <div className="mt-6 flex max-w-sm flex-col gap-2">
+        <Button onClick={() => setScreen("login")}>Enter the Vale</Button>
+        <Button variant="secondary" onClick={() => setScreen("how")}>
+          How to play
+        </Button>
+        <div className="flex gap-2">
+          <Button className="flex-1" variant="ghost" onClick={() => setScreen("scores")}>
+            <Trophy className="size-4" /> Scores
+          </Button>
+          <Button className="flex-1" variant="ghost" onClick={() => setScreen("patches")}>
+            <ScrollText className="size-4" /> Notes
+          </Button>
+        </div>
+        <Link to="/" className="pt-2 text-center text-xs text-fg-muted">
+          The House
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function Slots({ game }: { game: RefObject<GameHandle | null> }) {
+  const roster = useGameStore((s) => s.roster);
+  const beginCreate = useGameStore((s) => s.beginCreate);
+  const selectSlot = useGameStore((s) => s.selectSlot);
+  const deleteSlot = useGameStore((s) => s.deleteSlot);
+  const setScreen = useGameStore((s) => s.setScreen);
+
+  return (
+    <div className="absolute inset-0 overflow-y-auto bg-bg/80 px-4 py-8 backdrop-blur-[2px] safe-screen">
+      <div className="mx-auto w-full max-w-md">
+        <p className="text-xs tracking-[0.22em] text-fg-muted uppercase">Four berths</p>
+        <h2 className="mt-1 font-display text-3xl font-semibold">Who walks</h2>
+        <SignInGate fallback={<AccountForm callbackURL="/play" />}>
+          <ul className="mt-6 space-y-3">
+            {roster.map((ch, i) => {
+              if (ch) {
+                return (
+                  <li key={i} className="rounded-xl border border-border bg-surface p-4">
+                    <button
+                      type="button"
+                      className="w-full text-left"
+                      onClick={() => {
+                        const keep = selectSlot(i);
+                        if (!keep) return;
+                        game.current?.startRun(keep.classId, keep.name, keep);
+                      }}
+                    >
+                      <p className="font-medium">{ch.name}</p>
+                      <p className="text-xs text-fg-muted">
+                        {CLASSES[ch.classId].name} · lv {ch.level}
+                      </p>
+                    </button>
+                    <button
+                      type="button"
+                      className="mt-2 text-xs text-fg-muted"
+                      onClick={() => deleteSlot(i)}
+                    >
+                      Release this berth
+                    </button>
+                  </li>
+                );
+              }
+              return (
+                <li key={i} className="rounded-xl border border-dashed border-border bg-surface/50 p-4">
+                  <button type="button" className="w-full text-left" onClick={() => beginCreate(i)}>
+                    <p className="text-sm text-fg-muted">Empty berth {i + 1}</p>
+                    <p className="mt-1 text-sm text-fg">Pick a path</p>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+          <Button className="mt-6 w-full" variant="ghost" onClick={() => setScreen("title")}>
+            Back
+          </Button>
+        </SignInGate>
+      </div>
+    </div>
+  );
+}
+
+function ClassSelect({ game }: { game: RefObject<GameHandle | null> }) {
+  const classId = useGameStore((s) => s.classId);
+  const setClass = useGameStore((s) => s.setClass);
+  const name = useGameStore((s) => s.playerName);
+  const setName = useGameStore((s) => s.setName);
+  const creatingSlot = useGameStore((s) => s.creatingSlot);
+  const createActive = useGameStore((s) => s.createActive);
+  const selectSlot = useGameStore((s) => s.selectSlot);
+  const setScreen = useGameStore((s) => s.setScreen);
+  const def = CLASSES[classId];
+  const [err, setErr] = useState("");
+
+  function go() {
+    const slot = creatingSlot ?? 0;
+    void (async () => {
+      const fail = await createActive(slot, name, classId);
+      if (fail) {
+        setErr(fail);
+        return;
+      }
+      game.current?.startRun(classId, name.trim());
+    })();
+  }
+
+  return (
+    <div className="absolute inset-0 overflow-y-auto bg-bg/80 px-4 py-8 backdrop-blur-[2px] safe-screen">
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
+        <div>
+          <p className="text-xs tracking-[0.22em] text-fg-muted uppercase">Pick your path</p>
+          <h2 className="mt-1 font-display text-3xl font-semibold">The six of Thornvale</h2>
+          <p className="mt-2 max-w-xl text-sm text-fg-muted">
+            Hold Strike. The Vale finds the nearest foe and walks you into reach.
+          </p>
+        </div>
+        <label className="block text-xs font-medium text-fg-muted">
+          Name
+          <input
+            value={name}
+            onChange={(e) => {
+              setErr("");
+              setName(e.target.value.slice(0, 18));
+            }}
+            autoComplete="off"
+            className="mt-1 h-11 w-full rounded-md border border-border bg-surface-2 px-3 text-sm text-fg outline-none focus:ring-2 focus:ring-ring"
+          />
+        </label>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {CLASS_ORDER.map((id) => {
+            const c = CLASSES[id];
+            const on = id === classId;
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setClass(id)}
+                className={`rounded-xl border p-3 text-left ${on ? "border-primary bg-surface-2" : "border-border bg-surface"}`}
+              >
+                <img src={asset(`/sprites/classes/${id}.png`)} alt="" className="mb-2 h-16 w-16 object-cover object-top" />
+                <p className="font-medium">{c.name}</p>
+                <p className="text-xs text-fg-muted">{c.epithet}</p>
+              </button>
+            );
+          })}
+        </div>
+        <div className="rounded-xl border border-border bg-surface p-4">
+          <p className="font-display text-xl">{def.name}</p>
+          <p className="text-sm text-fg-muted">{def.blurb}</p>
+          <p className="mt-2 text-xs text-fg-subtle">{def.vow}</p>
+        </div>
+        {err ? <p className="text-sm text-hp">{err}</p> : null}
+        <Button onClick={go}>Walk</Button>
+        <Button
+          variant="ghost"
+          onClick={() => {
+            selectSlot(0);
+            setScreen("login");
+          }}
+        >
+          Back
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function Hud({ game, onPause }: { game: RefObject<GameHandle | null>; onPause: () => void }) {
+  const hp = useGameStore((s) => s.hp);
+  const maxHp = useGameStore((s) => s.maxHp);
+  const mp = useGameStore((s) => s.mp);
+  const maxMp = useGameStore((s) => s.maxMp);
+  const gold = useGameStore((s) => s.gold);
+  const level = useGameStore((s) => s.level);
+  const score = useGameStore((s) => s.score);
+  const lives = useGameStore((s) => s.lives);
+  const toast = useGameStore((s) => s.toast);
+  const targetName = useGameStore((s) => s.targetName);
+  const targetHp = useGameStore((s) => s.targetHp);
+  const targetMax = useGameStore((s) => s.targetMax);
+  const inReach = useGameStore((s) => s.inReach);
+  const combatHint = useGameStore((s) => s.combatHint);
+  const locationId = useGameStore((s) => s.locationId);
+  const prompt = useGameStore((s) => s.prompt);
+  const walkers = useGameStore((s) => s.walkers);
+  const clock = useGameStore((s) => s.clock);
+  const huntName = useGameStore((s) => s.huntName);
+  const overlay = useGameStore((s) => s.overlay);
+  const objective = useGameStore((s) => s.objective);
+  const training = useGameStore((s) => s.training);
+  const idleLeft = useGameStore((s) => s.idleLeft);
+  const here = settlement(locationId);
+  const xpNeed = useGameStore((s) => s.xpNeed);
+  const xpHave = useGameStore((s) => s.xp);
+
+  return (
+    <div className="pointer-events-none absolute inset-x-0 top-0 z-10 safe-top">
+      <div className="flex items-start justify-between gap-2 px-2">
+        <div className="min-w-0 max-w-[70%] rounded-xl border border-border bg-bg/70 px-3 py-2 backdrop-blur-sm">
+          <p className="text-[10px] tracking-[0.18em] text-fg-muted uppercase">
+            {here.name} · {clock}
+            {huntName ? ` · ${huntName}` : ""}
+            {walkers ? ` · ${walkers} walking` : ""}
+          </p>
+          <div className="mt-1 flex items-center gap-2 text-xs">
+            <span className="tabular-nums text-hp">
+              {Math.ceil(hp)}/{maxHp}
+            </span>
+            <span className="tabular-nums text-mp">
+              {Math.ceil(mp)}/{maxMp}
+            </span>
+            <span className="tabular-nums text-fg-muted">lv {level}</span>
+          </div>
+          <Bar value={hp / (maxHp || 1)} color="bg-hp" label="hp" />
+          <Bar value={mp / (maxMp || 1)} color="bg-mp" label="mp" />
+          <Bar value={xpNeed ? Math.min(1, xpHave / xpNeed) : 0} color="bg-xp" label="xp" />
+          <div className="mt-2 flex items-center justify-between text-xs text-fg-muted">
+            <span className="inline-flex items-center gap-1 tabular-nums">
+              <Heart className="size-3.5" /> {lives}
+            </span>
+            <span className="tabular-nums">Score {score}</span>
+            <span className="tabular-nums">{formatCoins(gold)}</span>
+          </div>
+          {targetName ? (
+            <div className="mt-2">
+              <p className="truncate text-xs text-fg">
+                {targetName}
+                <span className="text-fg-muted"> · {inReach ? "in reach" : "closing"}</span>
+              </p>
+              <Bar value={targetMax ? targetHp / targetMax : 0} color="bg-hp" label="mark" />
+            </div>
+          ) : combatHint ? (
+            <p className="mt-1 text-xs text-fg">{combatHint}</p>
+          ) : null}
+          {prompt ? (
+            <button
+              type="button"
+              className="pointer-events-auto mt-2 min-h-11 w-full rounded-md border border-border bg-surface-2 px-3 text-left text-sm text-fg"
+              onClick={() => game.current?.interact()}
+            >
+              {prompt.replace(" · E", "")} · tap
+            </button>
+          ) : null}
+          {objective ? <p className="mt-1 text-xs text-fg-subtle">{objective}</p> : null}
+          {training ? <p className="mt-1 text-xs text-fg">Training {training}</p> : null}
+          {idleLeft > 0 && idleLeft <= 120 ? (
+            <p className="mt-1 text-xs text-hp">
+              Move or click · {Math.floor(idleLeft / 60)}:{String(idleLeft % 60).padStart(2, "0")}
+            </p>
+          ) : null}
+          {toast ? <p className="mt-1 text-xs text-fg">{toast}</p> : null}
+        </div>
+        {overlay === "playing" ? (
+          <div className="flex flex-col items-end gap-2">
+            <button
+              type="button"
+              onClick={onPause}
+              className="pointer-events-auto flex size-11 items-center justify-center rounded-md border border-border bg-bg/80 text-fg"
+              aria-label="Pause"
+            >
+              <Pause className="size-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => useGameStore.getState().setOverlay("pack")}
+              className="pointer-events-auto flex size-11 items-center justify-center rounded-md border border-border bg-bg/80 text-fg"
+              aria-label="Pack"
+            >
+              <Backpack className="size-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => useGameStore.getState().setOverlay("atlas")}
+              className="pointer-events-auto flex size-11 items-center justify-center rounded-md border border-border bg-bg/80 text-fg"
+              aria-label="Atlas"
+            >
+              <Map className="size-4" />
+            </button>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function Bar({ value, color, label }: { value: number; color: string; label: string }) {
+  return (
+    <div className="mt-1.5">
+      <div className="h-1.5 overflow-hidden rounded-full bg-surface-3">
+        <div className={`h-full ${color}`} style={{ width: `${Math.round(Math.max(0, Math.min(1, value)) * 100)}%` }} />
+      </div>
+      <span className="sr-only">{label}</span>
+    </div>
+  );
+}
+
+function CombatPad({ game }: { game: RefObject<GameHandle | null> }) {
+  const abilities = useGameStore((s) => s.abilities);
+  const prompt = useGameStore((s) => s.prompt);
+  const [stick, setStick] = useState({ x: 0, y: 0 });
+  const [striking, setStriking] = useState(false);
+  const origin = useRef<{ id: number; x: number; y: number } | null>(null);
+
+  useEffect(() => {
+    game.current?.input.setStick(stick.x, stick.y);
+  }, [stick, game]);
+
+  function endStick(id: number) {
+    if (!origin.current || origin.current.id !== id) return;
+    origin.current = null;
+    setStick({ x: 0, y: 0 });
+  }
+
+  const orbit = [
+    "left-1/2 top-0 -translate-x-1/2",
+    "right-0 top-1/2 -translate-y-1/2",
+    "left-1/2 bottom-0 -translate-x-1/2",
+    "left-0 top-1/2 -translate-y-1/2",
+  ];
+
+  return (
+    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex items-end justify-between gap-2 safe-bottom">
+      <div
+        className="pointer-events-auto relative size-36 shrink-0 touch-none rounded-full border border-border bg-bg/55"
+        onPointerDown={(e) => {
+          e.preventDefault();
+          e.currentTarget.setPointerCapture(e.pointerId);
+          const r = e.currentTarget.getBoundingClientRect();
+          origin.current = { id: e.pointerId, x: r.left + r.width / 2, y: r.top + r.height / 2 };
+        }}
+        onPointerMove={(e) => {
+          if (!origin.current || origin.current.id !== e.pointerId) return;
+          const dx = (e.clientX - origin.current.x) / 56;
+          const dy = (e.clientY - origin.current.y) / 56;
+          const len = Math.hypot(dx, dy) || 1;
+          const s = Math.min(1, len);
+          setStick({ x: (dx / len) * s, y: (dy / len) * s });
+        }}
+        onPointerUp={(e) => endStick(e.pointerId)}
+        onPointerCancel={(e) => endStick(e.pointerId)}
+      >
+        <div
+          className="absolute left-1/2 top-1/2 size-12 rounded-full bg-fg/45"
+          style={{ transform: `translate(calc(-50% + ${stick.x * 36}px), calc(-50% + ${stick.y * 36}px))` }}
+        />
+      </div>
+      <div className="pointer-events-auto flex items-end gap-2">
+        <div className="mb-1 flex flex-col gap-2">
+          <Button
+            variant="secondary"
+            className="h-12 min-w-12 px-3"
+            onClick={() => useGameStore.getState().setChatOpen(true)}
+          >
+            Say
+          </Button>
+          <Button variant="secondary" className="h-12 min-w-12 px-3" onClick={() => game.current?.interact()}>
+            {prompt ? "Use" : "Talk"}
+          </Button>
+        </div>
+        <div className="relative size-44 shrink-0">
+          {abilities.map((a, i) => (
+            <button
+              key={a.id}
+              type="button"
+              aria-label={a.name}
+              onClick={() => game.current?.cast(i)}
+              className={`absolute flex size-11 flex-col items-center justify-center overflow-hidden rounded-full border border-border bg-bg/80 text-center text-xs leading-tight text-fg ${orbit[i] ?? ""} ${a.can ? "" : "opacity-50"}`}
+            >
+              {a.ready < 1 ? (
+                <span
+                  className="absolute inset-x-0 bottom-0 bg-surface-3"
+                  style={{ height: `${Math.round((1 - a.ready) * 100)}%` }}
+                />
+              ) : null}
+              <span className="relative">{a.name}</span>
+            </button>
+          ))}
+          <button
+            type="button"
+            aria-label="Strike"
+            className={`absolute left-1/2 top-1/2 flex size-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-primary bg-primary text-sm font-medium text-primary-foreground ${striking ? "scale-95" : ""}`}
+            onPointerDown={(e) => {
+              e.preventDefault();
+              e.currentTarget.setPointerCapture(e.pointerId);
+              setStriking(true);
+              game.current?.setAttackHold(true);
+            }}
+            onPointerUp={() => {
+              setStriking(false);
+              game.current?.setAttackHold(false);
+            }}
+            onPointerCancel={() => {
+              setStriking(false);
+              game.current?.setAttackHold(false);
+            }}
+          >
+            Strike
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PauseMenu({ game }: { game: RefObject<GameHandle | null> }) {
+  const settings = useGameStore((s) => s.settings);
+  const setSettings = useGameStore((s) => s.setSettings);
+  const setOverlay = useGameStore((s) => s.setOverlay);
+  const setScreen = useGameStore((s) => s.setScreen);
+  const skills = useGameStore((s) => s.skills);
+
+  return (
+    <div className="absolute inset-0 flex items-end justify-center overflow-y-auto bg-bg/70 px-4 py-4 backdrop-blur-[3px] sm:items-center safe-screen">
+      <div className="mb-2 w-full max-w-sm rounded-2xl border border-border bg-surface p-5 sm:mb-0">
+        <div className="flex items-center justify-between">
+          <h2 className="font-display text-2xl font-semibold">Paused</h2>
+          <button type="button" className="size-10" onClick={() => game.current?.togglePause()} aria-label="Close">
+            <X className="size-4" />
+          </button>
+        </div>
+        {skills.length > 0 ? (
+          <ul className="mt-4 space-y-1.5">
+            {skills.map((sk) => (
+              <li key={sk.id}>
+                <div className="flex justify-between text-xs text-fg-muted">
+                  <span>{sk.name}</span>
+                  <span className="tabular-nums text-fg">{sk.level}</span>
+                </div>
+                <div className="mt-1 h-1 overflow-hidden rounded-full bg-surface-3">
+                  <div className="h-full bg-primary" style={{ width: `${Math.round(sk.progress * 100)}%` }} />
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        <div className="mt-5 flex flex-col gap-3">
+          <Button onClick={() => game.current?.togglePause()}>
+            <Play className="size-4" /> Resume
+          </Button>
+          <Button variant="secondary" onClick={() => setOverlay("atlas")}>
+            <Map className="size-4" /> Atlas
+          </Button>
+          <Button variant="secondary" onClick={() => setOverlay("who")}>
+            <Users className="size-4" /> Who
+          </Button>
+          <Button variant="secondary" onClick={() => setOverlay("pack")}>
+            Pack
+          </Button>
+          <Button variant="secondary" onClick={() => setOverlay("gear")}>
+            Equipment
+          </Button>
+          <Button variant="secondary" onClick={() => setScreen("scores")}>
+            High scores
+          </Button>
+          <Button variant="secondary" onClick={() => setScreen("patches")}>
+            Patch notes
+          </Button>
+          <label className="text-xs text-fg-muted">
+            Effects
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.05}
+              value={settings.sfx}
+              onChange={(e) => setSettings({ sfx: Number(e.target.value) })}
+              className="mt-1 w-full"
+            />
+          </label>
+          <label className="text-xs text-fg-muted">
+            Music
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.05}
+              value={settings.music}
+              onChange={(e) => setSettings({ music: Number(e.target.value) })}
+              className="mt-1 w-full"
+            />
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={settings.shake}
+              onChange={(e) => setSettings({ shake: e.target.checked })}
+            />
+            Screen shake
+          </label>
+          <Button
+            variant="ghost"
+            onClick={() => {
+              game.current?.leaveRealm();
+              setScreen("title");
+            }}
+          >
+            Leave the Vale
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ChatDock({ game }: { game: RefObject<GameHandle | null> }) {
+  const open = useGameStore((s) => s.chatOpen);
+  const log = useGameStore((s) => s.chatLog);
+  const setChatOpen = useGameStore((s) => s.setChatOpen);
+  const [text, setText] = useState("");
+  const ref = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (open) ref.current?.focus();
+  }, [open]);
+
+  const recent = log.slice(-6);
+
+  return (
+    <div className="pointer-events-none absolute inset-x-0 bottom-36 z-10 px-3 sm:bottom-8">
+      <div className="mx-auto w-full max-w-md">
+        {recent.length > 0 ? (
+          <ul className="mb-2 space-y-0.5 rounded-md bg-bg/55 px-3 py-2 text-xs">
+            {recent.map((line, i) => (
+              <li key={`${line.at}-${i}`}>
+                <span className="text-fg">{line.from}</span>
+                <span className="text-fg-muted"> · {line.text}</span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+        {open ? (
+          <form
+            className="pointer-events-auto"
+            onSubmit={(e) => {
+              e.preventDefault();
+              const t = text.trim();
+              if (t) game.current?.say(t);
+              setText("");
+              setChatOpen(false);
+            }}
+          >
+            <input
+              ref={ref}
+              value={text}
+              maxLength={80}
+              placeholder="Say — Enter sends, Esc closes"
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  e.preventDefault();
+                  setChatOpen(false);
+                }
+              }}
+              className="h-11 w-full rounded-md border border-border bg-surface px-3 text-sm text-fg outline-none focus:ring-2 focus:ring-ring"
+            />
+          </form>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function Who() {
+  const who = useGameStore((s) => s.who);
+  const me = useGameStore((s) => s.playerName);
+  const classId = useGameStore((s) => s.classId);
+  const level = useGameStore((s) => s.level);
+  const setOverlay = useGameStore((s) => s.setOverlay);
+  const rows = [{ name: me, className: CLASSES[classId].name, level, ping: null as number | null }, ...who];
+  return (
+    <div className="absolute inset-0 flex items-center justify-center bg-bg/70 px-4 safe-screen">
+      <div className="w-full max-w-sm rounded-2xl border border-border bg-surface p-6">
+        <h2 className="font-display text-2xl font-semibold">Who</h2>
+        <p className="mt-1 text-xs text-fg-muted">The realm. Same square, same night.</p>
+        <ul className="mt-4 space-y-2">
+          {rows.map((w, i) => (
+            <li key={`${w.name}-${i}`} className="flex justify-between text-sm">
+              <span>
+                {w.name}
+                {i === 0 ? " · you" : ""} · {w.className}
+              </span>
+              <span className="tabular-nums text-fg-muted">lv {w.level}</span>
+            </li>
+          ))}
+        </ul>
+        <Button className="mt-6 w-full" variant="secondary" onClick={() => setOverlay("playing")}>
+          Close
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function Talk({ game }: { game: RefObject<GameHandle | null> }) {
+  const npc = useGameStore((s) => s.talkNpc) as Npc | null;
+  const pack = useGameStore((s) => s.pack);
+  const setOverlay = useGameStore((s) => s.setOverlay);
+  if (!npc) return null;
+  const job = jobNeed(npc.role);
+  const have = job ? pack.find((s) => s.item === job.item)?.qty ?? 0 : 0;
+  return (
+    <div className="absolute inset-0 flex items-end justify-center bg-bg/50 px-4 pb-8 sm:items-center sm:pb-0 safe-screen">
+      <div className="w-full max-w-sm rounded-2xl border border-border bg-surface p-6">
+        <p className="text-xs tracking-[0.18em] text-fg-muted uppercase">{roleLabel(npc.role)}</p>
+        <h2 className="font-display text-2xl font-semibold">{npc.name}</h2>
+        <p className="text-sm text-fg-subtle">{npc.epithet}</p>
+        <p className="mt-3 text-sm leading-relaxed text-fg">{npc.line}</p>
+        <p className="mt-2 text-sm leading-relaxed text-fg-muted">{npc.aside}</p>
+        <div className="mt-5 flex flex-col gap-2">
+          {npc.role === "inn" ? <Button onClick={() => game.current?.restInn()}>Rest — free</Button> : null}
+          {shopIdFromRole(npc.role) ? (
+            <Button onClick={() => game.current?.openShop(shopIdFromRole(npc.role)!)}>Trade</Button>
+          ) : null}
+          {job ? (
+            <Button variant="secondary" onClick={() => game.current?.turnIn()} disabled={have < job.qty}>
+              Hand over {job.qty} · {formatCoins(job.pay)}
+              {have < job.qty ? ` (${have}/${job.qty})` : ""}
+            </Button>
+          ) : null}
+          {npc.role === "fish" ? (
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setOverlay("playing");
+                game.current?.fish();
+              }}
+            >
+              Fish here
+            </Button>
+          ) : null}
+          <Button variant="ghost" onClick={() => setOverlay("playing")}>
+            Walk on
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Pack({ game }: { game: RefObject<GameHandle | null> }) {
+  const pack = useGameStore((s) => s.pack);
+  const worn = useGameStore((s) => s.worn);
+  const setOverlay = useGameStore((s) => s.setOverlay);
+  return (
+    <div className="absolute inset-0 overflow-y-auto bg-bg/80 px-4 py-8 safe-screen">
+      <div className="mx-auto w-full max-w-md">
+        <h2 className="font-display text-2xl font-semibold">Pack</h2>
+        <ul className="mt-4 space-y-2">
+          {SLOT_ORDER.map((slot: EquipSlot) => {
+            const id = worn[slot];
+            const d = id ? ITEMS[id] : null;
+            return (
+              <li key={slot} className="flex items-center justify-between rounded-md border border-border bg-surface px-3 py-2 text-sm">
+                <span className="text-fg-muted">{slot}</span>
+                {d ? (
+                  <button type="button" className="text-fg" onClick={() => game.current?.unequip(slot)}>
+                    {d.name}
+                  </button>
+                ) : (
+                  <span className="text-fg-subtle">empty</span>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+        <ul className="mt-4 space-y-2">
+          {pack.length === 0 ? <li className="text-sm text-fg-muted">Nothing in the pack.</li> : null}
+          {pack.map((s, i) => {
+            const d = ITEMS[s.item];
+            if (!d) return null;
+            return (
+              <li key={`${s.item}-${i}`} className="flex items-center justify-between rounded-md border border-border bg-surface px-3 py-2 text-sm">
+                <span>
+                  {d.name} {s.qty > 1 ? `×${s.qty}` : ""}
+                </span>
+                <span className="flex gap-2">
+                  {d.kind === "gear" ? (
+                    <Button size="sm" onClick={() => game.current?.equip(s.item)}>
+                      Wear
+                    </Button>
+                  ) : (
+                    <Button size="sm" variant="secondary" onClick={() => game.current?.useItem(s.item)}>
+                      Use
+                    </Button>
+                  )}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+        <Button className="mt-6 w-full" variant="secondary" onClick={() => setOverlay("playing")}>
+          Close
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function GearCodex() {
+  const setOverlay = useGameStore((s) => s.setOverlay);
+  const level = useGameStore((s) => s.level);
+  const hudSkills = useGameStore((s) => s.skills);
+  const skills = {
+    fight: { level: hudSkills.find((s) => s.id === "fight")?.level ?? 10, tries: 0 },
+    magic: { level: hudSkills.find((s) => s.id === "magic")?.level ?? 0, tries: 0 },
+    shielding: { level: hudSkills.find((s) => s.id === "shielding")?.level ?? 10, tries: 0 },
+  };
+  return (
+    <div className="absolute inset-0 overflow-y-auto bg-bg/80 px-4 py-8 safe-screen">
+      <div className="mx-auto w-full max-w-md">
+        <h2 className="font-display text-2xl font-semibold">Equipment</h2>
+        <p className="mt-2 text-sm text-fg-muted">
+          Combat 1–100. Common through relic. Wear needs combat level and a skill.
+        </p>
+        <ul className="mt-4 space-y-1">
+          {LADDER.slice(0, 24).map((d) => {
+            const why = d.kind === "gear" ? canWear(d, level, skills) : null;
+            return (
+              <li key={d.id} className="flex justify-between gap-2 text-xs">
+                <span className={RARITY_CLASS[d.rarity ?? "common"]}>
+                  {d.name}
+                  <span className="ml-2 text-fg-muted">{RARITY_LABEL[d.rarity ?? "common"]}</span>
+                </span>
+                <span className="text-fg-muted">{why ?? `lv ${d.levelReq}`}</span>
+              </li>
+            );
+          })}
+        </ul>
+        <Button className="mt-6 w-full" variant="secondary" onClick={() => setOverlay("playing")}>
+          Close
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function Atlas({ game }: { game: RefObject<GameHandle | null> }) {
+  const locationId = useGameStore((s) => s.locationId);
+  const gold = useGameStore((s) => s.gold);
+  const setOverlay = useGameStore((s) => s.setOverlay);
+  const here = settlement(locationId);
+  const [cont, setCont] = useState<ContinentId>(here.continent);
+  const roads = passagesFrom(locationId);
+  return (
+    <div className="absolute inset-0 overflow-y-auto bg-bg/80 px-4 py-8 safe-screen">
+      <div className="mx-auto w-full max-w-md">
+        <h2 className="font-display text-2xl font-semibold">Atlas</h2>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {CONTINENT_ORDER.map((id) => (
+            <Button key={id} size="sm" variant={id === cont ? "default" : "secondary"} onClick={() => setCont(id)}>
+              {CONTINENTS[id].name}
+            </Button>
+          ))}
+        </div>
+        <ul className="mt-4 space-y-2">
+          {listContinent(cont).map((s) => (
+            <li key={s.id}>
+              <Button
+                className="w-full justify-between"
+                variant={s.id === locationId ? "default" : "secondary"}
+                onClick={() => {
+                  const pass = roads.find((r) => otherEnd(r, locationId) === s.id);
+                  game.current?.travelTo(s.id, pass?.mode ?? "ship", pass?.gold ?? 8);
+                  setOverlay("playing");
+                }}
+                disabled={s.id === locationId}
+              >
+                {s.name}
+                {s.id === locationId ? " · here" : ""}
+              </Button>
+            </li>
+          ))}
+        </ul>
+        <Button className="mt-6 w-full" variant="ghost" onClick={() => setOverlay("playing")}>
+          Close
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function GameOver({ game }: { game: RefObject<GameHandle | null> }) {
+  const setScreen = useGameStore((s) => s.setScreen);
+  const name = useGameStore((s) => s.playerName);
+  const score = useGameStore((s) => s.score);
+  return (
+    <div className="absolute inset-0 flex items-center justify-center bg-bg/80 px-4 safe-screen">
+      <div className="w-full max-w-sm rounded-2xl border border-border bg-surface p-6">
+        <h2 className="font-display text-2xl font-semibold">The hunt ends</h2>
+        <p className="mt-2 text-sm text-fg-muted">
+          {name}. Score {score}. Coin and gear stay two hours.
+        </p>
+        <div className="mt-5 flex flex-col gap-2">
+          <Button onClick={() => game.current?.retryRun()}>Rise</Button>
+          <Button variant="secondary" onClick={() => setScreen("title")}>
+            Title
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Scores({ back }: { back: "title" | "paused" }) {
+  const scores = useGameStore((s) => s.scores);
+  const setScreen = useGameStore((s) => s.setScreen);
+  return (
+    <div className="absolute inset-0 overflow-y-auto bg-bg/80 px-4 py-8">
+      <div className="mx-auto w-full max-w-md">
+        <h2 className="font-display text-2xl font-semibold">High scores</h2>
+        <ul className="mt-4 space-y-2">
+          {scores.length === 0 ? <li className="text-sm text-fg-muted">No names on the stone yet.</li> : null}
+          {scores.map((s, i) => (
+            <li key={`${s.name}-${s.date}-${i}`} className="flex justify-between text-sm">
+              <span>
+                {s.name} · {CLASSES[s.classId].name}
+              </span>
+              <span className="tabular-nums text-fg-muted">
+                lv {s.level} · {s.score}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <Button className="mt-6 w-full" variant="secondary" onClick={() => setScreen(back)}>
+          Back
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function PatchNotes({ back }: { back: "title" | "paused" }) {
+  const setScreen = useGameStore((s) => s.setScreen);
+  return (
+    <div className="absolute inset-0 overflow-y-auto bg-bg/80 px-4 py-8">
+      <div className="mx-auto w-full max-w-md">
+        <h2 className="font-display text-2xl font-semibold">Patch notes</h2>
+        <p className="mt-3 text-sm text-fg">Hold Strike. The Vale finds the nearest foe. Skills sit around the button.</p>
+        <p className="mt-2 text-sm text-fg-muted">Book One stays free.</p>
+        <Button className="mt-6 w-full" variant="secondary" onClick={() => setScreen(back)}>
+          Back
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function HowTo() {
+  const setScreen = useGameStore((s) => s.setScreen);
+  return (
+    <div className="absolute inset-0 overflow-y-auto bg-bg/80 px-4 py-8">
+      <div className="mx-auto w-full max-w-md">
+        <h2 className="font-display text-2xl font-semibold">How to play</h2>
+        <ul className="mt-4 list-disc space-y-2 pl-5 text-sm text-fg">
+          <li>Hold Strike. You face the nearest beast, walk into reach, and keep hitting until you let go.</li>
+          <li>Tap a beast to lock it. Skills sit around Strike. Keys 1–4 on a keyboard.</li>
+          <li>On a phone: left stick walks, Strike holds the hunt, Talk uses the prompt.</li>
+          <li>WASD or the stick. Click to walk on a mouse. E to talk, enter, take.</li>
+          <li>West of the fountain is Nettle Copse — a first hunt.</li>
+          <li>Enter to say. Pause → Who. Book One stays free.</li>
+        </ul>
+        <Button className="mt-6 w-full" variant="secondary" onClick={() => setScreen("title")}>
+          Back
+        </Button>
+      </div>
+    </div>
   );
 }
