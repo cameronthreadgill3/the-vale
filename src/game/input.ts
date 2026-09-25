@@ -7,6 +7,7 @@ export type Actions = {
   inventory: boolean;
   map: boolean;
   chat: boolean;
+  cycle: boolean;
   ability: [boolean, boolean, boolean, boolean];
 };
 
@@ -30,6 +31,8 @@ const GAME_KEYS = new Set([
   "KeyI",
   "KeyB",
   "KeyM",
+  "Tab",
+  "KeyT",
 ]);
 
 export type PointerWorld = { x: number; y: number; down: boolean; justDown: boolean; touch: boolean };
@@ -54,6 +57,7 @@ export function createInput(canvas: HTMLCanvasElement) {
     inventory: false,
     map: false,
     chat: false,
+    cycle: false,
     ability: [false, false, false, false],
   };
   const stick = { x: 0, y: 0 };
@@ -137,7 +141,7 @@ export function createInput(canvas: HTMLCanvasElement) {
       return [...(injected.size ? injected : keys)];
     },
     sample(): Actions & {
-      just: { attack: boolean; pause: boolean; interact: boolean; inventory: boolean; map: boolean; chat: boolean; ability: boolean[] };
+      just: { attack: boolean; pause: boolean; interact: boolean; inventory: boolean; map: boolean; chat: boolean; cycle: boolean; ability: boolean[] };
     } {
       const held = injected.size ? injected : keys;
       const a: Actions = {
@@ -149,6 +153,7 @@ export function createInput(canvas: HTMLCanvasElement) {
         inventory: held.has("KeyI") || held.has("KeyB"),
         map: held.has("KeyM"),
         chat: held.has("Enter") || held.has("NumpadEnter"),
+        cycle: held.has("Tab") || held.has("KeyT"),
         ability: [held.has("Digit1"), held.has("Digit2"), held.has("Digit3"), held.has("Digit4")],
       };
       if (held.has("KeyA") || held.has("ArrowLeft")) a.moveX -= 1;
@@ -170,6 +175,7 @@ export function createInput(canvas: HTMLCanvasElement) {
         inventory: a.inventory && !prev.inventory,
         map: a.map && !prev.map,
         chat: a.chat && !prev.chat,
+        cycle: a.cycle && !prev.cycle,
         ability: a.ability.map((v, i) => v && !prev.ability[i]),
       };
       prev.moveX = a.moveX;
@@ -180,6 +186,7 @@ export function createInput(canvas: HTMLCanvasElement) {
       prev.inventory = a.inventory;
       prev.map = a.map;
       prev.chat = a.chat;
+      prev.cycle = a.cycle;
       prev.ability = [...a.ability] as Actions["ability"];
       const pd = pointer.justDown;
       pointer.justDown = false;
