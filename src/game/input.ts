@@ -7,6 +7,7 @@ export type Actions = {
   inventory: boolean;
   map: boolean;
   chat: boolean;
+  cycleTarget: boolean;
   ability: [boolean, boolean, boolean, boolean];
 };
 
@@ -30,6 +31,7 @@ const GAME_KEYS = new Set([
   "KeyI",
   "KeyB",
   "KeyM",
+  "Tab",
 ]);
 
 export type PointerWorld = { x: number; y: number; down: boolean; justDown: boolean; touch: boolean };
@@ -54,6 +56,7 @@ export function createInput(canvas: HTMLCanvasElement) {
     inventory: false,
     map: false,
     chat: false,
+    cycleTarget: false,
     ability: [false, false, false, false],
   };
   const stick = { x: 0, y: 0 };
@@ -137,7 +140,16 @@ export function createInput(canvas: HTMLCanvasElement) {
       return [...(injected.size ? injected : keys)];
     },
     sample(): Actions & {
-      just: { attack: boolean; pause: boolean; interact: boolean; inventory: boolean; map: boolean; chat: boolean; ability: boolean[] };
+      just: {
+        attack: boolean;
+        pause: boolean;
+        interact: boolean;
+        inventory: boolean;
+        map: boolean;
+        chat: boolean;
+        cycleTarget: boolean;
+        ability: boolean[];
+      };
     } {
       const held = injected.size ? injected : keys;
       const a: Actions = {
@@ -149,6 +161,7 @@ export function createInput(canvas: HTMLCanvasElement) {
         inventory: held.has("KeyI") || held.has("KeyB"),
         map: held.has("KeyM"),
         chat: held.has("Enter") || held.has("NumpadEnter"),
+        cycleTarget: held.has("Tab"),
         ability: [held.has("Digit1"), held.has("Digit2"), held.has("Digit3"), held.has("Digit4")],
       };
       if (held.has("KeyA") || held.has("ArrowLeft")) a.moveX -= 1;
@@ -170,6 +183,7 @@ export function createInput(canvas: HTMLCanvasElement) {
         inventory: a.inventory && !prev.inventory,
         map: a.map && !prev.map,
         chat: a.chat && !prev.chat,
+        cycleTarget: a.cycleTarget && !prev.cycleTarget,
         ability: a.ability.map((v, i) => v && !prev.ability[i]),
       };
       prev.moveX = a.moveX;
@@ -180,6 +194,7 @@ export function createInput(canvas: HTMLCanvasElement) {
       prev.inventory = a.inventory;
       prev.map = a.map;
       prev.chat = a.chat;
+      prev.cycleTarget = a.cycleTarget;
       prev.ability = [...a.ability] as Actions["ability"];
       const pd = pointer.justDown;
       pointer.justDown = false;
