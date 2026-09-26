@@ -8,6 +8,7 @@ export type Actions = {
   map: boolean;
   chat: boolean;
   cycleTarget: boolean;
+  lootAll: boolean;
   ability: [boolean, boolean, boolean, boolean];
 };
 
@@ -31,6 +32,7 @@ const GAME_KEYS = new Set([
   "KeyI",
   "KeyB",
   "KeyM",
+  "KeyF",
   "Tab",
 ]);
 
@@ -57,6 +59,7 @@ export function createInput(canvas: HTMLCanvasElement) {
     map: false,
     chat: false,
     cycleTarget: false,
+    lootAll: false,
     ability: [false, false, false, false],
   };
   const stick = { x: 0, y: 0 };
@@ -148,6 +151,7 @@ export function createInput(canvas: HTMLCanvasElement) {
         map: boolean;
         chat: boolean;
         cycleTarget: boolean;
+        lootAll: boolean;
         ability: boolean[];
       };
     } {
@@ -162,6 +166,7 @@ export function createInput(canvas: HTMLCanvasElement) {
         map: held.has("KeyM"),
         chat: held.has("Enter") || held.has("NumpadEnter"),
         cycleTarget: held.has("Tab"),
+        lootAll: held.has("KeyF"),
         ability: [held.has("Digit1"), held.has("Digit2"), held.has("Digit3"), held.has("Digit4")],
       };
       if (held.has("KeyA") || held.has("ArrowLeft")) a.moveX -= 1;
@@ -184,6 +189,7 @@ export function createInput(canvas: HTMLCanvasElement) {
         map: a.map && !prev.map,
         chat: a.chat && !prev.chat,
         cycleTarget: a.cycleTarget && !prev.cycleTarget,
+        lootAll: a.lootAll && !prev.lootAll,
         ability: a.ability.map((v, i) => v && !prev.ability[i]),
       };
       prev.moveX = a.moveX;
@@ -195,6 +201,7 @@ export function createInput(canvas: HTMLCanvasElement) {
       prev.map = a.map;
       prev.chat = a.chat;
       prev.cycleTarget = a.cycleTarget;
+      prev.lootAll = a.lootAll;
       prev.ability = [...a.ability] as Actions["ability"];
       const pd = pointer.justDown;
       pointer.justDown = false;
