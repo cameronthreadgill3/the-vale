@@ -1,4 +1,3 @@
-import type { GameHandle } from "./engine";
 import { useGameStore } from "./store";
 
 function typingInField(t: EventTarget | null) {
@@ -9,16 +8,14 @@ function typingInField(t: EventTarget | null) {
 }
 
 /** F drinks a health draught from the pack. */
-export function attachHealHotkey(game: { current: GameHandle | null }) {
+export function attachHealHotkey(useItem: (item: "health_potion") => boolean) {
   const onDown = (e: KeyboardEvent) => {
     if (e.code !== "KeyF" || e.repeat) return;
     if (typingInField(e.target)) return;
     const screen = useGameStore.getState().screen;
     if (screen !== "playing" && screen !== "paused") return;
     e.preventDefault();
-    const g = game.current;
-    if (!g) return;
-    if (!g.useItem("health_potion")) {
+    if (!useItem("health_potion")) {
       useGameStore.getState().pulse({ toast: "No draught in the pack." });
     }
   };
