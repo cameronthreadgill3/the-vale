@@ -9,4 +9,5 @@ export const FEATURE_LOG = [
   "Tab cycles the hunt lock through living beasts within acquire range, nearest first, without scanning the world every frame.",
   "F drinks a health draught from the pack without opening it.",
   "Q drinks a mana draught from the pack without opening it.",
+  "R sits or stands in place so you can rest without finding a bench.",
 ] as const;

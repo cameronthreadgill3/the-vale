@@ -9,6 +9,7 @@ export type Actions = {
   chat: boolean;
   heal: boolean;
   mana: boolean;
+  rest: boolean;
   ability: [boolean, boolean, boolean, boolean];
 };
 
@@ -34,6 +35,7 @@ const GAME_KEYS = new Set([
   "KeyM",
   "KeyF",
   "KeyQ",
+  "KeyR",
 ]);
 
 export type PointerWorld = { x: number; y: number; down: boolean; justDown: boolean; touch: boolean };
@@ -60,6 +62,7 @@ export function createInput(canvas: HTMLCanvasElement) {
     chat: false,
     heal: false,
     mana: false,
+    rest: false,
     ability: [false, false, false, false],
   };
   const stick = { x: 0, y: 0 };
@@ -143,7 +146,7 @@ export function createInput(canvas: HTMLCanvasElement) {
       return [...(injected.size ? injected : keys)];
     },
     sample(): Actions & {
-      just: { attack: boolean; pause: boolean; interact: boolean; inventory: boolean; map: boolean; chat: boolean; heal: boolean; mana: boolean; ability: boolean[] };
+      just: { attack: boolean; pause: boolean; interact: boolean; inventory: boolean; map: boolean; chat: boolean; heal: boolean; mana: boolean; rest: boolean; ability: boolean[] };
     } {
       const held = injected.size ? injected : keys;
       const a: Actions = {
@@ -157,6 +160,7 @@ export function createInput(canvas: HTMLCanvasElement) {
         chat: held.has("Enter") || held.has("NumpadEnter"),
         heal: held.has("KeyF"),
         mana: held.has("KeyQ"),
+        rest: held.has("KeyR"),
         ability: [held.has("Digit1"), held.has("Digit2"), held.has("Digit3"), held.has("Digit4")],
       };
       if (held.has("KeyA") || held.has("ArrowLeft")) a.moveX -= 1;
@@ -180,6 +184,7 @@ export function createInput(canvas: HTMLCanvasElement) {
         chat: a.chat && !prev.chat,
         heal: a.heal && !prev.heal,
         mana: a.mana && !prev.mana,
+        rest: a.rest && !prev.rest,
         ability: a.ability.map((v, i) => v && !prev.ability[i]),
       };
       prev.moveX = a.moveX;
@@ -192,6 +197,7 @@ export function createInput(canvas: HTMLCanvasElement) {
       prev.chat = a.chat;
       prev.heal = a.heal;
       prev.mana = a.mana;
+      prev.rest = a.rest;
       prev.ability = [...a.ability] as Actions["ability"];
       const pd = pointer.justDown;
       pointer.justDown = false;
