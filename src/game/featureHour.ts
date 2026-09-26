@@ -7,4 +7,5 @@ export const FEATURE_LOG = [
   "WASD or arrows walk; click to walk-mark; E talks, enters, and takes; I/B pack; M atlas; Esc/P pause; Enter says.",
   "Fountain mends you; dummy, shield post, and mana font train at Tibia rates.",
   "Tab cycles the hunt lock through living beasts within acquire range, nearest first, without scanning the world every frame.",
+  "F sweeps ground loot within arm's reach and takes every pile there; it only walks the nearby props when you press the key.",
 ];
