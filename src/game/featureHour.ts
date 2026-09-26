@@ -8,4 +8,5 @@ export const FEATURE_LOG = [
   "Fountain mends you; dummy, shield post, and mana font train at Tibia rates.",
   "Tab cycles the hunt lock through living beasts within acquire range, nearest first, without scanning the world every frame.",
   "F drinks a health draught from the pack without opening it.",
+  "Q drinks a mana draught from the pack without opening it.",
 ] as const;
