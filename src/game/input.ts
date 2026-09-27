@@ -57,7 +57,7 @@ export function createInput(canvas: HTMLCanvasElement) {
     map: false,
     town: false,
     chat: false,
-    ability: [false, false, false, boolean],
+    ability: [false, false, false, false],
   };
   const stick = { x: 0, y: 0 };
   const pointer: PointerWorld = { x: 0, y: 0, down: false, justDown: false, touch: false };
