@@ -168,6 +168,10 @@ export function createInput(canvas: HTMLCanvasElement) {
         a.moveX /= len;
         a.moveY /= len;
       }
+      if (a.walk) {
+        a.moveX *= 0.5;
+        a.moveY *= 0.5;
+      }
       const just = {
         attack: a.attack && !prev.attack,
         pause: a.pause && !prev.pause,
