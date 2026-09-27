@@ -7,6 +7,7 @@ export type Actions = {
   inventory: boolean;
   map: boolean;
   chat: boolean;
+  walk: boolean;
   ability: [boolean, boolean, boolean, boolean];
 };
 
@@ -30,6 +31,8 @@ const GAME_KEYS = new Set([
   "KeyI",
   "KeyB",
   "KeyM",
+  "ShiftLeft",
+  "ShiftRight",
 ]);
 
 export type PointerWorld = { x: number; y: number; down: boolean; justDown: boolean; touch: boolean };
@@ -54,6 +57,7 @@ export function createInput(canvas: HTMLCanvasElement) {
     inventory: false,
     map: false,
     chat: false,
+    walk: false,
     ability: [false, false, false, false],
   };
   const stick = { x: 0, y: 0 };
@@ -149,6 +153,7 @@ export function createInput(canvas: HTMLCanvasElement) {
         inventory: held.has("KeyI") || held.has("KeyB"),
         map: held.has("KeyM"),
         chat: held.has("Enter") || held.has("NumpadEnter"),
+        walk: held.has("ShiftLeft") || held.has("ShiftRight"),
         ability: [held.has("Digit1"), held.has("Digit2"), held.has("Digit3"), held.has("Digit4")],
       };
       if (held.has("KeyA") || held.has("ArrowLeft")) a.moveX -= 1;
@@ -180,6 +185,7 @@ export function createInput(canvas: HTMLCanvasElement) {
       prev.inventory = a.inventory;
       prev.map = a.map;
       prev.chat = a.chat;
+      prev.walk = a.walk;
       prev.ability = [...a.ability] as Actions["ability"];
       const pd = pointer.justDown;
       pointer.justDown = false;
