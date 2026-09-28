@@ -1920,6 +1920,7 @@ export function createGame(canvas: HTMLCanvasElement) {
       actions.just.pause ||
       actions.just.inventory ||
       actions.just.map ||
+      actions.just.home ||
       actions.just.ability.some(Boolean)
     ) {
       bumpIdle();
@@ -1949,6 +1950,19 @@ export function createGame(canvas: HTMLCanvasElement) {
     if (store.overlay !== "playing") return;
     net.tick(dt);
     const chatting = store.chatOpen;
+    if (actions.just.home && !chatting) {
+      if (world.underground) {
+        toast("The fountain is above.");
+      } else if (Math.hypot(player.x - world.townX, player.y - world.townY) < 56) {
+        toast("You are already at the fountain.");
+      } else {
+        player.sitting = false;
+        clearTarget();
+        player.walkTarget = { x: world.townX, y: world.townY };
+        destMark = { x: world.townX, y: world.townY, ttl: 1.35 };
+        toast("Walking to the fountain.");
+      }
+    }
     const still = chatting || player.sitting;
     if (pointerClick && !still && !steering) clickWorld();
     else if (input.pointer.justDown && input.pointer.touch && !still && !steering) tapFoe();
